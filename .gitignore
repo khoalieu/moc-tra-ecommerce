@@ -1,0 +1,26 @@
+# --- Maven ---
+target/
+*.war
+*.ear
+*.nar
+*.zip
+*.tar.gz
+*.rar
+
+# --- IntelliJ IDEA ---
+.idea/
+*.iws
+*.iml
+*.ipr
+out/
+
+# --- Java ---
+*.class
+*.log
+*.ctxt
+.mtj.tmp/
+
+# --- OS System Files ---
+.DS_Store
+Thumbs.db
+desktop.ini
