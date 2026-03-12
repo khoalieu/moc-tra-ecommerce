@@ -1,6 +1,8 @@
 package model;
 
 
+import model.enums.BlogStatus;
+
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.Date;
