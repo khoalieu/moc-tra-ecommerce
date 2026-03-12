@@ -1,5 +1,6 @@
 package controller;
 
+import dao.BlogCategoryDAO;
 import dao.BlogCommentDAO;
 import dao.BlogPostDAO;
 import model.BlogCategory;
