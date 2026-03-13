@@ -1,0 +1,249 @@
+
+/* 1. Filters Section */
+.filters-section {
+    background: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    border: 1px solid #eee;
+}
+
+.filters-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+}
+
+.filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.filter-group label {
+    font-size: 13px;
+    font-weight: 500;
+    color: #555;
+}
+
+.form-select {
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+    color: #333;
+    outline: none;
+}
+
+.form-select:focus {
+    border-color: #107e84;
+}
+
+/* 2. Orders Container & Table */
+.orders-container {
+    background: #fff;
+    border-radius: 8px;
+    border: 1px solid #eee;
+    overflow: hidden;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.02);
+}
+
+.table-header {
+    padding: 15px 20px;
+    background: #f8f9fa;
+    border-bottom: 1px solid #eee;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.orders-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+}
+
+.orders-table th {
+    background: #f8f9fa;
+    padding: 12px 15px;
+    text-align: left;
+    border-bottom: 1px solid #eee;
+    color: #555;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.orders-table td {
+    padding: 12px 15px;
+    border-bottom: 1px solid #f0f0f0;
+    vertical-align: middle;
+}
+
+.orders-table tr:hover {
+    background: #fbfbfb;
+}
+
+/* 3. Table Elements */
+.order-id {
+    font-weight: 700;
+    color: #107e84;
+}
+
+.customer-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.customer-name {
+    font-weight: 500;
+    color: #333;
+}
+
+.customer-phone {
+    font-size: 12px;
+    color: #888;
+}
+
+.order-items {
+    font-size: 13px;
+    color: #555;
+}
+
+.order-amount {
+    font-weight: 700;
+    color: #d32f2f;
+}
+
+.order-date {
+    font-size: 13px;
+    color: #333;
+}
+
+.order-date small {
+    color: #888;
+    display: block;
+    font-size: 11px;
+}
+
+/* 4. Action Buttons */
+.action-buttons {
+    display: flex;
+    gap: 6px;
+}
+
+.btn-action {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #eee;
+    background: white;
+    border-radius: 4px;
+    color: #666;
+    transition: 0.2s;
+}
+
+.btn-action:hover {
+    background: #107e84;
+    color: white;
+    border-color: #107e84;
+}
+
+.btn-action.danger:hover {
+    background: #dc3545;
+    border-color: #dc3545;
+}
+
+/* 5. Pagination */
+.pagination-container {
+    padding: 15px 20px;
+    border-top: 1px solid #eee;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.pagination {
+    display: flex;
+    gap: 5px;
+}
+
+.page-btn {
+    padding: 6px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    color: #555;
+    font-size: 13px;
+    background: #fff;
+}
+
+.page-btn:hover {
+    background: #f0f0f0;
+}
+
+.page-btn.active {
+    background: #107e84;
+    color: white;
+    border-color: #107e84;
+}
+
+/* 6. Bulk Actions Bar */
+.bulk-actions-bar {
+    position: fixed;
+    bottom: -100px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 12px 25px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);
+    display: flex;
+    gap: 20px;
+    align-items: center;
+    transition: bottom 0.3s ease;
+    z-index: 1000;
+}
+
+.bulk-actions-bar.active {
+    bottom: 30px;
+}
+
+.bulk-actions-info {
+    font-weight: 500;
+    color: #333;
+}
+
+.bulk-actions-buttons {
+    display: flex;
+    gap: 10px;
+}
+
+.btn-bulk {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 4px;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+}
+
+.btn-bulk-activate {
+    background: #28a745;
+    color: white;
+}
+
+.btn-bulk-delete {
+    background: #dc3545;
+    color: white;
+}
+
+.btn-bulk-cancel {
+    background: #f0f0f0;
+    color: #333;
+    text-decoration: none;
+}
