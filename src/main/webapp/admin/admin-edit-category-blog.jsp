@@ -1,0 +1,160 @@
+<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+
+<c:set var="ctx" value="${pageContext.request.contextPath}"/>
+
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý Danh mục Blog - Mộc Trà Admin</title>
+    <link rel="stylesheet" href="${ctx}/assets/css/base.css">
+    <link rel="stylesheet" href="${ctx}/assets/css/components.css">
+    <link rel="stylesheet" href="${ctx}/admin/assets/css/admin.css">
+    <link rel="stylesheet" href="${ctx}/admin/assets/css/admin-add-product.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css">
+    <style>
+        .error-message {
+            color: #dc3545;
+            font-size: 14px;
+            margin-top: 5px;
+            display: block;
+        }
+
+        .form-control.error {
+            border-color: #dc3545;
+        }
+    </style>
+</head>
+<body>
+<div class="admin-container">
+    <jsp:include page="/common/admin-sidebar.jsp">
+        <jsp:param name="activePage" value="blog-categories"/>
+    </jsp:include>
+
+    <main class="admin-main">
+        <header class="admin-header">
+            <div class="header-left">
+                <h1>Quản lý Danh mục Blog</h1>
+            </div>
+        </header>
+
+        <div class="admin-content">
+
+            <c:if test="${not empty error}">
+                <div class="alert alert-error">${error}</div>
+            </c:if>
+
+            <div class="form-grid">
+
+                <!-- LEFT: EDIT FORM -->
+                <div class="form-left">
+                    <div class="form-section">
+                        <h3>Cập nhật danh mục</h3>
+
+                        <form action="${ctx}/admin/blog-categories/edit" method="POST">
+                            <input type="hidden" name="id" value="${category.id}"/>
+
+                            <div class="form-group">
+                                <label for="name">Tên danh mục <span class="required">*</span></label>
+                                <input type="text" id="name" name="name"
+                                       class="form-control ${not empty error ? 'error' : ''}"
+                                       value="${category.name}">
+                                <c:if test="${not empty error}">
+                                    <span class="error-message">${error}</span>
+                                </c:if>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="slug">Slug (URL)</label>
+                                <input type="text" id="slug" name="slug" class="form-control"
+                                       value="${category.slug}"
+                                       placeholder="Tự động nếu để trống">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="description">Mô tả</label>
+                                <textarea id="description" name="description"
+                                          class="form-control textarea" rows="4">${category.description}</textarea>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="is_active">Trạng thái</label>
+                                <select id="is_active" name="is_active" class="form-control">
+                                    <option value="true"  ${category.isActive ? 'selected' : ''}>Hiển thị</option>
+                                    <option value="false" ${!category.isActive ? 'selected' : ''}>Ẩn</option>
+                                </select>
+                            </div>
+
+                            <div class="btn-group">
+                                <a href="${ctx}/admin/blog-categories" class="btn btn-outline">
+                                    <i class="fas fa-times"></i> Hủy
+                                </a>
+
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save"></i> Lưu thay đổi
+                                </button>
+                            </div>
+                        </form>
+
+                    </div>
+                </div>
+
+                <!-- RIGHT: LIST (NO DELETE ICON) -->
+                <div class="form-right">
+                    <div class="form-section">
+                        <h3>Danh sách hiện có</h3>
+
+                        <div class="table-responsive">
+                            <table class="category-table">
+                                <thead>
+                                <tr>
+                                    <th>Tên danh mục</th>
+                                    <th>Slug</th>
+                                    <th>Trạng thái</th>
+                                    <th>Thao tác</th>
+                                </tr>
+                                </thead>
+
+                                <tbody>
+                                <c:if test="${empty categories}">
+                                    <tr>
+                                        <td colspan="4" style="text-align:center;">Chưa có danh mục nào</td>
+                                    </tr>
+                                </c:if>
+
+                                <c:forEach var="cat" items="${categories}">
+                                    <tr>
+                                        <td><strong><c:out value="${cat.name}"/></strong></td>
+                                        <td><c:out value="${cat.slug}"/></td>
+                                        <td>
+                      <span class="badge ${cat.isActive ? 'badge-success' : 'badge-secondary'}">
+                              ${cat.isActive ? 'Hiển thị' : 'Ẩn'}
+                      </span>
+                                        </td>
+                                        <td>
+                                            <div class="action-buttons">
+                                                <a href="${ctx}/admin/blog-categories/edit?id=${cat.id}"
+                                                   class="btn-edit" title="Sửa">
+                                                    <i class="fa-solid fa-pen-to-square"></i>
+                                                </a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </c:forEach>
+                                </tbody>
+
+                            </table>
+                        </div>
+
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+    </main>
+</div>
+</body>
+</html>
