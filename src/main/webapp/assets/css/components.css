@@ -1,0 +1,195 @@
+/* components.css */
+
+/* --- NÚT BẤM (BUTTONS) --- */
+.cta-button {
+    background: var(--color-primary, #4CAF50);
+    color: #fff;
+    padding: 12px 25px;
+    text-decoration: none;
+    border-radius: 5px;
+    font-weight: 700;
+    transition: background-color 0.3s ease;
+    display: inline-block;
+}
+.cta-button:hover {
+    background: #43a047;
+    background: color-mix(in srgb, var(--color-primary, #4CAF50) 80%, white 20%);
+}
+
+.cta-button-outline {
+    background: transparent;
+    border: 2px solid #fff;
+    color: #fff;
+    padding: 10px 20px;
+    text-decoration: none;
+    border-radius: 5px;
+    font-weight: 700;
+    transition: all 0.3s ease;
+    align-self: flex-start;
+}
+.cta-button-outline:hover {
+    background: #fff;
+    color: #333;
+}
+
+/* --- LƯỚI SẢN PHẨM (PRODUCT GRID & CARD) --- */
+.product-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 30px;
+}
+
+.product-card {
+    background: #fff;
+    border-radius: 8px;
+    overflow: hidden;
+    text-align: center;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.07);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    position: relative; /* Thêm dòng này để chứa sale-tag */
+}
+.product-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+}
+.product-card img {
+    width: 100%;
+    height: 250px;
+    object-fit: cover;
+    display: block;
+}
+.product-card h3 {
+    font-size: 18px;
+    margin: 15px 10px 10px 10px;
+    font-weight: 500;
+}
+.product-card .price {
+    font-size: 16px;
+    font-weight: 700;
+    color: #e53935;
+    margin-bottom: 15px;
+}
+.product-card .cta-button {
+    margin-bottom: 20px;
+    font-size: 14px;
+    padding: 10px 20px;
+}
+
+/* --- LƯỚI BLOG (BLOG GRID & CARD) --- */
+.blog-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 30px;
+}
+
+.blog-card {
+    background: #fff;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.07);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.blog-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+}
+.blog-card img {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+}
+.blog-card h3 {
+    font-size: 20px;
+    margin: 20px 20px 10px 20px;
+    font-weight: 500;
+
+}
+.blog-card p {
+    margin: 0 20px 20px 20px;
+    color: #666;
+    font-size: 14px;
+    border-top: 1px solid #eee;
+    padding-top: 15px;
+}
+.blog-card a {
+    margin: 0 20px 20px 20px;
+    display: inline-block;
+    color: var(--color-primary, #4CAF50);
+    text-decoration: none;
+    font-weight: 700;
+}
+.blog-card a:hover {
+    text-decoration: underline;
+}
+
+.blog-card .blog-card-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+
+    margin: 10px 20px 10px 20px;
+
+    font-size: 13px;
+    color: #888;
+}
+.blog-card .meta-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+.blog-card .icon-eye,
+.blog-card .icon-calendar {
+    font-size: 14px;
+}
+/* --- THẺ KHUYẾN MÃI (SALE TAG) --- */
+.sale-tag {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background-color: #e53935;
+    color: #fff;
+    padding: 5px 10px;
+    font-size: 12px;
+    font-weight: 700;
+    border-radius: 5px;
+    z-index: 2;
+}
+.product-card .price .new-price {
+    color: #e53935;
+    font-weight: 700;
+    margin-right: 8px;
+}
+.product-card .price .old-price {
+    color: #999;
+    text-decoration: line-through;
+    font-size: 14px;
+}
+
+/* --- PHÂN TRANG (PAGINATION) --- */
+.pagination {
+    text-align: center;
+    margin-top: 40px;
+    margin-bottom: 20px;
+}
+.pagination a {
+    display: inline-block;
+    padding: 10px 15px;
+    margin: 0 5px;
+    border: 1px solid #ddd;
+    background: #fff;
+    color: #555;
+    text-decoration: none;
+    border-radius: 5px;
+    transition: all 0.3s ease;
+}
+.pagination a.active,
+.pagination a:hover {
+    background: var(--color-primary, #4CAF50);
+    color: #fff;
+    border-color: var(--color-primary, #4CAF50);
+}
+
+/* --- TIỆN ÍCH (UTILITIES) --- */
+.preserve-lines {
+    white-space: pre-line;
+}
