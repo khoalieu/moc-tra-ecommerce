@@ -1,0 +1,16 @@
+/* main.css - File chủ gộp tất cả CSS */
+
+/* 1. Biến (Luôn luôn đầu tiên) */
+@import 'variables.css';
+
+/* 2. Base (Reset, body, .container...) */
+@import 'base.css';
+
+/* 3. Layout (Header, Footer, Nav...) */
+@import 'layout.css';
+
+/* 4. Components (Các thẻ tái sử dụng: .product-card, .button...) */
+@import 'components.css';
+
+/* 5. Pages (Kiểu riêng cho từng trang: .hero-banner, .product-detail...) */
+@import 'pages.css';
