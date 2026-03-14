@@ -1,0 +1,24 @@
+/* assets/css/variables.css */
+
+/* Nhập (import) Google Fonts ở đầu tệp biến
+*/
+@import url('https://fonts.googleapis.com/css2?family=Lora:wght@700&family=Montserrat:wght@400&display=swap');
+
+:root {
+    /* Biến khoảng cách (Spacing System) */
+    --space-xs: 4px;
+    --space-sm: 8px;
+    --space-md: 16px;
+    --space-lg: 24px;
+    --space-xl: 32px;
+    --space-xxl: 48px;
+    --space-xxxl: 64px;
+
+    /* Biến Font (Typography) */
+    --font-primary: 'Lora', serif;
+    --font-secondary: 'Montserrat', sans-serif;
+
+    /* (Sau này bạn sẽ thêm các biến màu ở đây) */
+    --color-primary: #107e84;
+    --color-text: #191919;
+}

@@ -1,0 +1,45 @@
+/* base.css */
+/* --- CÀI ĐẶT CHUNG (GLOBAL) --- */
+
+
+
+body {
+    /* Dùng font-family từ file variables.css nếu có,
+       nếu không thì dùng Roboto làm dự phòng */
+    font-family: var(--font-secondary, 'Roboto', sans-serif);
+    margin: 0;
+    padding: 0;
+    background-color: #f9f9f9;
+    color: var(--color-text, #333); /* Dùng màu từ biến */
+    line-height: 1.6;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+/* Lớp .container này rất quan trọng, giữ nó ở base */
+.container {
+    max-width: 1200px;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: 15px;
+    padding-right: 15px;
+}
+
+a {
+    text-decoration: none;
+    color: inherit;
+}
+
+html {
+    height: 100%;
+}
+body {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+main {
+    flex-grow: 1; /* Đẩy footer xuống */
+}
