@@ -44,6 +44,8 @@
                             class="input-username"
                             type="text"
                             name="username"
+                            title="Tên đăng nhập phải ít nhất 6 ký tự, chỉ gồm chữ cái và số, không có khoảng trắng."
+                            pattern="^[a-zA-Z0-9]{6,}$"
                             placeholder="Tên đăng nhập"
                             aria-label="Tên đăng nhập"
                             value="${param.username}"

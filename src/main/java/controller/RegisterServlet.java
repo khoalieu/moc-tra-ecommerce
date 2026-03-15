@@ -32,7 +32,7 @@ public class RegisterServlet extends HttpServlet {
 
         String error = null;
 
-        if (user == null || !Pattern.matches(USERNAME_REGEX, user)) {
+        if (user == null || user.contains(" ") || !Pattern.matches(USERNAME_REGEX, user)) {
             error = "Tên đăng nhập phải từ 6 ký tự trở lên, không chứa dấu cách hoặc ký tự đặc biệt!";
         }
         else if (email == null || !Pattern.matches(EMAIL_REGEX, email)) {
