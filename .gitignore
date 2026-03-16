@@ -24,3 +24,5 @@ out/
 .DS_Store
 Thumbs.db
 desktop.ini
+# --- email configure ---
+email.properties

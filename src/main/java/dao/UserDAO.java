@@ -18,7 +18,6 @@ public class UserDAO {
     PreparedStatement ps = null;
     ResultSet rs = null;
 
-    // 1. Kiểm tra đăng nhập (LOGIC MỚI)
     public User checkLogin(String username, String password) {
         try {
             String query = "SELECT * FROM users WHERE username = ? AND is_active = 1";
