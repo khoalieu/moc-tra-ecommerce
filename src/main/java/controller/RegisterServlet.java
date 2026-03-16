@@ -63,8 +63,21 @@ public class RegisterServlet extends HttpServlet {
 
             request.getRequestDispatcher("signup.jsp").forward(request, response);
         } else {
-            dao.register(user, email, pass, phone);
-            response.sendRedirect("login.jsp");
+            String otp = String.format("%06d", new java.util.Random().nextInt(999999));
+            HttpSession session = request.getSession();
+            session.setAttribute("temp_username", user);
+            session.setAttribute("temp_email", email);
+            session.setAttribute("temp_password", pass);
+            session.setAttribute("temp_phone", phone);
+            session.setAttribute("otp_code", otp);
+            boolean isSent = controller.utils.EmailUtils.sendOTP(email, otp);
+            if (isSent) {
+                response.sendRedirect("verify-otp.jsp");
+            }
+            else {
+                request.setAttribute("errorMessage", "email không hợp lệ. Vui lòng thử lại!");
+                request.getRequestDispatcher("signup.jsp").forward(request, response);
+            }
         }
     }
 }
