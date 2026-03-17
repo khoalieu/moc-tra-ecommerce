@@ -3479,28 +3479,3 @@
     border-radius: 4px;
     font-weight: 500;
 }
-
-.password-field {
-    position: relative; /* Để làm chuẩn định vị cho icon con mắt bên trong */
-    width: 100%;
-}
-
-.password-field input {
-    width: 100%;
-    padding-right: 40px !important;
-}
-
-.toggle-password {
-    position: absolute;
-    right: 15px;
-    top: 50%;
-    transform: translateY(-50%);
-    cursor: pointer;
-    color: #6c757d;
-    font-size: 1.1rem;
-    transition: color 0.2s ease-in-out;
-}
-
-.toggle-password:hover {
-    color: #333;
-}
