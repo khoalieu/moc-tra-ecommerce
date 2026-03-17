@@ -66,22 +66,6 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 });
-
-document.getElementById('otpForm').addEventListener('submit', function (e) {
-    const inputs = document.querySelectorAll('.otp-input');
-    let code = '';
-
-    inputs.forEach(i => code += (i.value || ''));
-
-    if (code.length !== 6) {
-        alert('Vui lòng nhập đủ 6 số OTP');
-        e.preventDefault();
-        return;
-    }
-
-    document.getElementById('otpHiddenInput').value = code;
-});
-
 //tính năng hiện mật khẩu
 document.addEventListener('DOMContentLoaded', function() {
     const togglePasswordIcons = document.querySelectorAll('.toggle-password');
@@ -104,4 +88,24 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 });
+
+const otpForm = document.getElementById('otpForm');
+if (otpForm) {
+    otpForm.addEventListener('submit', function (e) {
+        const inputs = document.querySelectorAll('.otp-input');
+        let code = '';
+
+        inputs.forEach(i => code += (i.value || ''));
+
+        if (code.length !== 6) {
+            alert('Vui lòng nhập đủ 6 số OTP');
+            e.preventDefault();
+            return;
+        }
+
+        document.getElementById('otpHiddenInput').value = code;
+    });
+}
+
+
 
