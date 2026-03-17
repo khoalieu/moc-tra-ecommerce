@@ -33,9 +33,8 @@
             </div>
 
             <div class="login-content">
-
                 <!-- Verify OTP -->
-                <form id="otpForm" action="verify-otp" method="post" autocomplete="off">
+                <form id="otpForm" action="${pageContext.request.contextPath}/${not empty sessionScope.temp_email ? 'verify-register-otp' : 'verify-otp'}" method="post" autocomplete="off">
                     <div class="otp-input-group">
                         <input type="text" maxlength="1" class="otp-input" data-id="1">
                         <input type="text" maxlength="1" class="otp-input" data-id="2">
@@ -47,7 +46,6 @@
 
                     <input type="hidden" name="otp" id="otpHiddenInput">
 
-                    <!-- message lỗi màu đỏ -->
                     <p class="reset-message" style="color:red; margin:8px 0;">
                         <c:out value="${message}" />
                     </p>

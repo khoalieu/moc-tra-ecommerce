@@ -25,11 +25,20 @@ public class LoginServlet extends HttpServlet {
 
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        String user = request.getParameter("username");
-        String pass = request.getParameter("password");
-        UserDAO dao = new UserDAO();
-        User account = dao.checkLogin(user, pass);
+        String userParam = request.getParameter("username");
+        String passParam = request.getParameter("password");
 
+        if (userParam == null || userParam.trim().isEmpty() ||
+                passParam == null || passParam.isEmpty()) {
+            request.setAttribute("username", userParam != null ? userParam.trim() : "");
+            request.setAttribute("errorMessage", "Vui lòng nhập đầy đủ tên đăng nhập và mật khẩu!");
+            request.getRequestDispatcher("login.jsp").forward(request, response);
+        }
+        String username = userParam.trim();
+        String password = passParam;
+
+        UserDAO dao = new UserDAO();
+        User account = dao.checkLogin(username, password);
         if (account != null) {
             HttpSession session = request.getSession();
             session.setAttribute("user", account);

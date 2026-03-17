@@ -18,7 +18,6 @@ public class UserDAO {
     PreparedStatement ps = null;
     ResultSet rs = null;
 
-    // 1. Kiểm tra đăng nhập (LOGIC MỚI)
     public User checkLogin(String username, String password) {
         try {
             String query = "SELECT * FROM users WHERE username = ? AND is_active = 1";
@@ -46,7 +45,6 @@ public class UserDAO {
                     String genderStr = rs.getString("gender");
                     if (genderStr != null) {
                         try {
-                            // Database lưu chữ thường ('male'), Enum Java chữ hoa ('MALE') -> Cần toUpperCase()
                             user.setGender(UserGender.valueOf(genderStr.toUpperCase()));
                         } catch (IllegalArgumentException e) {
                             user.setGender(UserGender.OTHER);
@@ -272,8 +270,6 @@ public class UserDAO {
 
         return u;
     }
-
-    // tim user id trong email
     public Integer findUserIdByEmail(String email) {
         String sql = "SELECT id FROM users WHERE email = ? LIMIT 1";
         try (Connection conn = new DBConnect().getConnection();
@@ -346,17 +342,13 @@ public class UserDAO {
                         "WHERE u.role = 'customer' "
         );
 
-        // 1. Filter Search
         if (search != null && !search.isEmpty()) {
             sql.append(" AND (u.email LIKE ? OR u.phone LIKE ? OR CONCAT(u.last_name, ' ', u.first_name) LIKE ?) ");
         }
 
-        // Group By trước khi Having
         sql.append(" GROUP BY u.id HAVING 1=1 ");
 
-        // 2. Filter Spending (HAVING clause)
         if (spendingRange != null && !spendingRange.isEmpty()) {
-            // Ví dụ value: "0-500000", "500000-1000000", "5000000+"
             if (spendingRange.contains("-")) {
                 String[] parts = spendingRange.split("-");
                 sql.append(" AND total_spent BETWEEN ").append(parts[0]).append(" AND ").append(parts[1]);
@@ -375,23 +367,20 @@ public class UserDAO {
                     int max = Integer.parseInt(parts[1]);
                     sql.append(" AND total_orders BETWEEN ").append(min).append(" AND ").append(max);
                 } catch (NumberFormatException e) {
-                    // Bỏ qua nếu dữ liệu rác
                 }
             } else if (orderRange.endsWith("+")) {
                 try {
                     int min = Integer.parseInt(orderRange.replace("+", ""));
                     sql.append(" AND total_orders > ").append(min);
                 } catch (NumberFormatException e) {
-                    // Bỏ qua
                 }
             }
         }
 
-        // 3. Filter Status
         if (status != null && !status.isEmpty()) {
             switch (status) {
                 case "inactive":
-                    sql.append(" AND u.is_active = 0 "); // Lưu ý: Cần check lại alias trong HAVING hoặc chuyển lên WHERE nếu lỗi
+                    sql.append(" AND u.is_active = 0 ");
                     break;
                 case "vip":
                     sql.append(" AND total_spent > 5000000 AND u.is_active = 1 ");
@@ -405,7 +394,6 @@ public class UserDAO {
             }
         }
 
-        // 4. Sorting
         if (sort != null) {
             switch (sort) {
                 case "spending-desc": sql.append(" ORDER BY total_spent DESC "); break;
@@ -418,7 +406,6 @@ public class UserDAO {
             sql.append(" ORDER BY u.created_at DESC ");
         }
 
-        // 5. Pagination
         sql.append(" LIMIT ? OFFSET ?");
 
         try (Connection conn = DBConnect.getConnection();
@@ -455,10 +442,7 @@ public class UserDAO {
         }
         return list;
     }
-
-    // Hàm đếm tổng số lượng (để phân trang)
     public int countCustomers(String search, String status) {
-        // Để đơn giản, count theo search trước
         StringBuilder sql = new StringBuilder("SELECT COUNT(*) FROM users u WHERE u.role = 'customer'");
         if (search != null && !search.isEmpty()) {
             sql.append(" AND (u.email LIKE ? OR u.phone LIKE ? OR CONCAT(u.last_name, ' ', u.first_name) LIKE ?) ");
@@ -491,10 +475,10 @@ public class UserDAO {
             for (Integer id : ids) {
                 ps.setInt(1, isActive ? 1 : 0);
                 ps.setInt(2, id);
-                ps.addBatch(); // Thêm vào lô xử lý
+                ps.addBatch();
             }
 
-            ps.executeBatch(); // Thực thi toàn bộ lô
+            ps.executeBatch();
             conn.commit();
             return true;
 
@@ -675,6 +659,39 @@ public class UserDAO {
                     newUser.setAvatar(googleData.getPicture());
                     newUser.setRole(UserRole.CUSTOMER);
                     return newUser;
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+    public String checkUserExistDetailed(String username, String email, String phone) {
+        try {
+            String query = "SELECT username, email, phone FROM users WHERE username = ? OR email = ? OR phone = ? LIMIT 1";
+            conn = new DBConnect().getConnection();
+            ps = conn.prepareStatement(query);
+            ps.setString(1, username);
+            ps.setString(2, email);
+            ps.setString(3, phone);
+            rs = ps.executeQuery();
+
+            if (rs.next()) {
+                String dbUsername = rs.getString("username");
+                String dbEmail = rs.getString("email");
+                String dbPhone = rs.getString("phone");
+                List<String> duplicatedFields = new ArrayList<>();
+                if (username.equalsIgnoreCase(dbUsername)) {
+                    duplicatedFields.add("Tên đăng nhập");
+                }
+                if (email.equalsIgnoreCase(dbEmail)) {
+                    duplicatedFields.add("Email");
+                }
+                if (phone.equals(dbPhone)) {
+                    duplicatedFields.add("Số điện thoại");
+                }
+                if (!duplicatedFields.isEmpty()) {
+                    return String.join(", ", duplicatedFields) + " đã tồn tại trong hệ thống!";
                 }
             }
         } catch (Exception e) {

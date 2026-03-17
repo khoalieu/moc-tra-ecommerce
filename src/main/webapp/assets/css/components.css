@@ -193,3 +193,30 @@
 .preserve-lines {
     white-space: pre-line;
 }
+
+
+.password-field {
+    position: relative;
+    width: 100%;
+}
+
+.password-field input {
+    width: 100%;
+    padding-right: 40px !important; /* Tránh chữ đè lên icon */
+}
+
+.toggle-password {
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    color: #6c757d;
+    font-size: 1.1rem;
+    transition: color 0.2s ease-in-out;
+    z-index: 10; /* Đảm bảo icon luôn nổi lên trên để click được */
+}
+
+.toggle-password:hover {
+    color: #333;
+}
