@@ -24,6 +24,27 @@ public class RegisterServlet extends HttpServlet {
         request.setCharacterEncoding("UTF-8");
         response.setCharacterEncoding("UTF-8");
 
+        String userParam = request.getParameter("username");
+        String emailParam = request.getParameter("email");
+        String phoneParam = request.getParameter("phone");
+        String passParam = request.getParameter("password");
+        String rePassParam = request.getParameter("confirmPassword");
+
+        if (userParam == null || userParam.trim().isEmpty() ||
+                emailParam == null || emailParam.trim().isEmpty() ||
+                phoneParam == null || phoneParam.trim().isEmpty() ||
+                passParam == null || passParam.isEmpty() ||
+                rePassParam == null || rePassParam.isEmpty()) {
+
+            request.setAttribute("username", userParam != null ? userParam : "");
+            request.setAttribute("email", emailParam != null ? emailParam : "");
+            request.setAttribute("phone", phoneParam != null ? phoneParam : "");
+
+            request.setAttribute("errorMessage", "Vui lòng nhập đầy đủ tất cả thông tin!");
+            request.getRequestDispatcher("signup.jsp").forward(request, response);
+            return;
+        }
+
         String user = request.getParameter("username").trim();
         String email = request.getParameter("email").trim();
         String phone = request.getParameter("phone").trim();
@@ -32,13 +53,16 @@ public class RegisterServlet extends HttpServlet {
 
         String error = null;
 
-        if (user == null || user.contains(" ") || !Pattern.matches(USERNAME_REGEX, user)) {
+        if (user.contains(" ") || !Pattern.matches(USERNAME_REGEX, user)) {
             error = "Tên đăng nhập phải từ 6 ký tự trở lên, không chứa dấu cách hoặc ký tự đặc biệt!";
         }
-        else if (email == null || !Pattern.matches(EMAIL_REGEX, email)) {
+        else if (!Pattern.matches(EMAIL_REGEX, email)) {
             error = "Email không hợp lệ! (Ví dụ: abc@gmail.com)";
         }
-        else if (pass == null || !Pattern.matches(PASSWORD_REGEX, pass)) {
+        else if (!Pattern.matches("^[0-9]{10}$", phone)) {
+            error = "Số điện thoại không hợp lệ (phải gồm 10 chữ số)!";
+        }
+        else if (!Pattern.matches(PASSWORD_REGEX, pass)) {
             error = "Mật khẩu phải từ 6 ký tự trở lên, bao gồm cả CHỮ và SỐ!";
         }
         else if (!pass.equals(rePass)) {
