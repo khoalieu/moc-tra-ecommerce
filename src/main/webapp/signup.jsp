@@ -113,7 +113,7 @@
 
                 <div class="signup">
                     Đã có tài khoản?
-                    <a href="login.jsp">Đăng nhập</a> </div>
+                    <a href="/login">Đăng nhập</a> </div>
             </form>
         </div>
 
