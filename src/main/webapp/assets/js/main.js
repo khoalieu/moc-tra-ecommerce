@@ -82,3 +82,26 @@ document.getElementById('otpForm').addEventListener('submit', function (e) {
     document.getElementById('otpHiddenInput').value = code;
 });
 
+//tính năng hiện mật khẩu
+document.addEventListener('DOMContentLoaded', function() {
+    const togglePasswordIcons = document.querySelectorAll('.toggle-password');
+
+    togglePasswordIcons.forEach(function(icon) {
+        icon.addEventListener('click', function() {
+            const targetSelector = this.getAttribute('toggle');
+            const passwordInput = document.querySelector(targetSelector);
+            if (passwordInput) {
+                if (passwordInput.getAttribute('type') === 'password') {
+                    passwordInput.setAttribute('type', 'text');
+                    this.classList.remove('fa-eye');
+                    this.classList.add('fa-eye-slash');
+                } else {
+                    passwordInput.setAttribute('type', 'password');
+                    this.classList.remove('fa-eye-slash');
+                    this.classList.add('fa-eye');
+                }
+            }
+        });
+    });
+});
+
