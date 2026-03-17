@@ -17,6 +17,7 @@
             font-style: italic;
             font-size: 0.9rem;
         }
+
     </style>
 </head>
 <body>
@@ -57,7 +58,7 @@
                             name="password"
                             placeholder="Mật khẩu"
                             required>
-
+                    <i class="fa-solid fa-eye toggle-password" toggle="#login-password"></i>
                 </div>
 
 
@@ -91,9 +92,7 @@
 <button id="backToTop" class="back-to-top" title="Lên đầu trang">
     <i class="fa-solid fa-chevron-up"></i>
 </button>
-<script src="assets/js/main.js">
-
-</script>
+<script src=assets/js/main.js></script>
 
 </body>
 </html>

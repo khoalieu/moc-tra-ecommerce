@@ -17,6 +17,7 @@
             font-style: italic;
             font-weight: 500;
         }
+
     </style>
 </head>
 <body>
@@ -85,6 +86,7 @@
                             placeholder="Mật khẩu"
                             aria-label="Mật khẩu"
                             required>
+                    <i class="fa-solid fa-eye toggle-password" toggle="#signup-password"></i>
                 </div>
 
                 <div class="form-row password-field">
@@ -96,6 +98,7 @@
                             placeholder="Xác nhận mật khẩu"
                             aria-label="Xác nhận mật khẩu"
                             required>
+                    <i class="fa-solid fa-eye toggle-password" toggle="#signup-confirmPassword"></i>
                 </div>
 
                 <div class="form-row avatar-row">
@@ -144,7 +147,6 @@
     }
     avatarInput.addEventListener('change', handleAvatarChange);
 </script>
-
 <script src="assets/js/main.js"></script>
 
 </body>
