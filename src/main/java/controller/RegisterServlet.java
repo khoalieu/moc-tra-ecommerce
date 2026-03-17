@@ -24,6 +24,27 @@ public class RegisterServlet extends HttpServlet {
         request.setCharacterEncoding("UTF-8");
         response.setCharacterEncoding("UTF-8");
 
+        String userParam = request.getParameter("username");
+        String emailParam = request.getParameter("email");
+        String phoneParam = request.getParameter("phone");
+        String passParam = request.getParameter("password");
+        String rePassParam = request.getParameter("confirmPassword");
+
+        if (userParam == null || userParam.trim().isEmpty() ||
+                emailParam == null || emailParam.trim().isEmpty() ||
+                phoneParam == null || phoneParam.trim().isEmpty() ||
+                passParam == null || passParam.isEmpty() ||
+                rePassParam == null || rePassParam.isEmpty()) {
+
+            request.setAttribute("username", userParam != null ? userParam : "");
+            request.setAttribute("email", emailParam != null ? emailParam : "");
+            request.setAttribute("phone", phoneParam != null ? phoneParam : "");
+
+            request.setAttribute("errorMessage", "Vui lòng nhập đầy đủ tất cả thông tin!");
+            request.getRequestDispatcher("signup.jsp").forward(request, response);
+            return;
+        }
+
         String user = request.getParameter("username").trim();
         String email = request.getParameter("email").trim();
         String phone = request.getParameter("phone").trim();
@@ -32,13 +53,16 @@ public class RegisterServlet extends HttpServlet {
 
         String error = null;
 
-        if (user == null || !Pattern.matches(USERNAME_REGEX, user)) {
+        if (user.contains(" ") || !Pattern.matches(USERNAME_REGEX, user)) {
             error = "Tên đăng nhập phải từ 6 ký tự trở lên, không chứa dấu cách hoặc ký tự đặc biệt!";
         }
-        else if (email == null || !Pattern.matches(EMAIL_REGEX, email)) {
+        else if (!Pattern.matches(EMAIL_REGEX, email)) {
             error = "Email không hợp lệ! (Ví dụ: abc@gmail.com)";
         }
-        else if (pass == null || !Pattern.matches(PASSWORD_REGEX, pass)) {
+        else if (!Pattern.matches("^[0-9]{10}$", phone)) {
+            error = "Số điện thoại không hợp lệ (phải gồm 10 chữ số)!";
+        }
+        else if (!Pattern.matches(PASSWORD_REGEX, pass)) {
             error = "Mật khẩu phải từ 6 ký tự trở lên, bao gồm cả CHỮ và SỐ!";
         }
         else if (!pass.equals(rePass)) {
@@ -55,16 +79,30 @@ public class RegisterServlet extends HttpServlet {
             return;
         }
         UserDAO dao = new UserDAO();
-        if (dao.checkUserExist(user, email)) {
-            request.setAttribute("errorMessage", "Tên đăng nhập hoặc Email đã tồn tại trong hệ thống!");
+        String validationError = dao.checkUserExistDetailed(user, email, phone);
+        if (validationError != null) {
+            request.setAttribute("errorMessage", validationError);
             request.setAttribute("username", user);
             request.setAttribute("email", email);
             request.setAttribute("phone", phone);
 
             request.getRequestDispatcher("signup.jsp").forward(request, response);
         } else {
-            dao.register(user, email, pass, phone);
-            response.sendRedirect("login.jsp");
+            String otp = String.format("%06d", new java.util.Random().nextInt(999999));
+            HttpSession session = request.getSession();
+            session.setAttribute("temp_username", user);
+            session.setAttribute("temp_email", email);
+            session.setAttribute("temp_password", pass);
+            session.setAttribute("temp_phone", phone);
+            session.setAttribute("otp_code", otp);
+            boolean isSent = controller.utils.EmailUtils.sendOTP(email, otp);
+            if (isSent) {
+                response.sendRedirect("verify-otp.jsp");
+            }
+            else {
+                request.setAttribute("errorMessage", "email không hợp lệ. Vui lòng thử lại!");
+                request.getRequestDispatcher("signup.jsp").forward(request, response);
+            }
         }
     }
 }

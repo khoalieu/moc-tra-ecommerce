@@ -17,6 +17,7 @@
             font-style: italic;
             font-weight: 500;
         }
+
     </style>
 </head>
 <body>
@@ -44,6 +45,8 @@
                             class="input-username"
                             type="text"
                             name="username"
+                            title="Tên đăng nhập phải ít nhất 6 ký tự, chỉ gồm chữ cái và số, không có khoảng trắng."
+                            pattern="^[a-zA-Z0-9]{6,}$"
                             placeholder="Tên đăng nhập"
                             aria-label="Tên đăng nhập"
                             value="${param.username}"
@@ -83,6 +86,7 @@
                             placeholder="Mật khẩu"
                             aria-label="Mật khẩu"
                             required>
+                    <i class="fa-solid fa-eye toggle-password" toggle="#signup-password"></i>
                 </div>
 
                 <div class="form-row password-field">
@@ -94,6 +98,7 @@
                             placeholder="Xác nhận mật khẩu"
                             aria-label="Xác nhận mật khẩu"
                             required>
+                    <i class="fa-solid fa-eye toggle-password" toggle="#signup-confirmPassword"></i>
                 </div>
 
                 <div class="form-row avatar-row">
@@ -111,7 +116,7 @@
 
                 <div class="signup">
                     Đã có tài khoản?
-                    <a href="login.jsp">Đăng nhập</a> </div>
+                    <a href="/login">Đăng nhập</a> </div>
             </form>
         </div>
 
@@ -142,7 +147,6 @@
     }
     avatarInput.addEventListener('change', handleAvatarChange);
 </script>
-
 <script src="assets/js/main.js"></script>
 
 </body>
