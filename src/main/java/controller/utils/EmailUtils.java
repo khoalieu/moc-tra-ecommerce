@@ -8,7 +8,7 @@ import java.util.Properties;
 public class EmailUtils {
 
     private static String MY_EMAIL;
-    private static String MY_PASSWORD;
+    private static String MY_PASSWORD;  
     static {
         try (InputStream input = EmailUtils.class.getClassLoader().getResourceAsStream("email.properties")) {
             Properties prop = new Properties();

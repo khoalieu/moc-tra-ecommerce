@@ -55,8 +55,9 @@ public class RegisterServlet extends HttpServlet {
             return;
         }
         UserDAO dao = new UserDAO();
-        if (dao.checkUserExist(user, email)) {
-            request.setAttribute("errorMessage", "Tên đăng nhập hoặc Email đã tồn tại trong hệ thống!");
+        String validationError = dao.checkUserExistDetailed(user, email, phone);
+        if (validationError != null) {
+            request.setAttribute("errorMessage", validationError);
             request.setAttribute("username", user);
             request.setAttribute("email", email);
             request.setAttribute("phone", phone);
