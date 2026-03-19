@@ -69,24 +69,77 @@
             </div>
 
             <c:if test="${totalPages > 1}">
+                <c:set var="windowSize" value="6" />
+                <c:set var="currentBlock" value="${(currentPage - 1) div windowSize}" />
+                <c:set var="startPage" value="${currentBlock * windowSize + 1}" />
+                <c:set var="endPage" value="${startPage + windowSize - 1}" />
+
+                <c:if test="${endPage > totalPages}">
+                    <c:set var="endPage" value="${totalPages}" />
+                </c:if>
+
+                <c:set var="prevPage" value="${currentPage - windowSize}" />
+                <c:set var="nextPage" value="${currentPage + windowSize}" />
+
                 <div class="pagination">
-                    <c:forEach begin="1" end="${totalPages}" var="i">
+                    <c:choose>
+                        <c:when test="${mode == 'search'}">
+                            <a href="?page=${prevPage < 1 ? 1 : prevPage}&q=${q}"
+                               class="${currentPage <= windowSize ? 'disabled' : ''}">
+                                &laquo;
+                            </a>
 
-                        <c:choose>
-                            <c:when test="${mode == 'search'}">
-                                <a href="?page=${i}&q=${q}" class="${currentPage == i ? 'active' : ''}">${i}</a>
-                            </c:when>
+                            <c:forEach begin="${startPage}" end="${endPage}" var="i">
+                                <a href="?page=${i}&q=${q}"
+                                   class="${currentPage == i ? 'active' : ''}">
+                                        ${i}
+                                </a>
+                            </c:forEach>
 
-                            <c:when test="${mode == 'cat'}">
-                                <a href="?page=${i}&cat=${cat}" class="${currentPage == i ? 'active' : ''}">${i}</a>
-                            </c:when>
+                            <a href="?page=${nextPage > totalPages ? totalPages : nextPage}&q=${q}"
+                               class="${currentPage + windowSize > totalPages ? 'disabled' : ''}">
+                                &raquo;
+                            </a>
+                        </c:when>
 
-                            <c:otherwise>
-                                <a href="?page=${i}" class="${currentPage == i ? 'active' : ''}">${i}</a>
-                            </c:otherwise>
-                        </c:choose>
+                        <c:when test="${mode == 'cat'}">
+                            <a href="?page=${prevPage < 1 ? 1 : prevPage}&cat=${cat}"
+                               class="${currentPage <= windowSize ? 'disabled' : ''}">
+                                &laquo;
+                            </a>
 
-                    </c:forEach>
+                            <c:forEach begin="${startPage}" end="${endPage}" var="i">
+                                <a href="?page=${i}&cat=${cat}"
+                                   class="${currentPage == i ? 'active' : ''}">
+                                        ${i}
+                                </a>
+                            </c:forEach>
+
+                            <a href="?page=${nextPage > totalPages ? totalPages : nextPage}&cat=${cat}"
+                               class="${currentPage + windowSize > totalPages ? 'disabled' : ''}">
+                                &raquo;
+                            </a>
+                        </c:when>
+
+                        <c:otherwise>
+                            <a href="?page=${prevPage < 1 ? 1 : prevPage}"
+                               class="${currentPage <= windowSize ? 'disabled' : ''}">
+                                &laquo;
+                            </a>
+
+                            <c:forEach begin="${startPage}" end="${endPage}" var="i">
+                                <a href="?page=${i}"
+                                   class="${currentPage == i ? 'active' : ''}">
+                                        ${i}
+                                </a>
+                             </c:forEach>
+
+                            <a href="?page=${nextPage > totalPages ? totalPages : nextPage}"
+                               class="${currentPage + windowSize > totalPages ? 'disabled' : ''}">
+                                &raquo;
+                            </a>
+                        </c:otherwise>
+                    </c:choose>
                 </div>
             </c:if>
 
