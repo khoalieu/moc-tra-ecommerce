@@ -308,32 +308,48 @@
                         </tbody>
                     </table>
                 </div>
-
                 <div class="pagination-container">
                     <div class="pagination-info">
                         Trang <strong>${currentPage}</strong> / <strong>${totalPages}</strong>
                     </div>
-                    <div class="pagination">
-                        <c:if test="${currentPage > 1}">
-                            <a href="admin/products?page=${currentPage - 1}&categoryId=${currentCategoryId}&sort=${currentSort}"
-                               class="page-btn">
-                                <i class="fas fa-chevron-left"></i>
-                            </a>
+
+                    <c:if test="${totalPages > 1}">
+                        <c:set var="windowSize" value="6" />
+                        <c:set var="currentBlock" value="${(currentPage - 1) div windowSize}" />
+                        <c:set var="startPage" value="${currentBlock * windowSize + 1}" />
+                        <c:set var="endPage" value="${startPage + windowSize - 1}" />
+
+                        <c:if test="${endPage > totalPages}">
+                            <c:set var="endPage" value="${totalPages}" />
                         </c:if>
 
-                        <c:forEach begin="1" end="${totalPages}" var="i">
-                            <a href="admin/products?page=${i}&categoryId=${currentCategoryId}&sort=${currentSort}"
-                               class="page-btn ${currentPage == i ? 'active' : ''}">${i}</a>
-                        </c:forEach>
+                        <c:set var="prevPage" value="${currentPage - windowSize}" />
+                        <c:set var="nextPage" value="${currentPage + windowSize}" />
 
-                        <c:if test="${currentPage < totalPages}">
-                            <a href="admin/products?page=${currentPage + 1}&categoryId=${currentCategoryId}&sort=${currentSort}"
-                               class="page-btn">
-                                <i class="fas fa-chevron-right"></i>
+                        <div class="pagination">
+                            <!-- Lùi 6 trang -->
+                            <a href="admin/products?page=${prevPage < 1 ? 1 : prevPage}&categoryId=${currentCategoryId}&status=${currentStatus}&maxPrice=${currentMaxPrice}&sort=${currentSort}&keyword=${currentKeyword}"
+                               class="page-btn ${currentPage <= windowSize ? 'disabled' : ''}">
+                                &laquo;
                             </a>
-                        </c:if>
-                    </div>
+
+                            <!-- Các trang trong block hiện tại -->
+                            <c:forEach begin="${startPage}" end="${endPage}" var="i">
+                                <a href="admin/products?page=${i}&categoryId=${currentCategoryId}&status=${currentStatus}&maxPrice=${currentMaxPrice}&sort=${currentSort}&keyword=${currentKeyword}"
+                                   class="page-btn ${currentPage == i ? 'active' : ''}">
+                                        ${i}
+                                </a>
+                            </c:forEach>
+
+                            <!-- Tiến 6 trang -->
+                            <a href="admin/products?page=${nextPage > totalPages ? totalPages : nextPage}&categoryId=${currentCategoryId}&status=${currentStatus}&maxPrice=${currentMaxPrice}&sort=${currentSort}&keyword=${currentKeyword}"
+                               class="page-btn ${currentPage + windowSize > totalPages ? 'disabled' : ''}">
+                                &raquo;
+                            </a>
+                        </div>
+                    </c:if>
                 </div>
+
             </div>
         </div>
     </main>
