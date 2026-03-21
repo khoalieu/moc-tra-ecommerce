@@ -1,7 +1,7 @@
-package controller;
+package controller.auth;
 
 import dao.UserDAO;
-import model.User;
+import model.user.User;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -21,7 +21,7 @@ public class ChangePasswordServlet extends HttpServlet {
         User user = (User) session.getAttribute("user");
 
         if (user == null) {
-            response.sendRedirect("login.jsp");
+            response.sendRedirect(request.getContextPath() + "/login.jsp");
             return;
         }
 
@@ -30,28 +30,27 @@ public class ChangePasswordServlet extends HttpServlet {
         String confirmPass = request.getParameter("confirmNewPassword");
 
         UserDAO dao = new UserDAO();
-        // kiểm tra mật khẩu
-        if (dao.checkPassword(user.getId(), oldPass)) {
-            //check mật khẩu xem dúng chưa
-            if (newPass != null && !newPass.isEmpty() && newPass.equals(confirmPass)) {
-                boolean isPassUpdated = dao.changePassword(user.getId(), newPass);
 
-                if (isPassUpdated) {
-                    session.setAttribute("msg", "Đổi mật khẩu thành công!");
-                    session.setAttribute("msgType", "success");
-                } else {
-                    session.setAttribute("msg", "Lỗi hệ thống khi đổi mật khẩu.");
-                    session.setAttribute("msgType", "danger");
-                }
-            } else {
-                session.setAttribute("msg", "Mật khẩu xác nhận không khớp!");
-                session.setAttribute("msgType", "danger");
-            }
-        } else {
+        if (!dao.checkPassword(user.getId(), oldPass)){
             session.setAttribute("msg", "Mật khẩu cũ không chính xác!");
             session.setAttribute("msgType", "danger");
+        }else if (newPass == null || newPass.isEmpty() || !newPass.equals(confirmPass)){
+            session.setAttribute("msg", "Mật khẩu mới không khớp hoặc trống!");
+            session.setAttribute("msgType", "danger");
+        }else if (newPass.length() < 8){
+            session.setAttribute("msg", "Mật khẩu phải từ 8 ký tự trở lên!");
+            session.setAttribute("msgType", "danger");
+        }else {
+            boolean isPassUpdated = dao.changePassword(user.getId(), newPass);
+            if (isPassUpdated){
+                session.setAttribute("msg", "Đổi mật khẩu thành công!");
+                session.setAttribute("msgType", "success");
+            }else {
+                session.setAttribute("msg", "Lỗi hệ thống khi cập nhật mật khẩu");
+                session.setAttribute("msgType", "danger");
+            }
         }
 
-        response.sendRedirect("thong-tin-tai-khoan-nguoi-dung.jsp");
+        response.sendRedirect(request.getContextPath() + "/thong-tin-tai-khoan-nguoi-dung.jsp");
     }
 }
