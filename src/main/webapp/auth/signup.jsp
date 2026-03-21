@@ -17,7 +17,20 @@
             font-style: italic;
             font-weight: 500;
         }
+        .input-guide {
+            display: block;
+            font-size: 0.75rem;
+            color: #666;
+            margin-bottom: 4px;
+            margin-left: 2px;
+            font-style: italic;
+        }
 
+        .input-guide i {
+            margin-right: 4px;
+            font-size: 0.7rem;
+            color: #888;
+        }
     </style>
 </head>
 <body>
@@ -39,6 +52,7 @@
 
             <form action="${pageContext.request.contextPath}/signup" method="post" autocomplete="on">
 
+                <span class="input-guide"><i class="fa-solid fa-circle-info"></i> Tên đăng nhập: Ít nhất 6 ký tự, không dấu cách.</span>
                 <div class="form-row">
                     <input
                             id="signup-username"
@@ -53,6 +67,7 @@
                             required>
                 </div>
 
+                <span class="input-guide"><i class="fa-solid fa-circle-info"></i> Số điện thoại: Phải đủ 10 chữ số nhà mạng VN.</span>
                 <div class="form-row">
                     <input
                             id="signup-phone"
@@ -65,6 +80,7 @@
                             required>
                 </div>
 
+                <span class="input-guide"><i class="fa-solid fa-circle-info"></i> Mật khẩu: Ít nhất 8 ký tự, gồm cả chữ và số.</span>
                 <div class="form-row password-field">
                     <input
                             id="signup-password"
@@ -136,6 +152,5 @@
     avatarInput.addEventListener('change', handleAvatarChange);
 </script>
 <script src="${pageContext.request.contextPath}/assets/js/main.js"></script>
-
 </body>
 </html>
