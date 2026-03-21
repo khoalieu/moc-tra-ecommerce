@@ -118,6 +118,6 @@ public class ProductServlet extends HttpServlet {
         request.setAttribute("currentPrice", maxPrice);
         request.setAttribute("currentPromotion", promotionId);
 
-        request.getRequestDispatcher("/san-pham.jsp").forward(request, response);
+        request.getRequestDispatcher("/product/san-pham.jsp").forward(request, response);
     }
 }

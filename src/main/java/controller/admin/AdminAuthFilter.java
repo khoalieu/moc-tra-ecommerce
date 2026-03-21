@@ -27,12 +27,12 @@ public class AdminAuthFilter implements Filter {
 
         if (user == null) {
             String message = URLEncoder.encode("Vui lòng đăng nhập quyền Admin", StandardCharsets.UTF_8.toString());
-            res.sendRedirect(req.getContextPath() + "/login.jsp?message=" + message);
+            res.sendRedirect(req.getContextPath() + "/auth/login.jsp?message=" + message);
             return;
         }
 
         if (user.getRole() != UserRole.ADMIN) {
-            res.sendRedirect(req.getContextPath() + "/403.jsp");
+            res.sendRedirect(req.getContextPath() + "/errors/403.jsp");
             return;
         }
 

@@ -20,7 +20,7 @@ public class LoginServlet extends HttpServlet {
         }
         String googleLoginUrl = controller.utils.GoogleUtils.getGoogleAuthUrl();
         request.setAttribute("googleUrl", googleLoginUrl);
-        request.getRequestDispatcher("/login.jsp").forward(request, response);
+        request.getRequestDispatcher("/auth/login.jsp").forward(request, response);
     }
 
     @Override
@@ -32,7 +32,7 @@ public class LoginServlet extends HttpServlet {
                 passParam == null || passParam.isEmpty()) {
             request.setAttribute("username", userParam != null ? userParam.trim() : "");
             request.setAttribute("errorMessage", "Vui lòng nhập đầy đủ tên đăng nhập và mật khẩu!");
-            request.getRequestDispatcher("/login.jsp").forward(request, response);
+            request.getRequestDispatcher("/auth/login.jsp").forward(request, response);
         }
         String username = userParam.trim();
         String password = passParam;
@@ -59,7 +59,7 @@ public class LoginServlet extends HttpServlet {
         } else {
             request.setAttribute("errorMessage", "Sai tên đăng nhập hoặc mật khẩu!");
             request.setAttribute("username", username);
-            request.getRequestDispatcher("/login.jsp").forward(request, response);
+            request.getRequestDispatcher("/auth/login.jsp").forward(request, response);
         }
     }
 }

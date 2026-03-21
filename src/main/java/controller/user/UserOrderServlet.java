@@ -20,12 +20,12 @@ public class UserOrderServlet extends HttpServlet {
         HttpSession session = request.getSession();
         User user = (User) session.getAttribute("user");
         if (user == null) {
-            response.sendRedirect(request.getContextPath() + "/login.jsp");
+            response.sendRedirect(request.getContextPath() + "/auth/login.jsp");
             return;
         }
         OrderDAO orderDAO = new OrderDAO();
         List<Order> orders = orderDAO.getOrdersByUserId(user.getId());
         request.setAttribute("orders", orders);
-        request.getRequestDispatcher("/don-hang-nguoi-dung.jsp").forward(request, response);
+        request.getRequestDispatcher("/user/don-hang-nguoi-dung.jsp").forward(request, response);
     }
 }

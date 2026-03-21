@@ -22,10 +22,10 @@ public class UpdateProfileInfoServlet extends HttpServlet {
         User user = (User) session.getAttribute("user");
 
         if (user == null) {
-            response.sendRedirect(request.getContextPath() + "/login.jsp");
+            response.sendRedirect(request.getContextPath() + "/auth/login.jsp");
             return;
         }
-        request.getRequestDispatcher("/thong-tin-tai-khoan-nguoi-dung.jsp").forward(request, response);
+        request.getRequestDispatcher("/user/thong-tin-tai-khoan-nguoi-dung.jsp").forward(request, response);
     }
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
@@ -36,7 +36,7 @@ public class UpdateProfileInfoServlet extends HttpServlet {
         User user = (User) session.getAttribute("user");
 
         if (user == null) {
-            response.sendRedirect(request.getContextPath() + "/login.jsp");
+            response.sendRedirect(request.getContextPath() + "/auth/login.jsp");
             return;
         }
         String firstName = request.getParameter("firstname");
