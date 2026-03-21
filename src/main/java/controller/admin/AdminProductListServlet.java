@@ -1,10 +1,10 @@
 package controller.admin;
 import dao.PromotionDAO;
-import model.Promotion;
+import model.promotion.Promotion;
 import dao.CategoryDAO;
 import dao.ProductDAO;
-import model.Category;
-import model.Product;
+import model.product.Category;
+import model.product.Product;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;

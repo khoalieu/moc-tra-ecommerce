@@ -33,7 +33,7 @@
                         </div>
                     </li>
 
-                    <li><a href="${pageContext.request.contextPath}/">TRANG CHỦ</a></li>
+                    <li><a href="${pageContext.request.contextPath}/index">TRANG CHỦ</a></li>
 
                     <li class="has-dropdown">
                         <a href="${pageContext.request.contextPath}/san-pham">SẢN PHẨM</a>
@@ -130,7 +130,7 @@
 
                                     <div class="cart-item-info">
                                         <h4>
-                                            <a href="chi-tiet-san-pham?id=${item.product.id}" style="color: inherit; text-decoration: none;">
+                                            <a href="${pageContext.request.contextPath}/chi-tiet-san-pham?id=${item.product.id}" style="color: inherit; text-decoration: none;">
                                                     ${item.product.name}
                                             </a>
                                         </h4>

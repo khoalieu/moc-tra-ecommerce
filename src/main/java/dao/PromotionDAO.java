@@ -1,10 +1,9 @@
 package dao;
 
 import db.DBConnect;
-import model.Product;
-import model.Promotion;
+import model.product.Product;
+import model.promotion.Promotion;
 import model.enums.DiscountType;
-import model.enums.ProductStatus;
 
 import java.sql.*;
 import java.util.ArrayList;

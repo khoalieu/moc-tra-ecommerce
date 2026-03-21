@@ -1,6 +1,6 @@
 package controller.admin;
 
-import model.User;
+import model.user.User;
 import model.enums.UserRole;
 import jakarta.servlet.*;
 import jakarta.servlet.annotation.*;

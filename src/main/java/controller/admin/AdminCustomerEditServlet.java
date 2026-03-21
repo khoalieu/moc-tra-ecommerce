@@ -2,7 +2,7 @@
 package controller.admin;
 
 import dao.UserDAO;
-import model.User;
+import model.user.User;
 import model.enums.UserRole;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;

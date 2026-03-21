@@ -1,7 +1,7 @@
 package controller.admin;
 
 import dao.ProductDAO;
-import model.Product;
+import model.product.Product;
 import model.enums.ProductStatus;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -19,7 +19,7 @@ import java.io.IOException;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import dao.CategoryDAO;
-import model.Category;
+import model.product.Category;
 import java.util.Collection;
 import java.util.List;
 
