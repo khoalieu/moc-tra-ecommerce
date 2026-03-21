@@ -21,7 +21,7 @@ public class ChangePasswordServlet extends HttpServlet {
         User user = (User) session.getAttribute("user");
 
         if (user == null) {
-            response.sendRedirect(request.getContextPath() + "/login.jsp");
+            response.sendRedirect(request.getContextPath() + "/auth/login.jsp");
             return;
         }
 
@@ -51,6 +51,6 @@ public class ChangePasswordServlet extends HttpServlet {
             }
         }
 
-        response.sendRedirect(request.getContextPath() + "/thong-tin-tai-khoan-nguoi-dung.jsp");
+        response.sendRedirect(request.getContextPath() + "/tai-khoan-cua-toi");
     }
 }

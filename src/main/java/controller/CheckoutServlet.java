@@ -28,11 +28,11 @@ public class CheckoutServlet extends HttpServlet {
         User user = (User) session.getAttribute("user");
         Cart cart = (Cart) session.getAttribute("cart");
         if (user == null) {
-            response.sendRedirect(request.getContextPath() + "/login.jsp");
+            response.sendRedirect(request.getContextPath() + "/auth/login.jsp");
             return;
         }
         if (cart == null || cart.getTotalQuantity() == 0) {
-            response.sendRedirect(request.getContextPath() + "/san-pham.jsp");
+            response.sendRedirect(request.getContextPath() + "/san-pham");
             return;
         }
         UserAddressDAO addressDAO = new UserAddressDAO();
@@ -43,7 +43,7 @@ public class CheckoutServlet extends HttpServlet {
         request.setAttribute("shippingFee", defaultShipping);
         request.setAttribute("totalAmount", cart.getTotalMoney() + defaultShipping);
 
-        request.getRequestDispatcher("/thanh-toan.jsp").forward(request, response);
+        request.getRequestDispatcher("/cart/thanh-toan.jsp").forward(request, response);
     }
 
     @Override

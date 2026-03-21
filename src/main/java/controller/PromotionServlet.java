@@ -32,6 +32,6 @@ public class PromotionServlet extends HttpServlet {
 
         request.setAttribute("activePromotions", activePromotions);
         request.setAttribute("promoMap", promoMap);
-        request.getRequestDispatcher("/khuyen-mai.jsp").forward(request, response);
+        request.getRequestDispatcher("/policy/khuyen-mai.jsp").forward(request, response);
     }
 }

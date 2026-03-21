@@ -16,9 +16,9 @@ public class UserDashboardServlet extends HttpServlet {
         HttpSession session = request.getSession();
         User user = (User) session.getAttribute("user");
         if (user == null) {
-            response.sendRedirect(request.getContextPath() + "/login.jsp");
+            response.sendRedirect(request.getContextPath() + "/auth/login.jsp");
             return;
         }
-        request.getRequestDispatcher("/thong-tin-nguoi-dung.jsp").forward(request, response);
+        request.getRequestDispatcher("/user/thong-tin-nguoi-dung.jsp").forward(request, response);
     }
 }

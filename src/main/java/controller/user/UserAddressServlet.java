@@ -20,14 +20,14 @@ public class UserAddressServlet extends HttpServlet {
         HttpSession session = request.getSession();
         User user = (User) session.getAttribute("user");
         if (user == null) {
-            response.sendRedirect(request.getContextPath() + "/login.jsp");
+            response.sendRedirect(request.getContextPath() + "/auth/login.jsp");
             return;
         }
         UserAddressDAO dao = new UserAddressDAO();
         List<UserAddress> list = dao.getListAddress(user.getId());
 
         request.setAttribute("addressList", list);
-        request.getRequestDispatcher("/dia-chi-nguoi-dung.jsp").forward(request, response);
+        request.getRequestDispatcher("/user/dia-chi-nguoi-dung.jsp").forward(request, response);
     }
 
     @Override
@@ -37,7 +37,7 @@ public class UserAddressServlet extends HttpServlet {
         User user = (User) session.getAttribute("user");
 
         if (user == null) {
-            response.sendRedirect(request.getContextPath() + "/login.jsp");
+            response.sendRedirect(request.getContextPath() + "/auth/login.jsp");
             return;
         }
 

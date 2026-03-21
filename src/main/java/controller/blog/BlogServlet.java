@@ -98,6 +98,6 @@ public class BlogServlet extends HttpServlet {
         request.setAttribute("currentPage", page);
         request.setAttribute("emptyMessage", emptyMessage);
 
-        request.getRequestDispatcher("/blog.jsp").forward(request, response);
+        request.getRequestDispatcher("/blog/blog.jsp").forward(request, response);
     }
 }
