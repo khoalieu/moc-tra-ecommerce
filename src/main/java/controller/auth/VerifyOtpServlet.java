@@ -29,10 +29,10 @@ public class VerifyOtpServlet extends HttpServlet {
             session.removeAttribute("temp_username");
             session.removeAttribute("temp_password");
             session.removeAttribute("temp_phone");
-            response.sendRedirect("login.jsp");
+            response.sendRedirect(request.getContextPath() + "/auth/login.jsp");
         } else {
             request.setAttribute("errorMessage", "Mã OTP không chính xác hoặc đã hết hạn!");
-            request.getRequestDispatcher("/verify-otp.jsp").forward(request, response);
+            request.getRequestDispatcher("/auth/verify-otp.jsp").forward(request, response);
         }
     }
 }

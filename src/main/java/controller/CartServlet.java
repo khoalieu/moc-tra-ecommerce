@@ -31,7 +31,7 @@ public class CartServlet extends HttpServlet {
             session.setAttribute("cart", cart);
         }
         request.setAttribute("cart", cart);
-        request.getRequestDispatcher("/gio-hang.jsp").forward(request, response);
+        request.getRequestDispatcher("/cart/gio-hang.jsp").forward(request, response);
     }
 
     @Override

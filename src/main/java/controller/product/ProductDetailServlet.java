@@ -40,7 +40,7 @@ public class ProductDetailServlet extends HttpServlet {
             request.setAttribute("reviews", reviews);
             request.setAttribute("relatedProducts", relatedProducts);
             request.setAttribute("pageTitle", "Chi Tiết - " + product.getName());
-            request.getRequestDispatcher("/chi-tiet-san-pham.jsp").forward(request, response);
+            request.getRequestDispatcher("/product/chi-tiet-san-pham.jsp").forward(request, response);
 
         } catch (NumberFormatException e) {
             response.sendRedirect("san-pham");

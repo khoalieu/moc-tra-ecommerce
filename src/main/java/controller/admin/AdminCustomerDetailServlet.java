@@ -37,7 +37,7 @@ public class AdminCustomerDetailServlet extends HttpServlet {
 
         String idParam = request.getParameter("id");
         if (idParam == null || idParam.isEmpty()) {
-            response.sendRedirect(request.getContextPath() + "/admin/customers.jsp");
+            response.sendRedirect(request.getContextPath() + "/admin/customers");
             return;
         }
 
@@ -167,7 +167,7 @@ public class AdminCustomerDetailServlet extends HttpServlet {
             request.getRequestDispatcher("/admin/admin-customer-detail.jsp").forward(request, response);
 
         } catch (NumberFormatException e) {
-            response.sendRedirect(request.getContextPath() + "/admin/customers.jsp");
+            response.sendRedirect(request.getContextPath() + "/admin/customers");
         }
     }
 }
