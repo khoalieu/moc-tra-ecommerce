@@ -4,7 +4,7 @@
         <div class="left-footer footer-section">
             <div class="logo-footer">
                 <a href="index.html">
-                    <img src="assets/images/logoweb.png" alt="Tea Shop Logo">
+                    <img src="${pageContext.request.contextPath}/assets/images/logoweb.png" alt="Tea Shop Logo">
                 </a>
             </div>
             <h2>LỜI NHẮN NHỦ TỪ MỘC TRÀ</h2>

@@ -1,8 +1,8 @@
-package backend.controller;
+package controller;
 
 import dao.PromotionDAO;
-import model.Product;
-import model.Promotion;
+import model.product.Product;
+import model.promotion.Promotion;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -32,6 +32,6 @@ public class PromotionServlet extends HttpServlet {
 
         request.setAttribute("activePromotions", activePromotions);
         request.setAttribute("promoMap", promoMap);
-        request.getRequestDispatcher("/khuyen-mai.jsp").forward(request, response);
+        request.getRequestDispatcher("/policy/khuyen-mai.jsp").forward(request, response);
     }
 }

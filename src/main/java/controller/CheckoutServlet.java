@@ -4,11 +4,11 @@ import dao.CartDAO;
 import dao.OrderDAO;
 import dao.ProductDAO;
 import dao.UserAddressDAO;
-import model.Cart;
-import model.CartItem;
-import model.User;
-import model.UserAddress;
-import model.Order;
+import model.cart.Cart;
+import model.cart.CartItem;
+import model.user.User;
+import model.user.UserAddress;
+import model.order.Order;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -28,11 +28,11 @@ public class CheckoutServlet extends HttpServlet {
         User user = (User) session.getAttribute("user");
         Cart cart = (Cart) session.getAttribute("cart");
         if (user == null) {
-            response.sendRedirect("login.jsp");
+            response.sendRedirect(request.getContextPath() + "/auth/login.jsp");
             return;
         }
         if (cart == null || cart.getTotalQuantity() == 0) {
-            response.sendRedirect("san-pham.jsp");
+            response.sendRedirect(request.getContextPath() + "/san-pham");
             return;
         }
         UserAddressDAO addressDAO = new UserAddressDAO();
@@ -43,7 +43,7 @@ public class CheckoutServlet extends HttpServlet {
         request.setAttribute("shippingFee", defaultShipping);
         request.setAttribute("totalAmount", cart.getTotalMoney() + defaultShipping);
 
-        request.getRequestDispatcher("thanh-toan.jsp").forward(request, response);
+        request.getRequestDispatcher("/cart/thanh-toan.jsp").forward(request, response);
     }
 
     @Override
@@ -54,7 +54,7 @@ public class CheckoutServlet extends HttpServlet {
         Cart cart = (Cart) session.getAttribute("cart");
 
         if (user == null || cart == null || cart.getTotalQuantity() == 0) {
-            response.sendRedirect("index.jsp");
+            response.sendRedirect(request.getContextPath() + "/index.jsp");
             return;
         }
 

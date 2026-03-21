@@ -1,7 +1,7 @@
 package controller.admin;
 
 import dao.UserDAO;
-import model.CustomerDTO;
+import model.user.CustomerDTO;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
