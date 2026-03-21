@@ -80,7 +80,9 @@ public class UserDAO {
         return false;
     }
 
-    public void register(String username, String password, String phone) {
+    public void register(String username, String password, String phone, String email) {
+        Connection conn = null;
+        PreparedStatement ps = null;
         try {
             String hashedPassword = BCrypt.hashpw(password, BCrypt.gensalt(12));
 
@@ -90,10 +92,18 @@ public class UserDAO {
             ps.setString(1, username);
             ps.setString(2, hashedPassword);
             ps.setString(3, phone);
-            ps.setString(4, "");
-            ps.executeUpdate();
+            if (email == null || email.trim().isEmpty()) {
+                ps.setNull(4, java.sql.Types.VARCHAR);
+            } else {
+                ps.setString(4, email.trim());
+            }
+            int result = ps.executeUpdate();
+            System.out.println("Kết quả lưu DB: "+ (result > 0? "Thành công":"Thất bại!"));
         } catch (Exception e) {
+            System.out.println("Lỗi tại DAO "+e.getMessage());
             e.printStackTrace();
+        }finally {
+            try { if (ps != null) ps.close(); if (conn != null) conn.close(); } catch (Exception e) {}
         }
     }
 
@@ -695,6 +705,20 @@ public class UserDAO {
         return null;
     }
 
-
+    public boolean isValidCarrier(String phone) {
+        if (phone == null || phone.length() < 3) return false;
+        String prefix = phone.substring(0, 3);
+        String[] validPrefixes = {
+                "032", "033", "034", "035", "036", "037", "038", "039", // Viettel
+                "070", "079", "077", "076", "078", "089", "090", "093", // Mobi
+                "081", "082", "083", "084", "085", "088", "091", "094", // Vina
+                "056", "058", "092", // Vietnamobile
+                "059", "099" // Gmobile
+        };
+        for (String p : validPrefixes) {
+            if (prefix.equals(p)) return true;
+        }
+        return false;
+    }
 
 }

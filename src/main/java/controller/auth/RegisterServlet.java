@@ -9,7 +9,7 @@ import java.util.regex.Pattern;
 
 @WebServlet(name = "RegisterServlet", value = "/signup")
 public class RegisterServlet extends HttpServlet {
-
+    private static final String PHONE_REGEX = "^(03|05|07|08|09|01[2|6|8|9])\\d{8}$";
     private static final String USERNAME_REGEX = "^[a-zA-Z0-9]{6,}$";
     private static final String EMAIL_REGEX = "^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$";
     private static final String PASSWORD_REGEX = "^(?=.*[A-Za-z])(?=.*\\d)[A-Za-z\\d]{6,}$";
@@ -21,6 +21,8 @@ public class RegisterServlet extends HttpServlet {
 
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        UserDAO dao = new UserDAO();
+
         request.setCharacterEncoding("UTF-8");
         response.setCharacterEncoding("UTF-8");
 
@@ -54,8 +56,11 @@ public class RegisterServlet extends HttpServlet {
         }
         else if (!Pattern.matches("^[0-9]{10}$", phone)) {
             error = "Số điện thoại không hợp lệ (phải gồm 10 chữ số)!";
-        }
-        else if (!Pattern.matches(PASSWORD_REGEX, pass)) {
+        }else if (!Pattern.matches(PHONE_REGEX, phone)) {
+            error = "Số điện thoại không đúng định dạng nhà mạng VIỆT NAM!";
+        }else if (!dao.isValidCarrier(phone)){
+            error = "Đầu số nhà mạng không tồn tại!";
+        }else if (!Pattern.matches(PASSWORD_REGEX, pass)) {
             error = "Mật khẩu phải từ 6 ký tự trở lên, bao gồm cả CHỮ và SỐ!";
         }
         else if (!pass.equals(rePass)) {
@@ -63,14 +68,11 @@ public class RegisterServlet extends HttpServlet {
         }
         if (error != null) {
             request.setAttribute("errorMessage", error);
-
             request.setAttribute("username", user);
             request.setAttribute("phone", phone);
-
             request.getRequestDispatcher("/auth/signup.jsp").forward(request, response);
             return;
         }
-        UserDAO dao = new UserDAO();
         String validationError = dao.checkUserExistDetailed(user, phone);
         if (validationError != null) {
             request.setAttribute("errorMessage", validationError);
@@ -78,30 +80,15 @@ public class RegisterServlet extends HttpServlet {
             request.setAttribute("phone", phone);
             request.getRequestDispatcher("/auth/signup.jsp").forward(request, response);
         } else {
-            try {
-                dao.register(user, pass, phone);
-                response.sendRedirect(request.getContextPath() + "/auth/login.jsp");
-            } catch (Exception e) {
-                e.printStackTrace();
-                request.setAttribute("errorMessage", "Lỗi hệ thống, vui lòng thử lại!");
-                request.getRequestDispatcher("/auth/signup.jsp").forward(request, response);
-            }
-//            String otp = String.format("%06d", new java.util.Random().nextInt(999999));
-//            HttpSession session = request.getSession();
-//            session.setAttribute("temp_username", user);
-//            session.setAttribute("temp_password", pass);
-//            session.setAttribute("temp_phone", phone);
-//            session.setAttribute("otp_code", otp);
-//            System.out.println(">>> MÃ OTP CỦA BẠN LÀ: " + otp);
-//            response.sendRedirect(request.getContextPath() + "/verify-otp.jsp");
-//            boolean isSent = controller.utils.EmailUtils.sendOTP(email, otp);
-//            if (isSent) {
-//                response.sendRedirect(request.getContextPath() + "/verify-otp.jsp");
-//            }
-//            else {
-//                request.setAttribute("errorMessage", "email không hợp lệ. Vui lòng thử lại!");
-//                request.getRequestDispatcher("/auth/signup.jsp").forward(request, response);
-//            }
+            String otp = String.format("%06d", new java.util.Random().nextInt(999999));
+            HttpSession session = request.getSession();
+            session.setAttribute("temp_username", user);
+            session.setAttribute("temp_password", pass);
+            session.setAttribute("temp_phone", phone);
+            session.setAttribute("otp_code", otp);
+            System.out.println(">>> MÃ OTP CỦA BẠN LÀ: " + otp);
+            request.setAttribute("otp_display", otp);
+            request.getRequestDispatcher("/auth/verify-soft-otp.jsp").forward(request,response);
         }
     }
 }
