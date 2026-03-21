@@ -1,9 +1,8 @@
 package dao;
 
 import db.DBConnect;
-import model.Cart;
-import model.CartItem;
-import model.Product;
+import model.cart.Cart;
+import model.product.Product;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;

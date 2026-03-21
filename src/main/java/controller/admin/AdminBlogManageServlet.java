@@ -1,8 +1,8 @@
 package controller.admin;
 
 import dao.*;
-import model.BlogPost;
-import model.User;
+import model.blog.BlogPost;
+import model.user.User;
 import model.enums.BlogStatus;
 import model.enums.UserRole;
 

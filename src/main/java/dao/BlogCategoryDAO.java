@@ -1,6 +1,6 @@
 package dao;
 import db.DBConnect;
-import model.BlogCategory;
+import model.blog.BlogCategory;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;

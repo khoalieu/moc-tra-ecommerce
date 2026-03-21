@@ -1,7 +1,7 @@
 package dao;
 
 import db.DBConnect;
-import model.ProductImage;
+import model.product.ProductImage;
 
 import java.sql.*;
 import java.util.ArrayList;

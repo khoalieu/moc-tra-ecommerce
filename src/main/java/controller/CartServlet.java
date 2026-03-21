@@ -2,10 +2,10 @@ package controller;
 
 import dao.CartDAO;
 import dao.ProductDAO;
-import model.Cart;
-import model.CartItem;
-import model.Product;
-import model.User;
+import model.cart.Cart;
+import model.cart.CartItem;
+import model.product.Product;
+import model.user.User;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -102,7 +102,7 @@ public class CartServlet extends HttpServlet {
         if (referer != null && !referer.contains("login") && !referer.contains("register")) {
             response.sendRedirect(referer);
         } else {
-            response.sendRedirect("gio-hang");
+            response.sendRedirect(request.getContextPath() + "/gio-hang");
         }
     }
 }

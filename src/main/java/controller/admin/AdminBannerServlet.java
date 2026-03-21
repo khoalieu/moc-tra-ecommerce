@@ -4,8 +4,8 @@ import dao.BannerDAO;
 import dao.CategoryDAO;
 import dao.PromotionDAO;
 import model.Banner;
-import model.Promotion;
-import model.User;
+import model.promotion.Promotion;
+import model.user.User;
 import model.enums.UserRole;
 
 import jakarta.servlet.ServletException;
@@ -15,7 +15,6 @@ import jakarta.servlet.http.*;
 
 import java.io.IOException;
 import java.nio.file.*;
-import java.time.LocalDateTime;
 import java.util.*;
 
 @WebServlet(urlPatterns = {

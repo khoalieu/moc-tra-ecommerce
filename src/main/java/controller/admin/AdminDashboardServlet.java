@@ -1,7 +1,7 @@
 package controller.admin;
 
 import dao.OrderDAO;
-import model.Order;
+import model.order.Order;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;

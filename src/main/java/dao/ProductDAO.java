@@ -1,7 +1,7 @@
 package dao;
 
 import db.DBConnect;
-import model.Product;
+import model.product.Product;
 import model.enums.ProductStatus;
 
 import java.sql.*;

@@ -1,8 +1,8 @@
 package dao;
 
 import db.DBConnect;
-import model.BlogPost;
-import model.User;
+import model.blog.BlogPost;
+import model.user.User;
 import model.enums.BlogStatus;
 
 import java.sql.Connection;
