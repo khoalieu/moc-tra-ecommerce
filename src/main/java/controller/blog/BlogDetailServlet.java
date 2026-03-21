@@ -72,7 +72,7 @@ BlogDetailServlet extends HttpServlet {
         request.setAttribute("comments", comments);
         request.setAttribute("commentsCount", comments.size());
 
-        request.getRequestDispatcher("/chi-tiet-blog.jsp").forward(request, response);
+        request.getRequestDispatcher("/blog/chi-tiet-blog.jsp").forward(request, response);
     }
 
     @Override
@@ -140,4 +140,3 @@ BlogDetailServlet extends HttpServlet {
     }
 
 }
-

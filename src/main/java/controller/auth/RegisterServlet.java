@@ -16,7 +16,7 @@ public class RegisterServlet extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        request.getRequestDispatcher("/signup.jsp").forward(request, response);
+        request.getRequestDispatcher("/auth/signup.jsp").forward(request, response);
     }
 
     @Override
@@ -38,7 +38,7 @@ public class RegisterServlet extends HttpServlet {
             request.setAttribute("phone", phoneParam != null ? phoneParam : "");
 
             request.setAttribute("errorMessage", "Vui lòng nhập đầy đủ tất cả thông tin!");
-            request.getRequestDispatcher("/signup.jsp").forward(request, response);
+            request.getRequestDispatcher("/auth/signup.jsp").forward(request, response);
             return;
         }
 
@@ -67,7 +67,7 @@ public class RegisterServlet extends HttpServlet {
             request.setAttribute("username", user);
             request.setAttribute("phone", phone);
 
-            request.getRequestDispatcher("/signup.jsp").forward(request, response);
+            request.getRequestDispatcher("/auth/signup.jsp").forward(request, response);
             return;
         }
         UserDAO dao = new UserDAO();
@@ -76,15 +76,15 @@ public class RegisterServlet extends HttpServlet {
             request.setAttribute("errorMessage", validationError);
             request.setAttribute("username", user);
             request.setAttribute("phone", phone);
-            request.getRequestDispatcher("/signup.jsp").forward(request, response);
+            request.getRequestDispatcher("/auth/signup.jsp").forward(request, response);
         } else {
             try {
                 dao.register(user, pass, phone);
-                response.sendRedirect(request.getContextPath() + "/login.jsp");
+                response.sendRedirect(request.getContextPath() + "/auth/login.jsp");
             } catch (Exception e) {
                 e.printStackTrace();
                 request.setAttribute("errorMessage", "Lỗi hệ thống, vui lòng thử lại!");
-                request.getRequestDispatcher("/signup.jsp").forward(request, response);
+                request.getRequestDispatcher("/auth/signup.jsp").forward(request, response);
             }
 //            String otp = String.format("%06d", new java.util.Random().nextInt(999999));
 //            HttpSession session = request.getSession();
@@ -100,7 +100,7 @@ public class RegisterServlet extends HttpServlet {
 //            }
 //            else {
 //                request.setAttribute("errorMessage", "email không hợp lệ. Vui lòng thử lại!");
-//                request.getRequestDispatcher("/signup.jsp").forward(request, response);
+//                request.getRequestDispatcher("/auth/signup.jsp").forward(request, response);
 //            }
         }
     }

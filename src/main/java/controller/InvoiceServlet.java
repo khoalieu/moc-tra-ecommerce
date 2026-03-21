@@ -18,12 +18,12 @@ public class InvoiceServlet extends HttpServlet {
         HttpSession session = request.getSession();
         User user = (User) session.getAttribute("user");
         if (user == null) {
-            response.sendRedirect(request.getContextPath() + "/login.jsp");
+            response.sendRedirect(request.getContextPath() + "/auth/login.jsp");
             return;
         }
         String idStr = request.getParameter("id");
         if (idStr == null || idStr.isEmpty()) {
-            response.sendRedirect(request.getContextPath() + "/don-hang-nguoi-dung.jsp");
+            response.sendRedirect(request.getContextPath() + "/don-hang");
             return;
         }
 
@@ -33,12 +33,12 @@ public class InvoiceServlet extends HttpServlet {
             Order order = orderDAO.getOrderById(orderId);
             if (order != null && order.getUserId() == user.getId()) {
                 request.setAttribute("order", order);
-                request.getRequestDispatcher("/hoa-don.jsp").forward(request, response);
+                request.getRequestDispatcher("/cart/hoa-don.jsp").forward(request, response);
             } else {
-                response.sendRedirect(request.getContextPath() + "/don-hang-nguoi-dung.jsp");
+                response.sendRedirect(request.getContextPath() + "/don-hang");
             }
         } catch (NumberFormatException e) {
-            response.sendRedirect(request.getContextPath() + "/don-hang-nguoi-dung.jsp");
+            response.sendRedirect(request.getContextPath() + "/don-hang");
         }
     }
 }
