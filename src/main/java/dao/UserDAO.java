@@ -1,9 +1,9 @@
 package dao;
 
 import db.DBConnect;
-import model.CustomerDTO;
-import model.User;
-import model.UserAddress;
+import model.user.CustomerDTO;
+import model.user.User;
+import model.user.UserAddress;
 import model.enums.UserGender;
 import model.enums.UserRole;
 import org.mindrot.jbcrypt.BCrypt;
@@ -80,17 +80,17 @@ public class UserDAO {
         return false;
     }
 
-    public void register(String username, String email, String password, String phone) {
+    public void register(String username, String password, String phone) {
         try {
             String hashedPassword = BCrypt.hashpw(password, BCrypt.gensalt(12));
 
-            String query = "INSERT INTO users (username, email, password_hash, phone, role, is_active, created_at) VALUES (?, ?, ?, ?, 'customer', 1, NOW())";
+            String query = "INSERT INTO users (username, password_hash, phone, email, role, is_active, created_at) VALUES (?, ?, ?, ?, 'customer', 1, NOW())";
             conn = new DBConnect().getConnection();
             ps = conn.prepareStatement(query);
             ps.setString(1, username);
-            ps.setString(2, email);
-            ps.setString(3, hashedPassword); // Lưu chuỗi hash
-            ps.setString(4, phone);
+            ps.setString(2, hashedPassword);
+            ps.setString(3, phone);
+            ps.setString(4, "");
             ps.executeUpdate();
         } catch (Exception e) {
             e.printStackTrace();
@@ -666,26 +666,21 @@ public class UserDAO {
         }
         return null;
     }
-    public String checkUserExistDetailed(String username, String email, String phone) {
+    public String checkUserExistDetailed(String username, String phone) {
         try {
-            String query = "SELECT username, email, phone FROM users WHERE username = ? OR email = ? OR phone = ? LIMIT 1";
+            String query = "SELECT username, phone FROM users WHERE username = ? OR phone = ? LIMIT 1";
             conn = new DBConnect().getConnection();
             ps = conn.prepareStatement(query);
             ps.setString(1, username);
-            ps.setString(2, email);
-            ps.setString(3, phone);
+            ps.setString(2, phone);
             rs = ps.executeQuery();
 
             if (rs.next()) {
                 String dbUsername = rs.getString("username");
-                String dbEmail = rs.getString("email");
                 String dbPhone = rs.getString("phone");
                 List<String> duplicatedFields = new ArrayList<>();
                 if (username.equalsIgnoreCase(dbUsername)) {
                     duplicatedFields.add("Tên đăng nhập");
-                }
-                if (email.equalsIgnoreCase(dbEmail)) {
-                    duplicatedFields.add("Email");
                 }
                 if (phone.equals(dbPhone)) {
                     duplicatedFields.add("Số điện thoại");

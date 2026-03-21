@@ -1,7 +1,7 @@
 package dao;
 
 import db.DBConnect;
-import model.Category;
+import model.product.Category;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
