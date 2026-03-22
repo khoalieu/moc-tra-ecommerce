@@ -19,6 +19,8 @@ public class User {
     private UserGender gender;
     private Boolean isActive;
     private LocalDateTime createdAt;
+    private Integer failedAttempts;
+    private LocalDateTime lockUntil;
 
     public User() {}
 
@@ -85,5 +87,10 @@ public class User {
         String name = (fn + " " + ln).trim();
         return name.isEmpty() ? username : name;
     }
+    public Integer getFailedAttempts() { return failedAttempts; }
+    public void setFailedAttempts(Integer failedAttempts) { this.failedAttempts = failedAttempts; }
+
+    public LocalDateTime getLockUntil() { return lockUntil; }
+    public void setLockUntil(LocalDateTime lockUntil) { this.lockUntil = lockUntil; }
 
 }
