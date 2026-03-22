@@ -6,6 +6,7 @@ import jakarta.servlet.http.*;
 import jakarta.servlet.annotation.*;
 import java.io.IOException;
 import java.util.regex.Pattern;
+import controller.utils.CaptchaUtil;
 
 @WebServlet(name = "RegisterServlet", value = "/signup")
 public class RegisterServlet extends HttpServlet {
@@ -16,6 +17,8 @@ public class RegisterServlet extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+
+        request.setAttribute("captchaSiteKey", CaptchaUtil.getSiteKey());
         request.getRequestDispatcher("/auth/signup.jsp").forward(request, response);
     }
 
@@ -31,6 +34,8 @@ public class RegisterServlet extends HttpServlet {
         String passParam = request.getParameter("password");
         String rePassParam = request.getParameter("confirmPassword");
 
+        String captchaResponse = request.getParameter("g-recaptcha-response");
+
         if (userParam == null || userParam.trim().isEmpty() ||
                 phoneParam == null || phoneParam.trim().isEmpty() ||
                 passParam == null || passParam.isEmpty() ||
@@ -38,6 +43,7 @@ public class RegisterServlet extends HttpServlet {
 
             request.setAttribute("username", userParam != null ? userParam : "");
             request.setAttribute("phone", phoneParam != null ? phoneParam : "");
+            request.setAttribute("captchaSiteKey", CaptchaUtil.getSiteKey());
 
             request.setAttribute("errorMessage", "Vui lòng nhập đầy đủ tất cả thông tin!");
             request.getRequestDispatcher("/auth/signup.jsp").forward(request, response);
@@ -66,10 +72,14 @@ public class RegisterServlet extends HttpServlet {
         else if (!pass.equals(rePass)) {
             error = "Mật khẩu xác nhận không khớp!";
         }
+        else if (!CaptchaUtil.verify(captchaResponse)) {
+            error = "Vui lòng xác minh CAPTCHA";
+        }
         if (error != null) {
             request.setAttribute("errorMessage", error);
             request.setAttribute("username", user);
             request.setAttribute("phone", phone);
+            request.setAttribute("captchaSiteKey", CaptchaUtil.getSiteKey());
             request.getRequestDispatcher("/auth/signup.jsp").forward(request, response);
             return;
         }
@@ -78,6 +88,8 @@ public class RegisterServlet extends HttpServlet {
             request.setAttribute("errorMessage", validationError);
             request.setAttribute("username", user);
             request.setAttribute("phone", phone);
+            request.setAttribute("captchaSiteKey", CaptchaUtil.getSiteKey());
+
             request.getRequestDispatcher("/auth/signup.jsp").forward(request, response);
         } else {
             String otp = String.format("%06d", new java.util.Random().nextInt(999999));
