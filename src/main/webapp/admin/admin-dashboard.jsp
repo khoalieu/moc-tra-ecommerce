@@ -13,15 +13,15 @@
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-    <link rel="stylesheet" href="assets/css/base.css">
-    <link rel="stylesheet" href="assets/css/components.css">
-    <link rel="stylesheet" href="admin/assets/css/admin.css">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/base.css">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/components.css">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/admin/assets/css/admin.css">
 </head>
 <body>
 
 <div class="admin-container">
     <jsp:include page="/common/admin-sidebar.jsp">
-        <jsp:param name="activePage" value="dashboard"/>
+        <jsp:param name="activePage" value="/admin/dashboard"/>
     </jsp:include>
 
     <main class="admin-main">
@@ -57,7 +57,7 @@
                             <c:forEach var="o" items="${recentOrders}">
                                 <div class="list-item">
                                     <div class="item-info">
-                                        <a href="admin/order/detail?id=${o.id}" class="item-title"
+                                        <a href="${pageContext.request.contextPath}/admin/order/detail?id=${o.id}" class="item-title"
                                            style="text-decoration: none;">
                                             #${o.orderNumber}
                                         </a>
@@ -103,22 +103,22 @@
             <div class="quick-actions">
                 <h3>Thao tác nhanh</h3>
                 <div class="actions-grid">
-                    <a href="admin/product/add" class="action-card">
+                    <a href="${pageContext.request.contextPath}/admin/product/add" class="action-card">
                         <i class="fas fa-plus-circle"></i>
                         <span>Thêm sản phẩm mới</span>
                     </a>
 
-                    <a href="admin/orders" class="action-card">
+                    <a href="${pageContext.request.contextPath}/admin/orders" class="action-card">
                         <i class="fas fa-shopping-cart"></i>
                         <span>Xử lý đơn hàng</span>
                     </a>
 
-                    <a href="admin/customers" class="action-card">
+                    <a href="${pageContext.request.contextPath}/admin/customers" class="action-card">
                         <i class="fas fa-users"></i>
                         <span>Quản lý khách hàng</span>
                     </a>
 
-                    <a href="admin/blog/add" class="action-card">
+                    <a href="${pageContext.request.contextPath}/admin/blog/add" class="action-card">
                         <i class="fas fa-pen-nib"></i>
                         <span>Viết bài blog</span>
                     </a>
