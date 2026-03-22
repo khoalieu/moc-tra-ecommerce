@@ -82,13 +82,14 @@ public class RegisterServlet extends HttpServlet {
         } else {
             String otp = String.format("%06d", new java.util.Random().nextInt(999999));
             HttpSession session = request.getSession();
+            session.setAttribute("OTP_PURPOSE", "REGISTER");
             session.setAttribute("temp_username", user);
             session.setAttribute("temp_password", pass);
             session.setAttribute("temp_phone", phone);
             session.setAttribute("otp_code", otp);
             System.out.println(">>> MÃ OTP CỦA BẠN LÀ: " + otp);
             request.setAttribute("otp_display", otp);
-            request.getRequestDispatcher("/auth/verify-soft-otp.jsp").forward(request,response);
+            request.getRequestDispatcher("/auth/verify-otp.jsp").forward(request,response);
         }
     }
 }

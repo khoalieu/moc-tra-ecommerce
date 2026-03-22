@@ -9,6 +9,7 @@
     <title>Xác nhận mã OTP</title>
 
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/main.css" />
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/otp.css"/>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet" />
     <link rel="stylesheet"
           href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css"
@@ -34,7 +35,19 @@
 
             <div class="login-content">
                 <!-- Verify OTP -->
-                <form id="otpForm" action="${pageContext.request.contextPath}/${not empty sessionScope.temp_email ? 'verify-register-otp' : 'verify-otp'}" method="post" autocomplete="off">
+                <c:if test="${not empty requestScope.otp_display and sessionScope.OTP_PURPOSE != 'FORGOT'}">
+                    <div id="otp-auto-fill" class="otp-demo-container animate-pulse">
+                        <p style="margin: 0; color: #856404;">Mã xác thực của bạn là:</p>
+                        <strong id="source-code">${requestScope.otp_display}</strong>
+                        <span class="quick-fill-hint">
+                            <i class="fa-solid fa-hand-pointer"></i> Chạm vào đây để điền nhanh
+                        </span>
+                    </div>
+                </c:if>
+                <form id="otpForm"
+                      action="${pageContext.request.contextPath}/${sessionScope.OTP_PURPOSE == 'FORGOT' ? 'verify-otp' : 'verify-register-otp'}"
+                      method="post"
+                      autocomplete="off">
                     <div class="otp-input-group">
                         <input type="text" maxlength="1" class="otp-input" data-id="1">
                         <input type="text" maxlength="1" class="otp-input" data-id="2">
