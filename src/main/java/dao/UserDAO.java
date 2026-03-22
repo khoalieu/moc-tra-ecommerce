@@ -704,6 +704,81 @@ public class UserDAO {
         }
         return null;
     }
+    public User getUserForLogin(String username) {
+        try {
+            String query = "SELECT * FROM users WHERE username = ? AND is_active = 1";
+            conn = new DBConnect().getConnection();
+            ps = conn.prepareStatement(query);
+            ps.setString(1, username);
+            rs = ps.executeQuery();
+
+            if (rs.next()) {
+                User user = new User();
+                user.setId(rs.getInt("id"));
+                user.setUsername(rs.getString("username"));
+                user.setEmail(rs.getString("email"));
+                user.setPasswordHash(rs.getString("password_hash"));
+                user.setFailedAttempts(rs.getInt("failed_attempts"));
+
+                java.sql.Timestamp lockTimestamp = rs.getTimestamp("lock_until");
+                if (lockTimestamp != null) {
+                    user.setLockUntil(lockTimestamp.toLocalDateTime());
+                }
+                user.setFirstName(rs.getString("first_name"));
+                user.setLastName(rs.getString("last_name"));
+                user.setPhone(rs.getString("phone"));
+                user.setAvatar(rs.getString("avatar"));
+                try {
+                    user.setRole(model.enums.UserRole.valueOf(rs.getString("role").toUpperCase()));
+                } catch (Exception e) {
+                    user.setRole(model.enums.UserRole.CUSTOMER);
+                }
+
+                return user;
+            }
+        } catch (Exception e) {
+            System.err.println("Lỗi tại getUserForLogin: " + e.getMessage());
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public void resetFailedAttempts(int userId) {
+        try {
+            String query = "UPDATE users SET failed_attempts = 0, lock_until = NULL WHERE id = ?";
+            conn = new DBConnect().getConnection();
+            ps = conn.prepareStatement(query);
+            ps.setInt(1, userId);
+            ps.executeUpdate();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public boolean recordFailedAttempt(int userId, int currentAttempts) {
+        int newAttempts = currentAttempts + 1;
+        boolean justLocked = false;
+        String query;
+
+        try {
+            conn = new DBConnect().getConnection();
+            if (newAttempts >= 5) { // Ngưỡng 5 lần
+                query = "UPDATE users SET failed_attempts = ?, lock_until = DATE_ADD(NOW(), INTERVAL 30 MINUTE) WHERE id = ?";
+                justLocked = true;
+            } else {
+                query = "UPDATE users SET failed_attempts = ? WHERE id = ?";
+            }
+
+            ps = conn.prepareStatement(query);
+            ps.setInt(1, newAttempts);
+            ps.setInt(2, userId);
+            ps.executeUpdate();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return justLocked;
+    }
 
     public boolean isValidCarrier(String phone) {
         if (phone == null || phone.length() < 3) return false;
@@ -717,6 +792,22 @@ public class UserDAO {
         };
         for (String p : validPrefixes) {
             if (prefix.equals(p)) return true;
+        }
+        return false;
+    }
+    public boolean updateEmail(int userId, String newEmail) {
+        String sql = "UPDATE users SET email = ? WHERE id = ?";
+        try (Connection conn = DBConnect.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, newEmail);
+            ps.setInt(2, userId);
+
+            int rowsAffected = ps.executeUpdate();
+            return rowsAffected > 0;
+
+        } catch (Exception e) {
+            e.printStackTrace();
         }
         return false;
     }

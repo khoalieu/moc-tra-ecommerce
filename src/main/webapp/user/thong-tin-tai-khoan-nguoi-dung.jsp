@@ -9,6 +9,51 @@
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/main.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css" integrity="sha512-2SwdPD6INVrV/lHTZbO2nodKhrnDdJK9/kg2XD1r9uGqPo1cUbujc+IYdlYdEErWNu69gVcYgdxlmVmzTWnetw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <style>
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 8px;
+            width: 400px;
+            max-width: 90%;
+            position: relative;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            animation: fadeIn 0.3s ease;
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            font-size: 24px;
+            font-weight: bold;
+            color: #888;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+
+        .close-btn:hover {
+            color: #e74c3c;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
 </head>
 <body class="user-dashboard-page">
 <jsp:include page="/common/header.jsp"></jsp:include>
@@ -72,10 +117,17 @@
             <h3 class="section-subtitle" style="margin-top: 30px;">Thông tin liên hệ</h3>
 
             <div class="form-row">
-                <div class="input-group">
+                <div class="input-group" style="position: relative;">
                     <input type="email" id="email" name="email"
-                           value="${sessionScope.user.email}" readonly style="background-color: #f5f5f5;">
-                    <label for="email">Email</label>
+                           value="${sessionScope.user.email}" readonly
+                           style="background-color: #f5f5f5; padding-right: 35px;"> <label for="email">Email</label>
+
+                    <i class="fa-solid fa-pen"
+                       onclick="openEmailPopup()"
+                       style="position: absolute; right: 15px; top: 50%; transform: translateY(-50%); cursor: pointer; color: #666; transition: color 0.3s;"
+                       title="Nhấn để đổi email"
+                       onmouseover="this.style.color='#e67e22'"
+                       onmouseout="this.style.color='#666'"></i>
                 </div>
 
                 <div class="input-group phone-group">
@@ -122,6 +174,26 @@
                 <button type="submit" class="btn-save-changes" style="background-color: #e67e22;">Cập Nhật Mật Khẩu</button>
             </div>
         </form>
+        <div id="emailPopup" class="modal-overlay">
+            <div class="modal-content">
+                <span class="close-btn" onclick="closeEmailPopup()">&times;</span>
+                <h3 style="margin-bottom: 20px; color: #333;">Đổi Địa Chỉ Email</h3>
+
+                <form action="${pageContext.request.contextPath}/change-email" method="post">
+                    <input type="hidden" name="action" value="change_email">
+
+                    <div class="input-group">
+                        <input type="email" id="newEmail" name="newEmail" placeholder=" " required style="width: 100%; box-sizing: border-box;">
+                        <label for="newEmail">Nhập địa chỉ email mới</label>
+                    </div>
+
+                    <div class="form-actions" style="margin-top: 25px; display: flex; gap: 10px;">
+                        <button type="submit" class="btn-save-changes" style="flex: 1;">Xác nhận</button>
+                        <button type="button" onclick="closeEmailPopup()" class="btn-save-changes" style="flex: 1; background-color: #95a5a6;">Hủy bỏ</button>
+                    </div>
+                </form>
+            </div>
+        </div>
     </main>
 
 </div>
@@ -129,5 +201,19 @@
 <button id="backToTop" class="back-to-top" title="Lên đầu trang">
     <i class="fa-solid fa-chevron-up"></i>
 </button>
+<script>t
+    function openEmailPopup() {
+        document.getElementById('emailPopup').style.display = 'flex';
+    }
+    function closeEmailPopup() {
+        document.getElementById('emailPopup').style.display = 'none';
+    }
+    window.onclick = function(event) {
+        var popup = document.getElementById('emailPopup');
+        if (event.target == popup) {
+            popup.style.display = "none";
+        }
+    }
+</script>
 </body>
 </html>
