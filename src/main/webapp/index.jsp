@@ -10,12 +10,12 @@
     <title>Trà Thảo Mộc & Trà Sữa DIY</title>
     <base href="${pageContext.request.contextPath}/">
 
-    <link rel="stylesheet" href="assets/css/main.css">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/main.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
 
-<jsp:include page="common/header.jsp"></jsp:include>
+<jsp:include page="/common/header.jsp"></jsp:include>
 
 <section class="hero-banner">
     <div class="slideshow-container">
@@ -52,7 +52,7 @@
                     <div class="hero-content">
                         <h1>Mộc Trà Thiên Nhiên</h1>
                         <p>Tinh hoa thảo mộc Việt</p>
-                        <a href="san-pham" class="hero-btn">Khám Phá Ngay</a>
+                        <a href="${pageContext.request.contextPath}/san-pham" class="hero-btn">Khám Phá Ngay</a>
                     </div>
                 </div>
             </c:otherwise>
@@ -75,11 +75,11 @@
     <div class="container">
         <div class="category-box" style="background-image: url('assets/images/tra-thao-moc.webp');">
             <h2>TRÀ THẢO MỘC & SỨC KHỎE</h2>
-            <a href="san-pham?category=1" class="cta-button-outline">Xem Tất Cả</a>
+            <a href="${pageContext.request.contextPath}/san-pham?category=1" class="cta-button-outline">Xem Tất Cả</a>
         </div>
         <div class="category-box" style="background-image: url('assets/images/san-pham-tran-chau-den-4.jpg');">
             <h2>NGUYÊN LIỆU TRÀ SỮA DIY</h2>
-            <a href="san-pham?category=2" class="cta-button-outline">Trổ Tài Pha Chế</a>
+            <a href="${pageContext.request.contextPath}/san-pham?category=2" class="cta-button-outline">Trổ Tài Pha Chế</a>
         </div>
     </div>
 </section>
@@ -112,7 +112,7 @@
                         </c:choose>
                     </p>
 
-                    <a href="chi-tiet-san-pham?id=${p.id}" class="cta-button">Xem Chi Tiết</a>
+                    <a href="${pageContext.request.contextPath}/chi-tiet-san-pham?id=${p.id}" class="cta-button">Xem Chi Tiết</a>
                 </div>
             </c:forEach>
 
@@ -150,7 +150,7 @@
                             </c:otherwise>
                         </c:choose>
                     </p>
-                    <a href="chi-tiet-san-pham?id=${p.id}" class="cta-button">Xem Chi Tiết</a>
+                    <a href="${pageContext.request.contextPath}/chi-tiet-san-pham?id=${p.id}" class="cta-button">Xem Chi Tiết</a>
                 </div>
             </c:forEach>
 
@@ -185,21 +185,20 @@
                     </div>
 
                     <p>${empty b.excerpt ? '(Chưa có mô tả)' : b.excerpt}</p>
-                    <a href="chi-tiet-blog?slug=${b.slug}">Đọc Thêm</a>
+                    <a href="${pageContext.request.contextPath}/chi-tiet-blog?slug=${b.slug}">Đọc Thêm</a>
                 </div>
             </c:forEach>
         </div>
     </div>
 </section>
 
-<jsp:include page="common/footer.jsp"></jsp:include>
+<jsp:include page="/common/footer.jsp"></jsp:include>
 <button id="backToTop" class="back-to-top"><i class="fa-solid fa-chevron-up"></i></button>
 
 <script>
     let slideIndex = 1;
     let isTransitioning = false;
     let autoTimer;
-
     document.addEventListener('DOMContentLoaded', function() {
         showSlider(slideIndex);
         startAutoSlide();
@@ -278,6 +277,5 @@
         window.scrollTo({ top: 0, behavior: 'smooth' });
     });
 </script>
-
 </body>
 </html>

@@ -4,8 +4,8 @@ import dao.BannerDAO;
 import dao.BlogPostDAO;
 import dao.ProductDAO;
 import model.Banner;
-import model.BlogPost;
-import model.Product;
+import model.blog.BlogPost;
+import model.product.Product;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;

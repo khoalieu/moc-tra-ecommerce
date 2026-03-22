@@ -3,9 +3,9 @@ package controller.admin;
 import dao.OrderDAO;
 import dao.UserAddressDAO;
 import dao.UserDAO;
-import model.Order;
-import model.User;
-import model.UserAddress;
+import model.order.Order;
+import model.user.User;
+import model.user.UserAddress;
 import model.enums.UserRole;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -15,13 +15,13 @@ import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import dao.BlogCommentDAO;
-import model.BlogComment;
+import model.blog.BlogComment;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.text.DecimalFormat;
 import dao.ReviewDAO;
-import model.ProductReview;
-import model.UserActivityDTO;
+import model.product.ProductReview;
+import model.user.UserActivityDTO;
 
 @WebServlet("/admin/customer/detail")
 public class AdminCustomerDetailServlet extends HttpServlet {
@@ -37,7 +37,7 @@ public class AdminCustomerDetailServlet extends HttpServlet {
 
         String idParam = request.getParameter("id");
         if (idParam == null || idParam.isEmpty()) {
-            response.sendRedirect(request.getContextPath() + "/admin/customers.jsp");
+            response.sendRedirect(request.getContextPath() + "/admin/customers");
             return;
         }
 
@@ -167,7 +167,7 @@ public class AdminCustomerDetailServlet extends HttpServlet {
             request.getRequestDispatcher("/admin/admin-customer-detail.jsp").forward(request, response);
 
         } catch (NumberFormatException e) {
-            response.sendRedirect(request.getContextPath() + "/admin/customers.jsp");
+            response.sendRedirect(request.getContextPath() + "/admin/customers");
         }
     }
 }

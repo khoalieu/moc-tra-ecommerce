@@ -1,7 +1,7 @@
 package controller;
 
 import dao.ReviewDAO;
-import model.User;
+import model.user.User;
 import jakarta.servlet.*;
 import jakarta.servlet.http.*;
 import jakarta.servlet.annotation.*;
@@ -17,7 +17,7 @@ public class SubmitReviewServlet extends HttpServlet {
         User user = (User) session.getAttribute("user");
 
         if (user == null) {
-            response.sendRedirect("login.jsp");
+            response.sendRedirect(request.getContextPath() + "/auth/login.jsp");
             return;
         }
         try {
@@ -26,10 +26,10 @@ public class SubmitReviewServlet extends HttpServlet {
             String comment = request.getParameter("comment");
             ReviewDAO reviewDAO = new ReviewDAO();
             reviewDAO.addReview(productId, user.getId(), rating, comment);
-            response.sendRedirect("chi-tiet-san-pham?id=" + productId);
+            response.sendRedirect(request.getContextPath() + "/chi-tiet-san-pham?id=" + productId);
         } catch (NumberFormatException e) {
             e.printStackTrace();
-            response.sendRedirect("index.jsp");
+            response.sendRedirect(request.getContextPath() + "/index.jsp");
         }
     }
 }

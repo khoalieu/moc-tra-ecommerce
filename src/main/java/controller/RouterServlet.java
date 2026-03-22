@@ -26,34 +26,34 @@ public class RouterServlet extends HttpServlet {
 
         switch (path) {
             case "/ve-chung-toi":
-                targetPage = "ve-chung-toi.jsp";
+                targetPage = "/policy/ve-chung-toi.jsp";
                 pageTitle = "Về Chúng Tôi";
                 break;
             case "/tra-thao-moc":
-                targetPage = "tra-thao-moc.jsp";
+                targetPage = "/product/tra-thao-moc.jsp";
                 pageTitle = "Trà Thảo Mộc";
                 break;
             case "/tra-sua-nguyen-lieu":
-                targetPage = "tra-sua-nguyen-lieu.jsp";
+                targetPage = "/product/tra-sua-nguyen-lieu.jsp";
                 pageTitle = "Nguyên Liệu Trà Sữa";
                 break;
             case "/chinh-sach-ban-hang":
-                targetPage = "chinh-sach-ban-hang.jsp";
+                targetPage = "/policy/chinh-sach-ban-hang.jsp";
                 pageTitle = "Chính Sách Bán Hàng";
                 break;
 
             case "/chinh-sach-thanh-toan":
-                targetPage = "chinh-sach-thanh-toan.jsp";
+                targetPage = "/policy/chinh-sach-thanh-toan.jsp";
                 pageTitle = "Chính Sách Thanh Toán";
                 break;
 
             case "/chinh-sach-bao-hanh":
-                targetPage = "chinh-sach-bao-hanh.jsp";
+                targetPage = "/policy/chinh-sach-bao-hanh.jsp";
                 pageTitle = "Chính Sách Bảo Hành";
                 break;
 
             case "/dieu-khoan-dich-vu":
-                targetPage = "dieu-khoan-dich-vu.jsp";
+                targetPage = "/policy/dieu-khoan-dich-vu.jsp";
                 pageTitle = "Điều Khoản Dịch Vụ";
                 break;
 
