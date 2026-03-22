@@ -25,4 +25,7 @@ out/
 Thumbs.db
 desktop.ini
 # --- email configure ---
-email.properties
+email.properties.example
+
+captcha.properties
+src/main/resources/captcha.properties
