@@ -113,7 +113,9 @@
                     </div>
                     <input type="file" id="signup-avatarInput" name="avatar" accept="image/*" style="display:none;">
                 </div>
-
+                <div class="form-row" style="justify-content:center; margin-bottom: 15px;">
+                    <div class="g-recaptcha" data-sitekey="${captchaSiteKey}"></div>
+                </div>
                 <div class="form-row">
                     <button type="submit" class="btn">Đăng ký</button>
                 </div>
@@ -152,5 +154,6 @@
     avatarInput.addEventListener('change', handleAvatarChange);
 </script>
 <script src="${pageContext.request.contextPath}/assets/js/main.js"></script>
+<script src="https://www.google.com/recaptcha/api.js" async defer></script>
 </body>
 </html>
