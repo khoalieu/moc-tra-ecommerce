@@ -261,13 +261,25 @@
                 <!-- Pagination -->
                 <div class="pagination-container">
                     <div class="pagination-info">
-                        Hiển thị <strong>${fromItem}-${toItem}</strong> trong tổng số <strong>${totalPosts}</strong> bài
-                        viết
+                        Hiển thị <strong>${fromItem}-${toItem}</strong> trong tổng số <strong>${totalPosts}</strong> bài viết
                     </div>
-                    <div class="pagination">
-                        <c:forEach begin="1" end="${totalPages}" var="i">
-                            <c:url var="pageUrl" value="/admin/blog">
-                                <c:param name="page" value="${i}"/>
+
+                    <c:if test="${totalPages > 1}">
+                        <c:set var="windowSize" value="6" />
+                        <c:set var="currentBlock" value="${(currentPage - 1) div windowSize}" />
+                        <c:set var="startPage" value="${currentBlock * windowSize + 1}" />
+                        <c:set var="endPage" value="${startPage + windowSize - 1}" />
+
+                        <c:if test="${endPage > totalPages}">
+                            <c:set var="endPage" value="${totalPages}" />
+                        </c:if>
+
+                        <c:set var="prevPage" value="${currentPage - windowSize}" />
+                        <c:set var="nextPage" value="${currentPage + windowSize}" />
+
+                        <div class="pagination">
+                            <c:url var="prevUrl" value="/admin/blog">
+                                <c:param name="page" value="${prevPage < 1 ? 1 : prevPage}"/>
                                 <c:if test="${not empty currentQ}">
                                     <c:param name="q" value="${currentQ}"/>
                                 </c:if>
@@ -285,9 +297,57 @@
                                 </c:if>
                             </c:url>
 
-                            <a href="${pageUrl}" class="page-link ${currentPage == i ? 'active' : ''}">${i}</a>
-                        </c:forEach>
-                    </div>
+                            <a href="${prevUrl}" class="page-link ${currentPage <= windowSize ? 'disabled' : ''}">
+                                &laquo;
+                            </a>
+
+                            <c:forEach begin="${startPage}" end="${endPage}" var="i">
+                                <c:url var="pageUrl" value="/admin/blog">
+                                    <c:param name="page" value="${i}"/>
+                                    <c:if test="${not empty currentQ}">
+                                        <c:param name="q" value="${currentQ}"/>
+                                    </c:if>
+                                    <c:if test="${not empty currentCategory}">
+                                        <c:param name="category" value="${currentCategory}"/>
+                                    </c:if>
+                                    <c:if test="${not empty currentStatus}">
+                                        <c:param name="status" value="${currentStatus}"/>
+                                    </c:if>
+                                    <c:if test="${not empty currentAuthor}">
+                                        <c:param name="author" value="${currentAuthor}"/>
+                                    </c:if>
+                                    <c:if test="${not empty currentSort}">
+                                        <c:param name="sort" value="${currentSort}"/>
+                                    </c:if>
+                                </c:url>
+
+                                <a href="${pageUrl}" class="page-link ${currentPage == i ? 'active' : ''}">${i}</a>
+                            </c:forEach>
+
+                            <c:url var="nextUrl" value="/admin/blog">
+                                <c:param name="page" value="${nextPage > totalPages ? totalPages : nextPage}"/>
+                                <c:if test="${not empty currentQ}">
+                                    <c:param name="q" value="${currentQ}"/>
+                                </c:if>
+                                <c:if test="${not empty currentCategory}">
+                                    <c:param name="category" value="${currentCategory}"/>
+                                </c:if>
+                                <c:if test="${not empty currentStatus}">
+                                    <c:param name="status" value="${currentStatus}"/>
+                                </c:if>
+                                <c:if test="${not empty currentAuthor}">
+                                    <c:param name="author" value="${currentAuthor}"/>
+                                </c:if>
+                                <c:if test="${not empty currentSort}">
+                                    <c:param name="sort" value="${currentSort}"/>
+                                </c:if>
+                            </c:url>
+
+                            <a href="${nextUrl}" class="page-link ${currentPage + windowSize > totalPages ? 'disabled' : ''}">
+                                &raquo;
+                            </a>
+                        </div>
+                    </c:if>
                 </div>
             </div>
         </div>

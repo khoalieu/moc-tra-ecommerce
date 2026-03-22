@@ -178,10 +178,42 @@
                 </section>
 
                 <div class="pagination">
-                    <c:forEach begin="1" end="${totalPages}" var="i">
-                        <a href="${pageContext.request.contextPath}/san-pham?page=${i}&category=${currentCategory}&sort=${currentSort}"
-                           class="${currentPage == i ? 'active' : ''}">${i}</a>
-                    </c:forEach>
+                    <c:if test="${totalPages > 1}">
+                        <c:set var="windowSize" value="6" />
+                        <c:set var="currentBlock" value="${(currentPage - 1) div windowSize}" />
+                        <c:set var="startPage" value="${currentBlock * windowSize + 1}" />
+                        <c:set var="endPage" value="${startPage + windowSize - 1}" />
+
+                        <c:if test="${endPage > totalPages}">
+                            <c:set var="endPage" value="${totalPages}" />
+                        </c:if>
+
+                        <!-- lùi / tiến  6 trang theo currentPage -->
+                        <c:set var="prevPage" value="${currentPage - windowSize}" />
+                        <c:set var="nextPage" value="${currentPage + windowSize}" />
+
+                        <div class="pagination">
+                            <!--  lùi 6  -->
+                            <a href="san-pham?page=${prevPage < 1 ? 1 : prevPage}&category=${currentCategory}&sort=${currentSort}&price=${currentPrice}&promotionId=${currentPromotion}"
+                               class="${currentPage <= windowSize ? 'disabled' : ''}">
+                                &laquo;
+                            </a>
+
+                            <!-- block -->
+                            <c:forEach begin="${startPage}" end="${endPage}" var="i">
+                                <a href="san-pham?page=${i}&category=${currentCategory}&sort=${currentSort}&price=${currentPrice}&promotionId=${currentPromotion}"
+                                   class="${currentPage == i ? 'active' : ''}">
+                                        ${i}
+                                </a>
+                            </c:forEach>
+
+                            <!--  tiến 6 page -->
+                            <a href="san-pham?page=${nextPage > totalPages ? totalPages : nextPage}&category=${currentCategory}&sort=${currentSort}&price=${currentPrice}&promotionId=${currentPromotion}"
+                               class="${currentPage + windowSize > totalPages ? 'disabled' : ''}">
+                                &raquo;
+                            </a>
+                        </div>
+                    </c:if>
                 </div>
             </div>
         </div>
