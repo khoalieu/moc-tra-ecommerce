@@ -31,15 +31,19 @@ public class VerifyOtpServlet extends HttpServlet {
             UserDAO dao = new UserDAO();
             dao.register(username, password, phone, email);
 
+            session.setAttribute("registration_finished", true);
+
             session.removeAttribute("temp_username");
             session.removeAttribute("temp_password");
             session.removeAttribute("temp_phone");
+            session.removeAttribute("temp_email");
+            session.removeAttribute("otp_code");
             session.removeAttribute("otp_display");
             response.sendRedirect(request.getContextPath() + "/auth/login.jsp");
         } else {
             request.setAttribute("otp_display", sessionOtp);
             request.setAttribute("message", "Mã OTP không chính xác!");
-            request.getRequestDispatcher("/auth/verify-soft-otp.jsp").forward(request, response);
+            request.getRequestDispatcher("/auth/verify-otp.jsp").forward(request, response);
         }
     }
 }

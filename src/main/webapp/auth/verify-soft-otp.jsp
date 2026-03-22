@@ -1,5 +1,8 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
+<c:if test="${empty sessionScope.temp_email}">
+    <c:redirect url="/auth/signup.jsp"/>
+</c:if>
 
 <!DOCTYPE html>
 <html lang="vi">
@@ -29,7 +32,7 @@
                 </div>
                 <h2 class="login-title">Xác nhận mã OTP</h2>
 
-                <c:if test="${not empty requestScope.otp_display}">
+                <c:if test="${not empty requestScope.otp_display and sessionScope.OTP_PURPOSE != 'FORGOT'}">
                     <div id="otp-auto-fill" class="otp-demo-container animate-pulse">
                         <p style="margin: 0; color: #856404;">Mã xác thực của bạn là:</p>
                         <strong id="source-code">${requestScope.otp_display}</strong>
@@ -49,12 +52,14 @@
                 <form id="otpForm"
                       action="${pageContext.request.contextPath}/verify-register-otp" method="post" autocomplete="off">
                     <div class="otp-input-group">
-                        <input type="text" maxlength="1" class="otp-input" data-id="1">
-                        <input type="text" maxlength="1" class="otp-input" data-id="2">
-                        <input type="text" maxlength="1" class="otp-input" data-id="3">
-                        <input type="text" maxlength="1" class="otp-input" data-id="4">
-                        <input type="text" maxlength="1" class="otp-input" data-id="5">
-                        <input type="text" maxlength="1" class="otp-input" data-id="6">
+                        <label>
+                            <input type="text" inputmode="numeric" maxlength="1" class="otp-input" data-id="1">
+                            <input type="text" inputmode="numeric" maxlength="1" class="otp-input" data-id="2">
+                            <input type="text" inputmode="numeric" maxlength="1" class="otp-input" data-id="3">
+                            <input type="text" inputmode="numeric" maxlength="1" class="otp-input" data-id="4">
+                            <input type="text" inputmode="numeric" maxlength="1" class="otp-input" data-id="5">
+                            <input type="text" inputmode="numeric" maxlength="1" class="otp-input" data-id="6">
+                        </label>
                     </div>
 
                     <input type="hidden" name="otp" id="otpHiddenInput">
@@ -104,13 +109,16 @@
 
         if (autofill) {
             autofill.addEventListener('click', function() {
-                const codeText = document.getElementById('source-code').textContent.trim();
-                inputs.forEach((input, index) => {
-                    input.value = codeText[index] || '';
-                    input.style.backgroundColor = "#e8f5e9";
-                });
-                updateHiddenInput();
-                document.querySelector('.btn').focus();
+                const sourceElement = document.getElementById('source-code');
+                if (sourceElement){
+                    const codeText = sourceElement.textContent.trim();
+                    inputs.forEach((input, index) => {
+                        input.value = codeText[index] || '';
+                        input.style.backgroundColor = "#e8f5e9";
+                    });
+                    updateHiddenInput();
+                    document.querySelector('.btn').focus();
+                }
             });
         }
 

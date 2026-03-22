@@ -106,7 +106,7 @@ public class ForgotPasswordServlet extends HttpServlet {
             return;
         }
 
-        ss.setAttribute("OTP_CODE", otp);
+        ss.setAttribute("otp_code", otp);
         ss.setAttribute("OTP_EXP", now + OTP_TTL);
         ss.setAttribute("OTP_LAST_SEND", now);
         ss.setAttribute("OTP_VERIFIED", false);
@@ -115,6 +115,7 @@ public class ForgotPasswordServlet extends HttpServlet {
             req.setAttribute("message", "Đã gửi lại OTP. Vui lòng kiểm tra email.");
             req.getRequestDispatcher("/auth/verify-otp.jsp").forward(req, resp);
         } else {
+            ss.setAttribute("OTP_PURPOSE", "FORGOT");
             resp.sendRedirect(req.getContextPath() + "/verify-otp");
         }
     }
@@ -129,7 +130,7 @@ public class ForgotPasswordServlet extends HttpServlet {
         }
 
         String otpInput = req.getParameter("otp");
-        String otpSaved = (String) ss.getAttribute("OTP_CODE");
+        String otpSaved = (String) ss.getAttribute("otp_code");
         Long otpExp = (Long) ss.getAttribute("OTP_EXP");
         long now = System.currentTimeMillis();
 
@@ -140,7 +141,7 @@ public class ForgotPasswordServlet extends HttpServlet {
         }
 
         if (now > otpExp) {
-            ss.removeAttribute("OTP_CODE");
+            ss.removeAttribute("otp_code");
             ss.removeAttribute("OTP_EXP");
             req.setAttribute("message", "OTP đã hết hạn. Vui lòng gửi lại.");
             req.getRequestDispatcher("/auth/verify-otp.jsp").forward(req, resp);
@@ -156,8 +157,9 @@ public class ForgotPasswordServlet extends HttpServlet {
             return;
         }
 
-        ss.removeAttribute("OTP_CODE");
+        ss.removeAttribute("otp_code");
         ss.removeAttribute("OTP_EXP");
+        ss.removeAttribute("OTP_PURPOSE");
         ss.setAttribute("OTP_VERIFIED", true);
 
         resp.sendRedirect(req.getContextPath() + "/reset-password");
