@@ -1,9 +1,9 @@
 package dao;
 
 import db.DBConnect;
-import model.CustomerDTO;
-import model.User;
-import model.UserAddress;
+import model.user.CustomerDTO;
+import model.user.User;
+import model.user.UserAddress;
 import model.enums.UserGender;
 import model.enums.UserRole;
 import org.mindrot.jbcrypt.BCrypt;
@@ -18,7 +18,6 @@ public class UserDAO {
     PreparedStatement ps = null;
     ResultSet rs = null;
 
-    // 1. Kiểm tra đăng nhập (LOGIC MỚI)
     public User checkLogin(String username, String password) {
         try {
             String query = "SELECT * FROM users WHERE username = ? AND is_active = 1";
@@ -46,7 +45,6 @@ public class UserDAO {
                     String genderStr = rs.getString("gender");
                     if (genderStr != null) {
                         try {
-                            // Database lưu chữ thường ('male'), Enum Java chữ hoa ('MALE') -> Cần toUpperCase()
                             user.setGender(UserGender.valueOf(genderStr.toUpperCase()));
                         } catch (IllegalArgumentException e) {
                             user.setGender(UserGender.OTHER);
@@ -82,20 +80,30 @@ public class UserDAO {
         return false;
     }
 
-    public void register(String username, String email, String password, String phone) {
+    public void register(String username, String password, String phone, String email) {
+        Connection conn = null;
+        PreparedStatement ps = null;
         try {
             String hashedPassword = BCrypt.hashpw(password, BCrypt.gensalt(12));
 
-            String query = "INSERT INTO users (username, email, password_hash, phone, role, is_active, created_at) VALUES (?, ?, ?, ?, 'customer', 1, NOW())";
+            String query = "INSERT INTO users (username, password_hash, phone, email, role, is_active, created_at) VALUES (?, ?, ?, ?, 'customer', 1, NOW())";
             conn = new DBConnect().getConnection();
             ps = conn.prepareStatement(query);
             ps.setString(1, username);
-            ps.setString(2, email);
-            ps.setString(3, hashedPassword); // Lưu chuỗi hash
-            ps.setString(4, phone);
-            ps.executeUpdate();
+            ps.setString(2, hashedPassword);
+            ps.setString(3, phone);
+            if (email == null || email.trim().isEmpty()) {
+                ps.setNull(4, java.sql.Types.VARCHAR);
+            } else {
+                ps.setString(4, email.trim());
+            }
+            int result = ps.executeUpdate();
+            System.out.println("Kết quả lưu DB: "+ (result > 0? "Thành công":"Thất bại!"));
         } catch (Exception e) {
+            System.out.println("Lỗi tại DAO "+e.getMessage());
             e.printStackTrace();
+        }finally {
+            try { if (ps != null) ps.close(); if (conn != null) conn.close(); } catch (Exception e) {}
         }
     }
 
@@ -272,8 +280,6 @@ public class UserDAO {
 
         return u;
     }
-
-    // tim user id trong email
     public Integer findUserIdByEmail(String email) {
         String sql = "SELECT id FROM users WHERE email = ? LIMIT 1";
         try (Connection conn = new DBConnect().getConnection();
@@ -346,17 +352,13 @@ public class UserDAO {
                         "WHERE u.role = 'customer' "
         );
 
-        // 1. Filter Search
         if (search != null && !search.isEmpty()) {
             sql.append(" AND (u.email LIKE ? OR u.phone LIKE ? OR CONCAT(u.last_name, ' ', u.first_name) LIKE ?) ");
         }
 
-        // Group By trước khi Having
         sql.append(" GROUP BY u.id HAVING 1=1 ");
 
-        // 2. Filter Spending (HAVING clause)
         if (spendingRange != null && !spendingRange.isEmpty()) {
-            // Ví dụ value: "0-500000", "500000-1000000", "5000000+"
             if (spendingRange.contains("-")) {
                 String[] parts = spendingRange.split("-");
                 sql.append(" AND total_spent BETWEEN ").append(parts[0]).append(" AND ").append(parts[1]);
@@ -375,23 +377,20 @@ public class UserDAO {
                     int max = Integer.parseInt(parts[1]);
                     sql.append(" AND total_orders BETWEEN ").append(min).append(" AND ").append(max);
                 } catch (NumberFormatException e) {
-                    // Bỏ qua nếu dữ liệu rác
                 }
             } else if (orderRange.endsWith("+")) {
                 try {
                     int min = Integer.parseInt(orderRange.replace("+", ""));
                     sql.append(" AND total_orders > ").append(min);
                 } catch (NumberFormatException e) {
-                    // Bỏ qua
                 }
             }
         }
 
-        // 3. Filter Status
         if (status != null && !status.isEmpty()) {
             switch (status) {
                 case "inactive":
-                    sql.append(" AND u.is_active = 0 "); // Lưu ý: Cần check lại alias trong HAVING hoặc chuyển lên WHERE nếu lỗi
+                    sql.append(" AND u.is_active = 0 ");
                     break;
                 case "vip":
                     sql.append(" AND total_spent > 5000000 AND u.is_active = 1 ");
@@ -405,7 +404,6 @@ public class UserDAO {
             }
         }
 
-        // 4. Sorting
         if (sort != null) {
             switch (sort) {
                 case "spending-desc": sql.append(" ORDER BY total_spent DESC "); break;
@@ -418,7 +416,6 @@ public class UserDAO {
             sql.append(" ORDER BY u.created_at DESC ");
         }
 
-        // 5. Pagination
         sql.append(" LIMIT ? OFFSET ?");
 
         try (Connection conn = DBConnect.getConnection();
@@ -455,10 +452,7 @@ public class UserDAO {
         }
         return list;
     }
-
-    // Hàm đếm tổng số lượng (để phân trang)
     public int countCustomers(String search, String status) {
-        // Để đơn giản, count theo search trước
         StringBuilder sql = new StringBuilder("SELECT COUNT(*) FROM users u WHERE u.role = 'customer'");
         if (search != null && !search.isEmpty()) {
             sql.append(" AND (u.email LIKE ? OR u.phone LIKE ? OR CONCAT(u.last_name, ' ', u.first_name) LIKE ?) ");
@@ -491,10 +485,10 @@ public class UserDAO {
             for (Integer id : ids) {
                 ps.setInt(1, isActive ? 1 : 0);
                 ps.setInt(2, id);
-                ps.addBatch(); // Thêm vào lô xử lý
+                ps.addBatch();
             }
 
-            ps.executeBatch(); // Thực thi toàn bộ lô
+            ps.executeBatch();
             conn.commit();
             return true;
 
@@ -682,7 +676,49 @@ public class UserDAO {
         }
         return null;
     }
+    public String checkUserExistDetailed(String username, String phone) {
+        try {
+            String query = "SELECT username, phone FROM users WHERE username = ? OR phone = ? LIMIT 1";
+            conn = new DBConnect().getConnection();
+            ps = conn.prepareStatement(query);
+            ps.setString(1, username);
+            ps.setString(2, phone);
+            rs = ps.executeQuery();
 
+            if (rs.next()) {
+                String dbUsername = rs.getString("username");
+                String dbPhone = rs.getString("phone");
+                List<String> duplicatedFields = new ArrayList<>();
+                if (username.equalsIgnoreCase(dbUsername)) {
+                    duplicatedFields.add("Tên đăng nhập");
+                }
+                if (phone.equals(dbPhone)) {
+                    duplicatedFields.add("Số điện thoại");
+                }
+                if (!duplicatedFields.isEmpty()) {
+                    return String.join(", ", duplicatedFields) + " đã tồn tại trong hệ thống!";
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
 
+    public boolean isValidCarrier(String phone) {
+        if (phone == null || phone.length() < 3) return false;
+        String prefix = phone.substring(0, 3);
+        String[] validPrefixes = {
+                "032", "033", "034", "035", "036", "037", "038", "039", // Viettel
+                "070", "079", "077", "076", "078", "089", "090", "093", // Mobi
+                "081", "082", "083", "084", "085", "088", "091", "094", // Vina
+                "056", "058", "092", // Vietnamobile
+                "059", "099" // Gmobile
+        };
+        for (String p : validPrefixes) {
+            if (prefix.equals(p)) return true;
+        }
+        return false;
+    }
 
 }

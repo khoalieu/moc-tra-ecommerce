@@ -1,10 +1,10 @@
 package dao;
 
 import db.DBConnect;
-import model.CartItem;
-import model.Order;
-import model.OrderItem;
-import model.Product;
+import model.cart.CartItem;
+import model.order.Order;
+import model.order.OrderItem;
+import model.product.Product;
 import model.enums.OrderStatus;
 import model.enums.PaymentStatus;
 

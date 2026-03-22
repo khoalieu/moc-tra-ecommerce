@@ -2,8 +2,8 @@ package controller.admin;
 
 import dao.CategoryDAO;
 import dao.ProductDAO;
-import model.Category;
-import model.Product;
+import model.product.Category;
+import model.product.Product;
 import model.enums.ProductStatus;
 
 import jakarta.servlet.ServletException;

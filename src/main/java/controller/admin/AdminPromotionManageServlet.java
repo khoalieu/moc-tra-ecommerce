@@ -1,7 +1,7 @@
 package controller.admin;
 
 import dao.PromotionDAO;
-import model.Promotion;
+import model.promotion.Promotion;
 import model.enums.DiscountType;
 
 import jakarta.servlet.ServletException;

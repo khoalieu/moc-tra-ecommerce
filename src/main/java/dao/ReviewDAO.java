@@ -5,7 +5,7 @@ import model.ReviewDTO;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
-import model.ProductReview;
+import model.product.ProductReview;
 public class ReviewDAO {
     public List<ReviewDTO> getReviewsByProductId(int productId) {
         List<ReviewDTO> list = new ArrayList<>();
@@ -57,7 +57,7 @@ public class ReviewDAO {
     }
 
     public List<ProductReview> getReviewsByUserId(int userId) {
-        List<model.ProductReview> list = new ArrayList<>();
+        List<ProductReview> list = new ArrayList<>();
         String sql = "SELECT r.*, p.name AS product_name " +
                 "FROM product_reviews r " +
                 "JOIN products p ON r.product_id = p.id " +
@@ -71,7 +71,7 @@ public class ReviewDAO {
             ResultSet rs = ps.executeQuery();
 
             while (rs.next()) {
-                model.ProductReview r = new model.ProductReview();
+                ProductReview r = new ProductReview();
                 r.setId(rs.getInt("id"));
                 r.setProductId(rs.getInt("product_id"));
                 r.setUserId(rs.getInt("user_id"));

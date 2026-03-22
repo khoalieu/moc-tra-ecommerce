@@ -1,7 +1,7 @@
 package controller.admin;
 import dao.BlogCategoryDAO;
-import model.BlogCategory;
-import model.User;
+import model.blog.BlogCategory;
+import model.user.User;
 import model.enums.UserRole;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
