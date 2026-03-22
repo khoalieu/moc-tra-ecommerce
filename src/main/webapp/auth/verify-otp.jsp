@@ -34,7 +34,6 @@
             </div>
 
             <div class="login-content">
-                <!-- Verify OTP -->
                 <c:if test="${not empty requestScope.otp_display and sessionScope.OTP_PURPOSE != 'FORGOT'}">
                     <div id="otp-auto-fill" class="otp-demo-container animate-pulse">
                         <p style="margin: 0; color: #856404;">Mã xác thực của bạn là:</p>
@@ -45,7 +44,7 @@
                     </div>
                 </c:if>
                 <form id="otpForm"
-                      action="${pageContext.request.contextPath}/${sessionScope.OTP_PURPOSE == 'FORGOT' ? 'verify-otp' : 'verify-register-otp'}"
+                      action="${pageContext.request.contextPath}/${sessionScope.OTP_PURPOSE == 'CHANGE_EMAIL' ? 'verify-change-email-otp' : (sessionScope.OTP_PURPOSE == 'FORGOT' ? 'verify-otp' : 'verify-register-otp')}"
                       method="post"
                       autocomplete="off">
                     <div class="otp-input-group">
@@ -69,13 +68,22 @@
                 </form>
 
                 <div class="auth-extra-links">
-                    <!-- Resend OTP -->
-                    <form action="${pageContext.request.contextPath}/forgot-password" method="post" style="display:inline;">
-                        <input type="hidden" name="action" value="resend">
-                        <button type="submit" class="link-button">Gửi lại mã OTP</button>
-                    </form>
-
-                    <a href="${pageContext.request.contextPath}/forgot-password">Thay đổi email</a>
+                    <c:choose>
+                        <c:when test="${sessionScope.OTP_PURPOSE == 'CHANGE_EMAIL'}">
+                            <form action="${pageContext.request.contextPath}/change-email" method="post" style="display:inline;">
+                                <input type="hidden" name="action" value="resend_otp">
+                                <button type="submit" class="link-button">Gửi lại mã OTP</button>
+                            </form>
+                            <a href="${pageContext.request.contextPath}/tai-khoan-cua-toi">Hủy đổi email</a>
+                        </c:when>
+                        <c:otherwise>
+                            <form action="${pageContext.request.contextPath}/forgot-password" method="post" style="display:inline;">
+                                <input type="hidden" name="action" value="resend">
+                                <button type="submit" class="link-button">Gửi lại mã OTP</button>
+                            </form>
+                            <a href="${pageContext.request.contextPath}/forgot-password">Thay đổi email</a>
+                        </c:otherwise>
+                    </c:choose>
                 </div>
 
             </div>
