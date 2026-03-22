@@ -795,5 +795,21 @@ public class UserDAO {
         }
         return false;
     }
+    public boolean updateEmail(int userId, String newEmail) {
+        String sql = "UPDATE users SET email = ? WHERE id = ?";
+        try (Connection conn = DBConnect.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, newEmail);
+            ps.setInt(2, userId);
+
+            int rowsAffected = ps.executeUpdate();
+            return rowsAffected > 0;
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
 
 }
