@@ -9,6 +9,7 @@
     <title>Xác nhận mã OTP</title>
 
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/main.css"/>
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/otp.css"/>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet"/>
     <link rel="stylesheet"
           href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css"
@@ -27,15 +28,20 @@
                     <i class="fa-solid fa-key"></i>
                 </div>
                 <h2 class="login-title">Xác nhận mã OTP</h2>
+
+                <c:if test="${not empty requestScope.otp_display}">
+                    <div id="otp-auto-fill" class="otp-demo-container animate-pulse">
+                        <p style="margin: 0; color: #856404;">Mã xác thực của bạn là:</p>
+                        <strong id="source-code">${requestScope.otp_display}</strong>
+                        <span class="quick-fill-hint">
+                            <i class="fa-solid fa-hand-pointer"></i> Chạm vào đây để điền nhanh
+                        </span>
+                    </div>
+                </c:if>
+
                 <p class="login-subtitle">
                     Nhập mã OTP đã được gửi tới email của bạn.
                 </p>
-                <c:if test="${not empty requestScope.otp_display}">
-                    <div style="background: #fff3cd; border: 1px dashed #856404; padding: 10px; margin: 15px 0; border-radius: 8px; text-align: center;">
-                        <p style="margin: 0; font-size: 14px; color: #856404;">Mã xác thực Demo của bạn là:</p>
-                        <strong style="font-size: 24px; color: #d32f2f; letter-spacing: 5px;">${requestScope.otp_display}</strong>
-                    </div>
-                </c:if>
             </div>
 
             <div class="login-content">
@@ -88,11 +94,24 @@
     document.addEventListener('DOMContentLoaded', function () {
         const inputs = document.querySelectorAll('.otp-input');
         const hiddenInput = document.getElementById('otpHiddenInput');
+        const autofill = document.getElementById('otp-auto-fill')
 
         function updateHiddenInput() {
             let code = '';
             inputs.forEach(i => code += (i.value || ''));
             hiddenInput.value = code;
+        }
+
+        if (autofill) {
+            autofill.addEventListener('click', function() {
+                const codeText = document.getElementById('source-code').textContent.trim();
+                inputs.forEach((input, index) => {
+                    input.value = codeText[index] || '';
+                    input.style.backgroundColor = "#e8f5e9";
+                });
+                updateHiddenInput();
+                document.querySelector('.btn').focus();
+            });
         }
 
         inputs.forEach((input, index) => {
