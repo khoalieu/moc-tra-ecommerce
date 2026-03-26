@@ -81,7 +81,7 @@ public class LoginServlet extends HttpServlet {
             Cart userCartFromDB = cartDAO.getCartByUserId(user.getId());
             session.setAttribute("cart", userCartFromDB);
             if (user.getRole() != null && user.getRole().name().equalsIgnoreCase("ADMIN")) {
-                response.sendRedirect(request.getContextPath() + "/dashboard");
+                response.sendRedirect(request.getContextPath() + "admin/dashboard");
             } else {
                 response.sendRedirect(request.getContextPath() + "/index");
             }
