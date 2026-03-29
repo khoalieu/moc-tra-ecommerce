@@ -95,7 +95,7 @@
                     <button type="submit" style="border:none; background:none;">
                         <i class="fa-solid fa-magnifying-glass"></i>
                     </button>
-                    <input type="text" name="search" placeholder="Bạn muốn tìm gì...">
+                    <input type="text" name="search" value="${currentSearch}" placeholder="Bạn muốn tìm gì...">
                 </form>
                 <div class="cart-container">
                     <%-- 1. Phần hiển thị Text và Icon ) --%>
