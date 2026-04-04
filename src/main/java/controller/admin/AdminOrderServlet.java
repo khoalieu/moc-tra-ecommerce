@@ -33,17 +33,28 @@ public class AdminOrderServlet extends HttpServlet {
         } else {
             int page = 1;
             try { page = Integer.parseInt(request.getParameter("page")); } catch (Exception e) {}
+
+            String search = request.getParameter("search");
+            if (search != null) {
+                search = search.trim();
+                if (search.isEmpty()) {
+                    search = null;
+                }
+            }
+
             String status = request.getParameter("status");
             String timeFilter = request.getParameter("time");
             String sort = request.getParameter("sort");
 
-            List<Order> list = orderDAO.getAllOrders(page, 10, status, timeFilter, sort);
-            int totalOrders = orderDAO.countAllOrders(status, timeFilter);
-            int totalPages = (int) Math.ceil((double)totalOrders / 10);
+            List<Order> list = orderDAO.getAllOrders(page, 10, search, status, timeFilter, sort);
+            int totalOrders = orderDAO.countAllOrders(search, status, timeFilter);
+            int totalPages = (int) Math.ceil((double) totalOrders / 10);
+
             request.setAttribute("orders", list);
             request.setAttribute("currentPage", page);
             request.setAttribute("totalPages", totalPages);
             request.setAttribute("totalOrders", totalOrders);
+            request.setAttribute("search", search);
             request.setAttribute("status", status);
             request.setAttribute("time", timeFilter);
             request.setAttribute("sort", sort);
