@@ -16,114 +16,109 @@
     <section class="checkout-page">
         <div class="container">
             <h1 class="checkout-title">Giỏ hàng của bạn</h1>
-            <div class="checkout-layout">
-                <div class="checkout-left">
-                    <div class="checkout-card">
-                        <table class="cart-table">
-                            <thead>
-                            <tr>
-                                <th>Ảnh</th>          <%-- Đổi tên cột --%>
-                                <th>Tên sản phẩm</th> <%-- Thêm cột mới --%>
-                                <th>Đơn giá</th>
-                                <th>Số lượng</th>
-                                <th>Thành tiền</th>
-                                <th>Thao tác</th>
-                            </tr>
-                            </thead>
-                            <tbody>
-                            <c:if test="${empty sessionScope.cart or sessionScope.cart.items.size() == 0}">
-                                <tr><td colspan="6" style="text-align:center; padding: 20px;">Giỏ hàng trống!</td></tr>
-                            </c:if>
-
-                            <c:forEach var="item" items="${sessionScope.cart.items}">
+            <form id="checkoutForm" action="${pageContext.request.contextPath}/thanh-toan" method="GET">
+                <div class="checkout-layout">
+                    <div class="checkout-left">
+                        <div class="checkout-card">
+                            <table class="cart-table">
+                                <thead>
                                 <tr>
-                                        <%-- Cột 1: Chỉ hiển thị Ảnh --%>
-                                    <td style="width: 100px; text-align: center;">
-                                        <div class="cart-item-product">
-                                            <img src="${item.product.imageUrl}" alt="${item.product.name}"
-                                                 style="width: 80px; height: auto; object-fit: cover; border-radius: 4px;">
-                                        </div>
-                                    </td>
-
-                                        <%-- Cột 2: Hiển thị Tên sản phẩm --%>
-                                    <td>
-                                        <a href="${pageContext.request.contextPath}/chi-tiet-san-pham?id=${item.product.id}"
-                                           style="font-weight: 500; color: #333; text-decoration: none;">
-                                                ${item.product.name}
-                                        </a>
-                                    </td>
-
-                                        <%-- Cột 3: Đơn giá --%>
-                                    <td>
-                                        <c:choose>
-                                            <c:when test="${item.product.salePrice > 0}">
-                                                <fmt:formatNumber value="${item.product.salePrice}" type="currency"/>
-                                            </c:when>
-                                            <c:otherwise>
-                                                <fmt:formatNumber value="${item.product.price}" type="currency"/>
-                                            </c:otherwise>
-                                        </c:choose>
-                                    </td>
-
-                                        <%-- Cột 4: Số lượng --%>
-                                    <td>
-                                        <form action="${pageContext.request.contextPath}/gio-hang" method="post" style="display:inline;">
-                                            <input type="hidden" name="action" value="update">
-                                            <input type="hidden" name="productId" value="${item.product.id}">
-                                            <input class="cart-item-quantity" type="number" name="quantity"
-                                                   value="${item.quantity}" min="1"
-                                                   onchange="this.form.submit()" style="width: 60px; text-align: center;">
-                                        </form>
-                                    </td>
-
-                                        <%-- Cột 5: Thành tiền --%>
-                                    <td style="color: #d9534f; font-weight: bold;">
-                                        <fmt:formatNumber value="${item.totalPrice}" type="currency"/>
-                                    </td>
-
-                                        <%-- Cột 6: Thao tác --%>
-                                    <td>
-                                        <a href="${pageContext.request.contextPath}/chi-tiet-san-pham?id=${item.product.id}" title="Xem chi tiết"
-                                           style="color: #2196F3; margin-right: 10px; font-size: 1.1rem; text-decoration: none;">
-                                            <i class="fa-solid fa-eye"></i>
-                                        </a>
-                                        <form action="${pageContext.request.contextPath}/gio-hang" method="post" style="display:inline;">
-                                            <input type="hidden" name="action" value="remove">
-                                            <input type="hidden" name="productId" value="${item.product.id}">
-                                            <button type="submit" class="cart-item-remove" title="Xóa sản phẩm"
-                                                    style="border:none; background:none; cursor:pointer; color:red; font-size: 1.1rem;">
-                                                <i class="fa-solid fa-trash"></i>
-                                            </button>
-                                        </form>
-                                    </td>
+                                    <th style="width: 50px; text-align: center;">
+                                        <input type="checkbox" id="selectAll" title="Chọn tất cả">
+                                    </th>
+                                    <th>Ảnh</th>
+                                    <th>Tên sản phẩm</th>
+                                    <th>Đơn giá</th>
+                                    <th>Số lượng</th>
+                                    <th>Thành tiền</th>
+                                    <th>Thao tác</th>
                                 </tr>
-                            </c:forEach>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
+                                </thead>
+                                <tbody>
+                                <c:if test="${empty sessionScope.cart or sessionScope.cart.items.size() == 0}">
+                                    <tr><td colspan="7" style="text-align:center; padding: 20px;">Giỏ hàng trống!</td></tr>
+                                </c:if>
 
-                <div class="checkout-right">
-                    <div class="checkout-card">
-                        <h2 class="checkout-card__title">Tóm tắt đơn hàng</h2>
-                        <div class="order-summary">
-                            <div class="order-summary__row order-summary__row--total">
-                                <span>Tổng cộng</span>
-                                <span style="color: #d9534f; font-size: 1.2em; font-weight: bold;">
-                                    <fmt:formatNumber value="${sessionScope.cart.totalMoney}" type="currency"/>
+                                <c:forEach var="item" items="${sessionScope.cart.items}">
+                                    <tr>
+                                        <td style="text-align: center;">
+                                            <input type="checkbox" class="item-checkbox" name="selectedItems"
+                                                   value="${item.product.id}"
+                                                   data-price="${item.totalPrice}">
+                                        </td>
+
+                                        <td style="width: 100px; text-align: center;">
+                                            <div class="cart-item-product">
+                                                <img src="${item.product.imageUrl}" alt="${item.product.name}"
+                                                     style="width: 80px; height: auto; object-fit: cover; border-radius: 4px;">
+                                            </div>
+                                        </td>
+
+                                        <td>
+                                            <a href="${pageContext.request.contextPath}/chi-tiet-san-pham?id=${item.product.id}"
+                                               style="font-weight: 500; color: #333; text-decoration: none;">
+                                                    ${item.product.name}
+                                            </a>
+                                        </td>
+
+                                        <td>
+                                            <c:choose>
+                                                <c:when test="${item.product.salePrice > 0}">
+                                                    <fmt:formatNumber value="${item.product.salePrice}" type="currency"/>
+                                                </c:when>
+                                                <c:otherwise>
+                                                    <fmt:formatNumber value="${item.product.price}" type="currency"/>
+                                                </c:otherwise>
+                                            </c:choose>
+                                        </td>
+
+                                        <td>
+                                            <input class="cart-item-quantity" type="number"
+                                                   value="${item.quantity}" min="1"
+                                                   data-id="${item.product.id}"
+                                                   onchange="updateQuantity(this)" style="width: 60px; text-align: center;">
+                                        </td>
+
+                                        <td style="color: #d9534f; font-weight: bold;">
+                                            <fmt:formatNumber value="${item.totalPrice}" type="currency"/>
+                                        </td>
+
+                                        <td>    
+                                            <a href="${pageContext.request.contextPath}/gio-hang?action=remove&productId=${item.product.id}" class="cart-item-remove" title="Xóa sản phẩm"
+                                               style="color:red; font-size: 1.1rem; text-decoration: none;">
+                                                <i class="fa-solid fa-trash"></i>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                </c:forEach>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="checkout-right">
+                        <div class="checkout-card">
+                            <h2 class="checkout-card__title">Tóm tắt đơn hàng</h2>
+                            <div class="order-summary">
+                                <div class="order-summary__row order-summary__row--total">
+                                    <span>Tổng cộng (Đã chọn)</span>
+                                    <span id="total-selected-price" style="color: #d9534f; font-size: 1.2em; font-weight: bold;">
+                                    0 ₫
                                 </span>
+                                </div>
+                            </div>
+                            <div class="checkout-submit">
+                                <button type="submit" id="btn-checkout" class="btn btn-primary checkout-submit__btn" style="width:100%; border:none; padding:10px; cursor:pointer;" disabled>
+                                    Tiến hành Thanh toán
+                                </button>
+                                <a href="${pageContext.request.contextPath}/san-pham" class="continue-shopping-link" style="display:block; text-align:center; margin-top:15px;">
+                                    <i class="fa-solid fa-arrow-left"></i> Tiếp tục mua sắm
+                                </a>
                             </div>
                         </div>
-                        <div class="checkout-submit">
-                            <a href="${pageContext.request.contextPath}/thanh-toan" class="btn btn-primary checkout-submit__btn">Tiến hành Thanh toán</a>
-                            <a href="${pageContext.request.contextPath}/san-pham" class="continue-shopping-link">
-                                <i class="fa-solid fa-arrow-left"></i> Tiếp tục mua sắm
-                            </a>
-                        </div>
                     </div>
                 </div>
-            </div>
-
+            </form>
         </div>
     </section>
 </main>
@@ -131,6 +126,70 @@
 <button id="backToTop" class="back-to-top" title="Lên đầu trang">
     <i class="fa-solid fa-chevron-up"></i>
 </button>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const selectAllCb = document.getElementById('selectAll');
+        const itemCbs = document.querySelectorAll('.item-checkbox');
+        const totalDisplay = document.getElementById('total-selected-price');
+        const checkoutBtn = document.getElementById('btn-checkout');
+        const formatCurrency = (amount) => {
+            return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
+        };
+        const calculateTotal = () => {
+            let total = 0;
+            let checkedCount = 0;
 
+            itemCbs.forEach(cb => {
+                if (cb.checked) {
+                    total += parseFloat(cb.getAttribute('data-price'));
+                    checkedCount++;
+                }
+            });
+
+            totalDisplay.innerText = formatCurrency(total);
+            if (checkedCount > 0) {
+                checkoutBtn.disabled = false;
+                checkoutBtn.style.opacity = '1';
+                checkoutBtn.innerText = 'Tiến hành Thanh toán (' + checkedCount + ')';
+            } else {
+                checkoutBtn.disabled = true;
+                checkoutBtn.style.opacity = '0.5';
+                checkoutBtn.innerText = 'Vui lòng chọn sản phẩm';
+            }
+        };
+        if (selectAllCb) {
+            selectAllCb.addEventListener('change', function() {
+                itemCbs.forEach(cb => cb.checked = this.checked);
+                calculateTotal();
+            });
+        }
+
+        itemCbs.forEach(cb => {
+            cb.addEventListener('change', function() {
+                const allChecked = Array.from(itemCbs).every(i => i.checked);
+                if (selectAllCb) selectAllCb.checked = allChecked;
+                calculateTotal();
+            });
+        });
+
+        calculateTotal();
+    });
+    function updateQuantity(input) {
+        const productId = input.getAttribute("data-id");
+        const quantity = input.value;
+
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '${pageContext.request.contextPath}/gio-hang';
+
+        form.innerHTML = `
+        <input type="hidden" name="action" value="update">
+        <input type="hidden" name="productId" value="`+productId+`">
+        <input type="hidden" name="quantity" value="`+quantity+`">
+    `;
+        document.body.appendChild(form);
+        form.submit();
+    }
+</script>
 </body>
 </html>

@@ -35,13 +35,31 @@ public class CheckoutServlet extends HttpServlet {
             response.sendRedirect(request.getContextPath() + "/san-pham");
             return;
         }
+        String[] selectedItems = request.getParameterValues("selectedItems");
+        if (selectedItems == null || selectedItems.length == 0) {
+            response.sendRedirect(request.getContextPath() + "/gio-hang");
+            return;
+        }
+        double subtotal = 0;
+        List<CartItem> checkoutItems = new ArrayList<>();
+        for (CartItem item : cart.getItems()) {
+            for (String selectedId : selectedItems) {
+                if (item.getProduct().getId() == Integer.parseInt(selectedId)) {
+                    checkoutItems.add(item);
+                    subtotal += item.getTotalPrice();
+                    break;
+                }
+            }
+        }
         UserAddressDAO addressDAO = new UserAddressDAO();
         List<UserAddress> addresses = addressDAO.getListAddress(user.getId());
         request.setAttribute("addresses", addresses);
-        request.setAttribute("subtotal", cart.getTotalMoney());
+        request.setAttribute("checkoutItems", checkoutItems);
+        request.setAttribute("subtotal", subtotal);
         double defaultShipping = 20000;
         request.setAttribute("shippingFee", defaultShipping);
-        request.setAttribute("totalAmount", cart.getTotalMoney() + defaultShipping);
+        request.setAttribute("totalAmount", subtotal + defaultShipping);
+        session.setAttribute("selectedItemIds", selectedItems);
 
         request.getRequestDispatcher("/cart/thanh-toan.jsp").forward(request, response);
     }
