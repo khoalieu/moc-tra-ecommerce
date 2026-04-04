@@ -162,7 +162,7 @@
                             <h2 class="checkout-card__title">Đơn hàng của bạn</h2>
 
                             <div class="order-items">
-                                <c:forEach var="item" items="${sessionScope.cart.items}">
+                                <c:forEach var="item" items="${requestScope.checkoutItems}">
                                     <div class="order-item">
                                         <div class="order-item__thumb">
                                             <img src="${item.product.imageUrl}" alt="${item.product.name}">
