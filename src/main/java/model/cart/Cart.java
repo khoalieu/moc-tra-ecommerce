@@ -55,4 +55,14 @@ public class Cart {
         }
         return count;
     }
+    public void removeItems(String[] ids) {
+        if (ids == null) return;
+        for (String id : ids) {
+            int productId = Integer.parseInt(id);
+            if (items.containsKey(productId)) {
+                CartItem item = items.get(productId);
+                items.remove(productId);
+            }
+        }
+    }
 }

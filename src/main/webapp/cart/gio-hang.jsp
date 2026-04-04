@@ -83,7 +83,7 @@
                                             <fmt:formatNumber value="${item.totalPrice}" type="currency"/>
                                         </td>
 
-                                        <td>    
+                                        <td>
                                             <a href="${pageContext.request.contextPath}/gio-hang?action=remove&productId=${item.product.id}" class="cart-item-remove" title="Xóa sản phẩm"
                                                style="color:red; font-size: 1.1rem; text-decoration: none;">
                                                 <i class="fa-solid fa-trash"></i>
