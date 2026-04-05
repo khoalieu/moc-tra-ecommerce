@@ -76,7 +76,7 @@
                                     </div>
                                 </div>
 
-                                <div class="form-row form-row--3">
+                                <div class="form-row form-row--2">
                                     <div class="form-field">
                                         <label for="province">Tỉnh / Thành phố <span class="required">*</span></label>
                                         <select id="province" name="province" required>
@@ -84,15 +84,8 @@
                                         </select>
                                     </div>
                                     <div class="form-field">
-                                        <label for="district">Quận / Huyện <span class="required">*</span></label>
-                                        <select id="district" name="district" required>
-                                            <option value="">-- Chọn quận / huyện --</option>
-                                        </select>
-                                    </div>
-
-                                    <div class="form-field">
                                         <label for="ward">Phường / Xã <span class="required">*</span></label>
-                                        <select id="ward" name="ward" required>
+                                        <select id="ward" name="ward" disabled required>
                                             <option value="">-- Chọn phường / xã --</option>
                                         </select>
                                     </div>
@@ -255,15 +248,27 @@
 
 <script>
     document.addEventListener("DOMContentLoaded", function () {
+        // --- 1. XỬ LÝ LOGIC UI (FORM & TÍNH TIỀN) ---
         const addressRadios = document.querySelectorAll('input[name="selectedAddress"]');
         const manualAddressForm = document.querySelector(".manual-address");
         const manualInputs = manualAddressForm.querySelectorAll("input, textarea, select");
+        const provinceSelect = document.getElementById("province");
+        const wardSelect = document.getElementById("ward");
 
         function updateFormState() {
             const selected = document.querySelector('input[name="selectedAddress"]:checked');
             if (selected && selected.value === "new") {
                 manualAddressForm.classList.remove("disabled");
-                manualInputs.forEach(input => input.disabled = false);
+
+                manualInputs.forEach(input => {
+                    if(input.id !== "ward") {
+                        input.disabled = false;
+                    }
+                });
+                if(provinceSelect.value !== "") {
+                    wardSelect.disabled = false;
+                }
+
                 const firstInput = manualAddressForm.querySelector('input');
                 if(firstInput) firstInput.focus();
             } else {
@@ -271,10 +276,12 @@
                 manualInputs.forEach(input => input.disabled = true);
             }
         }
+
         addressRadios.forEach(radio => {
             radio.addEventListener("change", updateFormState);
         });
         updateFormState();
+
         const shippingRadios = document.querySelectorAll('input[name="shippingMethod"]');
         const subtotal = parseFloat(document.getElementById('hiddenSubtotal').value);
         const shippingFeeDisplay = document.getElementById('shippingFeeDisplay');
@@ -288,7 +295,6 @@
         function updateTotal() {
             const selectedShip = document.querySelector('input[name="shippingMethod"]:checked');
             const shipPrice = parseFloat(selectedShip.getAttribute('data-price'));
-
             const newTotal = subtotal + shipPrice;
 
             shippingFeeDisplay.innerText = formatCurrency(shipPrice);
@@ -299,6 +305,49 @@
         shippingRadios.forEach(radio => {
             radio.addEventListener("change", updateTotal);
         });
+        const DATA_URL = "${pageContext.request.contextPath}/assets/data/openapi.json";
+        let provincesData = [];
+
+        async function loadData() {
+            try {
+                const response = await fetch(DATA_URL);
+                if (!response.ok) throw new Error("Không thể đọc file JSON");
+                provincesData = await response.json();
+                provincesData.forEach(p => {
+                    const option = document.createElement("option");
+                    option.value = p.name;
+                    option.dataset.code = p.code;
+                    option.textContent = p.name;
+                    provinceSelect.appendChild(option);
+                });
+            } catch (error) {
+                console.error("Lỗi khi tải dữ liệu địa giới:", error);
+            }
+        }
+        provinceSelect.addEventListener("change", function () {
+            wardSelect.innerHTML = '<option value="">-- Chọn phường / xã --</option>';
+            wardSelect.disabled = true;
+
+            const selectedOption = this.options[this.selectedIndex];
+            const provinceCode = parseInt(selectedOption.dataset.code);
+
+            if (!provinceCode) return;
+            const selectedProvince = provincesData.find(p => p.code === provinceCode);
+
+            if (selectedProvince && selectedProvince.wards && selectedProvince.wards.length > 0) {
+                selectedProvince.wards.forEach(w => {
+                    const option = document.createElement("option");
+                    option.value = w.name;
+                    option.textContent = w.name;
+                    wardSelect.appendChild(option);
+                });
+                const selectedRadio = document.querySelector('input[name="selectedAddress"]:checked');
+                if (selectedRadio && selectedRadio.value === "new") {
+                    wardSelect.disabled = false;
+                }
+            }
+        });
+        loadData();
     });
 </script>
 </html>
