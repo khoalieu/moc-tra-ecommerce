@@ -68,28 +68,32 @@
                                 <div class="form-row form-row--2">
                                     <div class="form-field">
                                         <label for="fullName">Họ và tên <span class="required">*</span></label>
-                                        <input type="text" id="fullName" name="fullName" placeholder="Nguyễn Văn A">
+                                        <input type="text" id="fullName" name="fullName" placeholder="Nguyễn Văn A" required minlength="2" title="Vui lòng nhập họ tên hợp lệ">
                                     </div>
                                     <div class="form-field">
                                         <label for="phoneNumber">Số điện thoại <span class="required">*</span></label>
-                                        <input type="tel" id="phoneNumber" name="phoneNumber" placeholder="0888 531 015">
+                                        <input type="tel" id="phoneNumber" name="phoneNumber" placeholder="0888 531 015" required pattern="^(0[3|5|7|8|9])+([0-9]{8})$" title="Số điện thoại phải bắt đầu bằng 0 và gồm 10 chữ số">
                                     </div>
                                 </div>
 
                                 <div class="form-row form-row--3">
                                     <div class="form-field">
-                                        <label for="province">Tỉnh / Thành phố</label>
-                                        <select id="province" name="province">
+                                        <label for="province">Tỉnh / Thành phố <span class="required">*</span></label>
+                                        <select id="province" name="province" required>
                                             <option value="">-- Chọn tỉnh / thành --</option>
-                                            <option value="Hồ Chí Minh">Hồ Chí Minh</option>
-                                            <option value="Hà Nội">Hà Nội</option>
                                         </select>
                                     </div>
                                     <div class="form-field">
-                                        <label for="ward">Phường / Xã</label>
-                                        <select id="ward" name="ward">
+                                        <label for="district">Quận / Huyện <span class="required">*</span></label>
+                                        <select id="district" name="district" required>
+                                            <option value="">-- Chọn quận / huyện --</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="form-field">
+                                        <label for="ward">Phường / Xã <span class="required">*</span></label>
+                                        <select id="ward" name="ward" required>
                                             <option value="">-- Chọn phường / xã --</option>
-                                            <option value="Phường 1">Phường 1</option>
                                         </select>
                                     </div>
                                 </div>
@@ -97,7 +101,7 @@
                                 <div class="form-row">
                                     <div class="form-field">
                                         <label for="addressLine">Địa chỉ cụ thể <span class="required">*</span></label>
-                                        <input type="text" id="addressLine" name="addressLine" placeholder="Số nhà, tên đường, tòa nhà...">
+                                        <input type="text" id="addressLine" name="addressLine" placeholder="Số nhà, tên đường, tòa nhà..." required>
                                     </div>
                                 </div>
                             </div>
