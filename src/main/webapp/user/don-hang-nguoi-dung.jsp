@@ -12,6 +12,25 @@
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/main.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css" />
+    <style>
+        .alert {
+            padding: 15px;
+            margin: 15px 0;
+            border: 1px solid transparent;
+            border-radius: 4px;
+            font-family: Arial, sans-serif;
+        }
+        .alert-success {
+            color: #155724;
+            background-color: #d4edda;
+            border-color: #c3e6cb;
+        }
+        .alert-danger {
+            color: #721c24;
+            background-color: #f8d7da;
+            border-color: #f5c6cb;
+        }
+    </style>
 </head>
 <body class="user-dashboard-page">
 <jsp:include page="/common/header.jsp"></jsp:include>
@@ -21,6 +40,12 @@
     </jsp:include>
 
     <main class="main-content">
+        <c:if test="${not empty sessionScope.msg}">
+            <div class="alert alert-${sessionScope.msgType}">
+                    ${sessionScope.msg}
+            </div>
+            <% session.removeAttribute("msg"); session.removeAttribute("msgType"); %>
+        </c:if>
         <div class="orders-header">
             <h2 class="page-title" style="margin-bottom: 0;">Đơn Hàng Gần Đây</h2>
             <div class="orders-filter">

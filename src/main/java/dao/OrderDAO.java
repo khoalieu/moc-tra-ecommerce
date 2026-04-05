@@ -419,4 +419,42 @@ public class OrderDAO {
         }
         return list;
     }
+    public boolean cancelOrder(int orderId) {
+        Connection conn = null;
+        try {
+            conn = DBConnect.getConnection();
+            conn.setAutoCommit(false);
+            Order order = getOrderById(orderId);
+            if (order == null || order.getStatus() != OrderStatus.PENDING) {
+                return false;
+            }
+            String sqlUpdateOrder = "UPDATE orders SET status = 'cancelled' WHERE id = ?";
+            try (PreparedStatement ps = conn.prepareStatement(sqlUpdateOrder)) {
+                ps.setInt(1, orderId);
+                ps.executeUpdate();
+            }
+            ProductDAO productDAO = new ProductDAO();
+            for (OrderItem item : order.getItems()) {
+                String sqlUpdateStock = "UPDATE products SET stock_quantity = stock_quantity + ? WHERE id = ?";
+                try (PreparedStatement psStock = conn.prepareStatement(sqlUpdateStock)) {
+                    psStock.setInt(1, item.getQuantity());
+                    psStock.setInt(2, item.getProductId());
+                    psStock.executeUpdate();
+                }
+            }
+
+            conn.commit();
+            return true;
+        } catch (SQLException e) {
+            if (conn != null) {
+                try { conn.rollback(); } catch (SQLException ex) { ex.printStackTrace(); }
+            }
+            e.printStackTrace();
+        } finally {
+            if (conn != null) {
+                try { conn.setAutoCommit(true); conn.close(); } catch (SQLException e) { e.printStackTrace(); }
+            }
+        }
+        return false;
+    }
 }
