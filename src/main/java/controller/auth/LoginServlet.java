@@ -30,34 +30,34 @@ public class LoginServlet extends HttpServlet {
 
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        String userParam = request.getParameter("username");
+        String loginKey = request.getParameter("username");
         String passParam = request.getParameter("password");
 
         String genericErrorMessage = "Tên đăng nhập hoặc mật khẩu không chính xác.";
 
-        if (userParam == null || userParam.trim().isEmpty() ||
+        if (loginKey == null || loginKey.trim().isEmpty() ||
                 passParam == null || passParam.isEmpty()) {
-            request.setAttribute("username", userParam != null ? userParam.trim() : "");
+            request.setAttribute("username", loginKey != null ? loginKey.trim() : "");
             request.setAttribute("errorMessage", "Vui lòng nhập đầy đủ tên đăng nhập và mật khẩu!");
             request.getRequestDispatcher("/auth/login.jsp").forward(request, response);
             return;
         }
 
-        String username = userParam.trim();
+        String identifier = loginKey.trim().toLowerCase();
         String password = passParam;
 
         UserDAO dao = new UserDAO();
 
-        User user = dao.getUserForLogin(username);
+        User user = dao.getUserForLogin(identifier);
         if (user == null) {
             request.setAttribute("errorMessage", genericErrorMessage);
-            request.setAttribute("username", username);
+            request.setAttribute("username", identifier);
             request.getRequestDispatcher("/auth/login.jsp").forward(request, response);
             return;
         }
         if (user.getLockUntil() != null && user.getLockUntil().isAfter(LocalDateTime.now())) {
             request.setAttribute("errorMessage", genericErrorMessage);
-            request.setAttribute("username", username);
+            request.setAttribute("username", identifier);
             request.getRequestDispatcher("/auth/login.jsp").forward(request, response);
             return;
         }
@@ -81,7 +81,7 @@ public class LoginServlet extends HttpServlet {
             Cart userCartFromDB = cartDAO.getCartByUserId(user.getId());
             session.setAttribute("cart", userCartFromDB);
             if (user.getRole() != null && user.getRole().name().equalsIgnoreCase("ADMIN")) {
-                response.sendRedirect(request.getContextPath() + "admin/dashboard");
+                response.sendRedirect(request.getContextPath() + "/admin/dashboard");
             } else {
                 response.sendRedirect(request.getContextPath() + "/index");
             }
@@ -90,29 +90,33 @@ public class LoginServlet extends HttpServlet {
             int currentAttempts = (user.getFailedAttempts() != null) ? user.getFailedAttempts() : 0;
             boolean justLocked = dao.recordFailedAttempt(user.getId(), currentAttempts);
             if (justLocked) {
-                sendLockoutEmailAsync(user.getEmail(), user.getUsername());
+                String baseURL = request.getScheme() + "://"+request.getServerName()+":"+request.getServerPort()+request.getContextPath();
+                sendLockoutEmailAsync(user.getEmail(), user.getUsername(), baseURL);
                 logSuspiciousActivity(user.getId(), request.getRemoteAddr());
             }
 
             request.setAttribute("errorMessage", genericErrorMessage);
-            request.setAttribute("username", username);
+            request.setAttribute("username", identifier);
             request.getRequestDispatcher("/auth/login.jsp").forward(request, response);
         }
     }
 
-    private void sendLockoutEmailAsync(String toEmail, String username) {
+    private void sendLockoutEmailAsync(String toEmail, String username, String baseUrl) {
         if (toEmail == null || toEmail.trim().isEmpty()) {
             LogService.logWarning("Không thể gửi email cảnh báo: User " + username + " không có địa chỉ email.");
             return;
         }
         new Thread(() -> {
             try {
+                String resetLink = baseUrl + "/forgot-password?email=" + toEmail;
                 String subject = "Cảnh báo bảo mật: Tài khoản Mộc Trà của bạn bị tạm khóa";
                 String content = "Chào " + username + ",\n\n"
                         + "Chúng tôi nhận thấy có quá nhiều lần nhập sai mật khẩu vào tài khoản của bạn. "
                         + "Để bảo vệ an toàn, tài khoản của bạn đã bị khóa tạm thời trong 30 phút.\n\n"
                         + "Nếu đây không phải là bạn, vui lòng truy cập website và tiến hành Đổi mật khẩu/Quên mật khẩu "
                         + "ngay lập tức để đảm bảo an toàn.\n\n"
+                        + "Nếu bạn quên mật khẩu, hãy nhấn vào liên kết dưới đây để nhận mã OTP và mở khóa tài khoản ngay:\n"
+                        + resetLink + "\n\n"
                         + "Trân trọng,\n"
                         + "Đội ngũ bảo mật Mộc Trà Ecommerce.";
                 EmailService.sendEmail(toEmail, subject, content);

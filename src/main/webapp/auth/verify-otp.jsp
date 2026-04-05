@@ -101,6 +101,7 @@
     document.addEventListener('DOMContentLoaded', function () {
         const inputs = document.querySelectorAll('.otp-input');
         const hiddenInput = document.getElementById('otpHiddenInput');
+        const autofill = document.getElementById('otp-auto-fill');
 
         function updateHiddenInput() {
             let code = '';
@@ -108,22 +109,28 @@
             hiddenInput.value = code;
         }
 
+        if (autofill) {
+            autofill.addEventListener('click', function() {
+                const sourceElement = document.getElementById('source-code');
+                if (sourceElement){
+                    const codeText = sourceElement.textContent.trim();
+                    inputs.forEach((input, index) => {
+                        input.value = codeText[index] || '';
+                        input.style.backgroundColor = "#e8f5e9";
+                    });
+                    updateHiddenInput();
+                    document.querySelector('.btn').focus();
+                }
+            });
+        }
+
         inputs.forEach((input, index) => {
             input.addEventListener('input', (e) => {
-                input.value = input.value.replace(/[^0-9]/g, '');
-
-                if (e.inputType === 'insertFromPaste' && input.value.length > 1) {
-                    const chars = input.value.split('');
-                    input.value = chars[0];
-                    let nextIndex = index + 1;
-                    for (let i = 1; i < chars.length && nextIndex < inputs.length; i++, nextIndex++) {
-                        inputs[nextIndex].value = chars[i].replace(/[^0-9]/g, '');
-                    }
-                }
+                const val = e.target.value;
+                input.value = val.replace(/[^0-9]/g, '').slice(-1);
 
                 if (input.value && index < inputs.length - 1) {
                     inputs[index + 1].focus();
-                    inputs[index + 1].select();
                 }
                 updateHiddenInput();
             });
@@ -132,13 +139,20 @@
                 if (e.key === 'Backspace') {
                     if (input.value === '' && index > 0) {
                         inputs[index - 1].focus();
-                        inputs[index - 1].value = '';
-                        e.preventDefault();
-                        updateHiddenInput();
                     }
                 }
-                if (e.key === 'ArrowLeft' && index > 0) inputs[index - 1].focus();
-                if (e.key === 'ArrowRight' && index < inputs.length - 1) inputs[index + 1].focus();
+                if (e.key === 'ArrowLeft' && index > 0) {
+                    e.preventDefault();
+                    inputs[index - 1].focus();
+                }
+                if (e.key === 'ArrowRight' && index < inputs.length - 1) {
+                    e.preventDefault();
+                    inputs[index + 1].focus();
+                }
+            });
+
+            input.addEventListener('click', () => {
+                input.select();
             });
         });
     });

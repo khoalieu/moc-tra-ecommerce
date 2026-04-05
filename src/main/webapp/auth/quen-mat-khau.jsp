@@ -41,6 +41,8 @@
                                 name="email"
                                 placeholder="Email đã đăng ký"
                                 aria-label="Email đã đăng ký"
+                                value="${not empty param.email ? param.email : sessionScope.RESET_EMAIL}"
+                                ${not empty param.email or not empty sessionScope.RESET_EMAIL ? 'readonly' : ''}
                                 required>
                     </div>
 
