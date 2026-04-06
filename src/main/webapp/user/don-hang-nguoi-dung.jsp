@@ -30,6 +30,136 @@
             background-color: #f8d7da;
             border-color: #f5c6cb;
         }
+        .modal-overlay {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5); z-index: 2000; justify-content: center; align-items: center;
+        }
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.4); /* Làm tối nền mịn hơn */
+            backdrop-filter: blur(4px);    /* Hiệu ứng làm mờ nền phía sau */
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+            transition: all 0.3s ease;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .modal-content {
+            background: #fff;
+            padding: 0; /* Để header có màu riêng */
+            border-radius: 12px;
+            width: 100%;
+            max-width: 500px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+            animation: slideDown 0.4s ease;
+        }
+
+        /* Header Modal */
+        .modal-header {
+            background: #f8f9fa;
+            padding: 16px 24px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h3 {
+            margin: 0;
+            font-size: 1.25rem;
+            color: #333;
+            font-weight: 600;
+        }
+
+        .close-modal {
+            font-size: 24px;
+            color: #999;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+
+        .close-modal:hover {
+            color: #d32f2f;
+        }
+        
+        .modal-body {
+            padding: 24px;
+        }
+
+        .radio-group {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .radio-label {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            padding: 12px 15px;
+            border: 1px solid #eee;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+        }
+
+        .radio-label:hover {
+            background-color: #f1f8e9;
+            border-color: #8bc34a;
+        }
+
+        .radio-label input[type="radio"] {
+            width: 18px;
+            height: 18px;
+            accent-color: #4caf50;
+        }
+
+        #otherReasonInput {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            margin-top: 10px;
+            resize: none;
+            font-family: inherit;
+            transition: border-color 0.3s;
+        }
+        #otherReasonInput:focus {
+            border-color: #4caf50;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
+        }
+        .modal-footer {
+            padding: 16px 24px;
+            background: #f8f9fa;
+            border-top: 1px solid #eee;
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+        }
+        .btn {
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: 500;
+            cursor: pointer;
+            border: none;
+            transition: opacity 0.2s;
+        }
+
+        .btn-secondary { background: #e0e0e0; color: #333; }
+        .btn-danger { background: #d32f2f; color: #fff; }
+        .btn:hover { opacity: 0.9; }
     </style>
 </head>
 <body class="user-dashboard-page">
@@ -157,7 +287,7 @@
                                     <c:if test="${statusStr == 'PENDING'}">
                                         <form action="${pageContext.request.contextPath}/cancel-order" method="post" style="display:inline;" onsubmit="return confirm('Bạn có chắc muốn hủy đơn này?');">
                                             <input type="hidden" name="orderId" value="${o.id}">
-                                            <button type="submit" class="btn-action btn-secondary">
+                                            <button type="button" class="btn-action btn-secondary" onclick="openCancelModal(${o.id})">
                                                 <i class="fa-solid fa-times"></i> Hủy đơn
                                             </button>
                                         </form>
@@ -184,6 +314,45 @@
             <a href="${pageContext.request.contextPath}/san-pham" class="btn-action btn-primary" style="text-decoration: none; padding: 10px 20px;">
                 <i class="fa-solid fa-shopping-bag"></i> Mua sắm ngay
             </a>
+        </div>
+        <div id="cancelModal" class="modal-overlay">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Lý do hủy đơn hàng</h3>
+                    <span class="close-modal" onclick="closeCancelModal()">&times;</span>
+                </div>
+                <form action="${pageContext.request.contextPath}/cancel-order" method="post">
+                    <input type="hidden" name="orderId" id="modalOrderId">
+                    <div class="radio-group">
+                        <label class="radio-label">
+                            <input type="radio" name="reasonOpt" value="Đổi ý, không muốn mua nữa" checked onchange="toggleReasonInput(false)">
+                            <span>Đổi ý, không muốn mua nữa</span>
+                        </label>
+                        <label class="radio-label">
+                            <input type="radio" name="reasonOpt" value="Tìm thấy giá rẻ hơn ở nơi khác" onchange="toggleReasonInput(false)">
+                            <span>Tìm thấy giá rẻ hơn ở nơi khác</span>
+                        </label>
+                        <label class="radio-label">
+                            <input type="radio" name="reasonOpt" value="Thời gian giao hàng quá lâu" onchange="toggleReasonInput(false)">
+                            <span>Thời gian giao hàng quá lâu</span>
+                        </label>
+                        <label class="radio-label">
+                            <input type="radio" name="reasonOpt" value="other" onchange="toggleReasonInput(true)">
+                            <span>Lựa chọn khác</span>
+                        </label>
+                    </div>
+
+                    <div id="otherReasonWrapper" style="display: none; margin-top: 15px;">
+                        <textarea name="otherReason" id="otherReasonInput" class="form-input full-width" placeholder="Nhập lý do cụ thể..."></textarea>
+                    </div>
+                    <input type="hidden" name="cancelReason" id="finalReason">
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" onclick="closeCancelModal()">Đóng</button>
+                        <button type="submit" class="btn btn-danger" onclick="prepareSubmit(event)">Xác nhận hủy</button>
+                    </div>
+                </form>
+            </div>
         </div>
     </main>
 </div>
@@ -213,6 +382,33 @@
             });
         });
     });
+    function openCancelModal(orderId) {
+        document.getElementById('modalOrderId').value = orderId;
+        document.getElementById('cancelModal').classList.add('active');
+    }
+
+    function closeCancelModal() {
+        document.getElementById('cancelModal').classList.remove('active');
+    }
+
+    function toggleReasonInput(isOther) {
+        document.getElementById('otherReasonWrapper').style.display = isOther ? 'block' : 'none';
+    }
+
+    function prepareSubmit(e) {
+        const selectedOpt = document.querySelector('input[name="reasonOpt"]:checked').value;
+        let finalReason = selectedOpt;
+
+        if (selectedOpt === 'other') {
+            finalReason = document.getElementById('otherReasonInput').value.trim();
+            if (finalReason === "") {
+                alert("Vui lòng nhập lý do cụ thể!");
+                e.preventDefault();
+                return;
+            }
+        }
+        document.getElementById('finalReason').value = finalReason;
+    }
 </script>
 </body>
 </html>

@@ -25,10 +25,11 @@ public class CancelOrderServlet extends HttpServlet {
 
         try {
             int orderId = Integer.parseInt(request.getParameter("orderId"));
+            String reason = request.getParameter("cancelReason");
             OrderDAO orderDAO = new OrderDAO();
             Order order = orderDAO.getOrderById(orderId);
             if (order != null && order.getUserId() == user.getId()) {
-                boolean success = orderDAO.cancelOrder(orderId);
+                boolean success = orderDAO.cancelOrder(orderId, reason);
                 if (success) {
                     session.setAttribute("msg", "Đơn hàng đã được hủy thành công!");
                     session.setAttribute("msgType", "success");

@@ -457,4 +457,16 @@ public class OrderDAO {
         }
         return false;
     }
+    public boolean cancelOrder(int orderId, String reason) {
+        String sql = "UPDATE orders SET status = 'cancelled', cancel_reason = ? WHERE id = ? AND status = 'pending'";
+        try (Connection conn = DBConnect.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, reason);
+            ps.setInt(2, orderId);
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
 }
