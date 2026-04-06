@@ -84,7 +84,7 @@
                                         </td>
 
                                         <td>
-                                            <a href="${pageContext.request.contextPath}/gio-hang?action=remove&productId=${item.product.id}" class="cart-item-remove" title="Xóa sản phẩm"
+                                            <a href="javascript:void(0);" onclick="removeItem(${item.product.id})" class="cart-item-remove" title="Xóa sản phẩm"
                                                style="color:red; font-size: 1.1rem; text-decoration: none;">
                                                 <i class="fa-solid fa-trash"></i>
                                             </a>
@@ -189,6 +189,20 @@
     `;
         document.body.appendChild(form);
         form.submit();
+    }
+    function removeItem(productId) {
+        if(confirm('Bạn có chắc chắn muốn xóa sản phẩm này khỏi giỏ hàng?')) {
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '${pageContext.request.contextPath}/gio-hang';
+
+            form.innerHTML = `
+                <input type="hidden" name="action" value="remove">
+                <input type="hidden" name="productId" value="` + productId + `">
+            `;
+            document.body.appendChild(form);
+            form.submit();
+        }
     }
 </script>
 </body>
