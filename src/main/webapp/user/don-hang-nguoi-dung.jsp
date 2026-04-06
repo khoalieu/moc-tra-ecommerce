@@ -92,7 +92,7 @@
         .close-modal:hover {
             color: #d32f2f;
         }
-        
+
         .modal-body {
             padding: 24px;
         }
