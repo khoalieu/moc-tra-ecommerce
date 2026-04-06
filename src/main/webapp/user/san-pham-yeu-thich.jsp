@@ -67,7 +67,6 @@
       height: 60px;
       object-fit: cover;
       border-radius: 8px;
-      border: 1px solid #eee;
     }
 
     .favorite-name {
@@ -79,7 +78,6 @@
     .favorite-desc {
       font-size: 12px;
       color: #666;
-      line-height: 1.5;
     }
 
     .favorite-price-main {
@@ -131,11 +129,6 @@
       color: white;
     }
 
-    .favorite-actions .btn-action.danger:hover {
-      background: #dc3545;
-      color: white;
-    }
-
     .empty-favorites {
       text-align: center;
       padding: 50px 20px;
@@ -146,33 +139,6 @@
       font-size: 54px;
       color: #ddd;
       margin-bottom: 15px;
-    }
-
-    .mock-badge {
-      display: inline-block;
-      padding: 4px 10px;
-      border-radius: 20px;
-      font-size: 12px;
-      background: #fff3cd;
-      color: #856404;
-      margin-left: 10px;
-      font-weight: 600;
-    }
-
-    @media (max-width: 768px) {
-      .favorites-table {
-        font-size: 13px;
-      }
-
-      .favorites-table th,
-      .favorites-table td {
-        padding: 12px 8px;
-      }
-
-      .favorite-image-thumb {
-        width: 50px;
-        height: 50px;
-      }
     }
   </style>
 </head>
@@ -187,45 +153,40 @@
 
   <main class="main-content">
     <div class="orders-header">
-      <h2 class="page-title" style="margin-bottom: 0;">
-        Sản phẩm yêu thích
-        <span class="mock-badge">Mock UI</span>
-      </h2>
+      <h2 class="page-title" style="margin-bottom: 0;">Sản phẩm yêu thích</h2>
     </div>
 
-    <!-- Bộ lọc giả lập -->
-    <form action="#" method="get" class="favorites-filters">
+    <form action="${pageContext.request.contextPath}/san-pham-yeu-thich" method="get" class="favorites-filters">
       <div class="filters-grid">
         <div class="filter-group">
           <label for="category-filter">Danh mục</label>
-          <select name="categoryId" id="category-filter" class="form-select">
+          <select name="categoryId" id="category-filter" class="form-select" onchange="this.form.submit()">
             <option value="">Tất cả danh mục</option>
-            <option value="1">Trà Thảo Mộc</option>
-            <option value="2">Nguyên Liệu Trà Sữa</option>
-            <option value="3">Trân Châu</option>
-            <option value="4">Syrup</option>
+            <c:forEach var="cat" items="${categoryList}">
+              <option value="${cat.id}" ${currentCategoryId == cat.id ? 'selected' : ''}>${cat.name}</option>
+            </c:forEach>
           </select>
         </div>
 
         <div class="filter-group">
           <label for="price-filter">Khoảng giá</label>
-          <select name="maxPrice" id="price-filter" class="form-select">
+          <select name="maxPrice" id="price-filter" class="form-select" onchange="this.form.submit()">
             <option value="">Tất cả giá</option>
-            <option value="50000">Dưới 50.000₫</option>
-            <option value="100000">Dưới 100.000₫</option>
-            <option value="200000">Dưới 200.000₫</option>
-            <option value="500000">Dưới 500.000₫</option>
+            <option value="50000" ${currentMaxPrice == '50000' ? 'selected' : ''}>Dưới 50.000₫</option>
+            <option value="100000" ${currentMaxPrice == '100000' ? 'selected' : ''}>Dưới 100.000₫</option>
+            <option value="200000" ${currentMaxPrice == '200000' ? 'selected' : ''}>Dưới 200.000₫</option>
+            <option value="500000" ${currentMaxPrice == '500000' ? 'selected' : ''}>Dưới 500.000₫</option>
           </select>
         </div>
 
         <div class="filter-group">
           <label for="sort-filter">Sắp xếp</label>
-          <select name="sort" id="sort-filter" class="form-select">
-            <option value="newest">Yêu thích mới nhất</option>
-            <option value="oldest">Yêu thích lâu nhất</option>
-            <option value="price-asc">Giá thấp đến cao</option>
-            <option value="price-desc">Giá cao đến thấp</option>
-            <option value="name-asc">Tên A-Z</option>
+          <select name="sort" id="sort-filter" class="form-select" onchange="this.form.submit()">
+            <option value="newest" ${currentSort == 'newest' ? 'selected' : ''}>Yêu thích mới nhất</option>
+            <option value="oldest" ${currentSort == 'oldest' ? 'selected' : ''}>Yêu thích lâu nhất</option>
+            <option value="price-asc" ${currentSort == 'price-asc' ? 'selected' : ''}>Giá thấp đến cao</option>
+            <option value="price-desc" ${currentSort == 'price-desc' ? 'selected' : ''}>Giá cao đến thấp</option>
+            <option value="name-asc" ${currentSort == 'name-asc' ? 'selected' : ''}>Tên A-Z</option>
           </select>
         </div>
       </div>
@@ -233,144 +194,121 @@
 
     <div class="favorites-container">
       <div class="table-header">
-        <div class="products-count">Tổng cộng: <strong>3 sản phẩm</strong></div>
+        <div class="products-count">Tổng cộng: <strong>${totalProducts} sản phẩm</strong></div>
       </div>
 
-      <div class="table-responsive">
-        <table class="favorites-table">
-          <thead>
-          <tr>
-            <th style="width: 90px;">Hình ảnh</th>
-            <th>Tên sản phẩm</th>
-            <th style="width: 140px;">Giá bán</th>
-            <th style="width: 180px;">Mức giảm sau khuyến mãi</th>
-            <th style="width: 120px; text-align: center;">Hành động</th>
-          </tr>
-          </thead>
-          <tbody>
-          <tr>
-            <td>
-              <img src="${pageContext.request.contextPath}/assets/images/product-1.jpg"
-                   alt="Trà Hoa Cúc Mật Ong"
-                   class="favorite-image-thumb"
-                   onerror="this.src='${pageContext.request.contextPath}/assets/images/no-image.png'">
-            </td>
-            <td>
-              <div class="favorite-name">Trà Hoa Cúc Mật Ong</div>
-              <div class="favorite-desc">Hương vị thanh nhẹ, thích hợp dùng buổi tối và thư giãn.</div>
-            </td>
-            <td>
-              <div class="favorite-price-main">89.000₫</div>
-              <div class="favorite-price-old">110.000₫</div>
-            </td>
-            <td>
-              <span class="favorite-discount">Giảm 21.000₫ (19%)</span>
-            </td>
-            <td>
-              <div class="favorite-actions">
-                <a href="#" class="btn-action" title="Xem chi tiết">
-                  <i class="fa-solid fa-eye"></i>
-                </a>
-                <button type="button" class="btn-action danger" title="Xóa khỏi danh sách">
-                  <i class="fa-solid fa-trash"></i>
-                </button>
-              </div>
-            </td>
-          </tr>
+      <c:choose>
+        <c:when test="${not empty favoriteList}">
+          <div class="table-responsive">
+            <table class="favorites-table">
+              <thead>
+              <tr>
+                <th style="width: 90px;">Hình ảnh</th>
+                <th>Tên sản phẩm</th>
+                <th style="width: 140px;">Giá bán</th>
+                <th style="width: 180px;">Mức giảm sau khuyến mãi</th>
+                <th style="width: 90px; text-align: center;">Chi tiết</th>
+              </tr>
+              </thead>
+              <tbody>
+              <c:forEach var="p" items="${favoriteList}">
+                <tr>
+                  <td>
+                    <img src="${p.imageUrl}" alt="${p.name}" class="favorite-image-thumb">
+                  </td>
+                  <td>
+                    <div class="favorite-name">${p.name}</div>
+                    <div class="favorite-desc">${p.shortDescription}</div>
+                  </td>
+                  <td>
+                    <div class="favorite-price-main">
+                      <fmt:formatNumber value="${p.salePrice > 0 && p.salePrice < p.price ? p.salePrice : p.price}" pattern="#,###"/>₫
+                    </div>
+                    <c:if test="${p.salePrice > 0 && p.salePrice < p.price}">
+                      <div class="favorite-price-old">
+                        <fmt:formatNumber value="${p.price}" pattern="#,###"/>₫
+                      </div>
+                    </c:if>
+                  </td>
+                  <td>
+                    <c:choose>
+                      <c:when test="${p.salePrice > 0 && p.salePrice < p.price}">
+                                                <span class="favorite-discount">
+                                                    Giảm <fmt:formatNumber value="${p.price - p.salePrice}" pattern="#,###"/>₫
+                                                    (<fmt:formatNumber value="${(p.price - p.salePrice) / p.price * 100}" maxFractionDigits="0"/>%)
+                                                </span>
+                      </c:when>
+                      <c:otherwise>
+                        <span class="favorite-discount none">Không có</span>
+                      </c:otherwise>
+                    </c:choose>
+                  </td>
+                  <td>
+                    <div class="favorite-actions">
+                      <a href="${pageContext.request.contextPath}/chi-tiet-san-pham?id=${p.id}" class="btn-action" title="Xem chi tiết">
+                        <i class="fa-solid fa-eye"></i>
+                      </a>
+                    </div>
+                  </td>
+                </tr>
+              </c:forEach>
+              </tbody>
+            </table>
+          </div>
+        </c:when>
 
-          <tr>
-            <td>
-              <img src="${pageContext.request.contextPath}/assets/images/product-2.jpg"
-                   alt="Bột Sữa Pha Trà Sữa"
-                   class="favorite-image-thumb"
-                   onerror="this.src='${pageContext.request.contextPath}/assets/images/no-image.png'">
-            </td>
-            <td>
-              <div class="favorite-name">Bột Sữa Pha Trà Sữa</div>
-              <div class="favorite-desc">Nguyên liệu nền phổ biến để pha chế trà sữa tại nhà.</div>
-            </td>
-            <td>
-              <div class="favorite-price-main">65.000₫</div>
-            </td>
-            <td>
-              <span class="favorite-discount none">Không có</span>
-            </td>
-            <td>
-              <div class="favorite-actions">
-                <a href="#" class="btn-action" title="Xem chi tiết">
-                  <i class="fa-solid fa-eye"></i>
-                </a>
-                <button type="button" class="btn-action danger" title="Xóa khỏi danh sách">
-                  <i class="fa-solid fa-trash"></i>
-                </button>
-              </div>
-            </td>
-          </tr>
-
-          <tr>
-            <td>
-              <img src="${pageContext.request.contextPath}/assets/images/product-3.jpg"
-                   alt="Trân Châu Đen"
-                   class="favorite-image-thumb"
-                   onerror="this.src='${pageContext.request.contextPath}/assets/images/no-image.png'">
-            </td>
-            <td>
-              <div class="favorite-name">Trân Châu Đen</div>
-              <div class="favorite-desc">Dẻo mềm, phù hợp dùng với trà sữa truyền thống.</div>
-            </td>
-            <td>
-              <div class="favorite-price-main">45.000₫</div>
-              <div class="favorite-price-old">55.000₫</div>
-            </td>
-            <td>
-              <span class="favorite-discount">Giảm 10.000₫ (18%)</span>
-            </td>
-            <td>
-              <div class="favorite-actions">
-                <a href="#" class="btn-action" title="Xem chi tiết">
-                  <i class="fa-solid fa-eye"></i>
-                </a>
-                <button type="button" class="btn-action danger" title="Xóa khỏi danh sách">
-                  <i class="fa-solid fa-trash"></i>
-                </button>
-              </div>
-            </td>
-          </tr>
-          </tbody>
-        </table>
-      </div>
-
-      <div class="pagination-container">
-        <div class="pagination-info">
-          Trang <strong>1</strong> / <strong>3</strong>
-        </div>
-
-        <div class="pagination">
-          <a href="#" class="page-btn disabled">&laquo;</a>
-          <a href="#" class="page-btn active">1</a>
-          <a href="#" class="page-btn">2</a>
-          <a href="#" class="page-btn">3</a>
-          <a href="#" class="page-btn">&raquo;</a>
-        </div>
-      </div>
-    </div>
-
-    <%--
-    Nếu muốn test trạng thái rỗng thì comment block favorites-container ở trên
-    và mở block dưới ra.
-
-    <div class="favorites-container">
-        <div class="empty-favorites">
+        <c:otherwise>
+          <div class="empty-favorites">
             <i class="fa-regular fa-heart"></i>
             <h3>Chưa có sản phẩm yêu thích</h3>
             <p>Danh sách yêu thích của bạn hiện đang trống.</p>
             <a href="${pageContext.request.contextPath}/san-pham" class="btn-action"
                style="display: inline-flex; width: auto; padding: 10px 18px; margin-top: 15px;">
-                Đi mua sắm
+              Đi mua sắm
             </a>
+          </div>
+        </c:otherwise>
+      </c:choose>
+
+      <div class="pagination-container">
+        <div class="pagination-info">
+          Trang <strong>${currentPage}</strong> / <strong>${totalPages}</strong>
         </div>
+
+        <c:if test="${totalPages > 1}">
+          <c:set var="windowSize" value="6" />
+          <c:set var="currentBlock" value="${(currentPage - 1) div windowSize}" />
+          <c:set var="startPage" value="${currentBlock * windowSize + 1}" />
+          <c:set var="endPage" value="${startPage + windowSize - 1}" />
+
+          <c:if test="${endPage > totalPages}">
+            <c:set var="endPage" value="${totalPages}" />
+          </c:if>
+
+          <c:set var="prevPage" value="${currentPage - windowSize}" />
+          <c:set var="nextPage" value="${currentPage + windowSize}" />
+
+          <div class="pagination">
+            <a href="${pageContext.request.contextPath}/san-pham-yeu-thich?page=${prevPage < 1 ? 1 : prevPage}&categoryId=${currentCategoryId}&maxPrice=${currentMaxPrice}&sort=${currentSort}"
+               class="page-btn ${currentPage <= windowSize ? 'disabled' : ''}">
+              &laquo;
+            </a>
+
+            <c:forEach begin="${startPage}" end="${endPage}" var="i">
+              <a href="${pageContext.request.contextPath}/san-pham-yeu-thich?page=${i}&categoryId=${currentCategoryId}&maxPrice=${currentMaxPrice}&sort=${currentSort}"
+                 class="page-btn ${currentPage == i ? 'active' : ''}">
+                  ${i}
+              </a>
+            </c:forEach>
+
+            <a href="${pageContext.request.contextPath}/san-pham-yeu-thich?page=${nextPage > totalPages ? totalPages : nextPage}&categoryId=${currentCategoryId}&maxPrice=${currentMaxPrice}&sort=${currentSort}"
+               class="page-btn ${currentPage + windowSize > totalPages ? 'disabled' : ''}">
+              &raquo;
+            </a>
+          </div>
+        </c:if>
+      </div>
     </div>
-    --%>
   </main>
 </div>
 
