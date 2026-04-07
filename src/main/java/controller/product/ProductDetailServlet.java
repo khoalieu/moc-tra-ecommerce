@@ -10,6 +10,9 @@ import model.product.ProductImage;
 
 import java.io.IOException;
 import java.util.List;
+import dao.FavoriteDAO;
+import model.user.User;
+import jakarta.servlet.http.HttpSession;
 
 @WebServlet("/chi-tiet-san-pham")
 public class ProductDetailServlet extends HttpServlet {
@@ -34,6 +37,16 @@ public class ProductDetailServlet extends HttpServlet {
             List<ProductImage> gallery = imageDAO.getImagesByProductId(productId);
             List<ReviewDTO> reviews = reviewDAO.getReviewsByProductId(productId);
             List<Product> relatedProducts = productDAO.getRelatedProducts(product.getCategoryId(), productId);
+
+            HttpSession session = request.getSession(false);
+            User user = session != null ? (User) session.getAttribute("user") : null;
+
+            boolean isFavorite = false;
+            if (user != null) {
+                FavoriteDAO favoriteDAO = new FavoriteDAO();
+                isFavorite = favoriteDAO.isFavorite(user.getId(), productId);
+            }
+            request.setAttribute("isFavorite", isFavorite);
 
             request.setAttribute("product", product);
             request.setAttribute("gallery", gallery);
