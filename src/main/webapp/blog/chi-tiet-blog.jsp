@@ -27,7 +27,10 @@
                 <h1><c:out value="${post.title}" /></h1>
 
                 <div class="post-meta">
-                    <span>Tác giả: <b>Admin</b></span>
+                    <span>Tác giả: <b>${not empty post.author && (not empty post.author.firstName || not empty post.author.lastName)
+                            ? post.author.firstName.concat(' ').concat(post.author.lastName)
+                            : (not empty post.author ? post.author.username : 'Admin')}</b>
+                    </span>
                     <span>Ngày đăng: <b><fmt:formatDate value="${post.createdAtDate}" pattern="dd/MM/yyyy"/></b></span>
                     <span>
                         Danh mục:
