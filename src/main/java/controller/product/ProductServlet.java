@@ -3,6 +3,7 @@ package controller.product;
 import dao.CategoryDAO;
 import dao.ProductDAO;
 import dao.PromotionDAO;
+import jakarta.servlet.http.HttpSession;
 import model.product.Category;
 import model.product.Product;
 
@@ -16,6 +17,9 @@ import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import dao.FavoriteDAO;
+import model.user.User;
+import java.util.Set;
 
 @WebServlet("/san-pham")
 public class ProductServlet extends HttpServlet {
@@ -115,6 +119,14 @@ public class ProductServlet extends HttpServlet {
                     counts.put(c.getParentId(), parentCount + childCount);
                 }
             }
+        }
+        HttpSession session = request.getSession(false);
+        User user = session != null ? (User) session.getAttribute("user") : null;
+
+        if (user != null) {
+            FavoriteDAO favoriteDAO = new FavoriteDAO();
+            Set<Integer> favoriteProductIds = favoriteDAO.getFavoriteProductIds(user.getId());
+            request.setAttribute("favoriteProductIds", favoriteProductIds);
         }
 
         request.setAttribute("parentCategories", parentCategories);
