@@ -30,11 +30,14 @@ public class ForgotPasswordServlet extends HttpServlet {
             throws ServletException, IOException {
 
         String path = req.getServletPath();
+        String emailParam = req.getParameter("email");
         if ("/verify-otp".equals(path)) {
             req.getRequestDispatcher("/auth/verify-otp.jsp").forward(req, resp);
         } else if ("/reset-password".equals(path)) {
             req.getRequestDispatcher("/auth/reset-password.jsp").forward(req, resp);
-        } else {
+        } else if ("/forgot-password".equals(path) && emailParam != null && !emailParam.isEmpty()) {
+            handleSendOTP(req, resp);
+        }else {
             req.getRequestDispatcher("/auth/quen-mat-khau.jsp").forward(req, resp);
         }
     }
@@ -62,25 +65,20 @@ public class ForgotPasswordServlet extends HttpServlet {
         HttpSession ss = req.getSession();
         long now = System.currentTimeMillis();
         String action = req.getParameter("action");
-        String email;
+        String email = req.getParameter("email");
 
-        if ("resend".equalsIgnoreCase(action)) {
+        if (email == null || email.trim().isEmpty()){
             email = (String) ss.getAttribute("RESET_EMAIL");
-            if (email == null || email.trim().isEmpty()) {
-                req.setAttribute("message", "Vui lòng nhập email trước.");
-                req.getRequestDispatcher("/auth/quen-mat-khau.jsp").forward(req, resp);
-                return;
-            }
-        } else {
-            email = req.getParameter("email");
-            if (email == null || email.trim().isEmpty()) {
-                req.setAttribute("message", "Email không được để trống.");
-                req.getRequestDispatcher("/auth/quen-mat-khau.jsp").forward(req, resp);
-                return;
-            }
-            email = email.trim();
-            ss.setAttribute("RESET_EMAIL", email);
         }
+
+        if (email == null || email.trim().isEmpty()){
+            req.setAttribute("message", "Vui lòng nhập email");
+            req.getRequestDispatcher("/auth/quen-mat-khau.jsp").forward(req,resp);
+            return;
+        }
+
+        email = email.trim();
+        ss.setAttribute("RESET_EMAIL", email);
 
         Long lastSend = (Long) ss.getAttribute("OTP_LAST_SEND");
         if (lastSend != null && now - lastSend < RESEND_COOLDOWN) {
@@ -214,18 +212,18 @@ public class ForgotPasswordServlet extends HttpServlet {
 
         boolean ok = dao.changePassword(userId, newPass);
 
-        if (!ok) {
-            req.setAttribute("message", "Đổi mật khẩu thất bại.");
+        if (ok){
+            dao.resetFailedAttempts(userId);
+            ss.removeAttribute("RESET_EMAIL");
+            ss.removeAttribute("OTP_VERIFIED");
+            ss.removeAttribute("OTP_LAST_SEND");
+
+            req.setAttribute("message", "Đặt lại mật khẩu thành công! Vui longf đăng nhập.");
+            req.getRequestDispatcher("/auth/login.jsp").forward(req, resp);
+        }else {
+            req.setAttribute("message", "Lỗi hệ thống khi cập nhật mật khẩu.");
             req.getRequestDispatcher("/auth/reset-password.jsp").forward(req, resp);
-            return;
         }
-
-        ss.removeAttribute("RESET_EMAIL");
-        ss.removeAttribute("OTP_VERIFIED");
-        ss.removeAttribute("OTP_LAST_SEND");
-
-        req.setAttribute("message", "Đổi mật khẩu thành công. Vui lòng đăng nhập.");
-        req.getRequestDispatcher("/auth/login.jsp").forward(req, resp);
     }
 
     private boolean sendOtpMail(String toEmail, String otp) {

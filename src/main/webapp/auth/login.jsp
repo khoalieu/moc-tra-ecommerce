@@ -93,6 +93,5 @@
     <i class="fa-solid fa-chevron-up"></i>
 </button>
 <script src="${pageContext.request.contextPath}/assets/js/main.js"></script>
-
 </body>
 </html>
