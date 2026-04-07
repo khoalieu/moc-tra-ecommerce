@@ -704,40 +704,47 @@ public class UserDAO {
         }
         return null;
     }
-    public User getUserForLogin(String username) {
-        try {
-            String query = "SELECT * FROM users WHERE username = ? AND is_active = 1";
-            conn = new DBConnect().getConnection();
-            ps = conn.prepareStatement(query);
-            ps.setString(1, username);
-            rs = ps.executeQuery();
+    public User getUserForLogin(String loginKey) {
+        String query = "SELECT * FROM users WHERE (username = ? OR email = ? OR phone = ?) AND is_active = 1";
+        try (
+                Connection conn = DBConnect.getConnection();
+                PreparedStatement ps = conn.prepareStatement(query);
+                ){
+            ps.setString(1, loginKey);
+            ps.setString(2, loginKey);
+            ps.setString(3, loginKey);
+            try (
+                    ResultSet rs = ps.executeQuery();
+                    ){
+                if (rs.next()){
+                    User user = new User();
+                    user.setId(rs.getInt("id"));
+                    user.setUsername(rs.getString("username"));
+                    user.setEmail(rs.getString("email"));
+                    user.setPhone(rs.getString("phone"));
+                    user.setPasswordHash(rs.getString("password_hash"));
+                    user.setFailedAttempts(rs.getInt("failed_attempts"));
+                    java.sql.Timestamp lockTimestamp = rs.getTimestamp("lock_until");
+                    if (lockTimestamp != null){
+                        user.setLockUntil(lockTimestamp.toLocalDateTime());
+                    }
+                    user.setFirstName(rs.getString("first_name"));
+                    user.setLastName(rs.getString("last_name"));
+                    user.setAvatar(rs.getString("avatar"));
 
-            if (rs.next()) {
-                User user = new User();
-                user.setId(rs.getInt("id"));
-                user.setUsername(rs.getString("username"));
-                user.setEmail(rs.getString("email"));
-                user.setPasswordHash(rs.getString("password_hash"));
-                user.setFailedAttempts(rs.getInt("failed_attempts"));
-
-                java.sql.Timestamp lockTimestamp = rs.getTimestamp("lock_until");
-                if (lockTimestamp != null) {
-                    user.setLockUntil(lockTimestamp.toLocalDateTime());
+                    String roleStr = rs.getString("role");
+                    if (roleStr != null){
+                        try {
+                            user.setRole(model.enums.UserRole.valueOf(roleStr.toUpperCase()));
+                        } catch (IllegalArgumentException e) {
+                            user.setRole(model.enums.UserRole.CUSTOMER);
+                        }
+                    }
+                    return user;
                 }
-                user.setFirstName(rs.getString("first_name"));
-                user.setLastName(rs.getString("last_name"));
-                user.setPhone(rs.getString("phone"));
-                user.setAvatar(rs.getString("avatar"));
-                try {
-                    user.setRole(model.enums.UserRole.valueOf(rs.getString("role").toUpperCase()));
-                } catch (Exception e) {
-                    user.setRole(model.enums.UserRole.CUSTOMER);
-                }
-
-                return user;
             }
         } catch (Exception e) {
-            System.err.println("Lỗi tại getUserForLogin: " + e.getMessage());
+            System.out.println("Lỗi tại getUserForLogin: "+e.getMessage());
             e.printStackTrace();
         }
         return null;
