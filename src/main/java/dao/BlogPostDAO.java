@@ -95,17 +95,30 @@ public class BlogPostDAO {
     }
 
     public int countSearchPublished(String q) {
-        String sql = "SELECT COUNT(*) "
-                + "FROM blog_posts "
-                + "WHERE status = 'published' "
-                + "AND (title LIKE ? OR excerpt LIKE ? OR content LIKE ?)";
+        String[] keywords = splitKeywords(q);
+        if (keywords.length == 0) return 0;
+
+        StringBuilder sql = new StringBuilder(
+                "SELECT COUNT(*) FROM blog_posts WHERE status = 'published' AND ("
+        );
+
+        for (int i = 0; i < keywords.length; i++) {
+            if (i > 0) sql.append(" OR ");
+            sql.append("(title LIKE ? OR excerpt LIKE ? OR content LIKE ?)");
+        }
+        sql.append(")");
 
         try (Connection conn = DBConnect.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            String kw = "%" + q + "%";
-            ps.setString(1, kw);
-            ps.setString(2, kw);
-            ps.setString(3, kw);
+             PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+
+            int idx = 1;
+            for (String keyword : keywords) {
+                String kw = "%" + keyword + "%";
+                ps.setString(idx++, kw);
+                ps.setString(idx++, kw);
+                ps.setString(idx++, kw);
+            }
+
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) return rs.getInt(1);
             }
@@ -118,21 +131,36 @@ public class BlogPostDAO {
     public List<BlogPost> searchPublished(String q, int page, int size) {
         List<BlogPost> list = new ArrayList<>();
 
-        String sql = "SELECT id, title, slug, excerpt, featured_image, views_count, created_at "
-                + "FROM blog_posts "
-                + "WHERE status = 'published' "
-                + "AND (title LIKE ? OR excerpt LIKE ? OR content LIKE ?) "
-                + "ORDER BY created_at DESC "
-                + "LIMIT ? OFFSET ?";
+        String[] keywords = splitKeywords(q);
+        if (keywords.length == 0) return list;
+
+        StringBuilder sql = new StringBuilder(
+                "SELECT id, title, slug, excerpt, featured_image, views_count, created_at " +
+                        "FROM blog_posts " +
+                        "WHERE status = 'published' AND ("
+        );
+
+        for (int i = 0; i < keywords.length; i++) {
+            if (i > 0) sql.append(" OR ");
+            sql.append("(title LIKE ? OR excerpt LIKE ? OR content LIKE ?)");
+        }
+
+        sql.append(") ORDER BY created_at DESC LIMIT ? OFFSET ?");
 
         try (Connection conn = DBConnect.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            String kw = "%" + q + "%";
-            ps.setString(1, kw);
-            ps.setString(2, kw);
-            ps.setString(3, kw);
-            ps.setInt(4, size);
-            ps.setInt(5, (page - 1) * size);
+             PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+
+            int idx = 1;
+            for (String keyword : keywords) {
+                String kw = "%" + keyword + "%";
+                ps.setString(idx++, kw);
+                ps.setString(idx++, kw);
+                ps.setString(idx++, kw);
+            }
+
+            ps.setInt(idx++, size);
+            ps.setInt(idx++, (page - 1) * size);
+
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) list.add(mapCard(rs));
             }
@@ -140,6 +168,14 @@ public class BlogPostDAO {
             e.printStackTrace();
         }
         return list;
+    }
+    private String[] splitKeywords(String q) {
+        if (q == null) return new String[0];
+
+        q = q.trim();
+        if (q.isEmpty()) return new String[0];
+
+        return q.split("\\s+");
     }
 
     public List<BlogPost> getRecentPublishedPosts(int limit) {
@@ -273,10 +309,18 @@ public class BlogPostDAO {
     public int countPostsForAdmin(String q, Integer categoryId, BlogStatus status, Integer authorId) {
         StringBuilder sql = new StringBuilder("SELECT COUNT(*) FROM blog_posts bp WHERE 1=1");
 
-        boolean hasQ = (q != null && !q.isEmpty());
+        String[] keywords = splitKeywords(q);
+        boolean hasQ = keywords.length > 0;
+
         if (hasQ) {
-            sql.append(" AND (bp.title LIKE ? OR bp.slug LIKE ? OR IFNULL(bp.excerpt,'') LIKE ? OR IFNULL(bp.content,'') LIKE ?)");
+            sql.append(" AND (");
+            for (int i = 0; i < keywords.length; i++) {
+                if (i > 0) sql.append(" OR ");
+                sql.append("(bp.title LIKE ? OR bp.slug LIKE ? OR IFNULL(bp.excerpt,'') LIKE ? OR IFNULL(bp.content,'') LIKE ?)");
+            }
+            sql.append(")");
         }
+
         if (categoryId != null) sql.append(" AND bp.category_id = ?");
         if (status != null) sql.append(" AND bp.status = ?");
         if (authorId != null) sql.append(" AND bp.author_id = ?");
@@ -287,11 +331,13 @@ public class BlogPostDAO {
             int idx = 1;
 
             if (hasQ) {
-                String kw = "%" + q + "%";
-                ps.setString(idx++, kw);
-                ps.setString(idx++, kw);
-                ps.setString(idx++, kw);
-                ps.setString(idx++, kw);
+                for (String keyword : keywords) {
+                    String kw = "%" + keyword + "%";
+                    ps.setString(idx++, kw);
+                    ps.setString(idx++, kw);
+                    ps.setString(idx++, kw);
+                    ps.setString(idx++, kw);
+                }
             }
 
             if (categoryId != null) ps.setInt(idx++, categoryId);
@@ -316,10 +362,19 @@ public class BlogPostDAO {
                         "LEFT JOIN users u ON u.id = bp.author_id " +
                         "WHERE 1=1"
         );
-        boolean hasQ = (q != null && !q.isEmpty());
+
+        String[] keywords = splitKeywords(q);
+        boolean hasQ = keywords.length > 0;
+
         if (hasQ) {
-            sql.append(" AND (bp.title LIKE ? OR bp.slug LIKE ? OR IFNULL(bp.excerpt,'') LIKE ? OR IFNULL(bp.content,'') LIKE ?)");
+            sql.append(" AND (");
+            for (int i = 0; i < keywords.length; i++) {
+                if (i > 0) sql.append(" OR ");
+                sql.append("(bp.title LIKE ? OR bp.slug LIKE ? OR IFNULL(bp.excerpt,'') LIKE ? OR IFNULL(bp.content,'') LIKE ?)");
+            }
+            sql.append(")");
         }
+
         if (categoryId != null) sql.append(" AND bp.category_id = ?");
         if (status != null) sql.append(" AND bp.status = ?");
         if (authorId != null) sql.append(" AND bp.author_id = ?");
@@ -358,11 +413,13 @@ public class BlogPostDAO {
             int idx = 1;
 
             if (hasQ) {
-                String kw = "%" + q + "%";
-                ps.setString(idx++, kw);
-                ps.setString(idx++, kw);
-                ps.setString(idx++, kw);
-                ps.setString(idx++, kw);
+                for (String keyword : keywords) {
+                    String kw = "%" + keyword + "%";
+                    ps.setString(idx++, kw);
+                    ps.setString(idx++, kw);
+                    ps.setString(idx++, kw);
+                    ps.setString(idx++, kw);
+                }
             }
 
             if (categoryId != null) ps.setInt(idx++, categoryId);

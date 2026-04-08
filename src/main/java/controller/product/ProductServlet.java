@@ -31,6 +31,14 @@ public class ProductServlet extends HttpServlet {
         String priceParam = request.getParameter("price");
         String promoParam = request.getParameter("promotionId");
 
+        String searchParam = request.getParameter("search");
+        if (searchParam != null) {
+            searchParam = searchParam.trim();
+            if (searchParam.isEmpty()) {
+                searchParam = null;
+            }
+        }
+
         Integer categoryId = null;
         if (categoryParam != null && !categoryParam.isEmpty()) {
             try {
@@ -64,10 +72,15 @@ public class ProductServlet extends HttpServlet {
             } catch (Exception e) {
             }
         }
+        if (searchParam != null) {
+            categoryId = null;
+            maxPrice = null;
+            promotionId = null;
+        }
 
         int pageSize = 12;
-        List<Product> products = productDAO.getProducts(categoryId, promotionId, sortParam, maxPrice, page, pageSize, "active");
-        int totalProducts = productDAO.countProducts(categoryId, promotionId, maxPrice, "active");
+        List<Product> products = productDAO.getProducts(categoryId, promotionId, sortParam, maxPrice,  searchParam, page, pageSize, "active");
+        int totalProducts = productDAO.countProducts(categoryId, promotionId, maxPrice, searchParam , "active");
         int totalPages = (int) Math.ceil((double) totalProducts / pageSize);
 
         String categoryName = "Tất Cả Sản Phẩm";
@@ -117,6 +130,8 @@ public class ProductServlet extends HttpServlet {
         request.setAttribute("currentSort", sortParam);
         request.setAttribute("currentPrice", maxPrice);
         request.setAttribute("currentPromotion", promotionId);
+
+        request.setAttribute("currentSearch", searchParam);
 
         request.getRequestDispatcher("/product/san-pham.jsp").forward(request, response);
     }
