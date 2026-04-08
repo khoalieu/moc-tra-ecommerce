@@ -116,10 +116,10 @@
                 <div class="sort-bar">
                     <label for="sort-by">Sắp xếp theo:</label>
                     <select id="sort-by" class="sort-select" onchange="location = this.value;">
-                        <option value="san-pham?sort=default&category=${currentCategory}" ${currentSort == 'default' ? 'selected' : ''}>Mặc định</option>
-                        <option value="san-pham?sort=newest&category=${currentCategory}" ${currentSort == 'newest' ? 'selected' : ''}>Mới nhất</option>
-                        <option value="san-pham?sort=price-asc&category=${currentCategory}" ${currentSort == 'price-asc' ? 'selected' : ''}>Giá: Thấp đến Cao</option>
-                        <option value="san-pham?sort=price-desc&category=${currentCategory}" ${currentSort == 'price-desc' ? 'selected' : ''}>Giá: Cao đến Thấp</option>
+                        <option value="${pageContext.request.contextPath}/san-pham?sort=default&category=${currentCategory}&price=${currentPrice}&promotionId=${currentPromotion}&search=${currentSearch}" ${currentSort == 'default' ? 'selected' : ''}>Mặc định</option>
+                        <option value="${pageContext.request.contextPath}/san-pham?sort=newest&category=${currentCategory}&price=${currentPrice}&promotionId=${currentPromotion}&search=${currentSearch}" ${currentSort == 'newest' ? 'selected' : ''}>Mới nhất</option>
+                        <option value="${pageContext.request.contextPath}/san-pham?sort=price-asc&category=${currentCategory}&price=${currentPrice}&promotionId=${currentPromotion}&search=${currentSearch}" ${currentSort == 'price-asc' ? 'selected' : ''}>Giá: Thấp đến Cao</option>
+                        <option value="${pageContext.request.contextPath}/san-pham?sort=price-desc&category=${currentCategory}&price=${currentPrice}&promotionId=${currentPromotion}&search=${currentSearch}" ${currentSort == 'price-desc' ? 'selected' : ''}>Giá: Cao đến Thấp</option>
                     </select>
                 </div>
 
@@ -194,22 +194,19 @@
 
                         <div class="pagination">
                             <!--  lùi 6  -->
-                            <a href="san-pham?page=${prevPage < 1 ? 1 : prevPage}&category=${currentCategory}&sort=${currentSort}&price=${currentPrice}&promotionId=${currentPromotion}"
-                               class="${currentPage <= windowSize ? 'disabled' : ''}">
+                            <a href="${pageContext.request.contextPath}/san-pham?page=${prevPage < 1 ? 1 : prevPage}&category=${currentCategory}&sort=${currentSort}&price=${currentPrice}&promotionId=${currentPromotion}&search=${currentSearch}"                               class="${currentPage <= windowSize ? 'disabled' : ''}">
                                 &laquo;
                             </a>
 
                             <!-- block -->
                             <c:forEach begin="${startPage}" end="${endPage}" var="i">
-                                <a href="san-pham?page=${i}&category=${currentCategory}&sort=${currentSort}&price=${currentPrice}&promotionId=${currentPromotion}"
-                                   class="${currentPage == i ? 'active' : ''}">
+                                <a href="${pageContext.request.contextPath}/san-pham?page=${i}&category=${currentCategory}&sort=${currentSort}&price=${currentPrice}&promotionId=${currentPromotion}&search=${currentSearch}"                                   class="${currentPage == i ? 'active' : ''}">
                                         ${i}
                                 </a>
                             </c:forEach>
 
                             <!--  tiến 6 page -->
-                            <a href="san-pham?page=${nextPage > totalPages ? totalPages : nextPage}&category=${currentCategory}&sort=${currentSort}&price=${currentPrice}&promotionId=${currentPromotion}"
-                               class="${currentPage + windowSize > totalPages ? 'disabled' : ''}">
+                            <a href="${pageContext.request.contextPath}/san-pham?page=${nextPage > totalPages ? totalPages : nextPage}&category=${currentCategory}&sort=${currentSort}&price=${currentPrice}&promotionId=${currentPromotion}&search=${currentSearch}"                               class="${currentPage + windowSize > totalPages ? 'disabled' : ''}">
                                 &raquo;
                             </a>
                         </div>

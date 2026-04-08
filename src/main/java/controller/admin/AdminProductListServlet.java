@@ -60,14 +60,20 @@ public class AdminProductListServlet extends HttpServlet {
             } catch (Exception e) {
             }
         }
+        if (keyword != null) {
+            keyword = keyword.trim();
+            if (keyword.isEmpty()) {
+                keyword = null;
+            }
+        }
 
         int pageSize = 10;
 
-        List<Product> productList = productDAO.getProducts(categoryId, null, sort, maxPrice, page, pageSize, status);
+        List<Product> productList = productDAO.getProducts(categoryId, null, sort, maxPrice, keyword , page, pageSize, status);
 
         int totalProducts = 0;
         try {
-            totalProducts = productDAO.countProducts(categoryId, null, maxPrice, status);
+            totalProducts = productDAO.countProducts(categoryId, null, maxPrice, keyword , status);
         } catch (Exception e) {
             e.printStackTrace();
         }
