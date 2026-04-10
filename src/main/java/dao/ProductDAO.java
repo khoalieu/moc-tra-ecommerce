@@ -515,4 +515,16 @@ public class ProductDAO {
         }
         return p;
     }
+    public boolean increaseStock(int productId, int quantity) {
+        String sql = "UPDATE products SET stock_quantity = stock_quantity + ? WHERE id = ?";
+        try (Connection conn = DBConnect.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, quantity);
+            ps.setInt(2, productId);
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
 }
