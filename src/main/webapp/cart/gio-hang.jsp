@@ -16,6 +16,19 @@
     <section class="checkout-page">
         <div class="container">
             <h1 class="checkout-title">Giỏ hàng của bạn</h1>
+            <c:if test="${not empty sessionScope.successMsg}">
+                <div class="alert alert-success" style="padding: 10px; background: #d4edda; color: #155724; border-radius: 4px; margin-bottom: 20px;">
+                    <i class="fa-solid fa-circle-check"></i> ${sessionScope.successMsg}
+                </div>
+                <% session.removeAttribute("successMsg"); %>
+            </c:if>
+
+            <c:if test="${not empty sessionScope.errorMsg}">
+                <div class="alert alert-danger" style="padding: 10px; background: #f8d7da; color: #721c24; border-radius: 4px; margin-bottom: 20px;">
+                    <i class="fa-solid fa-triangle-exclamation"></i> ${sessionScope.errorMsg}
+                </div>
+                <% session.removeAttribute("errorMsg"); %>
+            </c:if>
             <div class="checkout-layout">
                 <div class="checkout-left">
                     <div class="checkout-card">
