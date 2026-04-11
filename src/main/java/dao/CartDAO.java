@@ -13,6 +13,8 @@ public class CartDAO {
 
     public Cart getCartByUserId(int userId) {
         Cart cart = new Cart();
+        cart.setUserId(userId);
+
         String sql = "SELECT c.product_id, c.quantity, p.name, p.image_url, p.price, p.sale_price, p.slug " +
                 "FROM cart c " +
                 "JOIN products p ON c.product_id = p.id " +
@@ -22,19 +24,19 @@ public class CartDAO {
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setInt(1, userId);
-            ResultSet rs = ps.executeQuery();
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Product p = new Product();
+                    p.setId(rs.getInt("product_id"));
+                    p.setName(rs.getString("name"));
+                    p.setImageUrl(rs.getString("image_url"));
+                    p.setPrice(rs.getDouble("price"));
+                    p.setSalePrice(rs.getDouble("sale_price"));
+                    p.setSlug(rs.getString("slug"));
 
-            while (rs.next()) {
-                Product p = new Product();
-                p.setId(rs.getInt("product_id"));
-                p.setName(rs.getString("name"));
-                p.setImageUrl(rs.getString("image_url"));
-                p.setPrice(rs.getDouble("price"));
-                p.setSalePrice(rs.getDouble("sale_price"));
-                p.setSlug(rs.getString("slug"));
-
-                int quantity = rs.getInt("quantity");
-                cart.add(p, quantity);
+                    int quantity = rs.getInt("quantity");
+                    cart.add(p, quantity);
+                }
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -43,36 +45,29 @@ public class CartDAO {
     }
 
     public void addToCart(int userId, int productId, int quantity) {
-        String checkSql = "SELECT quantity FROM cart WHERE user_id = ? AND product_id = ?";
+        String sql = "INSERT INTO cart (user_id, product_id, quantity) " +
+                "VALUES (?, ?, ?) " +
+                "ON DUPLICATE KEY UPDATE quantity = quantity + VALUES(quantity)";
+
         try (Connection conn = DBConnect.getConnection();
-             PreparedStatement psCheck = conn.prepareStatement(checkSql)) {
+             PreparedStatement ps = conn.prepareStatement(sql)) {
 
-            psCheck.setInt(1, userId);
-            psCheck.setInt(2, productId);
-            ResultSet rs = psCheck.executeQuery();
+            ps.setInt(1, userId);
+            ps.setInt(2, productId);
+            ps.setInt(3, quantity);
+            ps.executeUpdate();
 
-            if (rs.next()) {
-                // Nếu đã có -> Update cộng dồn số lượng
-                int currentQty = rs.getInt("quantity");
-                int newQty = currentQty + quantity;
-                updateQuantity(userId, productId, newQty);
-            } else {
-                // Nếu chưa có -> Insert mới
-                String insertSql = "INSERT INTO cart(user_id, product_id, quantity) VALUES (?, ?, ?)";
-                try (PreparedStatement psInsert = conn.prepareStatement(insertSql)) {
-                    psInsert.setInt(1, userId);
-                    psInsert.setInt(2, productId);
-                    psInsert.setInt(3, quantity);
-                    psInsert.executeUpdate();
-                }
-            }
         } catch (SQLException e) {
             e.printStackTrace();
         }
     }
 
     public void updateQuantity(int userId, int productId, int quantity) {
-        String sql = "UPDATE cart SET quantity = ? WHERE user_id = ? AND product_id = ?";
+        if (quantity <= 0) {
+            removeProduct(userId, productId);
+            return;
+        }
+        String sql = "UPDATE cart SET quantity = ?, updated_at = CURRENT_TIMESTAMP WHERE user_id = ? AND product_id = ?";
         try (Connection conn = DBConnect.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, quantity);

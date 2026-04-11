@@ -73,7 +73,10 @@ public class UserAddressServlet extends HttpServlet {
 
         } else if ("set_default".equals(action)) {
             int id = Integer.parseInt(request.getParameter("defaultAddressId"));
-            dao.setDefaultAddress(id, user.getId());
+            boolean ok = dao.setDefaultAddress(id, user.getId());
+            if(ok) {
+                session.setAttribute("msg", "Xóa thành công!");
+            }
         }
         response.sendRedirect(request.getContextPath() + "/dia-chi-nguoi-dung");
     }

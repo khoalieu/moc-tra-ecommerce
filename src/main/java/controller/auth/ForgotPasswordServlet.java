@@ -10,11 +10,18 @@ import jakarta.mail.internet.InternetAddress;
 import jakarta.mail.internet.MimeMessage;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.security.SecureRandom;
+import java.time.LocalDate;
 import java.util.Properties;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @WebServlet(urlPatterns = {"/forgot-password", "/verify-otp", "/reset-password"})
 public class ForgotPasswordServlet extends HttpServlet {
+
+    private static final int DAILY_EMAIL_LIMIT = 100;
+    private static final AtomicInteger emailCounter = new AtomicInteger(0);
+    private static LocalDate lastResetDay = LocalDate.now();
 
     private static final long OTP_TTL = 5 * 60_000L;
     private static final long RESEND_COOLDOWN = 2 * 60_000L;
@@ -22,8 +29,23 @@ public class ForgotPasswordServlet extends HttpServlet {
 
     private static final String SMTP_HOST = "smtp.gmail.com";
     private static final int SMTP_PORT = 587;
-    private static final String SMTP_USER = "tavanhuy20052005@gmail.com";
-    private static final String SMTP_PASS = "ehzy axfn vlwt bqqy";
+    private static String SMTP_USER;
+    private static String SMTP_PASS;
+
+    static {
+        try (InputStream input = ForgotPasswordServlet.class.getClassLoader().getResourceAsStream("config.properties")) {
+            Properties prop = new Properties();
+            if (input != null) {
+                prop.load(input);
+                SMTP_USER = prop.getProperty("smtp.user");
+                SMTP_PASS = prop.getProperty("smtp.pass");
+            } else {
+                System.err.println("[Error] Không tìm thấy file config.properties!");
+            }
+        } catch (IOException ex) {
+            ex.printStackTrace();
+        }
+    }
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
@@ -59,8 +81,23 @@ public class ForgotPasswordServlet extends HttpServlet {
         }
     }
 
+    private synchronized void resetCounter (){
+        LocalDate today = LocalDate.now();
+        if(!today.equals(lastResetDay)){
+            emailCounter.set(0);
+            lastResetDay = today;
+        }
+    }
+
     private void handleSendOTP(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
+
+        resetCounter();
+        if (emailCounter.get() >= DAILY_EMAIL_LIMIT){
+            req.setAttribute("message", "Hệ thống đã đạt giới hạn gửi email trong ngày . Vui lòng quay lại sau!");
+            req.getRequestDispatcher("/auth/quen-mat-khau.jsp").forward(req, resp);
+            return;
+        }
 
         HttpSession ss = req.getSession();
         long now = System.currentTimeMillis();
@@ -91,7 +128,7 @@ public class ForgotPasswordServlet extends HttpServlet {
         UserDAO dao = new UserDAO();
         Integer userId = dao.findUserIdByEmail(email);
         if (userId == null) {
-            req.setAttribute("message", "Email không tồn tại trong hệ thống.");
+            req.setAttribute("message", "Nếu email chính xác, mã OTP đã được gửi. Vui lòng kiểm tra hộp thư.");
             req.getRequestDispatcher("/auth/quen-mat-khau.jsp").forward(req, resp);
             return;
         }
@@ -103,6 +140,8 @@ public class ForgotPasswordServlet extends HttpServlet {
             req.getRequestDispatcher("/auth/quen-mat-khau.jsp").forward(req, resp);
             return;
         }
+
+        emailCounter.incrementAndGet();
 
         ss.setAttribute("otp_code", otp);
         ss.setAttribute("OTP_EXP", now + OTP_TTL);
