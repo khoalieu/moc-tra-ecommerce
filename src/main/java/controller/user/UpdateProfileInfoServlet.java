@@ -39,16 +39,36 @@ public class UpdateProfileInfoServlet extends HttpServlet {
             response.sendRedirect(request.getContextPath() + "/auth/login.jsp");
             return;
         }
+
         String firstName = request.getParameter("firstname");
         String lastName = request.getParameter("lastname");
         String phone = request.getParameter("phone");
         String dobStr = request.getParameter("dob");
         String genderRaw = request.getParameter("gender");
 
-        String genderForDb = (genderRaw != null) ? genderRaw.toLowerCase() : "other";
+        LocalDate validatedDob = null;
+        if (dobStr != null && !dobStr.isEmpty()) {
+            try {
+                validatedDob = LocalDate.parse(dobStr);
+
+                if (validatedDob.isAfter(LocalDate.now())) {
+                    session.setAttribute("msg", "Ngày sinh không được ở tương lai!");
+                    session.setAttribute("msgType", "danger");
+                    response.sendRedirect(request.getContextPath() + "/tai-khoan-cua-toi");
+                    return;
+                }
+            } catch (java.time.format.DateTimeParseException e) {
+                session.setAttribute("msg", "Định dạng ngày tháng không đúng (yyyy-MM-dd)!");
+                session.setAttribute("msgType", "danger");
+                response.sendRedirect(request.getContextPath() + "/tai-khoan-cua-toi");
+                return;
+            }
+        }
 
         UserDAO dao = new UserDAO();
+        String genderForDb = (genderRaw != null) ? genderRaw.toLowerCase() : "other";
         boolean isUpdated = false;
+
         try {
             isUpdated = dao.updateProfile(firstName, lastName, phone, dobStr, genderForDb, user.getId());
         } catch (SQLException e) {
@@ -60,27 +80,27 @@ public class UpdateProfileInfoServlet extends HttpServlet {
             user.setLastName(lastName);
             user.setPhone(phone);
 
-            if (dobStr != null && !dobStr.isEmpty()) {
-                try {
-                    user.setDateOfBirth(LocalDate.parse(dobStr).atStartOfDay());
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
+            if (dobStr == null || dobStr.trim().isEmpty()) {
+                user.setDateOfBirth(null);
+            } else if (validatedDob != null) {
+                user.setDateOfBirth(validatedDob.atStartOfDay());
             }
+
             if (genderRaw != null && !genderRaw.isEmpty()) {
                 try {
                     user.setGender(UserGender.valueOf(genderRaw.toUpperCase()));
                 } catch (IllegalArgumentException e) {
-                    e.printStackTrace();
                 }
             }
+
             session.setAttribute("user", user);
             session.setAttribute("msg", "Cập nhật thông tin thành công!");
             session.setAttribute("msgType", "success");
         } else {
-            session.setAttribute("msg", "Lỗi cập nhật! Vui lòng kiểm tra lại kết nối hoặc dữ liệu.");
+            session.setAttribute("msg", "Lỗi hệ thống! Vui lòng thử lại sau.");
             session.setAttribute("msgType", "danger");
         }
+
         response.sendRedirect(request.getContextPath() + "/tai-khoan-cua-toi");
     }
 }

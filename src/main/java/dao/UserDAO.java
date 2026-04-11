@@ -610,7 +610,6 @@ public class UserDAO {
         return false;
     }
     public User loginWithGoogle(GooglePojo googleData) {
-        // 1. Kiểm tra email đã tồn tại chưa
         String queryFind = "SELECT * FROM users WHERE email = ?";
         try {
             conn = new DBConnect().getConnection();
@@ -619,7 +618,6 @@ public class UserDAO {
             rs = ps.executeQuery();
 
             if (rs.next()) {
-                // Email đã tồn tại -> Trả về User để đăng nhập
                 User user = new User();
                 user.setId(rs.getInt("id"));
                 user.setUsername(rs.getString("username"));
@@ -627,7 +625,6 @@ public class UserDAO {
                 user.setFirstName(rs.getString("first_name"));
                 user.setLastName(rs.getString("last_name"));
                 user.setAvatar(rs.getString("avatar"));
-                // Set role và các thông tin khác tương tự hàm checkLogin
                 try {
                     user.setRole(UserRole.valueOf(rs.getString("role").toUpperCase()));
                 } catch (Exception e) {
@@ -635,14 +632,9 @@ public class UserDAO {
                 }
                 return user;
             } else {
-                // Email chưa tồn tại -> Đăng ký mới
-                // Vì bảng users yêu cầu password_hash NOT NULL, ta tạo password ngẫu nhiên
                 String randomPassword = UUID.randomUUID().toString();
                 String hashedPassword = BCrypt.hashpw(randomPassword, BCrypt.gensalt(12));
-                // Username lấy từ email (bỏ phần @domain) hoặc random
                 String newUsername = googleData.getEmail().split("@")[0];
-
-                // Kiểm tra trùng username, nếu trùng thì append số random
                 if(checkUserExist(newUsername, "")) {
                     newUsername += "_" + (int)(Math.random() * 1000);
                 }
