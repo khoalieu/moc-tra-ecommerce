@@ -31,6 +31,9 @@
                 <p class="login-subtitle">
                     Nhập mã OTP đã được gửi tới email của bạn.
                 </p>
+                <div style="margin-top: 10px; font-weight: 600; color: #333; background: #f0f2f5; padding: 5px 15px; border-radius: 20px; display: inline-block;">
+                    <c:out value="${sessionScope.RESET_EMAIL.replaceAll('(?<=.{3}).(?=.*@)', '*')}" />
+                </div>
             </div>
 
             <div class="login-content">
@@ -77,11 +80,24 @@
                             <a href="${pageContext.request.contextPath}/tai-khoan-cua-toi">Hủy đổi email</a>
                         </c:when>
                         <c:otherwise>
-                            <form action="${pageContext.request.contextPath}/forgot-password" method="post" style="display:inline;">
-                                <input type="hidden" name="action" value="resend">
-                                <button type="submit" class="link-button">Gửi lại mã OTP</button>
-                            </form>
-                            <a href="${pageContext.request.contextPath}/forgot-password">Thay đổi email</a>
+                            <div class="resend-section" style="margin-bottom: 15px;">
+                                <p style="font-size: 0.9em; color: #666; margin-bottom: 5px;">Bạn chưa nhận được mã?</p>
+                                <form action="${pageContext.request.contextPath}/forgot-password" method="post" style="display:inline;">
+                                    <input type="hidden" name="action" value="resend">
+                                    <button type="submit" class="link-button" style="font-weight: bold; color: #007bff; border: none; background: none; cursor: pointer; text-decoration: underline;">
+                                        <i class="fa-solid fa-rotate-right"></i> Gửi lại mã OTP
+                                    </button>
+                                </form>
+                            </div>
+
+                            <hr style="border: 0; border-top: 1px solid #eee; margin: 15px 0;">
+
+                            <div class="change-email-section">
+                                <p style="font-size: 0.9em; color: #666; margin-bottom: 5px;">Nhập nhầm địa chỉ email?</p>
+                                <a href="${pageContext.request.contextPath}/forgot-password" class="back-link" style="font-size: 0.95em; color: #dc3545; text-decoration: none; font-weight: 500;">
+                                    <i class="fa-solid fa-pen-to-square"></i> Thay đổi email khác
+                                </a>
+                            </div>
                         </c:otherwise>
                     </c:choose>
                 </div>
