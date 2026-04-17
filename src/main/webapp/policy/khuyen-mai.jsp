@@ -85,9 +85,16 @@
                     <c:forEach var="p" items="${productList}">
                         <div class="product-card">
                             <c:if test="${p.salePrice > 0 && p.salePrice < p.price}">
-                                <div class="sale-tag" style="position: absolute; top: 10px; right: 10px; background: red; color: white; padding: 5px 10px; border-radius: 5px; font-weight: bold;">
-                                    -<fmt:formatNumber value="${((p.price - p.salePrice) / p.price) * 100}" maxFractionDigits="0"/>%
-                                </div>
+                                <span class="sale-tag">
+                                    <c:choose>
+                                        <c:when test="${p.currentPromotionType == 'PERCENT'}">
+                                            -<fmt:formatNumber value="${p.currentPromotionValue}" maxFractionDigits="0"/>%
+                                        </c:when>
+                                        <c:otherwise>
+                                            -<fmt:formatNumber value="${p.currentPromotionValue}" pattern="#,###"/>₫
+                                        </c:otherwise>
+                                    </c:choose>
+                                </span>
                             </c:if>
 
                             <div class="product-image">
