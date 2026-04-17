@@ -35,13 +35,31 @@ public class CheckoutServlet extends HttpServlet {
             response.sendRedirect(request.getContextPath() + "/san-pham");
             return;
         }
+        String[] selectedItems = request.getParameterValues("selectedItems");
+        if (selectedItems == null || selectedItems.length == 0) {
+            response.sendRedirect(request.getContextPath() + "/gio-hang");
+            return;
+        }
+        double subtotal = 0;
+        List<CartItem> checkoutItems = new ArrayList<>();
+        for (CartItem item : cart.getItems()) {
+            for (String selectedId : selectedItems) {
+                if (item.getProduct().getId() == Integer.parseInt(selectedId)) {
+                    checkoutItems.add(item);
+                    subtotal += item.getTotalPrice();
+                    break;
+                }
+            }
+        }
         UserAddressDAO addressDAO = new UserAddressDAO();
         List<UserAddress> addresses = addressDAO.getListAddress(user.getId());
         request.setAttribute("addresses", addresses);
-        request.setAttribute("subtotal", cart.getTotalMoney());
+        request.setAttribute("checkoutItems", checkoutItems);
+        request.setAttribute("subtotal", subtotal);
         double defaultShipping = 20000;
         request.setAttribute("shippingFee", defaultShipping);
-        request.setAttribute("totalAmount", cart.getTotalMoney() + defaultShipping);
+        request.setAttribute("totalAmount", subtotal + defaultShipping);
+        session.setAttribute("selectedItemIds", selectedItems);
 
         request.getRequestDispatcher("/cart/thanh-toan.jsp").forward(request, response);
     }
@@ -52,14 +70,13 @@ public class CheckoutServlet extends HttpServlet {
         HttpSession session = request.getSession();
         User user = (User) session.getAttribute("user");
         Cart cart = (Cart) session.getAttribute("cart");
-
-        if (user == null || cart == null || cart.getTotalQuantity() == 0) {
-            response.sendRedirect(request.getContextPath() + "/index.jsp");
+        String[] selectedItemIds = (String[]) session.getAttribute("selectedItemIds");
+        if (user == null || cart == null || cart.getTotalQuantity() == 0 || selectedItemIds == null || selectedItemIds.length == 0) {
+            response.sendRedirect(request.getContextPath() + "/gio-hang");
             return;
         }
-
-        String selectedAddressVal = request.getParameter("selectedAddress"); // "new" hoặc ID (số)
-        String shippingMethod = request.getParameter("shippingMethod"); // standard, express, instant
+        String selectedAddressVal = request.getParameter("selectedAddress");
+        String shippingMethod = request.getParameter("shippingMethod");
         String paymentMethod = request.getParameter("paymentMethod");
         String note = request.getParameter("note");
         UserAddressDAO addressDAO = new UserAddressDAO();
@@ -88,11 +105,28 @@ public class CheckoutServlet extends HttpServlet {
             } catch (NumberFormatException e) {
             }
         }
+        List<CartItem> selectedCartItems = new ArrayList<>();
+        double subtotal = 0;
+
+        for (CartItem item : cart.getItems()) {
+            for (String idStr : selectedItemIds) {
+                try {
+                    int id = Integer.parseInt(idStr);
+                    if (item.getProduct().getId() == id) {
+                        selectedCartItems.add(item);
+                        subtotal += item.getTotalPrice();
+                        break;
+                    }
+                } catch (NumberFormatException e) {
+                }
+            }
+        }
+
         double shippingFee = 20000;
         if ("express".equals(shippingMethod)) shippingFee = 35000;
         else if ("instant".equals(shippingMethod)) shippingFee = 60000;
+        double totalAmount = subtotal + shippingFee;
 
-        double totalAmount = cart.getTotalMoney() + shippingFee;
         Order order = new Order();
         order.setUserId(user.getId());
         order.setShippingAddressId(shippingAddressId);
@@ -105,15 +139,19 @@ public class CheckoutServlet extends HttpServlet {
         int orderId = orderDAO.createOrder(order);
 
         if (orderId > 0) {
-            List<CartItem> cartItems = new ArrayList<>(cart.getItems());
-            orderDAO.addOrderItems(orderId, cartItems);
+            orderDAO.addOrderItems(orderId, selectedCartItems);
+
             ProductDAO productDAO = new ProductDAO();
-            for (CartItem item : cartItems) {
-                productDAO.decreaseStock(item.getProduct().getId(), item.getQuantity());
-            }
-            session.removeAttribute("cart");
             CartDAO cartDAO = new CartDAO();
-            cartDAO.clearCart(user.getId());
+
+            for (CartItem item : selectedCartItems) {
+                productDAO.decreaseStock(item.getProduct().getId(), item.getQuantity());
+                cartDAO.removeProduct(user.getId(), item.getProduct().getId());
+            }
+            cart.removeItems(selectedItemIds);
+            session.setAttribute("cart", cart);
+            session.removeAttribute("selectedItemIds");
+
             response.sendRedirect("hoa-don?id=" + orderId);
         } else {
             request.setAttribute("errorMessage", "Đặt hàng thất bại. Vui lòng thử lại.");

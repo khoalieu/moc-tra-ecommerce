@@ -36,6 +36,10 @@
                 <i class="fa-solid fa-cart-shopping"></i>
                 <span>Đơn hàng của tôi</span>
             </a>
+            <a href="${pageContext.request.contextPath}/san-pham-yeu-thich" class="grid-card">
+                <i class="fa-solid fa-heart"></i>
+                <span>Sản phẩm yêu thích</span>
+            </a>
         </div>
     </main>
 

@@ -12,6 +12,7 @@ public class Order {
     private int userId;
     private Integer shippingAddressId;
     private String orderNumber;
+    private String cancelReason;
 
     private OrderStatus status;
     private double totalAmount;
@@ -60,5 +61,12 @@ public class Order {
     }
     public void setItems(List<OrderItem> items) {
         this.items = items;
+    }
+    public String getCancelReason() {
+        return cancelReason;
+    }
+
+    public void setCancelReason(String cancelReason) {
+        this.cancelReason = cancelReason;
     }
 }

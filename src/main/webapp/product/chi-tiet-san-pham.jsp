@@ -66,13 +66,23 @@
 
                     <input type="hidden" name="productId" value="${product.id}">
 
-                    <div class="quantity-selector">
+                    <div class="quantity-selector product-qty-favorite-row">
                         <label for="quantity">Số lượng:</label>
                         <input type="number" id="quantity" name="quantity" value="1" min="1" max="${product.stockQuantity}">
 
                         <span style="font-size: 0.8rem; color: #888; margin-left: 10px;">
-                (Còn ${product.stockQuantity} sản phẩm)
-            </span>
+                        (Còn ${product.stockQuantity} sản phẩm)
+                        </span>
+
+                        <c:if test="${not empty sessionScope.user}">
+                            <button type="button"
+                                    class="favorite-btn ${isFavorite ? 'active' : ''}"
+                                    data-product-id="${product.id}"
+                                    data-favorited="${isFavorite ? 'true' : 'false'}"
+                                    title="${isFavorite ? 'Xóa khỏi yêu thích' : 'Thêm vào yêu thích'}">
+                                <i class="fa-solid fa-heart"></i>
+                            </button>
+                        </c:if>
                     </div>
 
                     <button type="submit" class="cta-button add-to-cart-btn">
@@ -235,6 +245,70 @@
         var href = event.currentTarget.getAttribute('href');
         window.location.href = href.replace("qty=1", "qty=" + qty);
     }
+</script>
+<div id="favoriteToast" class="favorite-toast"></div>
+
+<script>
+    function showFavoriteToast(message, type) {
+        let toast = document.getElementById('favoriteToast');
+        if (!toast) {
+            toast = document.createElement('div');
+            toast.id = 'favoriteToast';
+            toast.className = 'favorite-toast';
+            document.body.appendChild(toast);
+        }
+
+        const icon = type === 'success'
+            ? '<i class="fa-solid fa-circle-check"></i>'
+            : '<i class="fa-solid fa-circle-xmark"></i>';
+
+        toast.className = 'favorite-toast ' + type + ' show';
+        toast.innerHTML = icon + '<span>' + message + '</span>';
+
+        setTimeout(() => {
+            toast.className = 'favorite-toast';
+            toast.innerHTML = '';
+        }, 2000);
+    }
+
+    function bindFavoriteButtons() {
+        document.querySelectorAll('.favorite-btn').forEach(btn => {
+            btn.addEventListener('click', function () {
+                const productId = this.dataset.productId;
+
+                fetch('${pageContext.request.contextPath}/san-pham-yeu-thich', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                    body: new URLSearchParams({
+                        action: 'toggle',
+                        productId: productId
+                    })
+                })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.success) {
+                            this.dataset.favorited = data.favorited ? 'true' : 'false';
+                            this.title = data.favorited ? 'Xóa khỏi yêu thích' : 'Thêm vào yêu thích';
+
+                            if (data.favorited) {
+                                this.classList.add('active');
+                            } else {
+                                this.classList.remove('active');
+                            }
+
+                            showFavoriteToast(data.message, 'success');
+                        } else {
+                            showFavoriteToast(data.message, 'error');
+                        }
+                    })
+                    .catch(() => {
+                        showFavoriteToast('Thao tác yêu thích thất bại', 'error');
+                    });
+            });
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', bindFavoriteButtons);
 </script>
 </body>
 </html>
