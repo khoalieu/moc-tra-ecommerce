@@ -9,7 +9,7 @@ public class OrderItem {
     private int quantity;
     private double price;
     private Product product;
-
+    private Integer variantId;
 
     public OrderItem() {}
 
@@ -34,5 +34,6 @@ public class OrderItem {
     public void setProduct(Product product) {
         this.product = product;
     }
-
+    public Integer getVariantId() { return variantId; }
+    public void setVariantId(Integer variantId) { this.variantId = variantId; }
 }

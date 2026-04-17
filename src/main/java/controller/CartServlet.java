@@ -3,9 +3,11 @@ package controller;
 import dao.CartDAO;
 import dao.DAOFactory;
 import dao.ProductDAO;
+import dao.ProductVariantDAO; // Thêm import này
 import model.cart.Cart;
 import model.cart.CartItem;
 import model.product.Product;
+import model.product.ProductVariant; // Thêm import này
 import model.user.User;
 
 import jakarta.servlet.ServletException;
@@ -21,6 +23,7 @@ import java.io.IOException;
 public class CartServlet extends HttpServlet {
 
     private final ProductDAO productDAO = DAOFactory.getInstance().getProductDAO();
+    private final ProductVariantDAO variantDAO = DAOFactory.getInstance().getProductVariantDAO();
     private final CartDAO cartDAO = DAOFactory.getInstance().getCartDAO();
 
     @Override
@@ -48,9 +51,12 @@ public class CartServlet extends HttpServlet {
 
         String action = request.getParameter("action");
         String productIdStr = request.getParameter("productId");
+        String variantIdStr = request.getParameter("variantId");
 
         try {
-            int productId = Integer.parseInt(productIdStr);
+            int productId = (productIdStr != null && !productIdStr.isEmpty()) ? Integer.parseInt(productIdStr) : 0;
+            int variantId = (variantIdStr != null && !variantIdStr.isEmpty()) ? Integer.parseInt(variantIdStr) : 0;
+
             if ("add".equals(action)) {
                 int quantity = 1;
                 try {
@@ -58,16 +64,19 @@ public class CartServlet extends HttpServlet {
                 } catch (NumberFormatException ignored) {}
 
                 Product product = productDAO.getProductById(productId);
-                if (product != null) {
+                ProductVariant variant = variantDAO.getVariantById(variantId);
+                if (product != null && variant != null) {
                     int currentInCart = (cart.getItems().stream()
-                            .filter(i -> i.getProduct().getId() == productId)
+                            .filter(i -> i.getVariantId() == variantId)
                             .findFirst().map(CartItem::getQuantity).orElse(0));
-                    if (currentInCart + quantity > product.getStockQuantity()) {
-                        session.setAttribute("errorMsg", "Sản phẩm " + product.getName() + " chỉ còn " + product.getStockQuantity() + " món!");
+
+                    if (currentInCart + quantity > variant.getStockQuantity()) {
+                        session.setAttribute("errorMsg", "Phân loại " + variant.getVariantName() + " chỉ còn " + variant.getStockQuantity() + " sản phẩm!");
                     } else {
-                        cart.add(product, quantity);
+                        cart.add(product, variant, quantity);
+
                         if (isLoggedIn) {
-                            cartDAO.addToCart(user.getId(), productId, quantity);
+                            cartDAO.addToCart(user.getId(), productId, variantId, quantity);
                         }
                         session.setAttribute("successMsg", "Đã thêm vào giỏ hàng!");
                     }
@@ -75,30 +84,32 @@ public class CartServlet extends HttpServlet {
             }
             else if ("update".equals(action)) {
                 int quantity = Integer.parseInt(request.getParameter("quantity"));
-                Product product = productDAO.getProductById(productId);
-                if (product != null && quantity > product.getStockQuantity()) {
-                    session.setAttribute("errorMsg", "Số lượng vượt quá tồn kho!");
+                ProductVariant variant = variantDAO.getVariantById(variantId);
+
+                if (variant != null && quantity > variant.getStockQuantity()) {
+                    session.setAttribute("errorMsg", "Số lượng vượt quá tồn kho của phân loại này!");
                 } else {
-                    cart.update(productId, quantity);
+                    cart.update(variantId, quantity);
 
                     if (isLoggedIn) {
                         if (quantity > 0) {
-                            cartDAO.updateQuantity(user.getId(), productId, quantity);
+                            cartDAO.updateQuantity(user.getId(), variantId, quantity);
                         } else {
-                            cartDAO.removeProduct(user.getId(), productId);
+                            cartDAO.removeProduct(user.getId(), variantId);
                         }
                     }
                 }
             }
             else if ("remove".equals(action)) {
-                cart.remove(productId);
+                cart.remove(variantId);
                 if (isLoggedIn) {
-                    cartDAO.removeProduct(user.getId(), productId);
+                    cartDAO.removeProduct(user.getId(), variantId);
                 }
             }
         } catch (NumberFormatException e) {
             e.printStackTrace();
         }
+
         String referer = request.getHeader("referer");
         if (referer != null && !referer.contains("login") && !referer.contains("register")) {
             response.sendRedirect(referer);
