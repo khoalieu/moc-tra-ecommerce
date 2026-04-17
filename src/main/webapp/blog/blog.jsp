@@ -56,8 +56,12 @@
 
                                     <span class="meta-item">
                                         <i class="fa-solid fa-user"></i>
-                                        <span>Admin</span>
+                                        <span>${not empty b.author && (not empty b.author.firstName || not empty b.author.lastName)
+                                                ? b.author.firstName.concat(' ').concat(b.author.lastName)
+                                                : (not empty b.author ? b.author.username : 'Admin')}
+                                        </span>
                                     </span>
+
                                 </div>
                                 <p>${empty b.excerpt ? '(Chưa có mô tả)' : b.excerpt}</p>
 
