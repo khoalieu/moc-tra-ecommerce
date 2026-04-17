@@ -23,9 +23,9 @@ public class ProductDetailServlet extends HttpServlet {
 
         try {
             int productId = Integer.parseInt(idParam);
-            ProductDAO productDAO = new ProductDAO();
-            ProductImageDAO imageDAO = new ProductImageDAO();
-            ReviewDAO reviewDAO = new ReviewDAO();
+            ProductDAO productDAO = DAOFactory.getInstance().getProductDAO();
+            ProductImageDAO imageDAO = DAOFactory.getInstance().getProductImageDAO();
+            ReviewDAO reviewDAO = DAOFactory.getInstance().getReviewDAO();
             Product product = productDAO.getProductById(productId);
             if (product == null) {
                 response.sendError(HttpServletResponse.SC_NOT_FOUND, "Sản phẩm không tồn tại");

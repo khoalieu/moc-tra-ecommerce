@@ -1,6 +1,5 @@
 package dao;
 
-import db.DBConnect;
 import model.user.CustomerDTO;
 import model.user.User;
 import model.user.UserAddress;
@@ -8,6 +7,8 @@ import model.enums.UserGender;
 import model.enums.UserRole;
 import org.mindrot.jbcrypt.BCrypt;
 import model.GooglePojo;
+
+import javax.sql.DataSource;
 import java.util.UUID;
 
 import java.sql.*;
@@ -17,11 +18,16 @@ public class UserDAO {
     Connection conn = null;
     PreparedStatement ps = null;
     ResultSet rs = null;
+    private final DataSource ds;
+
+    public UserDAO(DataSource ds) {
+        this.ds = ds;
+    }
 
     public User checkLogin(String username, String password) {
         try {
             String query = "SELECT * FROM users WHERE username = ? AND is_active = 1";
-            conn = new DBConnect().getConnection();
+            conn = ds.getConnection();
             ps = conn.prepareStatement(query);
             ps.setString(1, username);
             rs = ps.executeQuery();
@@ -68,7 +74,7 @@ public class UserDAO {
     public boolean checkUserExist(String username, String email) {
         try {
             String query = "SELECT id FROM users WHERE username = ? OR email = ?";
-            conn = new DBConnect().getConnection();
+            conn = ds.getConnection();
             ps = conn.prepareStatement(query);
             ps.setString(1, username);
             ps.setString(2, email);
@@ -87,7 +93,7 @@ public class UserDAO {
             String hashedPassword = BCrypt.hashpw(password, BCrypt.gensalt(12));
 
             String query = "INSERT INTO users (username, password_hash, phone, email, role, is_active, created_at) VALUES (?, ?, ?, ?, 'customer', 1, NOW())";
-            conn = new DBConnect().getConnection();
+            conn = ds.getConnection();
             ps = conn.prepareStatement(query);
             ps.setString(1, username);
             ps.setString(2, hashedPassword);
@@ -115,7 +121,7 @@ public class UserDAO {
                 + "JOIN blog_comments bc ON bc.user_id = u.id "
                 + "WHERE bc.post_id = ?";
 
-        try (Connection c = new DBConnect().getConnection();
+        try (Connection c = ds.getConnection();
              PreparedStatement p = c.prepareStatement(sql)) {
             p.setInt(1, postId);
             try (ResultSet r = p.executeQuery()) {
@@ -138,7 +144,7 @@ public class UserDAO {
     public boolean updateProfile(String firstname, String lastname, String phone, String dob, String gender, int userId) throws SQLException {
         String query = "UPDATE users SET first_name = ?, last_name = ?, phone = ?, dateOfBirth = ?, gender = ? WHERE id = ?";
 
-        try (Connection conn = new DBConnect().getConnection();
+        try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(query)) {
 
             ps.setString(1, firstname);
@@ -171,7 +177,7 @@ public class UserDAO {
         String hashedPassword = BCrypt.hashpw(newPassword, BCrypt.gensalt(12));
         String query = "UPDATE users SET password_hash = ? WHERE id = ?";
         try {
-            conn = new DBConnect().getConnection();
+            conn = ds.getConnection();
             ps = conn.prepareStatement(query);
             ps.setString(1, hashedPassword);
             ps.setInt(2, userId);
@@ -185,7 +191,7 @@ public class UserDAO {
     public boolean checkPassword(int userId, String oldPassword) {
         String query = "SELECT password_hash FROM users WHERE id = ?";
         try {
-            conn = new DBConnect().getConnection();
+            conn = ds.getConnection();
             ps = conn.prepareStatement(query);
             ps.setInt(1, userId);
             rs = ps.executeQuery();
@@ -207,7 +213,7 @@ public class UserDAO {
                         "WHERE role IN ('admin','editor') " +
                         "ORDER BY username";
 
-        try (Connection conn = DBConnect.getConnection();
+        try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
 
@@ -228,7 +234,7 @@ public class UserDAO {
 
     public User getById(int id) {
         String sql = "SELECT id, username, email, first_name, last_name, avatar, role FROM users WHERE id=? LIMIT 1";
-        try (Connection conn = DBConnect.getConnection();
+        try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, id);
             try (ResultSet rs = ps.executeQuery()) {
@@ -248,7 +254,7 @@ public class UserDAO {
         for (int i = 0; i < ids.size(); i++) sj.add("?");
 
         String sql = "SELECT id, username, email, first_name, last_name, avatar, role FROM users WHERE id IN " + sj;
-        try (Connection conn = DBConnect.getConnection();
+        try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             int idx = 1;
@@ -282,7 +288,7 @@ public class UserDAO {
     }
     public Integer findUserIdByEmail(String email) {
         String sql = "SELECT id FROM users WHERE email = ? LIMIT 1";
-        try (Connection conn = new DBConnect().getConnection();
+        try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, email);
             try (ResultSet rs = ps.executeQuery()) {
@@ -296,7 +302,7 @@ public class UserDAO {
 
     public User getUserDetailById(int id) {
         String sql = "SELECT * FROM users WHERE id = ?";
-        try (Connection conn = DBConnect.getConnection();
+        try (Connection conn =ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setInt(1, id);
@@ -418,7 +424,7 @@ public class UserDAO {
 
         sql.append(" LIMIT ? OFFSET ?");
 
-        try (Connection conn = DBConnect.getConnection();
+        try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql.toString())) {
 
             int paramIndex = 1;
@@ -457,7 +463,7 @@ public class UserDAO {
         if (search != null && !search.isEmpty()) {
             sql.append(" AND (u.email LIKE ? OR u.phone LIKE ? OR CONCAT(u.last_name, ' ', u.first_name) LIKE ?) ");
         }
-        try (Connection conn = DBConnect.getConnection();
+        try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql.toString())) {
             if (search != null && !search.isEmpty()) {
                 String searchPattern = "%" + search + "%";
@@ -477,7 +483,7 @@ public class UserDAO {
         Connection conn = null;
         PreparedStatement ps = null;
         try {
-            conn = DBConnect.getConnection();
+            conn = ds.getConnection();
             conn.setAutoCommit(false);
 
             ps = conn.prepareStatement(sql);
@@ -550,7 +556,7 @@ public class UserDAO {
             }
         }
 
-        try (Connection conn = DBConnect.getConnection();
+        try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql.toString())) {
 
             if (search != null && !search.isEmpty()) {
@@ -571,7 +577,7 @@ public class UserDAO {
     }
     public int addAddressAndGetId(UserAddress addr) {
         String sql = "INSERT INTO user_addresses (user_id, full_name, phone_number, label, province, ward, street_address, is_default) VALUES (?,?,?,?,?,?,?,?)";
-        try (Connection conn = DBConnect.getConnection();
+        try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             ps.setInt(1, addr.getUserId());
             ps.setString(2, addr.getFullName());
@@ -593,7 +599,7 @@ public class UserDAO {
     }
     public boolean updateUserByAdmin(User u) {
         String sql = "UPDATE users SET first_name=?, last_name=?, phone=?, role=?, is_active=? WHERE id=?";
-        try (Connection conn = DBConnect.getConnection();
+        try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setString(1, u.getFirstName());
@@ -612,7 +618,7 @@ public class UserDAO {
     public User loginWithGoogle(GooglePojo googleData) {
         String queryFind = "SELECT * FROM users WHERE email = ?";
         try {
-            conn = new DBConnect().getConnection();
+            conn = ds.getConnection();
             ps = conn.prepareStatement(queryFind);
             ps.setString(1, googleData.getEmail());
             rs = ps.executeQuery();
@@ -671,7 +677,7 @@ public class UserDAO {
     public String checkUserExistDetailed(String username, String phone) {
         try {
             String query = "SELECT username, phone FROM users WHERE username = ? OR phone = ? LIMIT 1";
-            conn = new DBConnect().getConnection();
+            conn = ds.getConnection();
             ps = conn.prepareStatement(query);
             ps.setString(1, username);
             ps.setString(2, phone);
@@ -699,7 +705,7 @@ public class UserDAO {
     public User getUserForLogin(String loginKey) {
         String query = "SELECT * FROM users WHERE (username = ? OR email = ? OR phone = ?) AND is_active = 1";
         try (
-                Connection conn = DBConnect.getConnection();
+                Connection conn = ds.getConnection();
                 PreparedStatement ps = conn.prepareStatement(query);
                 ){
             ps.setString(1, loginKey);
@@ -745,7 +751,7 @@ public class UserDAO {
     public void resetFailedAttempts(int userId) {
         try {
             String query = "UPDATE users SET failed_attempts = 0, lock_until = NULL WHERE id = ?";
-            conn = new DBConnect().getConnection();
+            conn = ds.getConnection();
             ps = conn.prepareStatement(query);
             ps.setInt(1, userId);
             ps.executeUpdate();
@@ -760,7 +766,7 @@ public class UserDAO {
         String query;
 
         try {
-            conn = new DBConnect().getConnection();
+            conn = ds.getConnection();
             if (newAttempts >= 5) { // Ngưỡng 5 lần
                 query = "UPDATE users SET failed_attempts = ?, lock_until = DATE_ADD(NOW(), INTERVAL 30 MINUTE) WHERE id = ?";
                 justLocked = true;
@@ -796,7 +802,7 @@ public class UserDAO {
     }
     public boolean updateEmail(int userId, String newEmail) {
         String sql = "UPDATE users SET email = ? WHERE id = ?";
-        try (Connection conn = DBConnect.getConnection();
+        try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setString(1, newEmail);
@@ -809,6 +815,17 @@ public class UserDAO {
             e.printStackTrace();
         }
         return false;
+    }
+
+    public boolean updateAvatar(int userId, String avatarPath) throws SQLException {
+        String query = "UPDATE users SET avatar = ? WHERE id = ?";
+        try (Connection conn = ds.getConnection();
+             PreparedStatement ps = conn.prepareStatement(query)) {
+
+            ps.setString(1, avatarPath);
+            ps.setInt(2, userId);
+            return ps.executeUpdate() > 0;
+        }
     }
 
 }

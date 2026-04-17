@@ -2,6 +2,7 @@ package controller.admin;
 
 import dao.BannerDAO;
 import dao.CategoryDAO;
+import dao.DAOFactory;
 import dao.PromotionDAO;
 import model.Banner;
 import model.promotion.Promotion;
@@ -77,7 +78,7 @@ public class AdminBannerServlet extends HttpServlet {
     }
 
     private void showList(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        BannerDAO dao = new BannerDAO();
+        BannerDAO dao = DAOFactory.getInstance().getBannerDAO();
         request.setAttribute("banners", dao.getAll());
         request.getRequestDispatcher("/admin/admin-banner-list.jsp").forward(request, response);
     }
@@ -91,7 +92,7 @@ public class AdminBannerServlet extends HttpServlet {
                 response.sendRedirect(request.getContextPath() + "/admin/banner");
                 return;
             }
-            Banner b = new BannerDAO().getById(id);
+            Banner b = DAOFactory.getInstance().getBannerDAO().getById(id);
             if (b == null) {
                 response.sendRedirect(request.getContextPath() + "/admin/banner");
                 return;
@@ -175,7 +176,7 @@ public class AdminBannerServlet extends HttpServlet {
         b.setSortOrder(sortOrder);
         b.setIsActive(isActive);
 
-        BannerDAO dao = new BannerDAO();
+        BannerDAO dao = DAOFactory.getInstance().getBannerDAO();
         try {
             if ("edit".equals(mode)) dao.update(b);
             else dao.insert(b);
@@ -203,7 +204,7 @@ public class AdminBannerServlet extends HttpServlet {
         }
 
         try {
-            new BannerDAO().deleteByIds(ids);
+            DAOFactory.getInstance().getBannerDAO().deleteByIds(ids);
             request.getSession().setAttribute("successMsg", "Đã xóa banner!");
         } catch (Exception e) {
             e.printStackTrace();
@@ -228,7 +229,7 @@ public class AdminBannerServlet extends HttpServlet {
         boolean isActive = "1".equals(request.getParameter("is_active"));
 
         try {
-            new BannerDAO().updateActiveByIds(ids, isActive);
+            DAOFactory.getInstance().getBannerDAO().updateActiveByIds(ids, isActive);
             request.getSession().setAttribute("successMsg", isActive ? "Đã bật hiển thị banner!" : "Đã ẩn banner!");
         } catch (Exception e) {
             e.printStackTrace();
@@ -239,10 +240,10 @@ public class AdminBannerServlet extends HttpServlet {
     }
 
     private void loadTargets(HttpServletRequest request) {
-        CategoryDAO catDao = new CategoryDAO();
+        CategoryDAO catDao = DAOFactory.getInstance().getCategoryDAO();
         request.setAttribute("categoryMap", catDao.getActiveCategories());
 
-        PromotionDAO promoDao = new PromotionDAO();
+        PromotionDAO promoDao = DAOFactory.getInstance().getPromotionDAO();
         List<Promotion> promos = promoDao.getActivePromotions();
         request.setAttribute("promotions", promos);
     }

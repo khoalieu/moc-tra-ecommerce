@@ -1,5 +1,6 @@
 package controller;
 
+import dao.DAOFactory;
 import dao.ReviewDAO;
 import model.user.User;
 import jakarta.servlet.*;
@@ -24,7 +25,7 @@ public class SubmitReviewServlet extends HttpServlet {
             int productId = Integer.parseInt(request.getParameter("productId"));
             int rating = Integer.parseInt(request.getParameter("rating"));
             String comment = request.getParameter("comment");
-            ReviewDAO reviewDAO = new ReviewDAO();
+            ReviewDAO reviewDAO = DAOFactory.getInstance().getReviewDAO();
             reviewDAO.addReview(productId, user.getId(), rating, comment);
             response.sendRedirect(request.getContextPath() + "/chi-tiet-san-pham?id=" + productId);
         } catch (NumberFormatException e) {

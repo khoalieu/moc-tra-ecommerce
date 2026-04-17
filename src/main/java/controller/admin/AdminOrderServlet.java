@@ -1,5 +1,6 @@
 package controller.admin;
 
+import dao.DAOFactory;
 import dao.OrderDAO;
 import model.order.Order;
 import model.enums.OrderStatus;
@@ -15,7 +16,7 @@ import java.util.List;
 @WebServlet(name = "AdminOrderServlet", urlPatterns = {"/admin/orders", "/admin/order/detail", "/admin/order/update"})
 public class AdminOrderServlet extends HttpServlet {
 
-    private final OrderDAO orderDAO = new OrderDAO();
+    private final OrderDAO orderDAO = DAOFactory.getInstance().getOrderDAO();
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {

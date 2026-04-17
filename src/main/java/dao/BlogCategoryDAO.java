@@ -1,6 +1,7 @@
 package dao;
-import db.DBConnect;
 import model.blog.BlogCategory;
+
+import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -10,6 +11,10 @@ import java.util.List;
 import java.util.Map;
 
 public class BlogCategoryDAO {
+    private final DataSource ds;
+    public BlogCategoryDAO(DataSource ds) {
+        this.ds = ds;
+    }
 
     public List<BlogCategory> getActiveCategories() {
         List<BlogCategory> list = new ArrayList<>();
@@ -17,7 +22,7 @@ public class BlogCategoryDAO {
         String sql = "SELECT * FROM blog_categories "
                 + "WHERE is_active = 1 "
                 + "ORDER BY name ASC";
-        try (Connection conn = DBConnect.getConnection();
+        try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
 
@@ -35,7 +40,7 @@ public class BlogCategoryDAO {
                 "WHERE status = 'published' AND category_id IS NOT NULL " +
                 "GROUP BY category_id";
 
-        try (Connection conn = DBConnect.getConnection();
+        try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
 
@@ -50,7 +55,7 @@ public class BlogCategoryDAO {
     public BlogCategory getById(int id) {
         String sql = "SELECT * FROM blog_categories WHERE id = ?";
 
-        try (Connection conn = DBConnect.getConnection();
+        try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setInt(1, id);
@@ -79,7 +84,7 @@ public class BlogCategoryDAO {
         List<BlogCategory> list = new ArrayList<>();
         String sql = "SELECT * FROM blog_categories ORDER BY name ASC";
 
-        try (Connection conn = DBConnect.getConnection();
+        try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
 
@@ -94,7 +99,7 @@ public class BlogCategoryDAO {
 
         public boolean slugExists(String slug) {
             String sql = "SELECT 1 FROM blog_categories WHERE slug = ? LIMIT 1";
-            try (Connection conn = DBConnect.getConnection();
+            try (Connection conn = ds.getConnection();
                  PreparedStatement ps = conn.prepareStatement(sql)) {
                 ps.setString(1, slug);
                 try (ResultSet rs = ps.executeQuery()) {
@@ -108,7 +113,7 @@ public class BlogCategoryDAO {
 
     public boolean slugExistsExceptId(String slug, int excludeId) {
         String sql = "SELECT 1 FROM blog_categories WHERE slug = ? AND id <> ? LIMIT 1";
-        try (Connection conn = DBConnect.getConnection();
+        try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, slug);
             ps.setInt(2, excludeId);
@@ -124,7 +129,7 @@ public class BlogCategoryDAO {
         public int insertCategory(BlogCategory cat) {
             String sql = "INSERT INTO blog_categories (name, slug, description, is_active) VALUES (?, ?, ?, ?)";
 
-            try (Connection conn = DBConnect.getConnection();
+            try (Connection conn = ds.getConnection();
                  PreparedStatement ps = conn.prepareStatement(sql, PreparedStatement.RETURN_GENERATED_KEYS)) {
 
                 ps.setString(1, cat.getName());
@@ -148,7 +153,7 @@ public class BlogCategoryDAO {
         public BlogCategory getCategoryById(int id) {
             String sql = "SELECT * FROM blog_categories WHERE id = ? LIMIT 1";
 
-            try (Connection conn = DBConnect.getConnection();
+            try (Connection conn = ds.getConnection();
                  PreparedStatement ps = conn.prepareStatement(sql)) {
 
                 ps.setInt(1, id);
@@ -172,7 +177,7 @@ public class BlogCategoryDAO {
         public boolean updateCategory(BlogCategory cat) {
             String sql = "UPDATE blog_categories SET name = ?, slug = ?, description = ?, is_active = ? WHERE id = ? LIMIT 1";
 
-            try (Connection conn = DBConnect.getConnection();
+            try (Connection conn = ds.getConnection();
                  PreparedStatement ps = conn.prepareStatement(sql)) {
 
                 ps.setString(1, cat.getName());
@@ -191,7 +196,7 @@ public class BlogCategoryDAO {
         public boolean deleteCategory(int id) {
             String sql = "DELETE FROM blog_categories WHERE id = ? LIMIT 1";
 
-            try (Connection conn = DBConnect.getConnection();
+            try (Connection conn = ds.getConnection();
                  PreparedStatement ps = conn.prepareStatement(sql)) {
 
                 ps.setInt(1, id);

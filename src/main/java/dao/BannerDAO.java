@@ -1,13 +1,17 @@
 package dao;
 
-import db.DBConnect;
 import model.Banner;
 
+import javax.sql.DataSource;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
 public class BannerDAO {
+    private final DataSource ds;
+    public BannerDAO(DataSource ds) {
+        this.ds = ds;
+    }
 
     public List<Banner> getAll() {
         List<Banner> list = new ArrayList<>();
@@ -18,7 +22,7 @@ public class BannerDAO {
                         "  sort_order ASC, " +
                         "  created_at DESC";
 
-        try (Connection conn = DBConnect.getConnection();
+        try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
             while (rs.next()) list.add(map(rs));
@@ -30,7 +34,7 @@ public class BannerDAO {
 
     public Banner getById(int id) {
         String sql = "SELECT * FROM banners WHERE id = ?";
-        try (Connection conn = DBConnect.getConnection();
+        try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, id);
             try (ResultSet rs = ps.executeQuery()) {
@@ -51,7 +55,7 @@ public class BannerDAO {
         String sql = "INSERT INTO banners(title, subtitle, image_url, button_text, button_link, section, sort_order, is_active) " +
                 "VALUES(?,?,?,?,?,?,?,?)";
 
-        try (Connection conn = DBConnect.getConnection();
+        try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setString(1, b.getTitle());
@@ -77,7 +81,7 @@ public class BannerDAO {
         String sql = "UPDATE banners SET title=?, subtitle=?, image_url=?, button_text=?, button_link=?, section=?, sort_order=?, is_active=? " +
                 "WHERE id=?";
 
-        try (Connection conn = DBConnect.getConnection();
+        try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setString(1, b.getTitle());
@@ -107,7 +111,7 @@ public class BannerDAO {
         }
         sb.append(")");
 
-        try (Connection conn = DBConnect.getConnection();
+        try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sb.toString())) {
 
             for (int i = 0; i < ids.length; i++) ps.setInt(i + 1, ids[i]);
@@ -125,7 +129,7 @@ public class BannerDAO {
         }
         sb.append(")");
 
-        try (Connection conn = DBConnect.getConnection();
+        try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sb.toString())) {
 
             ps.setBoolean(1, isActive);
@@ -139,7 +143,7 @@ public class BannerDAO {
                 "WHERE section = ? AND sort_order = ? " +
                 (excludeId != null ? "AND id <> ?" : "");
 
-        try (Connection conn = DBConnect.getConnection();
+        try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setString(1, section);
@@ -180,7 +184,7 @@ public class BannerDAO {
                         "  sort_order ASC, " +
                         "  created_at DESC";
 
-        try (Connection conn = DBConnect.getConnection();
+        try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
 

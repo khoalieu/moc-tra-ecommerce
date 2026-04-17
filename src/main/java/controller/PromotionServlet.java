@@ -1,5 +1,6 @@
 package controller;
 
+import dao.DAOFactory;
 import dao.PromotionDAO;
 import model.product.Product;
 import model.promotion.Promotion;
@@ -18,7 +19,7 @@ import java.util.Map;
 public class PromotionServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        PromotionDAO dao = new PromotionDAO();
+        PromotionDAO dao = DAOFactory.getInstance().getPromotionDAO();
         List<Promotion> activePromotions = dao.getActivePromotions();
         Map<Promotion, List<Product>> promoMap = new LinkedHashMap<>();
 
