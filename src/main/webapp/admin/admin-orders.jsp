@@ -47,7 +47,10 @@
             <div class="header-right">
                 <div class="header-search">
                     <i class="fa-solid fa-search"></i>
-                    <input type="text" placeholder="Tìm kiếm đơn hàng, khách hàng...">
+                    <input type="text" name="search" form="filterForm"
+                           value="${search}"
+                           placeholder="Tìm kiếm mã đơn hoặc khách hàng..."
+                           autocomplete="off">
                 </div>
             </div>
         </header>
@@ -63,6 +66,7 @@
 
             <div class="filters-section">
                 <form id="filterForm" action="admin/orders" method="GET">
+                    <input type="hidden" name="search" value="${search}">
                     <div class="filters-grid">
                         <div class="filter-group">
                             <label>Trạng thái</label>
@@ -211,13 +215,41 @@
 
                 <div class="pagination-container">
                     <div class="pagination-info">
-                        Trang ${currentPage}/${totalPages}
+                        <c:set var="startIdx" value="${(currentPage - 1) * 10 + 1}" />
+                        <c:set var="endIdx" value="${startIdx + orders.size() - 1}" />
+                        <c:if test="${totalOrders == 0}">
+                            <c:set var="startIdx" value="0" />
+                            <c:set var="endIdx" value="0" />
+                        </c:if>
+
+                        Hiển thị <strong>${startIdx}-${endIdx}</strong> trong tổng số <strong>${totalOrders}</strong> đơn hàng
                     </div>
+
                     <div class="pagination">
+                        <c:if test="${currentPage > 1}">
+                            <a href="admin/orders?page=${currentPage - 1}&search=${search}&status=${status}&time=${time}&sort=${sort}"
+                               class="page-btn">
+                                <i class="fas fa-chevron-left"></i>
+                            </a>
+                        </c:if>
+                        <c:if test="${currentPage <= 1}">
+                            <span class="page-btn disabled"><i class="fas fa-chevron-left"></i></span>
+                        </c:if>
+
                         <c:forEach begin="1" end="${totalPages}" var="i">
-                            <a href="admin/orders?page=${i}&status=${status}&time=${time}&sort=${sort}"
+                            <a href="admin/orders?page=${i}&search=${search}&status=${status}&time=${time}&sort=${sort}"
                                class="page-btn ${currentPage == i ? 'active' : ''}">${i}</a>
                         </c:forEach>
+
+                        <c:if test="${currentPage < totalPages}">
+                            <a href="admin/orders?page=${currentPage + 1}&search=${search}&status=${status}&time=${time}&sort=${sort}"
+                               class="page-btn">
+                                <i class="fas fa-chevron-right"></i>
+                            </a>
+                        </c:if>
+                        <c:if test="${currentPage >= totalPages}">
+                            <span class="page-btn disabled"><i class="fas fa-chevron-right"></i></span>
+                        </c:if>
                     </div>
                 </div>
             </div>

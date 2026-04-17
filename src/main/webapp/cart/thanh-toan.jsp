@@ -68,28 +68,25 @@
                                 <div class="form-row form-row--2">
                                     <div class="form-field">
                                         <label for="fullName">Họ và tên <span class="required">*</span></label>
-                                        <input type="text" id="fullName" name="fullName" placeholder="Nguyễn Văn A">
+                                        <input type="text" id="fullName" name="fullName" placeholder="Nguyễn Văn A" required minlength="2" title="Vui lòng nhập họ tên hợp lệ">
                                     </div>
                                     <div class="form-field">
                                         <label for="phoneNumber">Số điện thoại <span class="required">*</span></label>
-                                        <input type="tel" id="phoneNumber" name="phoneNumber" placeholder="0888 531 015">
+                                        <input type="tel" id="phoneNumber" name="phoneNumber" placeholder="0888 531 015" required pattern="^(0[3|5|7|8|9])+([0-9]{8})$" title="Số điện thoại phải bắt đầu bằng 0 và gồm 10 chữ số">
                                     </div>
                                 </div>
 
-                                <div class="form-row form-row--3">
+                                <div class="form-row form-row--2">
                                     <div class="form-field">
-                                        <label for="province">Tỉnh / Thành phố</label>
-                                        <select id="province" name="province">
+                                        <label for="province">Tỉnh / Thành phố <span class="required">*</span></label>
+                                        <select id="province" name="province" required>
                                             <option value="">-- Chọn tỉnh / thành --</option>
-                                            <option value="Hồ Chí Minh">Hồ Chí Minh</option>
-                                            <option value="Hà Nội">Hà Nội</option>
                                         </select>
                                     </div>
                                     <div class="form-field">
-                                        <label for="ward">Phường / Xã</label>
-                                        <select id="ward" name="ward">
+                                        <label for="ward">Phường / Xã <span class="required">*</span></label>
+                                        <select id="ward" name="ward" disabled required>
                                             <option value="">-- Chọn phường / xã --</option>
-                                            <option value="Phường 1">Phường 1</option>
                                         </select>
                                     </div>
                                 </div>
@@ -97,7 +94,7 @@
                                 <div class="form-row">
                                     <div class="form-field">
                                         <label for="addressLine">Địa chỉ cụ thể <span class="required">*</span></label>
-                                        <input type="text" id="addressLine" name="addressLine" placeholder="Số nhà, tên đường, tòa nhà...">
+                                        <input type="text" id="addressLine" name="addressLine" placeholder="Số nhà, tên đường, tòa nhà..." required>
                                     </div>
                                 </div>
                             </div>
@@ -162,7 +159,7 @@
                             <h2 class="checkout-card__title">Đơn hàng của bạn</h2>
 
                             <div class="order-items">
-                                <c:forEach var="item" items="${sessionScope.cart.items}">
+                                <c:forEach var="item" items="${requestScope.checkoutItems}">
                                     <div class="order-item">
                                         <div class="order-item__thumb">
                                             <img src="${item.product.imageUrl}" alt="${item.product.name}">
@@ -251,15 +248,27 @@
 
 <script>
     document.addEventListener("DOMContentLoaded", function () {
+        // --- 1. XỬ LÝ LOGIC UI (FORM & TÍNH TIỀN) ---
         const addressRadios = document.querySelectorAll('input[name="selectedAddress"]');
         const manualAddressForm = document.querySelector(".manual-address");
         const manualInputs = manualAddressForm.querySelectorAll("input, textarea, select");
+        const provinceSelect = document.getElementById("province");
+        const wardSelect = document.getElementById("ward");
 
         function updateFormState() {
             const selected = document.querySelector('input[name="selectedAddress"]:checked');
             if (selected && selected.value === "new") {
                 manualAddressForm.classList.remove("disabled");
-                manualInputs.forEach(input => input.disabled = false);
+
+                manualInputs.forEach(input => {
+                    if(input.id !== "ward") {
+                        input.disabled = false;
+                    }
+                });
+                if(provinceSelect.value !== "") {
+                    wardSelect.disabled = false;
+                }
+
                 const firstInput = manualAddressForm.querySelector('input');
                 if(firstInput) firstInput.focus();
             } else {
@@ -267,10 +276,12 @@
                 manualInputs.forEach(input => input.disabled = true);
             }
         }
+
         addressRadios.forEach(radio => {
             radio.addEventListener("change", updateFormState);
         });
         updateFormState();
+
         const shippingRadios = document.querySelectorAll('input[name="shippingMethod"]');
         const subtotal = parseFloat(document.getElementById('hiddenSubtotal').value);
         const shippingFeeDisplay = document.getElementById('shippingFeeDisplay');
@@ -284,7 +295,6 @@
         function updateTotal() {
             const selectedShip = document.querySelector('input[name="shippingMethod"]:checked');
             const shipPrice = parseFloat(selectedShip.getAttribute('data-price'));
-
             const newTotal = subtotal + shipPrice;
 
             shippingFeeDisplay.innerText = formatCurrency(shipPrice);
@@ -295,6 +305,49 @@
         shippingRadios.forEach(radio => {
             radio.addEventListener("change", updateTotal);
         });
+        const DATA_URL = "${pageContext.request.contextPath}/assets/data/openapi.json";
+        let provincesData = [];
+
+        async function loadData() {
+            try {
+                const response = await fetch(DATA_URL);
+                if (!response.ok) throw new Error("Không thể đọc file JSON");
+                provincesData = await response.json();
+                provincesData.forEach(p => {
+                    const option = document.createElement("option");
+                    option.value = p.name;
+                    option.dataset.code = p.code;
+                    option.textContent = p.name;
+                    provinceSelect.appendChild(option);
+                });
+            } catch (error) {
+                console.error("Lỗi khi tải dữ liệu địa giới:", error);
+            }
+        }
+        provinceSelect.addEventListener("change", function () {
+            wardSelect.innerHTML = '<option value="">-- Chọn phường / xã --</option>';
+            wardSelect.disabled = true;
+
+            const selectedOption = this.options[this.selectedIndex];
+            const provinceCode = parseInt(selectedOption.dataset.code);
+
+            if (!provinceCode) return;
+            const selectedProvince = provincesData.find(p => p.code === provinceCode);
+
+            if (selectedProvince && selectedProvince.wards && selectedProvince.wards.length > 0) {
+                selectedProvince.wards.forEach(w => {
+                    const option = document.createElement("option");
+                    option.value = w.name;
+                    option.textContent = w.name;
+                    wardSelect.appendChild(option);
+                });
+                const selectedRadio = document.querySelector('input[name="selectedAddress"]:checked');
+                if (selectedRadio && selectedRadio.value === "new") {
+                    wardSelect.disabled = false;
+                }
+            }
+        });
+        loadData();
     });
 </script>
 </html>

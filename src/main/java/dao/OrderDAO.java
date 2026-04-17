@@ -244,15 +244,22 @@ public class OrderDAO {
         return o;
     }
 
-    public List<Order> getAllOrders(int index, int size, String status, String timeFilter, String sortOrder) {
+    public List<Order> getAllOrders(int index, int size, String search, String status, String timeFilter, String sortOrder) {
         List<Order> list = new ArrayList<>();
         StringBuilder sql = new StringBuilder(
                 "SELECT o.*, a.full_name, a.phone_number FROM orders o " +
                         "LEFT JOIN user_addresses a ON o.shipping_address_id = a.id " +
-                        "WHERE 1=1 ");
+                        "WHERE 1=1 "
+        );
+
+        if (search != null && !search.trim().isEmpty()) {
+            sql.append(" AND (o.order_number LIKE ? OR a.full_name LIKE ?) ");
+        }
+
         if (status != null && !status.isEmpty()) {
             sql.append(" AND o.status = ? ");
         }
+
         if ("this_month".equals(timeFilter)) {
             sql.append(" AND MONTH(o.created_at) = MONTH(CURRENT_DATE()) AND YEAR(o.created_at) = YEAR(CURRENT_DATE()) ");
         } else if ("last_month".equals(timeFilter)) {
@@ -266,7 +273,7 @@ public class OrderDAO {
         } else if ("oldest".equals(sortOrder)) {
             sql.append(" ORDER BY o.created_at ASC ");
         } else {
-            sql.append(" ORDER BY o.created_at DESC "); // Mặc định: Mới nhất
+            sql.append(" ORDER BY o.created_at DESC ");
         }
 
         sql.append(" LIMIT ? OFFSET ?");
@@ -275,6 +282,13 @@ public class OrderDAO {
              PreparedStatement ps = conn.prepareStatement(sql.toString())) {
 
             int paramIndex = 1;
+
+            if (search != null && !search.trim().isEmpty()) {
+                String kw = "%" + search.trim() + "%";
+                ps.setString(paramIndex++, kw);
+                ps.setString(paramIndex++, kw);
+            }
+
             if (status != null && !status.isEmpty()) {
                 ps.setString(paramIndex++, status.toLowerCase());
             }
@@ -294,22 +308,39 @@ public class OrderDAO {
         return list;
     }
 
-    public int countAllOrders(String status, String timeFilter) {
-        StringBuilder sql = new StringBuilder("SELECT COUNT(*) FROM orders WHERE 1=1 ");
+    public int countAllOrders(String search, String status, String timeFilter) {
+        StringBuilder sql = new StringBuilder(
+                "SELECT COUNT(*) " +
+                        "FROM orders o " +
+                        "LEFT JOIN user_addresses a ON o.shipping_address_id = a.id " +
+                        "WHERE 1=1 "
+        );
 
+        if (search != null && !search.trim().isEmpty()) {
+            sql.append(" AND (o.order_number LIKE ? OR a.full_name LIKE ?) ");
+        }
         if (status != null && !status.isEmpty()) {
-            sql.append(" AND status = ? ");
+            sql.append(" AND o.status = ? ");
         }
         if ("this_month".equals(timeFilter)) {
-            sql.append(" AND MONTH(created_at) = MONTH(CURRENT_DATE()) AND YEAR(created_at) = YEAR(CURRENT_DATE()) ");
+            sql.append(" AND MONTH(o.created_at) = MONTH(CURRENT_DATE()) AND YEAR(o.created_at) = YEAR(CURRENT_DATE()) ");
         } else if ("last_month".equals(timeFilter)) {
-            sql.append(" AND MONTH(created_at) = MONTH(CURRENT_DATE() - INTERVAL 1 MONTH) ");
+            sql.append(" AND MONTH(o.created_at) = MONTH(CURRENT_DATE() - INTERVAL 1 MONTH) ");
         }
 
         try (Connection conn = DBConnect.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+
+            int paramIndex = 1;
+
+            if (search != null && !search.trim().isEmpty()) {
+                String kw = "%" + search.trim() + "%";
+                ps.setString(paramIndex++, kw);
+                ps.setString(paramIndex++, kw);
+            }
+
             if (status != null && !status.isEmpty()) {
-                ps.setString(1, status.toLowerCase());
+                ps.setString(paramIndex++, status.toLowerCase());
             }
             ResultSet rs = ps.executeQuery();
             if (rs.next()) return rs.getInt(1);
@@ -387,5 +418,55 @@ public class OrderDAO {
             e.printStackTrace();
         }
         return list;
+    }
+    public boolean cancelOrder(int orderId) {
+        Connection conn = null;
+        try {
+            conn = DBConnect.getConnection();
+            conn.setAutoCommit(false);
+            Order order = getOrderById(orderId);
+            if (order == null || order.getStatus() != OrderStatus.PENDING) {
+                return false;
+            }
+            String sqlUpdateOrder = "UPDATE orders SET status = 'cancelled' WHERE id = ?";
+            try (PreparedStatement ps = conn.prepareStatement(sqlUpdateOrder)) {
+                ps.setInt(1, orderId);
+                ps.executeUpdate();
+            }
+            ProductDAO productDAO = new ProductDAO();
+            for (OrderItem item : order.getItems()) {
+                String sqlUpdateStock = "UPDATE products SET stock_quantity = stock_quantity + ? WHERE id = ?";
+                try (PreparedStatement psStock = conn.prepareStatement(sqlUpdateStock)) {
+                    psStock.setInt(1, item.getQuantity());
+                    psStock.setInt(2, item.getProductId());
+                    psStock.executeUpdate();
+                }
+            }
+
+            conn.commit();
+            return true;
+        } catch (SQLException e) {
+            if (conn != null) {
+                try { conn.rollback(); } catch (SQLException ex) { ex.printStackTrace(); }
+            }
+            e.printStackTrace();
+        } finally {
+            if (conn != null) {
+                try { conn.setAutoCommit(true); conn.close(); } catch (SQLException e) { e.printStackTrace(); }
+            }
+        }
+        return false;
+    }
+    public boolean cancelOrder(int orderId, String reason) {
+        String sql = "UPDATE orders SET status = 'cancelled', cancel_reason = ? WHERE id = ? AND status = 'pending'";
+        try (Connection conn = DBConnect.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, reason);
+            ps.setInt(2, orderId);
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
     }
 }
