@@ -246,12 +246,13 @@
     flex: 1;
     position: relative;
 }
-.product-info .sale-tag { /* Style cho tag ở trang chi tiết */
-    position: absolute;
+.product-info .sale-tag {
     top: 0;
     right: 0;
-    font-size: 14px;
-    padding: 8px 12px;
+    font-size: 22px;
+    padding: 10px 18px;
+    min-width: 110px;
+    border-radius: 0 0 0 10px;
 }
 .product-info h1 {
     font-size: 32px;
