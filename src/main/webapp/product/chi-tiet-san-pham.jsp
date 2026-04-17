@@ -39,9 +39,16 @@
 
             <div class="product-info">
                 <c:if test="${product.salePrice > 0 && product.salePrice < product.price}">
-        <span class="sale-tag">
-            -<fmt:formatNumber value="${(product.price - product.salePrice) / product.price * 100}" maxFractionDigits="0"/>%
-        </span>
+                    <span class="sale-tag">
+                        <c:choose>
+                            <c:when test="${product.currentPromotionType eq 'PERCENT'}">
+                                -<fmt:formatNumber value="${product.currentPromotionValue}" maxFractionDigits="0"/>%
+                            </c:when>
+                            <c:when test="${not empty product.currentPromotionValue}">
+                                -<fmt:formatNumber value="${product.currentPromotionValue}" pattern="#,###"/>₫
+                            </c:when>
+                        </c:choose>
+                    </span>
                 </c:if>
 
                 <h1>${product.name}</h1>

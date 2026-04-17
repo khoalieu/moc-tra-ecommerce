@@ -40,8 +40,10 @@ public class PromotionDAO {
     public List<Product> getProductsByPromotionId(int promoId, int limit) {
         List<Product> list = new ArrayList<>();
 
-        String sql = "SELECT p.* FROM products p " +
+        String sql = "SELECT p.*, pi.promotion_id AS current_promo_id, pr.discount_type, pr.discount_value " +
+                "FROM products p " +
                 "JOIN promotion_items pi ON p.id = pi.product_id " +
+                "JOIN promotions pr ON pr.id = pi.promotion_id " +
                 "WHERE pi.promotion_id = ? AND p.status = 'active' " +
                 "LIMIT ?";
 
@@ -61,6 +63,11 @@ public class PromotionDAO {
                 p.setSalePrice(rs.getDouble("sale_price"));
                 p.setImageUrl(rs.getString("image_url"));
                 p.setShortDescription(rs.getString("short_description"));
+
+                p.setCurrentPromotionId(rs.getInt("current_promo_id"));
+                p.setCurrentPromotionType(rs.getString("discount_type"));
+                p.setCurrentPromotionValue(rs.getDouble("discount_value"));
+
                 list.add(p);
             }
         } catch (Exception e) {

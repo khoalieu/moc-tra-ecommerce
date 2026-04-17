@@ -4,7 +4,7 @@ import model.enums.ProductStatus;
 
 import java.time.LocalDateTime;
 
-public class Product {
+public class    Product {
     private int id;
     private String name;
     private String slug;
@@ -22,6 +22,8 @@ public class Product {
     private String usageInstructions;
     private LocalDateTime createdAt;
     private int currentPromotionId;
+    private String currentPromotionType;
+    private Double currentPromotionValue;
     public Product() {}
 
     public int getId() { return id; }
@@ -73,4 +75,11 @@ public class Product {
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
     public int getCurrentPromotionId() { return currentPromotionId; }
     public void setCurrentPromotionId(int currentPromotionId) { this.currentPromotionId = currentPromotionId; }
+
+
+    public String getCurrentPromotionType() { return currentPromotionType; }
+    public void setCurrentPromotionType(String currentPromotionType) { this.currentPromotionType = currentPromotionType; }
+
+    public Double getCurrentPromotionValue() { return currentPromotionValue; }
+    public void setCurrentPromotionValue(Double currentPromotionValue) { this.currentPromotionValue = currentPromotionValue; }
 }

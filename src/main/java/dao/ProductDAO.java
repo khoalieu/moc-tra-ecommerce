@@ -35,10 +35,17 @@ public class ProductDAO {
         }
         StringBuilder sql = new StringBuilder(
                 "SELECT p.*, " +
-                        "(SELECT promotion_id FROM promotion_items pi WHERE pi.product_id = p.id LIMIT 1) AS current_promo_id " +
+                        "(SELECT pi.promotion_id FROM promotion_items pi WHERE pi.product_id = p.id LIMIT 1) AS current_promo_id, " +
+                        "(SELECT pr.discount_type " +
+                        "   FROM promotion_items pi " +
+                        "   JOIN promotions pr ON pr.id = pi.promotion_id " +
+                        "   WHERE pi.product_id = p.id LIMIT 1) AS current_promo_type, " +
+                        "(SELECT pr.discount_value " +
+                        "   FROM promotion_items pi " +
+                        "   JOIN promotions pr ON pr.id = pi.promotion_id " +
+                        "   WHERE pi.product_id = p.id LIMIT 1) AS current_promo_value " +
                         "FROM products p "
         );
-
         sql.append(" WHERE 1=1 ");
 
         if (categoryId != null) {
@@ -125,7 +132,12 @@ public class ProductDAO {
                 p.setBestseller(rs.getBoolean("is_bestseller"));
 
                 p.setCurrentPromotionId(rs.getInt("current_promo_id"));
+                p.setCurrentPromotionType(rs.getString("current_promo_type"));
 
+                double promoValue = rs.getDouble("current_promo_value");
+                if (!rs.wasNull()) {
+                    p.setCurrentPromotionValue(promoValue);
+                }
                 String statusStr = rs.getString("status");
                 if (statusStr != null) {
                     try {
@@ -215,7 +227,15 @@ public class ProductDAO {
     }
 
     public Product getProductById(int id) {
-        String sql = "SELECT * FROM products WHERE id = ?";
+        String sql = "SELECT p.*, " +
+                "pi.promotion_id AS current_promo_id, " +
+                "pr.discount_type AS current_promo_type, " +
+                "pr.discount_value AS current_promo_value " +
+                "FROM products p " +
+                "LEFT JOIN promotion_items pi ON p.id = pi.product_id " +
+                "LEFT JOIN promotions pr ON pr.id = pi.promotion_id " +
+                "WHERE p.id = ? " +
+                "LIMIT 1";
         try (Connection conn = DBConnect.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, id);
@@ -234,6 +254,17 @@ public class ProductDAO {
                 p.setCategoryId(rs.getInt("category_id"));
                 p.setImageUrl(rs.getString("image_url"));
                 p.setBestseller(rs.getBoolean("is_bestseller"));
+                int currentPromoId = rs.getInt("current_promo_id");
+                if (!rs.wasNull()) {
+                    p.setCurrentPromotionId(currentPromoId);
+                }
+
+                p.setCurrentPromotionType(rs.getString("current_promo_type"));
+
+                double currentPromoValue = rs.getDouble("current_promo_value");
+                if (!rs.wasNull()) {
+                    p.setCurrentPromotionValue(currentPromoValue);
+                }
                 String statusStr = rs.getString("status");
                 if (statusStr != null) {
                     try {
