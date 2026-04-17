@@ -17,9 +17,22 @@ public class ProductDAO {
 
         return getProducts(categoryId, promotionId, sort, maxPrice, index, size, "active");
     }
-
     public List<Product> getProducts(Integer categoryId, Integer promotionId, String sort, Double maxPrice, int index, int size, String status) {
+        return getProducts(categoryId, promotionId, sort, maxPrice, null, index, size, status);
+    }
+
+    public List<Product> getProducts(Integer categoryId, Integer promotionId, String sort, Double maxPrice,
+                                     String search ,int index, int size, String status) {
+
         List<Product> list = new ArrayList<>();
+        List<String> keywords = new ArrayList<>();
+        if (search != null && !search.isBlank()) {
+            for (String keyword : search.trim().toLowerCase().split("\\s+")) {
+                if (!keyword.isBlank()) {
+                    keywords.add(keyword);
+                }
+            }
+        }
         StringBuilder sql = new StringBuilder(
                 "SELECT p.*, " +
                         "(SELECT promotion_id FROM promotion_items pi WHERE pi.product_id = p.id LIMIT 1) AS current_promo_id " +
@@ -38,6 +51,15 @@ public class ProductDAO {
 
         if (promotionId != null) {
             sql.append(" AND p.id IN (SELECT product_id FROM promotion_items WHERE promotion_id = ?) ");
+        }
+        // chia keyword theo từng từ và tìm theo từng từ đó
+        if (!keywords.isEmpty()) {
+            sql.append(" AND (");
+            for (int i = 0; i < keywords.size(); i++) {
+                if (i > 0) sql.append(" OR ");
+                sql.append(" LOWER(p.name) LIKE ? ");
+            }
+            sql.append(") ");
         }
 
         if (status != null && !status.isEmpty()) {
@@ -77,6 +99,10 @@ public class ProductDAO {
             if (categoryId != null) ps.setInt(paramIndex++, categoryId);
             if (maxPrice != null) ps.setDouble(paramIndex++, maxPrice);
             if (promotionId != null) ps.setInt(paramIndex++, promotionId);
+
+            for (String keyword : keywords) {
+                ps.setString(paramIndex++, "%" + keyword + "%");
+            }
 
             int offset = (index - 1) * size;
             ps.setInt(paramIndex++, size);
@@ -119,8 +145,19 @@ public class ProductDAO {
     public int countProducts(Integer categoryId, Integer promotionId, Double maxPrice) throws SQLException {
         return countProducts(categoryId, promotionId, maxPrice, "active");
     }
-
     public int countProducts(Integer categoryId, Integer promotionId, Double maxPrice, String status) {
+        return countProducts(categoryId, promotionId, maxPrice, null, status);
+    }
+
+    public int countProducts(Integer categoryId, Integer promotionId, Double maxPrice, String search, String status) {
+        List<String> keywords = new ArrayList<>();
+        if (search != null && !search.isBlank()) {
+            for (String keyword : search.trim().toLowerCase().split("\\s+")) {
+                if (!keyword.isBlank()) {
+                    keywords.add(keyword);
+                }
+            }
+        }
         StringBuilder sql = new StringBuilder("SELECT COUNT(*) FROM products p ");
 
         if (promotionId != null) {
@@ -140,6 +177,14 @@ public class ProductDAO {
         if (promotionId != null) {
             sql.append(" AND pi.promotion_id = ? ");
         }
+        if (!keywords.isEmpty()) {
+            sql.append(" AND (");
+            for (int i = 0; i < keywords.size(); i++) {
+                if (i > 0) sql.append(" OR ");
+                sql.append(" LOWER(p.name) LIKE ? ");
+            }
+            sql.append(") ");
+        }
 
         if (status != null && !status.isEmpty()) {
             if ("active".equals(status)) sql.append(" AND p.status = 'active' ");
@@ -155,6 +200,10 @@ public class ProductDAO {
             if (categoryId != null) ps.setInt(paramIndex++, categoryId);
             if (maxPrice != null) ps.setDouble(paramIndex++, maxPrice);
             if (promotionId != null) ps.setInt(paramIndex++, promotionId);
+
+            for (String keyword : keywords) {
+                ps.setString(paramIndex++, "%" + keyword + "%");
+            }
 
             ResultSet rs = ps.executeQuery();
             if (rs.next()) return rs.getInt(1);
@@ -465,5 +514,17 @@ public class ProductDAO {
             p.setCreatedAt(rs.getTimestamp("created_at").toLocalDateTime());
         }
         return p;
+    }
+    public boolean increaseStock(int productId, int quantity) {
+        String sql = "UPDATE products SET stock_quantity = stock_quantity + ? WHERE id = ?";
+        try (Connection conn = DBConnect.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, quantity);
+            ps.setInt(2, productId);
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
     }
 }

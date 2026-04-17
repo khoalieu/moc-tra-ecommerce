@@ -92,7 +92,10 @@
             <div class="header-right">
                 <div class="header-search">
                     <i class="fas fa-search"></i>
-                    <input type="text" placeholder="Tìm kiếm sản phẩm...">
+                    <input type="text"  name="keyword"  form="productFilterForm"
+                           value="${currentKeyword}"
+                           placeholder="Tìm kiếm sản phẩm..."
+                           autocomplete="off">
                 </div>
 
                 <a href="${pageContext.request.contextPath}/" class="view-site-btn" target="_blank"
@@ -116,8 +119,7 @@
                 </div>
             </div>
 
-            <form action="admin/products" method="get" class="filters-section">
-                <div class="filters-grid">
+            <form id="productFilterForm" action="admin/products" method="get" class="filters-section">                <div class="filters-grid">
                     <div class="filter-group">
                         <label for="category-filter">Danh mục</label>
                         <select name="categoryId" id="category-filter" class="form-select"
@@ -165,7 +167,6 @@
                         </select>
                     </div>
 
-                    <input type="hidden" name="keyword" value="${currentKeyword}">
                 </div>
             </form>
 
