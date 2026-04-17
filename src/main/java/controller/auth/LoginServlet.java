@@ -1,6 +1,7 @@
 package controller.auth;
 
 import dao.CartDAO;
+import dao.DAOFactory;
 import dao.UserDAO;
 import model.cart.Cart;
 import model.cart.CartItem;
@@ -46,7 +47,7 @@ public class LoginServlet extends HttpServlet {
         String identifier = loginKey.trim().toLowerCase();
         String password = passParam;
 
-        UserDAO dao = new UserDAO();
+        UserDAO dao = DAOFactory.getInstance().getUserDAO();
 
         User user = dao.getUserForLogin(identifier);
         if (user == null) {
@@ -71,7 +72,7 @@ public class LoginServlet extends HttpServlet {
 
             HttpSession session = request.getSession();
             session.setAttribute("user", user);
-            CartDAO cartDAO = new CartDAO();
+            CartDAO cartDAO = DAOFactory.getInstance().getCartDAO();
             Cart sessionCart = (Cart) session.getAttribute("cart");
             if (sessionCart != null && sessionCart.getItems().size() > 0) {
                 for (CartItem item : sessionCart.getItems()) {

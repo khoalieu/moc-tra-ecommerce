@@ -1,6 +1,5 @@
 package dao;
 
-import db.DBConnect;
 import model.cart.CartItem;
 import model.order.Order;
 import model.order.OrderItem;
@@ -8,11 +7,16 @@ import model.product.Product;
 import model.enums.OrderStatus;
 import model.enums.PaymentStatus;
 
+import javax.sql.DataSource;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
 public class OrderDAO {
+    private final DataSource ds;
+    public OrderDAO(DataSource ds) {
+        this.ds = ds;
+    }
 
     public List<Order> getOrdersByUserId(int userId) {
         List<Order> list = new ArrayList<>();
@@ -22,7 +26,7 @@ public class OrderDAO {
                 "WHERE o.user_id = ? " +
                 "ORDER BY o.created_at DESC";
 
-        try (Connection conn = DBConnect.getConnection();
+        try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setInt(1, userId);
@@ -91,7 +95,7 @@ public class OrderDAO {
     public int createOrder(Order order) {
         String sql = "INSERT INTO orders (user_id, shipping_address_id, order_number, status, total_amount, shipping_fee, payment_method, payment_status, notes, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())";
 
-        try (Connection conn = DBConnect.getConnection();
+        try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
             ps.setInt(1, order.getUserId());
@@ -130,7 +134,7 @@ public class OrderDAO {
 
     public void addOrderItems(int orderId, List<CartItem> items) {
         String sql = "INSERT INTO order_items (order_id, product_id, quantity, price) VALUES (?, ?, ?, ?)";
-        try (Connection conn = DBConnect.getConnection();
+        try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             for (CartItem item : items) {
@@ -158,7 +162,7 @@ public class OrderDAO {
                 "JOIN products p ON oi.product_id = p.id " +
                 "WHERE oi.order_id = ?";
 
-        try (Connection conn = DBConnect.getConnection();
+        try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setInt(1, orderId);
@@ -193,7 +197,7 @@ public class OrderDAO {
                 "LEFT JOIN user_addresses a ON o.shipping_address_id = a.id " +
                 "WHERE o.id = ?";
 
-        try (Connection conn = DBConnect.getConnection();
+        try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setInt(1, orderId);
@@ -271,7 +275,7 @@ public class OrderDAO {
 
         sql.append(" LIMIT ? OFFSET ?");
 
-        try (Connection conn = DBConnect.getConnection();
+        try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql.toString())) {
 
             int paramIndex = 1;
@@ -306,7 +310,7 @@ public class OrderDAO {
             sql.append(" AND MONTH(created_at) = MONTH(CURRENT_DATE() - INTERVAL 1 MONTH) ");
         }
 
-        try (Connection conn = DBConnect.getConnection();
+        try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql.toString())) {
             if (status != null && !status.isEmpty()) {
                 ps.setString(1, status.toLowerCase());
@@ -321,7 +325,7 @@ public class OrderDAO {
 
     public boolean updateOrderStatus(int orderId, OrderStatus status) {
         String sql = "UPDATE orders SET status = ? WHERE id = ?";
-        try (Connection conn = DBConnect.getConnection();
+        try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setString(1, status.name().toLowerCase());
@@ -373,7 +377,7 @@ public class OrderDAO {
                 "LEFT JOIN user_addresses a ON o.shipping_address_id = a.id " +
                 "ORDER BY o.created_at DESC LIMIT ?";
 
-        try (Connection conn = DBConnect.getConnection();
+        try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setInt(1, limit);

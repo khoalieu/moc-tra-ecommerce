@@ -1,5 +1,6 @@
 package controller.auth;
 
+import dao.DAOFactory;
 import dao.UserDAO;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -28,7 +29,7 @@ public class VerifyOtpServlet extends HttpServlet {
             String phone = (String) session.getAttribute("temp_phone");
             String email = (String) session.getAttribute("temp_email");
 
-            UserDAO dao = new UserDAO();
+            UserDAO dao = DAOFactory.getInstance().getUserDAO();
             dao.register(username, password, phone, email);
 
             session.setAttribute("registration_finished", true);

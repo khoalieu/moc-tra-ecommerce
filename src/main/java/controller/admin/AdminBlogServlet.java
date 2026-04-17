@@ -2,6 +2,7 @@ package controller.admin;
 
 import dao.BlogPostDAO;
 import dao.BlogCategoryDAO;
+import dao.DAOFactory;
 import dao.UserDAO;
 import model.blog.BlogPost;
 import model.blog.BlogCategory;
@@ -31,9 +32,9 @@ public class AdminBlogServlet extends HttpServlet {
             return;
         }
 
-        BlogPostDAO postDAO = new BlogPostDAO();
-        BlogCategoryDAO catDAO = new BlogCategoryDAO();
-        UserDAO userDAO = new UserDAO();
+        BlogPostDAO postDAO = DAOFactory.getInstance().getBlogPostDAO();
+        BlogCategoryDAO catDAO = DAOFactory.getInstance().getBlogCategoryDAO();
+        UserDAO userDAO = DAOFactory.getInstance().getUserDAO();
 
         String categoryParam = request.getParameter("category");
         String statusParam = request.getParameter("status");

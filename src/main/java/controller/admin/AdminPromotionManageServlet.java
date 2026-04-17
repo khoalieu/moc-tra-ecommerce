@@ -1,5 +1,6 @@
 package controller.admin;
 
+import dao.DAOFactory;
 import dao.PromotionDAO;
 import model.promotion.Promotion;
 import model.enums.DiscountType;
@@ -30,7 +31,7 @@ public class AdminPromotionManageServlet extends HttpServlet {
 
     @Override
     public void init() {
-        promotionDAO = new PromotionDAO();
+        promotionDAO = DAOFactory.getInstance().getPromotionDAO();
     }
 
     @Override

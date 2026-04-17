@@ -1,8 +1,6 @@
 package controller.blog;
 
-import dao.BlogCategoryDAO;
-import dao.BlogCommentDAO;
-import dao.BlogPostDAO;
+import dao.*;
 import model.blog.BlogCategory;
 import model.blog.BlogComment;
 import model.blog.BlogPost;
@@ -12,7 +10,7 @@ import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.*;
 import java.io.IOException;
 import java.util.*;
-import dao.UserDAO;
+
 @WebServlet("/chi-tiet-blog")
 public class
 BlogDetailServlet extends HttpServlet {
@@ -28,9 +26,9 @@ BlogDetailServlet extends HttpServlet {
             response.sendRedirect(request.getContextPath() + "/blog");
             return;
         }
-        BlogPostDAO postDAO = new BlogPostDAO();
-        BlogCategoryDAO catDAO = new BlogCategoryDAO();
-        BlogCommentDAO commentDAO = new BlogCommentDAO();
+        BlogPostDAO postDAO = DAOFactory.getInstance().getBlogPostDAO();
+        BlogCategoryDAO catDAO = DAOFactory.getInstance().getBlogCategoryDAO();
+        BlogCommentDAO commentDAO = DAOFactory.getInstance().getBlogCommentDAO();
 
         BlogPost post = postDAO.getPublishedBySlug(slug);
         if (post == null) {
@@ -60,7 +58,7 @@ BlogDetailServlet extends HttpServlet {
 
         List<BlogPost> recentPosts = postDAO.getRecentPublishedPosts(3);
         List<BlogComment> comments = commentDAO.getByPostId(post.getId());
-        request.setAttribute("commentUserMap", new UserDAO().getUserMapByPostId(post.getId()));
+        request.setAttribute("commentUserMap", DAOFactory.getInstance().getUserDAO().getUserMapByPostId(post.getId()));
 
         request.setAttribute("post", post);
         request.setAttribute("postCategory", postCategory);
@@ -92,7 +90,7 @@ BlogDetailServlet extends HttpServlet {
             return;
         }
 
-        BlogPostDAO postDAO = new BlogPostDAO();
+        BlogPostDAO postDAO = DAOFactory.getInstance().getBlogPostDAO();
         BlogPost post = postDAO.getPublishedBySlug(slug);
         if (post == null) {
             response.sendError(HttpServletResponse.SC_NOT_FOUND);
@@ -118,7 +116,7 @@ BlogDetailServlet extends HttpServlet {
             return;
         }
 
-        BlogCommentDAO commentDAO = new BlogCommentDAO();
+        BlogCommentDAO commentDAO = DAOFactory.getInstance().getBlogCommentDAO();
         boolean ok = commentDAO.insert(post.getId(), userId, commentText);
 
         if (!ok) {

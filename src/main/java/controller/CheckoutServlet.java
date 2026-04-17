@@ -1,9 +1,6 @@
 package controller;
 
-import dao.CartDAO;
-import dao.OrderDAO;
-import dao.ProductDAO;
-import dao.UserAddressDAO;
+import dao.*;
 import model.cart.Cart;
 import model.cart.CartItem;
 import model.user.User;
@@ -35,7 +32,7 @@ public class CheckoutServlet extends HttpServlet {
             response.sendRedirect(request.getContextPath() + "/san-pham");
             return;
         }
-        UserAddressDAO addressDAO = new UserAddressDAO();
+        UserAddressDAO addressDAO = DAOFactory.getInstance().getUserAddressDAO();
         List<UserAddress> addresses = addressDAO.getListAddress(user.getId());
         request.setAttribute("addresses", addresses);
         request.setAttribute("subtotal", cart.getTotalMoney());
@@ -62,7 +59,7 @@ public class CheckoutServlet extends HttpServlet {
         String shippingMethod = request.getParameter("shippingMethod"); // standard, express, instant
         String paymentMethod = request.getParameter("paymentMethod");
         String note = request.getParameter("note");
-        UserAddressDAO addressDAO = new UserAddressDAO();
+        UserAddressDAO addressDAO = DAOFactory.getInstance().getUserAddressDAO();
         int shippingAddressId = 0;
 
         if ("new".equals(selectedAddressVal)) {
@@ -101,18 +98,18 @@ public class CheckoutServlet extends HttpServlet {
         order.setShippingFee(shippingFee);
         order.setPaymentMethod(paymentMethod);
         order.setNotes(note);
-        OrderDAO orderDAO = new OrderDAO();
+        OrderDAO orderDAO = DAOFactory.getInstance().getOrderDAO();
         int orderId = orderDAO.createOrder(order);
 
         if (orderId > 0) {
             List<CartItem> cartItems = new ArrayList<>(cart.getItems());
             orderDAO.addOrderItems(orderId, cartItems);
-            ProductDAO productDAO = new ProductDAO();
+            ProductDAO productDAO = DAOFactory.getInstance().getProductDAO();
             for (CartItem item : cartItems) {
                 productDAO.decreaseStock(item.getProduct().getId(), item.getQuantity());
             }
             session.removeAttribute("cart");
-            CartDAO cartDAO = new CartDAO();
+            CartDAO cartDAO = DAOFactory.getInstance().getCartDAO();
             cartDAO.clearCart(user.getId());
             response.sendRedirect("hoa-don?id=" + orderId);
         } else {

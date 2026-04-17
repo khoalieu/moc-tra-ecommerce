@@ -1,5 +1,6 @@
 package controller.auth;
 
+import dao.DAOFactory;
 import dao.UserDAO;
 import jakarta.servlet.*;
 import jakarta.servlet.http.*;
@@ -24,7 +25,7 @@ public class RegisterServlet extends HttpServlet {
 
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        UserDAO dao = new UserDAO();
+        UserDAO dao = DAOFactory.getInstance().getUserDAO();
 
         request.setCharacterEncoding("UTF-8");
         response.setCharacterEncoding("UTF-8");
