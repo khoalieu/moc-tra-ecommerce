@@ -27,5 +27,18 @@ public class SubmitReviewServlet extends HttpServlet {
             response.sendRedirect(request.getContextPath() + "/auth/login.jsp?redirect=" + redirect);
             return;
         }
+
+        if (!reviewDAO.hasPurchasedProduct(user.getId(), productId)) {
+            response.sendRedirect(request.getContextPath()
+                    + "/chi-tiet-san-pham?id=" + productId + "&tab=review&reviewError=not_purchased");
+            return;
+        }
+
+        int rating = Integer.parseInt(request.getParameter("rating"));
+        String comment = request.getParameter("comment");
+        reviewDAO.addReview(productId, user.getId(), rating, comment);
+
+        response.sendRedirect(request.getContextPath()
+                + "/chi-tiet-san-pham?id=" + productId + "&tab=review&reviewSuccess=1");
     }
 }
