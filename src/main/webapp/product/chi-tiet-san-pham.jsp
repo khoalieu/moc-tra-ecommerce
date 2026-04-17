@@ -156,6 +156,11 @@
                             để đánh giá sản phẩm.
                         </p>
                     </c:if>
+                    <c:if test="${not empty sessionScope.user and not canReview}">
+                        <p style="margin-bottom: 30px; color: #777;">
+                            Bạn cần mua sản phẩm này và đơn hàng phải hoàn tất thì mới được đánh giá.
+                        </p>
+                    </c:if>
 
                     <div class="review-list">
                         <c:if test="${empty reviews}">
@@ -228,37 +233,37 @@
 <button id="backToTop" class="back-to-top" title="Lên đầu trang"><i class="fa-solid fa-chevron-up"></i></button>
 
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function() {
         const tabLinks = document.querySelectorAll('.tab-link');
         const tabContents = document.querySelectorAll('.tab-content');
 
         function openTab(tabId) {
-            tabLinks.forEach(item => item.classList.remove('active'));
-            tabContents.forEach(item => item.classList.remove('active'));
+        tabLinks.forEach(item => item.classList.remove('active'));
+        tabContents.forEach(item => item.classList.remove('active'));
 
-            const activeButton = document.querySelector('.tab-link[data-tab="' + tabId + '"]');
-            const activeContent = document.getElementById(tabId);
+        const activeButton = document.querySelector('.tab-link[data-tab="' + tabId + '"]');
+        const activeContent = document.getElementById(tabId);
 
-            if (activeButton) activeButton.classList.add('active');
-            if (activeContent) activeContent.classList.add('active');
-        }
+        if (activeButton) activeButton.classList.add('active');
+        if (activeContent) activeContent.classList.add('active');
+    }
 
         tabLinks.forEach(link => {
-            link.addEventListener('click', function() {
-                const tabId = this.getAttribute('data-tab');
-                openTab(tabId);
-            });
-        });
+        link.addEventListener('click', function() {
+        const tabId = this.getAttribute('data-tab');
+        openTab(tabId);
+    });
+    });
 
         const params = new URLSearchParams(window.location.search);
         if (params.get('tab') === 'review') {
-            openTab('tab-4');
+        openTab('tab-4');
 
-            const reviewSection = document.getElementById('tab-4');
-            if (reviewSection) {
-                reviewSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }
-        }
+        const reviewSection = document.getElementById('tab-4');
+        if (reviewSection) {
+        reviewSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+    }
     });
 
     function changeImage(element) {
