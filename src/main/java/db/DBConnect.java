@@ -7,7 +7,7 @@ import java.sql.SQLException;
 public class DBConnect {
     private static String url = "jdbc:mysql://localhost:3306/moctra_db?useUnicode=true&characterEncoding=utf-8";
     private static String user = "root";
-    private static String password = "1234";
+    private static String password = "";
 
     public static Connection getConnection() {
 

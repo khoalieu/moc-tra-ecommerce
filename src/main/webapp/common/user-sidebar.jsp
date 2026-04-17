@@ -38,6 +38,12 @@
                 <a href="${pageContext.request.contextPath}/don-hang"><i class="fa-solid fa-cart-shopping"></i> Đơn hàng của tôi</a>
             </li>
 
+            <li class="${param.activePage == 'yeu-thich' ? 'active' : ''}">
+                <a href="${pageContext.request.contextPath}/san-pham-yeu-thich">
+                    <i class="fa-solid fa-heart"></i> Sản phẩm yêu thích
+                </a>
+            </li>
+
             <%-- Mục 5: Đăng xuất --%>
             <li>
                 <a href="${pageContext.request.contextPath}/logout" style="color: #dc3545;"><i class="fa-solid fa-right-from-bracket"></i> Đăng xuất</a>
