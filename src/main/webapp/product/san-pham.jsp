@@ -72,6 +72,13 @@
 
                     </ul>
                 </div>
+                <div style="margin-top: 18px;">
+                    <a href="${pageContext.request.contextPath}/san-pham-yeu-thich"
+                       style="display: block; padding: 12px 15px; border-radius: 8px; background: #fff; border: 1px solid #eee; font-weight: 600; color: #107e84; text-decoration: none;">
+                        <i class="fa-solid fa-heart" style="margin-right: 8px;"></i>
+                        Danh sách yêu thích
+                    </a>
+                </div>
                 <div class="filter-group">
                     <h3>Lọc Theo Giá</h3>
 
@@ -116,10 +123,10 @@
                 <div class="sort-bar">
                     <label for="sort-by">Sắp xếp theo:</label>
                     <select id="sort-by" class="sort-select" onchange="location = this.value;">
-                        <option value="san-pham?sort=default&category=${currentCategory}" ${currentSort == 'default' ? 'selected' : ''}>Mặc định</option>
-                        <option value="san-pham?sort=newest&category=${currentCategory}" ${currentSort == 'newest' ? 'selected' : ''}>Mới nhất</option>
-                        <option value="san-pham?sort=price-asc&category=${currentCategory}" ${currentSort == 'price-asc' ? 'selected' : ''}>Giá: Thấp đến Cao</option>
-                        <option value="san-pham?sort=price-desc&category=${currentCategory}" ${currentSort == 'price-desc' ? 'selected' : ''}>Giá: Cao đến Thấp</option>
+                        <option value="${pageContext.request.contextPath}/san-pham?sort=default&category=${currentCategory}&price=${currentPrice}&promotionId=${currentPromotion}&search=${currentSearch}" ${currentSort == 'default' ? 'selected' : ''}>Mặc định</option>
+                        <option value="${pageContext.request.contextPath}/san-pham?sort=newest&category=${currentCategory}&price=${currentPrice}&promotionId=${currentPromotion}&search=${currentSearch}" ${currentSort == 'newest' ? 'selected' : ''}>Mới nhất</option>
+                        <option value="${pageContext.request.contextPath}/san-pham?sort=price-asc&category=${currentCategory}&price=${currentPrice}&promotionId=${currentPromotion}&search=${currentSearch}" ${currentSort == 'price-asc' ? 'selected' : ''}>Giá: Thấp đến Cao</option>
+                        <option value="${pageContext.request.contextPath}/san-pham?sort=price-desc&category=${currentCategory}&price=${currentPrice}&promotionId=${currentPromotion}&search=${currentSearch}" ${currentSort == 'price-desc' ? 'selected' : ''}>Giá: Cao đến Thấp</option>
                     </select>
                 </div>
 
@@ -170,8 +177,19 @@
                                     </c:choose>
                                 </p>
 
-                                <a href="${pageContext.request.contextPath}/chi-tiet-san-pham?id=${p.id}" class="cta-button">Xem Chi Tiết</a>
-                            </div>
+                                <div class="product-card-actions">
+                                    <a href="${pageContext.request.contextPath}/chi-tiet-san-pham?id=${p.id}" class="cta-button">Xem Chi Tiết</a>
+
+                                    <c:if test="${not empty sessionScope.user}">
+                                        <button type="button"
+                                                class="favorite-btn ${favoriteProductIds != null && favoriteProductIds.contains(p.id) ? 'active' : ''}"
+                                                data-product-id="${p.id}"
+                                                data-favorited="${favoriteProductIds != null && favoriteProductIds.contains(p.id) ? 'true' : 'false'}"
+                                                title="${favoriteProductIds != null && favoriteProductIds.contains(p.id) ? 'Xóa khỏi yêu thích' : 'Thêm vào yêu thích'}">
+                                            <i class="fa-solid fa-heart"></i>
+                                        </button>
+                                    </c:if>
+                                </div>                            </div>
                         </c:forEach>
 
                     </div>
@@ -194,22 +212,19 @@
 
                         <div class="pagination">
                             <!--  lùi 6  -->
-                            <a href="san-pham?page=${prevPage < 1 ? 1 : prevPage}&category=${currentCategory}&sort=${currentSort}&price=${currentPrice}&promotionId=${currentPromotion}"
-                               class="${currentPage <= windowSize ? 'disabled' : ''}">
+                            <a href="${pageContext.request.contextPath}/san-pham?page=${prevPage < 1 ? 1 : prevPage}&category=${currentCategory}&sort=${currentSort}&price=${currentPrice}&promotionId=${currentPromotion}&search=${currentSearch}"                               class="${currentPage <= windowSize ? 'disabled' : ''}">
                                 &laquo;
                             </a>
 
                             <!-- block -->
                             <c:forEach begin="${startPage}" end="${endPage}" var="i">
-                                <a href="san-pham?page=${i}&category=${currentCategory}&sort=${currentSort}&price=${currentPrice}&promotionId=${currentPromotion}"
-                                   class="${currentPage == i ? 'active' : ''}">
+                                <a href="${pageContext.request.contextPath}/san-pham?page=${i}&category=${currentCategory}&sort=${currentSort}&price=${currentPrice}&promotionId=${currentPromotion}&search=${currentSearch}"                                   class="${currentPage == i ? 'active' : ''}">
                                         ${i}
                                 </a>
                             </c:forEach>
 
                             <!--  tiến 6 page -->
-                            <a href="san-pham?page=${nextPage > totalPages ? totalPages : nextPage}&category=${currentCategory}&sort=${currentSort}&price=${currentPrice}&promotionId=${currentPromotion}"
-                               class="${currentPage + windowSize > totalPages ? 'disabled' : ''}">
+                            <a href="${pageContext.request.contextPath}/san-pham?page=${nextPage > totalPages ? totalPages : nextPage}&category=${currentCategory}&sort=${currentSort}&price=${currentPrice}&promotionId=${currentPromotion}&search=${currentSearch}"                               class="${currentPage + windowSize > totalPages ? 'disabled' : ''}">
                                 &raquo;
                             </a>
                         </div>
@@ -223,6 +238,69 @@
 <button id="backToTop" class="back-to-top" title="Lên đầu trang">
     <i class="fa-solid fa-chevron-up"></i>
 </button>
+<div id="favoriteToast" class="favorite-toast"></div>
 
+<script>
+    function showFavoriteToast(message, type) {
+        let toast = document.getElementById('favoriteToast');
+        if (!toast) {
+            toast = document.createElement('div');
+            toast.id = 'favoriteToast';
+            toast.className = 'favorite-toast';
+            document.body.appendChild(toast);
+        }
+
+        const icon = type === 'success'
+            ? '<i class="fa-solid fa-circle-check"></i>'
+            : '<i class="fa-solid fa-circle-xmark"></i>';
+
+        toast.className = 'favorite-toast ' + type + ' show';
+        toast.innerHTML = icon + '<span>' + message + '</span>';
+
+        setTimeout(() => {
+            toast.className = 'favorite-toast';
+            toast.innerHTML = '';
+        }, 2000);
+    }
+
+    function bindFavoriteButtons() {
+        document.querySelectorAll('.favorite-btn').forEach(btn => {
+            btn.addEventListener('click', function () {
+                const productId = this.dataset.productId;
+
+                fetch('${pageContext.request.contextPath}/san-pham-yeu-thich', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                    body: new URLSearchParams({
+                        action: 'toggle',
+                        productId: productId
+                    })
+                })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.success) {
+                            this.dataset.favorited = data.favorited ? 'true' : 'false';
+                            this.title = data.favorited ? 'Xóa khỏi yêu thích' : 'Thêm vào yêu thích';
+
+                            if (data.favorited) {
+                                this.classList.add('active');
+                            } else {
+                                this.classList.remove('active');
+                            }
+
+                            showFavoriteToast(data.message, 'success');
+                        } else {
+                            showFavoriteToast(data.message, 'error');
+                        }
+                    })
+                    .catch(() => {
+                        showFavoriteToast('Thao tác yêu thích thất bại', 'error');
+                    });
+            });
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', bindFavoriteButtons);
+</script>
 </body>
 </html>
