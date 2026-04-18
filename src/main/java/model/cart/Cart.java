@@ -1,13 +1,16 @@
 package model.cart;
 
 import model.product.Product;
+import model.user.User;
 
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class Cart {
     // Key: Product ID, Value: CartItem
+    private int userId;
     private Map<Integer, CartItem> items;
 
     public Cart() {
@@ -31,6 +34,14 @@ public class Cart {
                 items.get(productId).setQuantity(quantity);
             }
         }
+    }
+
+    public void setUserId(int userId) {
+        this.userId = userId;
+    }
+
+    public int getUserId() {
+        return userId;
     }
 
     public void remove(int productId) {

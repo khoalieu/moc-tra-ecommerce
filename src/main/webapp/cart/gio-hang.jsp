@@ -16,6 +16,39 @@
     <section class="checkout-page">
         <div class="container">
             <h1 class="checkout-title">Giỏ hàng của bạn</h1>
+            <c:if test="${not empty sessionScope.successMsg}">
+                <div class="alert alert-success" style="padding: 10px; background: #d4edda; color: #155724; border-radius: 4px; margin-bottom: 20px;">
+                    <i class="fa-solid fa-circle-check"></i> ${sessionScope.successMsg}
+                </div>
+                <% session.removeAttribute("successMsg"); %>
+            </c:if>
+
+            <c:if test="${not empty sessionScope.errorMsg}">
+                <div class="alert alert-danger" style="padding: 10px; background: #f8d7da; color: #721c24; border-radius: 4px; margin-bottom: 20px;">
+                    <i class="fa-solid fa-triangle-exclamation"></i> ${sessionScope.errorMsg}
+                </div>
+                <% session.removeAttribute("errorMsg"); %>
+            </c:if>
+            <div class="checkout-layout">
+                <div class="checkout-left">
+                    <div class="checkout-card">
+                        <table class="cart-table">
+                            <thead>
+                            <tr>
+                                <th>Ảnh</th>          <%-- Đổi tên cột --%>
+                                <th>Tên sản phẩm</th> <%-- Thêm cột mới --%>
+                                <th>Đơn giá</th>
+                                <th>Số lượng</th>
+                                <th>Thành tiền</th>
+                                <th>Thao tác</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <c:if test="${empty sessionScope.cart or sessionScope.cart.items.size() == 0}">
+                                <tr><td colspan="6" style="text-align:center; padding: 20px;">Giỏ hàng trống!</td></tr>
+                            </c:if>
+
+                            <c:forEach var="item" items="${sessionScope.cart.items}">
             <form id="checkoutForm" action="${pageContext.request.contextPath}/thanh-toan" method="GET">
                 <div class="checkout-layout">
                     <div class="checkout-left">
