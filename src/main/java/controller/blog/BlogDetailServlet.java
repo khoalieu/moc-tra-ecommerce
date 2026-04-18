@@ -99,8 +99,11 @@ BlogDetailServlet extends HttpServlet {
 
         Integer userId = resolveUserId(request.getSession(false));
         if (userId == null) {
-            request.setAttribute("commentError", "Vui lòng đăng nhập để bình luận.");
-            doGet(request, response);
+            String redirect = java.net.URLEncoder.encode(
+                    "/chi-tiet-blog?slug=" + slug + "&tab=comments",
+                    java.nio.charset.StandardCharsets.UTF_8.toString()
+            );
+            response.sendRedirect(request.getContextPath() + "/auth/login.jsp?redirect=" + redirect);
             return;
         }
 
@@ -124,8 +127,7 @@ BlogDetailServlet extends HttpServlet {
             doGet(request, response);
             return;
         }
-        response.sendRedirect(request.getContextPath() + "/chi-tiet-blog?slug=" + slug + "#comments");
-    }
+        response.sendRedirect(request.getContextPath() + "/chi-tiet-blog?slug=" + slug + "&tab=comments");    }
 
     private Integer resolveUserId(HttpSession session) {
         if (session == null) return null;

@@ -27,7 +27,10 @@
                 <h1><c:out value="${post.title}" /></h1>
 
                 <div class="post-meta">
-                    <span>Tác giả: <b>Admin</b></span>
+                    <span>Tác giả: <b>${not empty post.author && (not empty post.author.firstName || not empty post.author.lastName)
+                            ? post.author.firstName.concat(' ').concat(post.author.lastName)
+                            : (not empty post.author ? post.author.username : 'Admin')}</b>
+                    </span>
                     <span>Ngày đăng: <b><fmt:formatDate value="${post.createdAtDate}" pattern="dd/MM/yyyy"/></b></span>
                     <span>
                         Danh mục:
@@ -58,18 +61,34 @@
                         <p style="color:#c00; margin:10px 0;">${commentError}</p>
                     </c:if>
 
-                    <div class="comment-form">
-                        <form action="${pageContext.request.contextPath}/chi-tiet-blog" method="post">
-                            <input type="hidden" name="slug" value="${post.slug}">
+                    <c:choose>
+                        <c:when test="${empty sessionScope.user}">
+                            <c:url var="loginUrl" value="/auth/login.jsp">
+                                <c:param name="redirect" value="/chi-tiet-blog?slug=${post.slug}&tab=comments" />
+                            </c:url>
 
-                            <div class="form-field">
-                                <label for="comment_text">Để lại bình luận của bạn:</label>
-                                <textarea id="comment_text" name="comment_text" rows="4"
-                                          placeholder="Viết bình luận của bạn ở đây..."></textarea>
+                            <p style="margin-bottom: 20px;">
+                                Vui lòng
+                                <a href="${loginUrl}" style="color:#4CAF50; font-weight:bold;">đăng nhập</a>
+                                để bình luận.
+                            </p>
+                        </c:when>
+
+                        <c:otherwise>
+                            <div class="comment-form">
+                                <form action="${pageContext.request.contextPath}/chi-tiet-blog" method="post">
+                                    <input type="hidden" name="slug" value="${post.slug}">
+
+                                    <div class="form-field">
+                                        <label for="comment_text">Để lại bình luận của bạn:</label>
+                                        <textarea id="comment_text" name="comment_text" rows="4"
+                                                  placeholder="Viết bình luận của bạn ở đây..."></textarea>
+                                    </div>
+                                    <button type="submit" class="cta-button">Gửi bình luận</button>
+                                </form>
                             </div>
-                            <button type="submit" class="cta-button">Gửi bình luận</button>
-                        </form>
-                    </div>
+                        </c:otherwise>
+                    </c:choose>
 
                     <div class="comment-list">
                         <c:if test="${empty comments}">
@@ -107,6 +126,16 @@
 <button id="backToTop" class="back-to-top" title="Lên đầu trang">
     <i class="fa-solid fa-chevron-up"></i>
 </button>
-
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('tab') === 'comments') {
+            const comments = document.getElementById('comments');
+            if (comments) {
+                comments.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        }
+    });
+</script>
 </body>
 </html>

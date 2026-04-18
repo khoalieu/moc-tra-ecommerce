@@ -1,5 +1,6 @@
 package controller.auth;
 
+import controller.utils.RedirectUtils;
 import dao.CartDAO;
 import dao.DAOFactory;
 import dao.UserDAO;
@@ -81,8 +82,12 @@ public class LoginServlet extends HttpServlet {
             }
             Cart userCartFromDB = cartDAO.getCartByUserId(user.getId());
             session.setAttribute("cart", userCartFromDB);
+            String redirect = RedirectUtils.getSafeRedirect(request);
+
             if (user.getRole() != null && user.getRole().name().equalsIgnoreCase("ADMIN")) {
                 response.sendRedirect(request.getContextPath() + "/admin/dashboard");
+            } else if (redirect != null) {
+                response.sendRedirect(request.getContextPath() + redirect);
             } else {
                 response.sendRedirect(request.getContextPath() + "/index");
             }

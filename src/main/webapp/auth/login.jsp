@@ -39,6 +39,9 @@
             <p class="error-message">${errorMessage}</p>
 
             <form action="${pageContext.request.contextPath}/login" method="post" autocomplete="on">
+
+                <input type="hidden" name="redirect" value="${param.redirect}">
+
                 <div class="form-row">
                     <input
                             id="login-username"
