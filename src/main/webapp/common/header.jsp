@@ -145,18 +145,17 @@
                                                     ${item.product.name}
                                             </a>
                                         </h4>
+
+                                        <c:if test="${not empty item.variant}">
+                                            <p style="font-size: 0.8rem; color: #888; margin: 2px 0 5px 0;">
+                                                Phân loại: ${item.variant.variantName}
+                                            </p>
+                                        </c:if>
                                         <p class="cart-item-quantity">
                                                 ${item.quantity} ×
                                             <span class="cart-item-price">
-                                <c:choose>
-                                    <c:when test="${item.product.salePrice > 0}">
-                                        <fmt:formatNumber value="${item.product.salePrice}" type="currency"/>
-                                    </c:when>
-                                    <c:otherwise>
-                                        <fmt:formatNumber value="${item.product.price}" type="currency"/>
-                                    </c:otherwise>
-                                </c:choose>
-                            </span>
+                                                <fmt:formatNumber value="${item.unitPrice}" type="currency"/>
+                                            </span>
                                         </p>
                                     </div>
                                 </div>

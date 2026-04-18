@@ -166,7 +166,12 @@
                                         </div>
                                         <div class="order-item__info">
                                             <div class="order-item__name">${item.product.name}</div>
-                                            <div class="order-item__meta">Số lượng: ${item.quantity}</div>
+                                            <c:if test="${not empty item.variant}">
+                                                <div class="order-item__variant" style="font-size: 0.85em; color: #666; margin-top: 3px;">
+                                                    Phân loại: ${item.variant.variantName}
+                                                </div>
+                                            </c:if>
+                                            <div class="order-item__meta" style="margin-top: 5px;">Số lượng: ${item.quantity}</div>
                                         </div>
                                         <div class="order-item__price">
                                             <fmt:formatNumber value="${item.totalPrice}" type="currency" currencySymbol="đ" maxFractionDigits="0"/>
@@ -248,7 +253,6 @@
 
 <script>
     document.addEventListener("DOMContentLoaded", function () {
-        // --- 1. XỬ LÝ LOGIC UI (FORM & TÍNH TIỀN) ---
         const addressRadios = document.querySelectorAll('input[name="selectedAddress"]');
         const manualAddressForm = document.querySelector(".manual-address");
         const manualInputs = manualAddressForm.querySelectorAll("input, textarea, select");

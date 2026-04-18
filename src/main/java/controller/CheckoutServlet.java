@@ -37,11 +37,12 @@ public class CheckoutServlet extends HttpServlet {
             response.sendRedirect(request.getContextPath() + "/gio-hang");
             return;
         }
+
         double subtotal = 0;
         List<CartItem> checkoutItems = new ArrayList<>();
         for (CartItem item : cart.getItems()) {
             for (String selectedId : selectedItems) {
-                if (item.getProduct().getId() == Integer.parseInt(selectedId)) {
+                if (item.getVariantId() == Integer.parseInt(selectedId)) {
                     checkoutItems.add(item);
                     subtotal += item.getTotalPrice();
                     break;
@@ -68,10 +69,12 @@ public class CheckoutServlet extends HttpServlet {
         User user = (User) session.getAttribute("user");
         Cart cart = (Cart) session.getAttribute("cart");
         String[] selectedItemIds = (String[]) session.getAttribute("selectedItemIds");
+
         if (user == null || cart == null || cart.getTotalQuantity() == 0 || selectedItemIds == null || selectedItemIds.length == 0) {
             response.sendRedirect(request.getContextPath() + "/gio-hang");
             return;
         }
+
         String selectedAddressVal = request.getParameter("selectedAddress");
         String shippingMethod = request.getParameter("shippingMethod");
         String paymentMethod = request.getParameter("paymentMethod");
@@ -102,14 +105,14 @@ public class CheckoutServlet extends HttpServlet {
             } catch (NumberFormatException e) {
             }
         }
+
         List<CartItem> selectedCartItems = new ArrayList<>();
         double subtotal = 0;
-
         for (CartItem item : cart.getItems()) {
             for (String idStr : selectedItemIds) {
                 try {
                     int id = Integer.parseInt(idStr);
-                    if (item.getProduct().getId() == id) {
+                    if (item.getVariantId() == id) {
                         selectedCartItems.add(item);
                         subtotal += item.getTotalPrice();
                         break;
@@ -138,13 +141,15 @@ public class CheckoutServlet extends HttpServlet {
         if (orderId > 0) {
             orderDAO.addOrderItems(orderId, selectedCartItems);
 
-            ProductDAO productDAO = DAOFactory.getInstance().getProductDAO();
+            ProductVariantDAO variantDAO = DAOFactory.getInstance().getCartDAO();
             CartDAO cartDAO = DAOFactory.getInstance().getCartDAO();
 
             for (CartItem item : selectedCartItems) {
-                productDAO.decreaseStock(item.getProduct().getId(), item.getQuantity());
-                cartDAO.removeProduct(user.getId(), item.getProduct().getId());
+                variantDAO.decreaseStock(item.getVariantId(), item.getQuantity());
+
+                cartDAO.removeProduct(user.getId(), item.getVariantId());
             }
+
             cart.removeItems(selectedItemIds);
             session.setAttribute("cart", cart);
             session.removeAttribute("selectedItemIds");
@@ -155,6 +160,7 @@ public class CheckoutServlet extends HttpServlet {
             doGet(request, response);
         }
     }
+
     private String generateOrderNumber() {
         return "ORD" + System.currentTimeMillis();
     }
