@@ -55,7 +55,7 @@
                         <div class="checkout-card">
                             <table class="cart-table">
                                 <thead>
-                              <tr>
+                                <tr>
                                     <th style="width: 50px; text-align: center;">
                                         <input type="checkbox" id="selectAll" title="Chọn tất cả">
                                     </th>
