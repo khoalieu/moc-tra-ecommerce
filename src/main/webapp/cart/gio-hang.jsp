@@ -76,7 +76,7 @@
                                     <tr>
                                         <td style="text-align: center;">
                                             <input type="checkbox" class="item-checkbox" name="selectedItems"
-                                                   value="${item.product.id}"
+                                                   value="${item.variantId}"
                                                    data-price="${item.totalPrice}">
                                         </td>
 
@@ -92,23 +92,21 @@
                                                style="font-weight: 500; color: #333; text-decoration: none;">
                                                     ${item.product.name}
                                             </a>
+                                            <c:if test="${not empty item.variant}">
+                                                <div style="font-size: 0.85rem; color: #666; margin-top: 5px;">
+                                                    Phân loại: ${item.variant.variantName}
+                                                </div>
+                                            </c:if>
                                         </td>
 
                                         <td>
-                                            <c:choose>
-                                                <c:when test="${item.product.salePrice > 0}">
-                                                    <fmt:formatNumber value="${item.product.salePrice}" type="currency"/>
-                                                </c:when>
-                                                <c:otherwise>
-                                                    <fmt:formatNumber value="${item.product.price}" type="currency"/>
-                                                </c:otherwise>
-                                            </c:choose>
+                                            <fmt:formatNumber value="${item.unitPrice}" type="currency"/>
                                         </td>
 
                                         <td>
                                             <input class="cart-item-quantity" type="number"
                                                    value="${item.quantity}" min="1"
-                                                   data-id="${item.product.id}"
+                                                   data-id="${item.variantId}"
                                                    onchange="updateQuantity(this)" style="width: 60px; text-align: center;">
                                         </td>
 
@@ -117,7 +115,7 @@
                                         </td>
 
                                         <td>
-                                            <a href="javascript:void(0);" onclick="removeItem(${item.product.id})" class="cart-item-remove" title="Xóa sản phẩm"
+                                            <a href="javascript:void(0);" onclick="removeItem(${item.variantId})" class="cart-item-remove" title="Xóa sản phẩm"
                                                style="color:red; font-size: 1.1rem; text-decoration: none;">
                                                 <i class="fa-solid fa-trash"></i>
                                             </a>
@@ -208,7 +206,7 @@
         calculateTotal();
     });
     function updateQuantity(input) {
-        const productId = input.getAttribute("data-id");
+        const variantId = input.getAttribute("data-id");
         const quantity = input.value;
 
         const form = document.createElement('form');
@@ -217,21 +215,21 @@
 
         form.innerHTML = `
         <input type="hidden" name="action" value="update">
-        <input type="hidden" name="productId" value="`+productId+`">
+        <input type="hidden" name="variantId" value="`+variantId+`">
         <input type="hidden" name="quantity" value="`+quantity+`">
-    `;
+        `;
         document.body.appendChild(form);
         form.submit();
     }
-    function removeItem(productId) {
+
+    function removeItem(variantId) {
         if(confirm('Bạn có chắc chắn muốn xóa sản phẩm này khỏi giỏ hàng?')) {
             const form = document.createElement('form');
             form.method = 'POST';
             form.action = '${pageContext.request.contextPath}/gio-hang';
-
             form.innerHTML = `
                 <input type="hidden" name="action" value="remove">
-                <input type="hidden" name="productId" value="` + productId + `">
+                <input type="hidden" name="variantId" value="` + variantId + `">
             `;
             document.body.appendChild(form);
             form.submit();
