@@ -13,7 +13,6 @@ public class CartDAO {
 
     public Cart getCartByUserId(int userId) {
         Cart cart = new Cart();
-        cart.setUserId(userId);
 
         String sql = "SELECT c.product_id, c.quantity, p.name, p.image_url, p.price, p.sale_price, p.slug " +
                 "FROM cart c " +
