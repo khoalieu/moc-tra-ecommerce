@@ -1,6 +1,7 @@
 package controller.product;
 
 import dao.CategoryDAO;
+import dao.DAOFactory;
 import dao.ProductDAO;
 import dao.PromotionDAO;
 import jakarta.servlet.http.HttpSession;
@@ -26,8 +27,8 @@ public class ProductServlet extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        ProductDAO productDAO = new ProductDAO();
-        CategoryDAO categoryDAO = new CategoryDAO();
+        ProductDAO productDAO = DAOFactory.getInstance().getProductDAO();
+        CategoryDAO categoryDAO = DAOFactory.getInstance().getCategoryDAO();
 
         String categoryParam = request.getParameter("category");
         String sortParam = request.getParameter("sort");
@@ -90,7 +91,7 @@ public class ProductServlet extends HttpServlet {
         String categoryName = "Tất Cả Sản Phẩm";
 
         if (promotionId != null) {
-            PromotionDAO promoDAO = new PromotionDAO();
+            PromotionDAO promoDAO = DAOFactory.getInstance().getPromotionDAO();
             categoryName = promoDAO.getPromotionName(promotionId);
         } else if (categoryId != null) {
             if (categoryId == 1) {

@@ -1,18 +1,22 @@
 package dao;
 
-import db.DBConnect;
 import model.product.ProductImage;
 
+import javax.sql.DataSource;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
 public class ProductImageDAO {
+    private final DataSource ds;
+    public ProductImageDAO(DataSource ds) {
+        this.ds = ds;
+    }
 
     public List<ProductImage> getImagesByProductId(int productId) {
         List<ProductImage> list = new ArrayList<>();
         String sql = "SELECT * FROM product_images WHERE product_id = ? ORDER BY sort_order ASC";
-        try (Connection conn = DBConnect.getConnection();
+        try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, productId);
             ResultSet rs = ps.executeQuery();

@@ -1,6 +1,7 @@
 package controller;
 
 import dao.CartDAO;
+import dao.DAOFactory;
 import dao.ProductDAO;
 import model.cart.Cart;
 import model.cart.CartItem;
@@ -19,8 +20,8 @@ import java.io.IOException;
 @WebServlet(name = "CartServlet", value = "/gio-hang")
 public class CartServlet extends HttpServlet {
 
-    private final ProductDAO productDAO = new ProductDAO();
-    private final CartDAO cartDAO = new CartDAO();
+    private final ProductDAO productDAO = DAOFactory.getInstance().getProductDAO();
+    private final CartDAO cartDAO = DAOFactory.getInstance().getCartDAO();
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {

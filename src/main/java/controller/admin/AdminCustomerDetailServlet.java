@@ -1,8 +1,6 @@
 package controller.admin;
 
-import dao.OrderDAO;
-import dao.UserAddressDAO;
-import dao.UserDAO;
+import dao.*;
 import model.order.Order;
 import model.user.User;
 import model.user.UserAddress;
@@ -14,12 +12,12 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
-import dao.BlogCommentDAO;
+
 import model.blog.BlogComment;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.text.DecimalFormat;
-import dao.ReviewDAO;
+
 import model.product.ProductReview;
 import model.user.UserActivityDTO;
 
@@ -45,11 +43,11 @@ public class AdminCustomerDetailServlet extends HttpServlet {
             int userId = Integer.parseInt(idParam);
 
 
-            UserDAO userDAO = new UserDAO();
-            UserAddressDAO addressDAO = new UserAddressDAO();
-            OrderDAO orderDAO = new OrderDAO();
-            ReviewDAO reviewDAO = new ReviewDAO();
-            BlogCommentDAO blogCommentDAO = new BlogCommentDAO();
+            UserDAO userDAO = DAOFactory.getInstance().getUserDAO();
+            UserAddressDAO addressDAO = DAOFactory.getInstance().getUserAddressDAO();
+            OrderDAO orderDAO = DAOFactory.getInstance().getOrderDAO();
+            ReviewDAO reviewDAO = DAOFactory.getInstance().getReviewDAO();
+            BlogCommentDAO blogCommentDAO = DAOFactory.getInstance().getBlogCommentDAO();
 
 
             User customer = userDAO.getUserDetailById(userId);

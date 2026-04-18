@@ -1,5 +1,6 @@
 package controller.auth;
 
+import dao.DAOFactory;
 import dao.UserDAO;
 import model.user.User;
 import jakarta.servlet.ServletException;
@@ -29,7 +30,7 @@ public class ChangePasswordServlet extends HttpServlet {
         String newPass = request.getParameter("newPassword");
         String confirmPass = request.getParameter("confirmNewPassword");
 
-        UserDAO dao = new UserDAO();
+        UserDAO dao = DAOFactory.getInstance().getUserDAO();
 
         if (!dao.checkPassword(user.getId(), oldPass)){
             session.setAttribute("msg", "Mật khẩu cũ không chính xác!");

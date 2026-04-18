@@ -88,8 +88,8 @@ public class AdminBlogManageServlet extends HttpServlet {
 
     private void doGetAdd(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        BlogCategoryDAO catDAO = new BlogCategoryDAO();
-        UserDAO userDAO = new UserDAO();
+        BlogCategoryDAO catDAO = DAOFactory.getInstance().getBlogCategoryDAO();
+        UserDAO userDAO = DAOFactory.getInstance().getUserDAO();
 
         request.setAttribute("allCategories", catDAO.getAllCategories());
         request.setAttribute("allAuthors", userDAO.getAllAdminUsers());
@@ -100,7 +100,7 @@ public class AdminBlogManageServlet extends HttpServlet {
     private void doPostAdd(HttpServletRequest request, HttpServletResponse response, User me)
             throws ServletException, IOException {
 
-        BlogPostDAO postDAO = new BlogPostDAO();
+        BlogPostDAO postDAO = DAOFactory.getInstance().getBlogPostDAO();
 
         String title   = trimOrNull(request.getParameter("title"));
         String slugInp = trimOrNull(request.getParameter("slug"));
@@ -196,13 +196,13 @@ public class AdminBlogManageServlet extends HttpServlet {
         int id = parseInt(request.getParameter("id"));
         if (id <= 0) { response.sendRedirect(request.getContextPath() + "/admin/blog"); return; }
 
-        BlogPostDAO postDAO = new BlogPostDAO();
+        BlogPostDAO postDAO = DAOFactory.getInstance().getBlogPostDAO();
         BlogPost post = postDAO.getByIdForAdmin(id);
         if (post == null) { response.sendError(HttpServletResponse.SC_NOT_FOUND); return; }
 
         request.setAttribute("post", post);
-        request.setAttribute("allCategories", new BlogCategoryDAO().getAllCategories());
-        request.setAttribute("allAuthors", new UserDAO().getAllAdminUsers());
+        request.setAttribute("allCategories", DAOFactory.getInstance().getBlogCategoryDAO().getAllCategories());
+        request.setAttribute("allAuthors", DAOFactory.getInstance().getUserDAO().getAllAdminUsers());
 
         request.getRequestDispatcher("/admin/admin-blog-edit.jsp").forward(request, response);
     }
@@ -213,7 +213,7 @@ public class AdminBlogManageServlet extends HttpServlet {
         int id = parseInt(request.getParameter("id"));
         if (id <= 0) { response.sendRedirect(request.getContextPath() + "/admin/blog"); return; }
 
-        BlogPostDAO postDAO = new BlogPostDAO();
+        BlogPostDAO postDAO = DAOFactory.getInstance().getBlogPostDAO();
         BlogPost old = postDAO.getByIdForAdmin(id);
         if (old == null) { response.sendError(HttpServletResponse.SC_NOT_FOUND); return; }
 
@@ -300,7 +300,7 @@ public class AdminBlogManageServlet extends HttpServlet {
             }
         }
 
-        boolean success = new BlogPostDAO().deleteByIds(ids);
+        boolean success = DAOFactory.getInstance().getBlogPostDAO().deleteByIds(ids);
         if (success) {
             response.sendRedirect(request.getContextPath() + "/admin/blog?msg=deleted&count=" + ids.size());
         } else {
@@ -324,7 +324,7 @@ public class AdminBlogManageServlet extends HttpServlet {
         try { if (stStr != null) newStatus = BlogStatus.valueOf(stStr.toUpperCase()); }
         catch (Exception ignored) {}
 
-        boolean success = new BlogPostDAO().updateStatusByIds(ids, newStatus);
+        boolean success = DAOFactory.getInstance().getBlogPostDAO().updateStatusByIds(ids, newStatus);
         if (success) {
             response.sendRedirect(request.getContextPath()
                     + "/admin/blog?msg=status_updated&status=" + stStr + "&count=" + ids.size());

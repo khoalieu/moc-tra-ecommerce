@@ -1,9 +1,6 @@
 package controller;
 
-import dao.CartDAO;
-import dao.OrderDAO;
-import dao.ProductDAO;
-import dao.UserAddressDAO;
+import dao.*;
 import model.cart.Cart;
 import model.cart.CartItem;
 import model.user.User;
@@ -51,7 +48,7 @@ public class CheckoutServlet extends HttpServlet {
                 }
             }
         }
-        UserAddressDAO addressDAO = new UserAddressDAO();
+        UserAddressDAO addressDAO = DAOFactory.getInstance().getUserAddressDAO();
         List<UserAddress> addresses = addressDAO.getListAddress(user.getId());
         request.setAttribute("addresses", addresses);
         request.setAttribute("checkoutItems", checkoutItems);
@@ -79,7 +76,7 @@ public class CheckoutServlet extends HttpServlet {
         String shippingMethod = request.getParameter("shippingMethod");
         String paymentMethod = request.getParameter("paymentMethod");
         String note = request.getParameter("note");
-        UserAddressDAO addressDAO = new UserAddressDAO();
+        UserAddressDAO addressDAO = DAOFactory.getInstance().getUserAddressDAO();
         int shippingAddressId = 0;
 
         if ("new".equals(selectedAddressVal)) {
@@ -135,14 +132,14 @@ public class CheckoutServlet extends HttpServlet {
         order.setShippingFee(shippingFee);
         order.setPaymentMethod(paymentMethod);
         order.setNotes(note);
-        OrderDAO orderDAO = new OrderDAO();
+        OrderDAO orderDAO = DAOFactory.getInstance().getOrderDAO();
         int orderId = orderDAO.createOrder(order);
 
         if (orderId > 0) {
             orderDAO.addOrderItems(orderId, selectedCartItems);
 
-            ProductDAO productDAO = new ProductDAO();
-            CartDAO cartDAO = new CartDAO();
+            ProductDAO productDAO = DAOFactory.getInstance().getProductDAO();
+            CartDAO cartDAO = DAOFactory.getInstance().getCartDAO();
 
             for (CartItem item : selectedCartItems) {
                 productDAO.decreaseStock(item.getProduct().getId(), item.getQuantity());
