@@ -1,5 +1,6 @@
 package controller.admin;
 
+import dao.DAOFactory;
 import dao.OrderDAO;
 import model.order.Order;
 import jakarta.servlet.ServletException;
@@ -13,7 +14,7 @@ import java.util.List;
 @WebServlet(name = "AdminDashboardServlet", urlPatterns = {"/admin/dashboard"})
 public class AdminDashboardServlet extends HttpServlet {
 
-    private final OrderDAO orderDAO = new OrderDAO();
+    private final OrderDAO orderDAO = DAOFactory.getInstance().getOrderDAO();
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {

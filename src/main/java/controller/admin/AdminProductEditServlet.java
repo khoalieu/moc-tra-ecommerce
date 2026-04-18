@@ -1,6 +1,7 @@
 package controller.admin;
 
 import dao.CategoryDAO;
+import dao.DAOFactory;
 import dao.ProductDAO;
 import model.product.Category;
 import model.product.Product;
@@ -28,8 +29,8 @@ public class AdminProductEditServlet extends HttpServlet {
 
     @Override
     public void init() {
-        productDAO = new ProductDAO();
-        categoryDAO = new CategoryDAO();
+        productDAO = DAOFactory.getInstance().getProductDAO();
+        categoryDAO = DAOFactory.getInstance().getCategoryDAO();
     }
 
     @Override

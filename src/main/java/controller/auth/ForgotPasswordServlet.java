@@ -1,6 +1,7 @@
 
 package controller.auth;
 
+import dao.DAOFactory;
 import dao.UserDAO;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -125,7 +126,7 @@ public class ForgotPasswordServlet extends HttpServlet {
             return;
         }
 
-        UserDAO dao = new UserDAO();
+        UserDAO dao = DAOFactory.getInstance().getUserDAO();
         Integer userId = dao.findUserIdByEmail(email);
         if (userId == null) {
             req.setAttribute("message", "Nếu email chính xác, mã OTP đã được gửi. Vui lòng kiểm tra hộp thư.");
@@ -241,7 +242,7 @@ public class ForgotPasswordServlet extends HttpServlet {
             return;
         }
 
-        UserDAO dao = new UserDAO();
+        UserDAO dao = DAOFactory.getInstance().getUserDAO();
         Integer userId = dao.findUserIdByEmail(email.trim());
         if (userId == null) {
             req.setAttribute("message", "Email không tồn tại.");

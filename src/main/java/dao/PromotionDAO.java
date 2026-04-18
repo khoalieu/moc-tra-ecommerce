@@ -1,21 +1,25 @@
 package dao;
 
-import db.DBConnect;
 import model.product.Product;
 import model.promotion.Promotion;
 import model.enums.DiscountType;
 
+import javax.sql.DataSource;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
 public class PromotionDAO {
+    private final DataSource ds;
+    public PromotionDAO(DataSource ds) {
+        this.ds = ds;
+    }
 
     public List<Promotion> getActivePromotions() {
         List<Promotion> list = new ArrayList<>();
         String sql = "SELECT * FROM promotions WHERE is_active = 1 AND start_date <= NOW() AND end_date >= NOW()";
 
-        try (Connection conn = DBConnect.getConnection();
+        try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
 
@@ -45,7 +49,7 @@ public class PromotionDAO {
                 "WHERE pi.promotion_id = ? AND p.status = 'active' " +
                 "LIMIT ?";
 
-        try (Connection conn = DBConnect.getConnection();
+        try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setInt(1, promoId);
@@ -71,7 +75,7 @@ public class PromotionDAO {
 
     public String getPromotionName(int promoId) {
         String sql = "SELECT name FROM promotions WHERE id = ?";
-        try (Connection conn = DBConnect.getConnection();
+        try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setInt(1, promoId);
@@ -94,7 +98,7 @@ public class PromotionDAO {
         PreparedStatement psCleanOld = null;
 
         try {
-            conn = DBConnect.getConnection();
+            conn = ds.getConnection();
             conn.setAutoCommit(false);
 
             String sqlGetPromo = "SELECT discount_type, discount_value FROM promotions WHERE id = ?";
@@ -186,7 +190,7 @@ public class PromotionDAO {
         PreparedStatement psResetPrice = null;
 
         try {
-            conn = DBConnect.getConnection();
+            conn = ds.getConnection();
             conn.setAutoCommit(false);
 
             String sqlDelete = "DELETE FROM promotion_items WHERE product_id = ?";
@@ -237,7 +241,7 @@ public class PromotionDAO {
     public List<Promotion> getAllPromotions() {
         List<Promotion> list = new ArrayList<>();
         String sql = "SELECT * FROM promotions ORDER BY created_at DESC";
-        try (Connection conn = DBConnect.getConnection();
+        try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
             while (rs.next()) {
@@ -261,7 +265,7 @@ public class PromotionDAO {
     public boolean insertPromotion(Promotion p) {
         String sql = "INSERT INTO promotions (name, description, discount_type, discount_value, start_date, end_date, is_active, image_url, created_at) " +
                 "VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())";
-        try (Connection conn = DBConnect.getConnection();
+        try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, p.getName());
             ps.setString(2, p.getDescription());
@@ -282,7 +286,7 @@ public class PromotionDAO {
     public void togglePromotionStatus(int promoId, boolean newStatus) {
         Connection conn = null;
         try {
-            conn = DBConnect.getConnection();
+            conn = ds.getConnection();
             conn.setAutoCommit(false);
 
             String sqlUpdateStatus = "UPDATE promotions SET is_active = ? WHERE id = ?";
@@ -327,7 +331,7 @@ public class PromotionDAO {
     public boolean updatePromotion(Promotion p) {
         String sql = "UPDATE promotions SET name=?, description=?, discount_type=?, discount_value=?, " +
                 "start_date=?, end_date=?, image_url=? WHERE id=?";
-        try (Connection conn = DBConnect.getConnection();
+        try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setString(1, p.getName());

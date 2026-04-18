@@ -26,9 +26,9 @@ public class ProductDetailServlet extends HttpServlet {
 
         try {
             int productId = Integer.parseInt(idParam);
-            ProductDAO productDAO = new ProductDAO();
-            ProductImageDAO imageDAO = new ProductImageDAO();
-            ReviewDAO reviewDAO = new ReviewDAO();
+            ProductDAO productDAO = DAOFactory.getInstance().getProductDAO();
+            ProductImageDAO imageDAO = DAOFactory.getInstance().getProductImageDAO();
+            ReviewDAO reviewDAO = DAOFactory.getInstance().getReviewDAO();
             Product product = productDAO.getProductById(productId);
             if (product == null) {
                 response.sendError(HttpServletResponse.SC_NOT_FOUND, "Sản phẩm không tồn tại");
@@ -42,12 +42,17 @@ public class ProductDetailServlet extends HttpServlet {
             User user = session != null ? (User) session.getAttribute("user") : null;
 
             boolean isFavorite = false;
+            boolean canReview = false;
+
             if (user != null) {
                 FavoriteDAO favoriteDAO = new FavoriteDAO();
                 isFavorite = favoriteDAO.isFavorite(user.getId(), productId);
-            }
-            request.setAttribute("isFavorite", isFavorite);
 
+                canReview = reviewDAO.hasPurchasedProduct(user.getId(), productId);
+            }
+
+            request.setAttribute("isFavorite", isFavorite);
+            request.setAttribute("canReview", canReview);
             request.setAttribute("product", product);
             request.setAttribute("gallery", gallery);
             request.setAttribute("reviews", reviews);

@@ -1,5 +1,6 @@
 package controller.auth;
 
+import dao.DAOFactory;
 import dao.UserDAO;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -28,7 +29,7 @@ public class VerifyChangeEmailOtpServlet extends HttpServlet {
         String newEmail = (String) session.getAttribute("NEW_EMAIL");
 
         if (sessionOtp != null && sessionOtp.equals(inputOtp)) {
-            UserDAO userDAO = new UserDAO();
+            UserDAO userDAO = DAOFactory.getInstance().getUserDAO();
             boolean isUpdated = userDAO.updateEmail(currentUser.getId(), newEmail);
 
             if (isUpdated) {
