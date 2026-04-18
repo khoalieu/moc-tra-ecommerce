@@ -1,10 +1,10 @@
 package dao;
 
-import db.DBConnect;
 import model.blog.BlogPost;
 import model.user.User;
 import model.enums.BlogStatus;
 
+import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -14,10 +14,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class BlogPostDAO {
+    private final DataSource ds;
+    public BlogPostDAO(DataSource ds) {
+        this.ds = ds;
+    }
 
     public int countAllPublished() {
         String sql = "SELECT COUNT(*) " + "FROM blog_posts " + "WHERE status = 'published'";
-        try (Connection conn = DBConnect.getConnection();
+        try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
             if (rs.next()) return rs.getInt(1);
@@ -39,7 +43,7 @@ public class BlogPostDAO {
                 "ORDER BY bp.created_at DESC " +
                 "LIMIT ? OFFSET ?";
 
-        try (Connection conn = DBConnect.getConnection();
+        try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setInt(1, size);
@@ -62,7 +66,7 @@ public class BlogPostDAO {
                 + "JOIN blog_categories bc ON bc.id = bp.category_id "
                 + "WHERE bp.status = 'published' " + "AND bc.slug = ?";
 
-        try (Connection conn = DBConnect.getConnection();
+        try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, catSlug);
             try (ResultSet rs = ps.executeQuery()) {
@@ -87,7 +91,7 @@ public class BlogPostDAO {
                 "ORDER BY bp.created_at DESC " +
                 "LIMIT ? OFFSET ?";
 
-        try (Connection conn = DBConnect.getConnection();
+        try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, catSlug);
             ps.setInt(2, size);
@@ -116,7 +120,7 @@ public class BlogPostDAO {
         }
         sql.append(")");
 
-        try (Connection conn = DBConnect.getConnection();
+        try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql.toString())) {
 
             int idx = 1;
@@ -158,7 +162,7 @@ public class BlogPostDAO {
 
         sql.append(") ORDER BY bp.created_at DESC LIMIT ? OFFSET ?");
 
-        try (Connection conn = DBConnect.getConnection();
+        try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql.toString())) {
 
             int idx = 1;
@@ -198,7 +202,7 @@ public class BlogPostDAO {
                 "WHERE status = 'published' " +
                 "ORDER BY created_at DESC " +
                 "LIMIT ?";
-        try (Connection conn = DBConnect.getConnection();
+        try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, limit);
             try (ResultSet rs = ps.executeQuery()) {
@@ -229,7 +233,7 @@ public class BlogPostDAO {
                 "WHERE bp.status = 'published' AND bp.slug = ? " +
                 "LIMIT 1";
 
-        try (Connection conn = DBConnect.getConnection();
+        try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setString(1, slug);
@@ -288,7 +292,7 @@ public class BlogPostDAO {
                 "SET views_count = IFNULL(views_count, 0) + 1 " +
                 "WHERE id = ?";
 
-        try (Connection conn = DBConnect.getConnection();
+        try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, postId);
             ps.executeUpdate();
@@ -308,7 +312,7 @@ public class BlogPostDAO {
                 "ORDER BY IFNULL(bp.views_count, 0) DESC, bp.created_at DESC " +
                 "LIMIT ?";
 
-        try (Connection conn = DBConnect.getConnection();
+        try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setInt(1, limit);
@@ -380,7 +384,7 @@ public class BlogPostDAO {
         if (status != null) sql.append(" AND bp.status = ?");
         if (authorId != null) sql.append(" AND bp.author_id = ?");
 
-        try (Connection conn = DBConnect.getConnection();
+        try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql.toString())) {
 
             int idx = 1;
@@ -462,7 +466,7 @@ public class BlogPostDAO {
         if (page < 1) page = 1;
         int offset = (page - 1) * size;
 
-        try (Connection conn = DBConnect.getConnection();
+        try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql.toString())) {
 
             int idx = 1;
@@ -531,7 +535,7 @@ public class BlogPostDAO {
 
     public boolean slugExists(String slug) {
         String sql = "SELECT 1 FROM blog_posts WHERE slug = ? LIMIT 1";
-        try (Connection conn = DBConnect.getConnection();
+        try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, slug);
             try (ResultSet rs = ps.executeQuery()) {
@@ -548,7 +552,7 @@ public class BlogPostDAO {
                 "(title, slug, excerpt, content, featured_image, author_id, category_id, status, views_count, meta_title, meta_description, created_at) " +
                 "VALUES (?,?,?,?,?,?,?,?,?,?,?, COALESCE(?, NOW()))";
 
-        try (Connection conn = DBConnect.getConnection();
+        try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql, PreparedStatement.RETURN_GENERATED_KEYS)) {
 
             ps.setString(1, p.getTitle());
@@ -588,7 +592,7 @@ public class BlogPostDAO {
                         "WHERE bp.id = ? " +
                         "LIMIT 1";
 
-        try (Connection conn = DBConnect.getConnection();
+        try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setInt(1, id);
@@ -664,7 +668,7 @@ public class BlogPostDAO {
                         "LIMIT 1"
         );
 
-        try (Connection conn = DBConnect.getConnection();
+        try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql.toString())) {
 
             int idx = 1;
@@ -698,7 +702,7 @@ public class BlogPostDAO {
 
     public boolean slugExistsExceptId(String slug, int excludeId) {
         String sql = "SELECT 1 FROM blog_posts WHERE slug = ? AND id <> ? LIMIT 1";
-        try (Connection conn = DBConnect.getConnection();
+        try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, slug);
             ps.setInt(2, excludeId);
@@ -722,7 +726,7 @@ public class BlogPostDAO {
         }
         sql.append(")");
 
-        try (Connection conn = DBConnect.getConnection();
+        try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql.toString())) {
 
             for (int i = 0; i < ids.size(); i++) {
@@ -747,7 +751,7 @@ public class BlogPostDAO {
         }
         sql.append(")");
 
-        try (Connection conn = DBConnect.getConnection();
+        try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql.toString())) {
 
             ps.setString(1, newStatus.name().toLowerCase());

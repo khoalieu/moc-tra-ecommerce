@@ -1,5 +1,6 @@
 package controller.admin;
 
+import dao.DAOFactory;
 import dao.ProductDAO;
 import model.product.Product;
 import model.enums.ProductStatus;
@@ -36,8 +37,8 @@ public class AdminProductServlet extends HttpServlet {
 
     @Override
     public void init() {
-        productDAO = new ProductDAO();
-        categoryDAO = new CategoryDAO();
+        productDAO = DAOFactory.getInstance().getProductDAO();
+        categoryDAO = DAOFactory.getInstance().getCategoryDAO();
     }
 
     @Override

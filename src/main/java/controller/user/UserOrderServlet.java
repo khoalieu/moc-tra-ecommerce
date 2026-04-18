@@ -1,5 +1,6 @@
 package controller.user;
 
+import dao.DAOFactory;
 import dao.OrderDAO;
 import model.order.Order;
 import model.user.User;
@@ -23,7 +24,7 @@ public class UserOrderServlet extends HttpServlet {
             response.sendRedirect(request.getContextPath() + "/auth/login.jsp");
             return;
         }
-        OrderDAO orderDAO = new OrderDAO();
+        OrderDAO orderDAO = DAOFactory.getInstance().getOrderDAO();
         List<Order> orders = orderDAO.getOrdersByUserId(user.getId());
         request.setAttribute("orders", orders);
         request.getRequestDispatcher("/user/don-hang-nguoi-dung.jsp").forward(request, response);

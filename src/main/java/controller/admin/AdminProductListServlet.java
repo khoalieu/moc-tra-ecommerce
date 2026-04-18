@@ -1,4 +1,5 @@
 package controller.admin;
+import dao.DAOFactory;
 import dao.PromotionDAO;
 import model.promotion.Promotion;
 import dao.CategoryDAO;
@@ -24,9 +25,9 @@ public class AdminProductListServlet extends HttpServlet {
 
     @Override
     public void init() {
-        productDAO = new ProductDAO();
-        categoryDAO = new CategoryDAO();
-        promotionDAO = new PromotionDAO();
+        productDAO = DAOFactory.getInstance().getProductDAO();
+        categoryDAO = DAOFactory.getInstance().getCategoryDAO();
+        promotionDAO = DAOFactory.getInstance().getPromotionDAO();
     }
 
     @Override

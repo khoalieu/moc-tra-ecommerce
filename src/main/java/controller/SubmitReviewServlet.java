@@ -1,5 +1,6 @@
 package controller;
 
+import dao.DAOFactory;
 import dao.ReviewDAO;
 import model.user.User;
 import jakarta.servlet.*;
@@ -17,7 +18,7 @@ public class SubmitReviewServlet extends HttpServlet {
         User user = session != null ? (User) session.getAttribute("user") : null;
 
         int productId = Integer.parseInt(request.getParameter("productId"));
-        ReviewDAO reviewDAO = new ReviewDAO();
+        ReviewDAO reviewDAO = DAOFactory.getInstance().getReviewDAO();
 
         if (user == null) {
             String redirect = java.net.URLEncoder.encode(
