@@ -1,26 +1,29 @@
 package dao;
 
-import db.DBConnect;
 import model.cart.Cart;
 import model.product.Product;
 
+import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
 public class CartDAO {
+    private final DataSource ds;
+    public CartDAO(DataSource ds) {
+        this.ds = ds;
+    }
 
     public Cart getCartByUserId(int userId) {
         Cart cart = new Cart();
-        cart.setUserId(userId);
 
         String sql = "SELECT c.product_id, c.quantity, p.name, p.image_url, p.price, p.sale_price, p.slug " +
                 "FROM cart c " +
                 "JOIN products p ON c.product_id = p.id " +
                 "WHERE c.user_id = ?";
 
-        try (Connection conn = DBConnect.getConnection();
+        try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setInt(1, userId);
@@ -49,7 +52,7 @@ public class CartDAO {
                 "VALUES (?, ?, ?) " +
                 "ON DUPLICATE KEY UPDATE quantity = quantity + VALUES(quantity)";
 
-        try (Connection conn = DBConnect.getConnection();
+        try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setInt(1, userId);
@@ -68,7 +71,7 @@ public class CartDAO {
             return;
         }
         String sql = "UPDATE cart SET quantity = ?, updated_at = CURRENT_TIMESTAMP WHERE user_id = ? AND product_id = ?";
-        try (Connection conn = DBConnect.getConnection();
+        try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, quantity);
             ps.setInt(2, userId);
@@ -81,7 +84,7 @@ public class CartDAO {
 
     public void removeProduct(int userId, int productId) {
         String sql = "DELETE FROM cart WHERE user_id = ? AND product_id = ?";
-        try (Connection conn = DBConnect.getConnection();
+        try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, userId);
             ps.setInt(2, productId);
@@ -93,7 +96,7 @@ public class CartDAO {
 
     public void clearCart(int userId) {
         String sql = "DELETE FROM cart WHERE user_id = ?";
-        try (Connection conn = DBConnect.getConnection();
+        try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setInt(1, userId);

@@ -29,20 +29,20 @@ public class AdminBlogDetailServlet extends HttpServlet {
         try { id = Integer.parseInt(request.getParameter("id")); }
         catch (Exception e) { response.sendRedirect(request.getContextPath() + "/admin/blog"); return; }
 
-        BlogPostDAO postDAO = new BlogPostDAO();
+        BlogPostDAO postDAO = DAOFactory.getInstance().getBlogPostDAO();
         BlogPost post = postDAO.getByIdForAdmin(id);
         if (post == null) { response.sendError(404); return; }
 
         BlogCategory category = null;
-        if (post.getCategoryId() != null) category = new BlogCategoryDAO().getById(post.getCategoryId());
+        if (post.getCategoryId() != null) category = DAOFactory.getInstance().getBlogCategoryDAO().getById(post.getCategoryId());
 
-        List<BlogComment> comments = new BlogCommentDAO().getByPostId(post.getId());
+        List<BlogComment> comments = DAOFactory.getInstance().getBlogCommentDAO().getByPostId(post.getId());
 
         Set<Integer> userIds = new HashSet<>();
         if (post.getAuthorId() != null) userIds.add(post.getAuthorId());
         for (BlogComment c : comments) if (c.getUserId() != null) userIds.add(c.getUserId());
 
-        Map<Integer, User> userMap = new UserDAO().getMapByIds(userIds);
+        Map<Integer, User> userMap = DAOFactory.getInstance().getUserDAO().getMapByIds(userIds);
         if (post.getAuthorId() != null) post.setAuthor(userMap.get(post.getAuthorId()));
 
         request.setAttribute("post", post);
@@ -71,7 +71,7 @@ public class AdminBlogDetailServlet extends HttpServlet {
             return;
         }
 
-        BlogCommentDAO dao = new BlogCommentDAO();
+        BlogCommentDAO dao = DAOFactory.getInstance().getBlogCommentDAO();
 
         if ("delete".equalsIgnoreCase(action)) {
             int commentId = parseInt(request.getParameter("commentId"));
@@ -93,7 +93,7 @@ public class AdminBlogDetailServlet extends HttpServlet {
             if (replyToId > 0) {
                 BlogComment target = dao.getById(replyToId);
                 if (target != null) {
-                    User u = new UserDAO().getById(target.getUserId());
+                    User u = DAOFactory.getInstance().getUserDAO().getById(target.getUserId());
                     String name = (u == null) ? ("User " + target.getUserId()) : u.getDisplayName();
                     prefix = "Trả lời @" + name + ": ";
                 }

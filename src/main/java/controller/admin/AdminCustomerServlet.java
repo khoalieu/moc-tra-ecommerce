@@ -1,5 +1,6 @@
 package controller.admin;
 
+import dao.DAOFactory;
 import dao.UserDAO;
 import model.user.CustomerDTO;
 import jakarta.servlet.ServletException;
@@ -32,7 +33,7 @@ public class AdminCustomerServlet extends HttpServlet {
         } catch (NumberFormatException e) {
             page = 1;
         }
-        UserDAO userDAO = new UserDAO();
+        UserDAO userDAO = DAOFactory.getInstance().getUserDAO();
 
         List<CustomerDTO> customers = userDAO.getCustomers(search, status, spending, orders, sort, page, pageSize);
         int totalCustomers = 0;
@@ -61,7 +62,7 @@ public class AdminCustomerServlet extends HttpServlet {
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");
 
-        UserDAO userDAO = new UserDAO();
+        UserDAO userDAO = DAOFactory.getInstance().getUserDAO();
         List<Integer> idsToUpdate = new ArrayList<>();
         boolean success = false;
         String message = "";

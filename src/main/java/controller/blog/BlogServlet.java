@@ -2,6 +2,7 @@ package controller.blog;
 
 import dao.BlogCategoryDAO;
 import dao.BlogPostDAO;
+import dao.DAOFactory;
 import model.blog.BlogCategory;
 import model.blog.BlogPost;
 
@@ -22,8 +23,8 @@ public class BlogServlet extends HttpServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
-        BlogPostDAO postDAO = new BlogPostDAO();
-        BlogCategoryDAO catDAO = new BlogCategoryDAO();
+        BlogPostDAO postDAO = DAOFactory.getInstance().getBlogPostDAO();
+        BlogCategoryDAO catDAO = DAOFactory.getInstance().getBlogCategoryDAO();
 
         String cat = request.getParameter("cat");
         String q = request.getParameter("q");
