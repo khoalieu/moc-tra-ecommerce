@@ -42,12 +42,17 @@ public class ProductDetailServlet extends HttpServlet {
             User user = session != null ? (User) session.getAttribute("user") : null;
 
             boolean isFavorite = false;
+            boolean canReview = false;
+
             if (user != null) {
                 FavoriteDAO favoriteDAO = new FavoriteDAO();
                 isFavorite = favoriteDAO.isFavorite(user.getId(), productId);
-            }
-            request.setAttribute("isFavorite", isFavorite);
 
+                canReview = reviewDAO.hasPurchasedProduct(user.getId(), productId);
+            }
+
+            request.setAttribute("isFavorite", isFavorite);
+            request.setAttribute("canReview", canReview);
             request.setAttribute("product", product);
             request.setAttribute("gallery", gallery);
             request.setAttribute("reviews", reviews);
