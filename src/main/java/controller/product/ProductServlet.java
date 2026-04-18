@@ -4,6 +4,7 @@ import dao.CategoryDAO;
 import dao.DAOFactory;
 import dao.ProductDAO;
 import dao.PromotionDAO;
+import jakarta.servlet.http.HttpSession;
 import model.product.Category;
 import model.product.Product;
 
@@ -17,6 +18,9 @@ import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import dao.FavoriteDAO;
+import model.user.User;
+import java.util.Set;
 
 @WebServlet("/san-pham")
 public class ProductServlet extends HttpServlet {
@@ -31,6 +35,14 @@ public class ProductServlet extends HttpServlet {
         String pageParam = request.getParameter("page");
         String priceParam = request.getParameter("price");
         String promoParam = request.getParameter("promotionId");
+
+        String searchParam = request.getParameter("search");
+        if (searchParam != null) {
+            searchParam = searchParam.trim();
+            if (searchParam.isEmpty()) {
+                searchParam = null;
+            }
+        }
 
         Integer categoryId = null;
         if (categoryParam != null && !categoryParam.isEmpty()) {
@@ -65,10 +77,15 @@ public class ProductServlet extends HttpServlet {
             } catch (Exception e) {
             }
         }
+        if (searchParam != null) {
+            categoryId = null;
+            maxPrice = null;
+            promotionId = null;
+        }
 
         int pageSize = 12;
-        List<Product> products = productDAO.getProducts(categoryId, promotionId, sortParam, maxPrice, page, pageSize, "active");
-        int totalProducts = productDAO.countProducts(categoryId, promotionId, maxPrice, "active");
+        List<Product> products = productDAO.getProducts(categoryId, promotionId, sortParam, maxPrice,  searchParam, page, pageSize, "active");
+        int totalProducts = productDAO.countProducts(categoryId, promotionId, maxPrice, searchParam , "active");
         int totalPages = (int) Math.ceil((double) totalProducts / pageSize);
 
         String categoryName = "Tất Cả Sản Phẩm";
@@ -104,6 +121,14 @@ public class ProductServlet extends HttpServlet {
                 }
             }
         }
+        HttpSession session = request.getSession(false);
+        User user = session != null ? (User) session.getAttribute("user") : null;
+
+        if (user != null) {
+            FavoriteDAO favoriteDAO = new FavoriteDAO();
+            Set<Integer> favoriteProductIds = favoriteDAO.getFavoriteProductIds(user.getId());
+            request.setAttribute("favoriteProductIds", favoriteProductIds);
+        }
 
         request.setAttribute("parentCategories", parentCategories);
         request.setAttribute("childrenMap", childrenMap);
@@ -118,6 +143,8 @@ public class ProductServlet extends HttpServlet {
         request.setAttribute("currentSort", sortParam);
         request.setAttribute("currentPrice", maxPrice);
         request.setAttribute("currentPromotion", promotionId);
+
+        request.setAttribute("currentSearch", searchParam);
 
         request.getRequestDispatcher("/product/san-pham.jsp").forward(request, response);
     }

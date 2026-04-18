@@ -95,4 +95,43 @@ public class ReviewDAO {
         }
         return list;
     }
+    public boolean hasPurchasedProduct(int userId, int productId) {
+        String sql = "SELECT 1 " +
+                "FROM orders o " +
+                "JOIN order_items oi ON o.id = oi.order_id " +
+                "WHERE o.user_id = ? " +
+                "AND oi.product_id = ? " +
+                "AND o.status = 'completed' " +
+                "LIMIT 1";
+
+        try (Connection conn = DBConnect.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, userId);
+            ps.setInt(2, productId);
+
+            ResultSet rs = ps.executeQuery();
+            return rs.next();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    public boolean hasReviewed(int userId, int productId) {
+        String sql = "SELECT 1 FROM product_reviews WHERE user_id = ? AND product_id = ? LIMIT 1";
+
+        try (Connection conn = DBConnect.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, userId);
+            ps.setInt(2, productId);
+
+            ResultSet rs = ps.executeQuery();
+            return rs.next();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
 }

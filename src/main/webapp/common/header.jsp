@@ -105,7 +105,7 @@
                     <button type="submit" style="border:none; background:none;">
                         <i class="fa-solid fa-magnifying-glass"></i>
                     </button>
-                    <input type="text" name="search" placeholder="Bạn muốn tìm gì...">
+                    <input type="text" name="search" value="${currentSearch}" placeholder="Bạn muốn tìm gì...">
                 </form>
                 <div class="cart-container">
                     <%-- 1. Phần hiển thị Text và Icon ) --%>
@@ -219,9 +219,25 @@
                                 <c:if test="${sessionScope.user.role == 'ADMIN'}">
                                     <a href="${pageContext.request.contextPath}/admin/admin-dashboard.jsp">Trang quản trị</a>
                                 </c:if>
-                                <a href="${pageContext.request.contextPath}/tai-khoan-cua-toi">Tài khoản của tôi</a>
-                                <a href="${pageContext.request.contextPath}/don-hang">Đơn mua</a>
-                                <a href="${pageContext.request.contextPath}/logout" style="color: red;">Đăng xuất</a>
+                                <a href="${pageContext.request.contextPath}/tai-khoan-cua-toi">
+                                    <i class="fa-regular fa-user" style="margin-right: 8px;"></i>
+                                    Tài khoản của tôi
+                                </a>
+
+                                <a href="${pageContext.request.contextPath}/don-hang">
+                                    <i class="fa-solid fa-bag-shopping" style="margin-right: 8px;"></i>
+                                    Đơn mua
+                                </a>
+
+                                <a href="${pageContext.request.contextPath}/san-pham-yeu-thich">
+                                    <i class="fa-solid fa-heart" style="margin-right: 8px;"></i>
+                                    Sản phẩm yêu thích
+                                </a>
+
+                                <a href="${pageContext.request.contextPath}/logout" style="color: #dc3545;">
+                                    <i class="fa-solid fa-right-from-bracket" style="margin-right: 8px;"></i>
+                                    Đăng xuất
+                                </a>
                             </c:when>
                             <c:otherwise>
                                 <a href="${pageContext.request.contextPath}/login">Đăng nhập</a>
