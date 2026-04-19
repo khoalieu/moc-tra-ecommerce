@@ -141,7 +141,7 @@ public class CheckoutServlet extends HttpServlet {
         if (orderId > 0) {
             orderDAO.addOrderItems(orderId, selectedCartItems);
 
-            ProductVariantDAO variantDAO = DAOFactory.getInstance().getCartDAO();
+            ProductVariantDAO variantDAO = DAOFactory.getInstance().getProductVariantDAO();
             CartDAO cartDAO = DAOFactory.getInstance().getCartDAO();
 
             for (CartItem item : selectedCartItems) {

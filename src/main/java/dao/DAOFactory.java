@@ -83,6 +83,10 @@ public class DAOFactory {
         return new CategoryDAO(dataSource);
     }
 
+    public FavoriteDAO getFavoriteDAO() {
+        return new FavoriteDAO(dataSource);
+    }
+
     // Order & Product
     public OrderDAO getOrderDAO() {
         return new OrderDAO(dataSource);
@@ -94,6 +98,10 @@ public class DAOFactory {
 
     public ProductImageDAO getProductImageDAO() {
         return new ProductImageDAO(dataSource);
+    }
+
+    public ProductVariantDAO getProductVariantDAO() {
+        return new ProductVariantDAO(dataSource);
     }
 
     // Promotion & Review

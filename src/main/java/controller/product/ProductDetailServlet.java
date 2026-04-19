@@ -49,7 +49,7 @@ public class ProductDetailServlet extends HttpServlet {
             boolean canReview = false;
 
             if (user != null) {
-                FavoriteDAO favoriteDAO = new FavoriteDAO();
+                FavoriteDAO favoriteDAO = DAOFactory.getInstance().getFavoriteDAO();
                 isFavorite = favoriteDAO.isFavorite(user.getId(), productId);
 
                 canReview = reviewDAO.hasPurchasedProduct(user.getId(), productId);
