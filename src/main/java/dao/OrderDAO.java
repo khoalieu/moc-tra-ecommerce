@@ -133,20 +133,34 @@ public class OrderDAO {
     }
 
     public void addOrderItems(int orderId, List<CartItem> items) {
-        String sql = "INSERT INTO order_items (order_id, product_id, quantity, price) VALUES (?, ?, ?, ?)";
+        String sql = "INSERT INTO order_items (order_id, product_id, variant_id, quantity, price) VALUES (?, ?, ?, ?, ?)";
         try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             for (CartItem item : items) {
                 ps.setInt(1, orderId);
                 ps.setInt(2, item.getProduct().getId());
-                ps.setInt(3, item.getQuantity());
+                Integer variantId = item.getVariant() != null ? item.getVariant().getId() :
+                        (item.getVariantId() > 0 ? item.getVariantId() : null);
+                if (variantId != null && variantId > 0) {
+                    ps.setInt(3, variantId);
+                } else {
+                    ps.setNull(3, Types.INTEGER);
+                }
+                ps.setInt(4, item.getQuantity());
 
-                double finalPrice = item.getProduct().getSalePrice() > 0 ?
-                        item.getProduct().getSalePrice() :
-                        item.getProduct().getPrice();
+                double finalPrice;
+                if (item.getVariant() != null) {
+                    finalPrice = item.getVariant().getSalePrice() > 0 ?
+                            item.getVariant().getSalePrice() :
+                            item.getVariant().getPrice();
+                } else {
+                    finalPrice = item.getProduct().getSalePrice() > 0 ?
+                            item.getProduct().getSalePrice() :
+                            item.getProduct().getPrice();
+                }
 
-                ps.setDouble(4, finalPrice);
+                ps.setDouble(5, finalPrice);
                 ps.addBatch();
             }
             ps.executeBatch();
@@ -157,9 +171,11 @@ public class OrderDAO {
 
     private List<OrderItem> getOrderItems(int orderId) {
         List<OrderItem> items = new ArrayList<>();
-        String sql = "SELECT oi.*, p.name, p.image_url " +
+        String sql = "SELECT oi.*, oi.variant_id AS order_variant_id, p.name, p.image_url, " +
+                "v.variant_name, v.price AS v_price, v.sale_price AS v_sale_price " +
                 "FROM order_items oi " +
                 "JOIN products p ON oi.product_id = p.id " +
+                "LEFT JOIN product_variants v ON oi.variant_id = v.id " +
                 "WHERE oi.order_id = ?";
 
         try (Connection conn = ds.getConnection();
@@ -175,6 +191,19 @@ public class OrderDAO {
                 item.setProductId(rs.getInt("product_id"));
                 item.setQuantity(rs.getInt("quantity"));
                 item.setPrice(rs.getDouble("price"));
+
+                Integer variantId = (Integer) rs.getObject("order_variant_id");
+                if (variantId != null && variantId > 0) {
+                    model.product.ProductVariant variant = new model.product.ProductVariant();
+                    variant.setId(variantId);
+                    variant.setProductId(item.getProductId());
+                    variant.setVariantName(rs.getString("variant_name"));
+                    variant.setPrice(rs.getDouble("v_price"));
+                    variant.setSalePrice(rs.getDouble("v_sale_price"));
+                    item.setVariant(variant);
+                } else {
+                    item.setVariantId(null);
+                }
 
                 Product p = new Product();
                 p.setId(rs.getInt("product_id"));
@@ -438,11 +467,21 @@ public class OrderDAO {
                 ps.executeUpdate();
             }
             for (OrderItem item : order.getItems()) {
-                String sqlUpdateStock = "UPDATE products SET stock_quantity = stock_quantity + ? WHERE id = ?";
-                try (PreparedStatement psStock = conn.prepareStatement(sqlUpdateStock)) {
-                    psStock.setInt(1, item.getQuantity());
-                    psStock.setInt(2, item.getProductId());
-                    psStock.executeUpdate();
+                Integer variantId = item.getVariantId();
+                if (variantId != null && variantId > 0) {
+                    String sqlUpdateVariant = "UPDATE product_variants SET stock_quantity = stock_quantity + ? WHERE id = ?";
+                    try (PreparedStatement psStock = conn.prepareStatement(sqlUpdateVariant)) {
+                        psStock.setInt(1, item.getQuantity());
+                        psStock.setInt(2, variantId);
+                        psStock.executeUpdate();
+                    }
+                } else {
+                    String sqlUpdateStock = "UPDATE products SET stock_quantity = stock_quantity + ? WHERE id = ?";
+                    try (PreparedStatement psStock = conn.prepareStatement(sqlUpdateStock)) {
+                        psStock.setInt(1, item.getQuantity());
+                        psStock.setInt(2, item.getProductId());
+                        psStock.executeUpdate();
+                    }
                 }
             }
 
@@ -461,14 +500,56 @@ public class OrderDAO {
         return false;
     }
     public boolean cancelOrder(int orderId, String reason) {
-        String sql = "UPDATE orders SET status = 'cancelled', cancel_reason = ? WHERE id = ? AND status = 'pending'";
-        try (Connection conn = ds.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setString(1, reason);
-            ps.setInt(2, orderId);
-            return ps.executeUpdate() > 0;
+        Connection conn = null;
+        try {
+            conn = ds.getConnection();
+            conn.setAutoCommit(false);
+
+            Order order = getOrderById(orderId);
+            if (order == null || order.getStatus() != OrderStatus.PENDING) {
+                return false;
+            }
+
+            String sql = "UPDATE orders SET status = 'cancelled', cancel_reason = ? WHERE id = ? AND status = 'pending'";
+            try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                ps.setString(1, reason);
+                ps.setInt(2, orderId);
+                if (ps.executeUpdate() == 0) {
+                    conn.rollback();
+                    return false;
+                }
+            }
+
+            for (OrderItem item : order.getItems()) {
+                Integer variantId = item.getVariantId();
+                if (variantId != null && variantId > 0) {
+                    String sqlUpdateVariant = "UPDATE product_variants SET stock_quantity = stock_quantity + ? WHERE id = ?";
+                    try (PreparedStatement psStock = conn.prepareStatement(sqlUpdateVariant)) {
+                        psStock.setInt(1, item.getQuantity());
+                        psStock.setInt(2, variantId);
+                        psStock.executeUpdate();
+                    }
+                } else {
+                    String sqlUpdateStock = "UPDATE products SET stock_quantity = stock_quantity + ? WHERE id = ?";
+                    try (PreparedStatement psStock = conn.prepareStatement(sqlUpdateStock)) {
+                        psStock.setInt(1, item.getQuantity());
+                        psStock.setInt(2, item.getProductId());
+                        psStock.executeUpdate();
+                    }
+                }
+            }
+
+            conn.commit();
+            return true;
         } catch (SQLException e) {
+            if (conn != null) {
+                try { conn.rollback(); } catch (SQLException ex) { ex.printStackTrace(); }
+            }
             e.printStackTrace();
+        } finally {
+            if (conn != null) {
+                try { conn.setAutoCommit(true); conn.close(); } catch (SQLException e) { e.printStackTrace(); }
+            }
         }
         return false;
     }

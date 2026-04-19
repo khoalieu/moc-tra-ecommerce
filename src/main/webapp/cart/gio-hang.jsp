@@ -30,27 +30,7 @@
                 <% session.removeAttribute("errorMsg"); %>
             </c:if>
             <div class="checkout-layout">
-                <div class="checkout-left">
-                    <div class="checkout-card">
-                        <table class="cart-table">
-                            <thead>
-                            <tr>
-                                <th>Ảnh</th>          <%-- Đổi tên cột --%>
-                                <th>Tên sản phẩm</th> <%-- Thêm cột mới --%>
-                                <th>Đơn giá</th>
-                                <th>Số lượng</th>
-                                <th>Thành tiền</th>
-                                <th>Thao tác</th>
-                            </tr>
-                            </thead>
-                            <tbody>
-                            <c:if test="${empty sessionScope.cart or sessionScope.cart.items.size() == 0}">
-                                <tr><td colspan="6" style="text-align:center; padding: 20px;">Giỏ hàng trống!</td></tr>
-                            </c:if>
-
-                            <c:forEach var="item" items="${sessionScope.cart.items}">
-            <form id="checkoutForm" action="${pageContext.request.contextPath}/thanh-toan" method="GET">
-                <div class="checkout-layout">
+                <form id="checkoutForm" action="${pageContext.request.contextPath}/thanh-toan" method="GET">
                     <div class="checkout-left">
                         <div class="checkout-card">
                             <table class="cart-table">
@@ -148,8 +128,8 @@
                             </div>
                         </div>
                     </div>
-                </div>
-            </form>
+                </form>
+            </div>
         </div>
     </section>
 </main>
