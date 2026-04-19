@@ -1,5 +1,6 @@
 package controller;
 
+import dao.DAOFactory;
 import dao.OrderDAO;
 import model.order.Order;
 import model.user.User;
@@ -26,7 +27,7 @@ public class CancelOrderServlet extends HttpServlet {
         try {
             int orderId = Integer.parseInt(request.getParameter("orderId"));
             String reason = request.getParameter("cancelReason");
-            OrderDAO orderDAO = new OrderDAO();
+            OrderDAO orderDAO = DAOFactory.getInstance().getOrderDAO();
             Order order = orderDAO.getOrderById(orderId);
             if (order != null && order.getUserId() == user.getId()) {
                 boolean success = orderDAO.cancelOrder(orderId, reason);

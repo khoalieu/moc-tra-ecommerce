@@ -426,7 +426,7 @@ public class OrderDAO {
     public boolean cancelOrder(int orderId) {
         Connection conn = null;
         try {
-            conn = DBConnect.getConnection();
+            conn = ds.getConnection();
             conn.setAutoCommit(false);
             Order order = getOrderById(orderId);
             if (order == null || order.getStatus() != OrderStatus.PENDING) {
@@ -437,7 +437,6 @@ public class OrderDAO {
                 ps.setInt(1, orderId);
                 ps.executeUpdate();
             }
-            ProductDAO productDAO = new ProductDAO();
             for (OrderItem item : order.getItems()) {
                 String sqlUpdateStock = "UPDATE products SET stock_quantity = stock_quantity + ? WHERE id = ?";
                 try (PreparedStatement psStock = conn.prepareStatement(sqlUpdateStock)) {
@@ -463,7 +462,7 @@ public class OrderDAO {
     }
     public boolean cancelOrder(int orderId, String reason) {
         String sql = "UPDATE orders SET status = 'cancelled', cancel_reason = ? WHERE id = ? AND status = 'pending'";
-        try (Connection conn = DBConnect.getConnection();
+        try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, reason);
             ps.setInt(2, orderId);

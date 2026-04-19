@@ -1,7 +1,8 @@
 package dao;
 
-import db.DBConnect;
 import model.product.ProductVariant;
+
+import javax.sql.DataSource;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -11,11 +12,17 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ProductVariantDAO {
+    private final DataSource ds;
+
+    public ProductVariantDAO(DataSource ds) {
+        this.ds = ds;
+    }
+
     public List<ProductVariant> getVariantsByProductId(int productId) {
         List<ProductVariant> variants = new ArrayList<>();
         String sql = "SELECT * FROM product_variants WHERE product_id = ? AND is_active = 1";
 
-        try (Connection conn = DBConnect.getConnection();
+        try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setInt(1, productId);
@@ -41,7 +48,7 @@ public class ProductVariantDAO {
     public ProductVariant getVariantById(int variantId) {
         String sql = "SELECT * FROM product_variants WHERE id = ?";
 
-        try (Connection conn = DBConnect.getConnection();
+        try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setInt(1, variantId);
@@ -66,7 +73,7 @@ public class ProductVariantDAO {
 
     public void decreaseStock(int variantId, int quantity) {
         String sql = "UPDATE product_variants SET stock_quantity = stock_quantity - ? WHERE id = ? AND stock_quantity >= ?";
-        try (Connection conn = DBConnect.getConnection();
+        try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, quantity);
             ps.setInt(2, variantId);

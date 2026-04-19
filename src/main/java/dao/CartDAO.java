@@ -67,7 +67,7 @@ public class CartDAO {
         String checkSql = "SELECT quantity FROM cart WHERE user_id = ? AND variant_id = ?";
 
         try (Connection conn = ds.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+             PreparedStatement checkPs = conn.prepareStatement(checkSql)) {
 
             checkPs.setInt(1, userId);
             checkPs.setInt(2, variantId);

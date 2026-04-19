@@ -1,6 +1,7 @@
 package controller.user;
 
 import dao.CategoryDAO;
+import dao.DAOFactory;
 import dao.FavoriteDAO;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -12,7 +13,6 @@ import model.user.User;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 @WebServlet(name = "FavoriteServlet", value = "/san-pham-yeu-thich")
 public class FavoriteServlet extends HttpServlet {
@@ -22,8 +22,9 @@ public class FavoriteServlet extends HttpServlet {
 
     @Override
     public void init() {
-        favoriteDAO = new FavoriteDAO();
-        categoryDAO = new CategoryDAO();
+        DAOFactory factory = DAOFactory.getInstance();
+        favoriteDAO = factory.getFavoriteDAO();
+        categoryDAO = factory.getCategoryDAO();
     }
 
     @Override

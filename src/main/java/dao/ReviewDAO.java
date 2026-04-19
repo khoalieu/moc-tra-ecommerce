@@ -104,7 +104,7 @@ public class ReviewDAO {
                 "AND o.status = 'completed' " +
                 "LIMIT 1";
 
-        try (Connection conn = DBConnect.getConnection();
+        try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setInt(1, userId);
@@ -121,7 +121,7 @@ public class ReviewDAO {
     public boolean hasReviewed(int userId, int productId) {
         String sql = "SELECT 1 FROM product_reviews WHERE user_id = ? AND product_id = ? LIMIT 1";
 
-        try (Connection conn = DBConnect.getConnection();
+        try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setInt(1, userId);
