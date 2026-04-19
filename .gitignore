@@ -29,3 +29,4 @@ email.properties.example
 
 captcha.properties
 src/main/resources/captcha.properties
+src/main/resources/database.properties

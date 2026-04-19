@@ -1,6 +1,7 @@
 package model.order;
 
 import model.product.Product;
+import model.product.ProductVariant;
 
 public class OrderItem {
     private int id;
@@ -10,6 +11,7 @@ public class OrderItem {
     private double price;
     private Product product;
     private Integer variantId;
+    private ProductVariant variant;
 
     public OrderItem() {}
 
@@ -34,6 +36,15 @@ public class OrderItem {
     public void setProduct(Product product) {
         this.product = product;
     }
+
     public Integer getVariantId() { return variantId; }
     public void setVariantId(Integer variantId) { this.variantId = variantId; }
+
+    public ProductVariant getVariant() { return variant; }
+    public void setVariant(ProductVariant variant) {
+        this.variant = variant;
+        if (variant != null) {
+            this.variantId = variant.getId();
+        }
+    }
 }
