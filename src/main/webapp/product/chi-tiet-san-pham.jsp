@@ -97,13 +97,20 @@
                             </style>
                         </div>
                     </c:if>
+                    <c:choose>
+                        <c:when test="${not empty variants}">
+                            <c:set var="initialStock" value="${variants[0].stockQuantity}" />
+                        </c:when>
+                        <c:otherwise>
+                            <c:set var="initialStock" value="${product.stockQuantity}" />
+                        </c:otherwise>
+                    </c:choose>
+
                     <div class="quantity-selector product-qty-favorite-row">
                         <label for="quantity">Số lượng:</label>
-                        <input type="number" id="quantity" name="quantity" value="1" min="1" max="${product.stockQuantity}">
+                        <input type="number" id="quantity" name="quantity" value="1" min="1" max="${initialStock}">
 
-                        <span style="font-size: 0.8rem; color: #888; margin-left: 10px;">
-                        (Còn ${product.stockQuantity} sản phẩm)
-                        </span>
+                        <span id="variant-stock" data-default-stock="${initialStock}" style="font-size: 0.8rem; color: #888; margin-left: 10px;">(Còn ${initialStock} sản phẩm)</span>
 
                         <c:if test="${not empty sessionScope.user}">
                             <button type="button"
@@ -370,7 +377,6 @@
 
         const formatCurrency = (amount) => new Intl.NumberFormat('vi-VN').format(amount) + " VNĐ";
 
-        // Cập nhật giá
         if (salePrice > 0 && salePrice < price) {
             newPriceElem.innerText = formatCurrency(salePrice);
             oldPriceElem.innerText = formatCurrency(price);
@@ -381,12 +387,12 @@
         }
 
         // Cập nhật tồn kho
-        stockElem.innerText = `(Còn ${stock} sản phẩm)`;
-        quantityInput.max = stock;
+        const safeStock = Number.isFinite(stock) ? stock : 0;
+        stockElem.innerText = "(Còn " + safeStock + " sản phẩm)";
+        quantityInput.max = safeStock;
 
-        // Giới hạn lại input nếu user đang nhập số lớn hơn tồn kho mới
-        if (parseInt(quantityInput.value) > stock) {
-            quantityInput.value = stock;
+        if (parseInt(quantityInput.value) > safeStock && safeStock > 0) {
+            quantityInput.value = safeStock;
         }
     }
 
@@ -415,8 +421,17 @@
         const defaultCheckedVariant = document.querySelector('input[name="variantId"]:checked');
         if (defaultCheckedVariant) {
             updateVariantInfo(defaultCheckedVariant);
+        } else {
+            const stockElem = document.getElementById('variant-stock');
+            const quantityInput = document.getElementById('quantity');
+            const defaultStock = parseInt(stockElem.getAttribute('data-default-stock'));
+            const safeStock = Number.isFinite(defaultStock) ? defaultStock : 0;
+            stockElem.innerText = "(Còn " + safeStock + " sản phẩm)";
+            quantityInput.max = safeStock;
         }
     });
 </script>
 </body>
 </html>
+
+
