@@ -3,8 +3,10 @@ package controller.admin;
 import dao.CategoryDAO;
 import dao.DAOFactory;
 import dao.ProductDAO;
+import dao.ProductVariantDAO; // BẮT BUỘC PHẢI IMPORT
 import model.product.Category;
 import model.product.Product;
+import model.product.ProductVariant; // BẮT BUỘC PHẢI IMPORT
 import model.enums.ProductStatus;
 
 import jakarta.servlet.ServletException;
@@ -26,11 +28,15 @@ public class AdminProductEditServlet extends HttpServlet {
 
     private ProductDAO productDAO;
     private CategoryDAO categoryDAO;
+    private ProductVariantDAO variantDAO; // KHAI BÁO DAO PHÂN LOẠI
 
     @Override
     public void init() {
         productDAO = DAOFactory.getInstance().getProductDAO();
         categoryDAO = DAOFactory.getInstance().getCategoryDAO();
+
+        // Khởi tạo DAO Phân Loại
+        variantDAO = DAOFactory.getInstance().getProductVariantDAO();
     }
 
     @Override
@@ -51,8 +57,12 @@ public class AdminProductEditServlet extends HttpServlet {
 
             List<Category> categories = categoryDAO.getAllCategories();
 
+            // Lấy danh sách phân loại cũ đưa lên giao diện
+            List<ProductVariant> variants = variantDAO.getVariantsByProductId(id);
+
             request.setAttribute("product", product);
             request.setAttribute("categories", categories);
+            request.setAttribute("variants", variants);
 
             request.getRequestDispatcher("/admin/admin-product-edit.jsp").forward(request, response);
 
@@ -66,7 +76,6 @@ public class AdminProductEditServlet extends HttpServlet {
         request.setCharacterEncoding("UTF-8");
 
         try {
-
             int id = Integer.parseInt(request.getParameter("id"));
             String name = request.getParameter("name");
             String slug = request.getParameter("slug");
@@ -101,6 +110,7 @@ public class AdminProductEditServlet extends HttpServlet {
                 filePart.write(uploadDir + File.separator + fileName);
                 newImageUrl = "assets/images/" + fileName;
             }
+
             Product product = new Product();
             product.setId(id);
             product.setName(name);
@@ -124,6 +134,28 @@ public class AdminProductEditServlet extends HttpServlet {
             boolean success = productDAO.updateProduct(product);
 
             if (success) {
+                variantDAO.deleteVariantsByProductId(id);
+
+                String[] variantNames = request.getParameterValues("variantNames");
+                String[] variantPrices = request.getParameterValues("variantPrices");
+                String[] variantSalePrices = request.getParameterValues("variantSalePrices");
+                String[] variantStocks = request.getParameterValues("variantStocks");
+
+                if (variantNames != null && variantNames.length > 0) {
+                    for (int i = 0; i < variantNames.length; i++) {
+                        String vName = variantNames[i];
+                        if (vName != null && !vName.trim().isEmpty()) {
+                            ProductVariant variant = new ProductVariant();
+                            variant.setProductId(id);
+                            variant.setVariantName(vName.trim());
+                            variant.setPrice(parseDoubleSafe(variantPrices != null && variantPrices.length > i ? variantPrices[i] : "0"));
+                            variant.setSalePrice(parseDoubleSafe(variantSalePrices != null && variantSalePrices.length > i ? variantSalePrices[i] : "0"));
+                            variant.setStockQuantity(parseIntSafe(variantStocks != null && variantStocks.length > i ? variantStocks[i] : "0"));
+                            variantDAO.addVariant(variant);
+                        }
+                    }
+                }
+
                 response.sendRedirect(request.getContextPath() + "/admin/products?msg=update_success");
             } else {
                 request.setAttribute("error", "Cập nhật thất bại!");
@@ -135,5 +167,14 @@ public class AdminProductEditServlet extends HttpServlet {
             e.printStackTrace();
             response.sendRedirect(request.getContextPath() + "/admin/products?msg=error");
         }
+    }
+
+    private double parseDoubleSafe(String value) {
+        if (value == null || value.trim().isEmpty()) return 0.0;
+        try { return Double.parseDouble(value); } catch (NumberFormatException e) { return 0.0; }
+    }
+    private int parseIntSafe(String value) {
+        if (value == null || value.trim().isEmpty()) return 0;
+        try { return Integer.parseInt(value); } catch (NumberFormatException e) { return 0; }
     }
 }
