@@ -84,7 +84,7 @@ public class ProductVariantDAO {
         }
     }
     public void addVariant(ProductVariant variant) {
-        String sql = "INSERT INTO product_variants (product_id, variant_name, price, sale_price, stock_quantity) VALUES (?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO product_variants (product_id, variant_name, price, sale_price, stock_quantity, is_active) VALUES (?, ?, ?, ?, ?, 1)";
         try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, variant.getProductId());
