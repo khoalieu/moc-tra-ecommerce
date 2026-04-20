@@ -125,7 +125,7 @@ public class ProductServlet extends HttpServlet {
         User user = session != null ? (User) session.getAttribute("user") : null;
 
         if (user != null) {
-            FavoriteDAO favoriteDAO = new FavoriteDAO();
+            FavoriteDAO favoriteDAO = DAOFactory.getInstance().getFavoriteDAO();
             Set<Integer> favoriteProductIds = favoriteDAO.getFavoriteProductIds(user.getId());
             request.setAttribute("favoriteProductIds", favoriteProductIds);
         }

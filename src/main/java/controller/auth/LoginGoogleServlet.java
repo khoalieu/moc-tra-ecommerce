@@ -43,7 +43,7 @@ public class LoginGoogleServlet extends HttpServlet {
                 Cart sessionCart = (Cart) session.getAttribute("cart");
                 if (sessionCart != null && !sessionCart.getItems().isEmpty()) {
                     for (CartItem item : sessionCart.getItems()) {
-                        cartDAO.addToCart(user.getId(), item.getProduct().getId(), item.getQuantity());
+                        cartDAO.addToCart(user.getId(), item.getProduct().getId(), item.getVariantId(), item.getQuantity());
                     }
                 }
                 Cart userCartFromDB = cartDAO.getCartByUserId(user.getId());

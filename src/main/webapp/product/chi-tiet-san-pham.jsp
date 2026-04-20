@@ -48,15 +48,15 @@
                 <p style="color: #666; font-size: 0.9rem;">Mã SP: ${product.sku}</p>
 
                 <div class="price-block">
-                    <c:choose>
-                        <c:when test="${product.salePrice > 0}">
-                            <span class="new-price"><fmt:formatNumber value="${product.salePrice}" pattern="#,###"/> VNĐ</span>
-                            <span class="old-price"><fmt:formatNumber value="${product.price}" pattern="#,###"/> VNĐ</span>
-                        </c:when>
-                        <c:otherwise>
-                            <span class="new-price"><fmt:formatNumber value="${product.price}" pattern="#,###"/> VNĐ</span>
-                        </c:otherwise>
-                    </c:choose>
+                    <span id="display-new-price" class="new-price">
+                        <c:choose>
+                            <c:when test="${product.salePrice > 0}"><fmt:formatNumber value="${product.salePrice}" pattern="#,###"/> VNĐ</c:when>
+                            <c:otherwise><fmt:formatNumber value="${product.price}" pattern="#,###"/> VNĐ</c:otherwise>
+                        </c:choose>
+                    </span>
+                        <span id="display-old-price" class="old-price" style="${product.salePrice > 0 ? '' : 'display:none;'}">
+                        <fmt:formatNumber value="${product.price}" pattern="#,###"/> VNĐ
+                    </span>
                 </div>
 
                 <p class="short-description">${product.shortDescription}</p>
@@ -65,14 +65,52 @@
                     <input type="hidden" name="action" value="add">
 
                     <input type="hidden" name="productId" value="${product.id}">
+                    <c:if test="${not empty variants}">
+                        <div class="variant-selector" style="margin-bottom: 20px;">
+                            <label style="display: block; margin-bottom: 10px; font-weight: bold; color: #333;">Phân loại:</label>
+
+                            <div class="variant-options" style="display: flex; gap: 15px; flex-wrap: wrap;">
+                                <c:forEach var="v" items="${variants}" varStatus="loop">
+                                    <label class="variant-item" style="cursor: pointer; display: flex; align-items: center; gap: 5px;">
+                                        <input type="radio" name="variantId" value="${v.id}"
+                                               data-price="${v.price}"
+                                               data-sale="${v.salePrice}"
+                                               data-stock="${v.stockQuantity}"
+                                            ${loop.first ? 'checked' : ''}
+                                               onchange="updateVariantInfo(this)">
+                                        <span style="padding: 5px 10px; border: 1px solid #ddd; border-radius: 4px; transition: all 0.2s;">
+                                                ${v.variantName}
+                                        </span>
+                                    </label>
+                                </c:forEach>
+                            </div>
+
+                            <style>
+                                .variant-item input[type="radio"] { display: none; }
+                                .variant-item input[type="radio"]:checked + span {
+                                    border-color: #4CAF50;
+                                    background-color: #e8f5e9;
+                                    color: #2e7d32;
+                                    font-weight: bold;
+                                }
+                                .variant-item span:hover { background-color: #f5f5f5; }
+                            </style>
+                        </div>
+                    </c:if>
+                    <c:choose>
+                        <c:when test="${not empty variants}">
+                            <c:set var="initialStock" value="${variants[0].stockQuantity}" />
+                        </c:when>
+                        <c:otherwise>
+                            <c:set var="initialStock" value="${product.stockQuantity}" />
+                        </c:otherwise>
+                    </c:choose>
 
                     <div class="quantity-selector product-qty-favorite-row">
                         <label for="quantity">Số lượng:</label>
-                        <input type="number" id="quantity" name="quantity" value="1" min="1" max="${product.stockQuantity}">
+                        <input type="number" id="quantity" name="quantity" value="1" min="1" max="${initialStock}">
 
-                        <span style="font-size: 0.8rem; color: #888; margin-left: 10px;">
-                        (Còn ${product.stockQuantity} sản phẩm)
-                        </span>
+                        <span id="variant-stock" data-default-stock="${initialStock}" style="font-size: 0.8rem; color: #888; margin-left: 10px;">(Còn ${initialStock} sản phẩm)</span>
 
                         <c:if test="${not empty sessionScope.user}">
                             <button type="button"
@@ -232,10 +270,13 @@
 <jsp:include page="/common/footer.jsp"></jsp:include>
 <button id="backToTop" class="back-to-top" title="Lên đầu trang"><i class="fa-solid fa-chevron-up"></i></button>
 
+<div id="favoriteToast" class="favorite-toast"></div>
+
 <script>
         document.addEventListener('DOMContentLoaded', function() {
         const tabLinks = document.querySelectorAll('.tab-link');
         const tabContents = document.querySelectorAll('.tab-content');
+    // --- 1. CÁC HÀM TIỆN ÍCH (UTILITIES & ACTIONS) ---
 
         function openTab(tabId) {
         tabLinks.forEach(item => item.classList.remove('active'));
@@ -266,31 +307,16 @@
     }
     });
 
+    // Đổi ảnh chính khi click vào thumbnail
     function changeImage(element) {
         document.getElementById('mainImg').src = element.src;
         document.querySelectorAll('.thumbnail-images img').forEach(img => img.classList.remove('active'));
         element.classList.add('active');
     }
 
-    function addToCartJS(event) {
-        event.preventDefault();
-        var qty = document.getElementById('quantity').value;
-        var href = event.currentTarget.getAttribute('href');
-        window.location.href = href.replace("qty=1", "qty=" + qty);
-    }
-</script>
-<div id="favoriteToast" class="favorite-toast"></div>
-
-<script>
+    // Hiển thị thông báo Toast
     function showFavoriteToast(message, type) {
         let toast = document.getElementById('favoriteToast');
-        if (!toast) {
-            toast = document.createElement('div');
-            toast.id = 'favoriteToast';
-            toast.className = 'favorite-toast';
-            document.body.appendChild(toast);
-        }
-
         const icon = type === 'success'
             ? '<i class="fa-solid fa-circle-check"></i>'
             : '<i class="fa-solid fa-circle-xmark"></i>';
@@ -304,6 +330,7 @@
         }, 2000);
     }
 
+    // Gắn sự kiện cho nút Yêu thích
     function bindFavoriteButtons() {
         document.querySelectorAll('.favorite-btn').forEach(btn => {
             btn.addEventListener('click', function () {
@@ -323,12 +350,8 @@
                             this.dataset.favorited = data.favorited ? 'true' : 'false';
                             this.title = data.favorited ? 'Xóa khỏi yêu thích' : 'Thêm vào yêu thích';
 
-                            if (data.favorited) {
-                                this.classList.add('active');
-                            } else {
-                                this.classList.remove('active');
-                            }
-
+                            // Toggle class active để đổi màu tim
+                            this.classList.toggle('active', data.favorited);
                             showFavoriteToast(data.message, 'success');
                         } else {
                             showFavoriteToast(data.message, 'error');
@@ -341,7 +364,74 @@
         });
     }
 
-    document.addEventListener('DOMContentLoaded', bindFavoriteButtons);
+    // Cập nhật giá và tồn kho khi đổi phân loại
+    function updateVariantInfo(radioElement) {
+        const price = parseFloat(radioElement.getAttribute('data-price'));
+        const salePrice = parseFloat(radioElement.getAttribute('data-sale'));
+        const stock = parseInt(radioElement.getAttribute('data-stock'));
+
+        const newPriceElem = document.getElementById('display-new-price');
+        const oldPriceElem = document.getElementById('display-old-price');
+        const stockElem = document.getElementById('variant-stock');
+        const quantityInput = document.getElementById('quantity');
+
+        const formatCurrency = (amount) => new Intl.NumberFormat('vi-VN').format(amount) + " VNĐ";
+
+        if (salePrice > 0 && salePrice < price) {
+            newPriceElem.innerText = formatCurrency(salePrice);
+            oldPriceElem.innerText = formatCurrency(price);
+            oldPriceElem.style.display = 'inline-block';
+        } else {
+            newPriceElem.innerText = formatCurrency(price);
+            oldPriceElem.style.display = 'none';
+        }
+
+        // Cập nhật tồn kho
+        const safeStock = Number.isFinite(stock) ? stock : 0;
+        stockElem.innerText = "(Còn " + safeStock + " sản phẩm)";
+        quantityInput.max = safeStock;
+
+        if (parseInt(quantityInput.value) > safeStock && safeStock > 0) {
+            quantityInput.value = safeStock;
+        }
+    }
+
+
+    // --- 2. KHỞI TẠO CÁC SỰ KIỆN KHI TRANG ĐÃ LOAD XONG ---
+    document.addEventListener('DOMContentLoaded', function() {
+
+        // 2.1. Khởi tạo chức năng chuyển Tab
+        const tabLinks = document.querySelectorAll('.tab-link');
+        const tabContents = document.querySelectorAll('.tab-content');
+
+        tabLinks.forEach(link => {
+            link.addEventListener('click', function() {
+                const tabId = this.getAttribute('data-tab');
+                tabLinks.forEach(item => item.classList.remove('active'));
+                tabContents.forEach(item => item.classList.remove('active'));
+                this.classList.add('active');
+                document.getElementById(tabId).classList.add('active');
+            });
+        });
+
+        // 2.2. Kích hoạt nút thả tim
+        bindFavoriteButtons();
+
+        // 2.3. Khởi tạo giá tiền theo phân loại mặc định (nếu có)
+        const defaultCheckedVariant = document.querySelector('input[name="variantId"]:checked');
+        if (defaultCheckedVariant) {
+            updateVariantInfo(defaultCheckedVariant);
+        } else {
+            const stockElem = document.getElementById('variant-stock');
+            const quantityInput = document.getElementById('quantity');
+            const defaultStock = parseInt(stockElem.getAttribute('data-default-stock'));
+            const safeStock = Number.isFinite(defaultStock) ? defaultStock : 0;
+            stockElem.innerText = "(Còn " + safeStock + " sản phẩm)";
+            quantityInput.max = safeStock;
+        }
+    });
 </script>
 </body>
 </html>
+
+

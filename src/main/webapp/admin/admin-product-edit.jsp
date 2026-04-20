@@ -179,13 +179,13 @@
                                 <div class="form-group">
                                     <label for="price">Giá bán (VNĐ) <span class="required">*</span></label>
                                     <input type="number" id="price" name="price" class="form-control"
-                                           value="<fmt:formatNumber value="${product.price}" pattern="###"/>" required>
+                                           value="<fmt:formatNumber value='${product.price}' pattern='0'/>" required>
                                 </div>
 
                                 <div class="form-group">
                                     <label for="sale_price">Giá khuyến mãi (VNĐ)</label>
                                     <input type="number" id="sale_price" name="sale_price" class="form-control"
-                                           value="<fmt:formatNumber value="${product.salePrice}" pattern="###"/>">
+                                           value="<fmt:formatNumber value='${product.salePrice}' pattern='0'/>">
                                 </div>
 
                                 <div class="form-row">
@@ -203,6 +203,43 @@
                                 </div>
                             </div>
 
+                            <div class="form-section">
+                                <h3><i class="fas fa-tags"></i> Phân loại sản phẩm</h3>
+                                <p style="font-size: 13px; color: #666; margin-bottom: 15px;">Thêm/sửa các quy cách đóng gói (VD: Hộp 10 gói). Nếu bỏ trống, sản phẩm sẽ bán theo giá cơ bản.</p>
+
+                                <div id="variantsContainer">
+                                    <c:choose>
+                                        <c:when test="${not empty variants}">
+                                            <c:forEach var="v" items="${variants}">
+                                                <div class="variant-row" style="display: flex; gap: 8px; margin-bottom: 10px; align-items: center;">
+                                                    <input type="text" name="variantNames" value="${v.variantName}" placeholder="Tên loại" class="form-control" style="flex: 2;" required>
+
+                                                    <input type="number" name="variantPrices" value="<fmt:formatNumber value='${v.price}' pattern='#' groupingUsed='false'/>" placeholder="Giá gốc" class="form-control" style="flex: 1.5;" min="0">
+
+                                                    <input type="number" name="variantSalePrices" value="<fmt:formatNumber value='${v.salePrice}' pattern='#' groupingUsed='false'/>" placeholder="Giá Sale" class="form-control" style="flex: 1.5;" min="0">
+
+                                                    <input type="number" name="variantStocks" value="${v.stockQuantity}" placeholder="Kho" class="form-control" style="flex: 1;" min="0">
+
+                                                    <button type="button" class="btn btn-danger btn-sm" onclick="removeVariantRow(this)" style="padding: 8px 12px;"><i class="fas fa-trash"></i></button>
+                                                </div>
+                                            </c:forEach>
+                                        </c:when>
+                                        <c:otherwise>
+                                            <div class="variant-row" style="display: flex; gap: 8px; margin-bottom: 10px; align-items: center;">
+                                                <input type="text" name="variantNames" placeholder="Tên loại" class="form-control" style="flex: 2;" required>
+                                                <input type="number" name="variantPrices" placeholder="Giá gốc" class="form-control" style="flex: 1.5;" min="0">
+                                                <input type="number" name="variantSalePrices" value="0" placeholder="Giá Sale" class="form-control" style="flex: 1.5;" min="0">
+                                                <input type="number" name="variantStocks" placeholder="Kho" class="form-control" style="flex: 1;" min="0">
+                                                <button type="button" class="btn btn-danger btn-sm" onclick="removeVariantRow(this)" style="padding: 8px 12px;"><i class="fas fa-trash"></i></button>
+                                            </div>
+                                        </c:otherwise>
+                                    </c:choose>
+                                </div>
+
+                                <button type="button" class="btn btn-success btn-sm mt-2" onclick="addVariantRow()">
+                                    <i class="fas fa-plus"></i> Thêm phân loại
+                                </button>
+                            </div>
                             <div class="form-section">
                                 <h3><i class="fas fa-image"></i> Hình ảnh sản phẩm</h3>
 
@@ -243,5 +280,26 @@
         </div>
     </main>
 </div>
+
+<script>
+    function addVariantRow() {
+        const container = document.getElementById('variantsContainer');
+        const rowHTML = `
+            <div class="variant-row" style="display: flex; gap: 8px; margin-bottom: 10px; align-items: center;">
+                <input type="text" name="variantNames" placeholder="Tên loại (VD: Hộp 10 gói)" class="form-control" style="flex: 2;" required>
+                <input type="number" name="variantPrices" placeholder="Giá gốc" class="form-control" style="flex: 1.5;" min="0">
+                <input type="number" name="variantSalePrices" value="0" placeholder="Giá Sale" class="form-control" style="flex: 1.5;" min="0">
+                <input type="number" name="variantStocks" placeholder="Kho" class="form-control" style="flex: 1;" min="0">
+                <button type="button" class="btn btn-danger btn-sm" onclick="removeVariantRow(this)" style="padding: 8px 12px;"><i class="fas fa-trash"></i></button>
+            </div>
+        `;
+        container.insertAdjacentHTML('beforeend', rowHTML);
+    }
+
+    function removeVariantRow(button) {
+        button.closest('.variant-row').remove();
+    }
+</script>
+
 </body>
 </html>

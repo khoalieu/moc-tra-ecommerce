@@ -104,9 +104,9 @@
                                 <tr>
                                     <th>Hình ảnh</th>
                                     <th>Tên Sản phẩm</th>
-                                    <th>Số lượng</th>
-                                    <th>Đơn giá</th>
-                                    <th>Thành tiền</th>
+                                    <th style="text-align: center;">Số lượng</th>
+                                    <th style="text-align: right;">Đơn giá</th>
+                                    <th style="text-align: right;">Thành tiền</th>
                                 </tr>
                                 </thead>
                                 <tbody>
@@ -114,16 +114,24 @@
                                     <tr>
                                         <td>
                                             <div style="display: flex; align-items: center; gap: 10px;">
-                                                <img src="${item.product.imageUrl}" alt="${item.product.name}"
+                                                <img src="${pageContext.request.contextPath}/${item.product.imageUrl}" alt="${item.product.name}"
                                                      style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px;">
                                             </div>
                                         </td>
-                                        <td><span class="invoice-product-name">${item.product.name}</span></td>
-                                        <td>${item.quantity}</td>
                                         <td>
+                                            <span class="invoice-product-name" style="font-weight: 500; color: #333;">${item.product.name}</span>
+
+                                            <c:if test="${not empty item.variant}">
+                                                <div style="font-size: 0.85rem; color: #666; margin-top: 4px;">
+                                                    Phân loại: ${item.variant.variantName}
+                                                </div>
+                                            </c:if>
+                                        </td>
+                                        <td style="text-align: center;">${item.quantity}</td>
+                                        <td style="text-align: right;">
                                             <fmt:formatNumber value="${item.price}" type="currency"/>
                                         </td>
-                                        <td>
+                                        <td style="text-align: right; font-weight: bold; color: #d32f2f;">
                                             <fmt:formatNumber value="${item.price * item.quantity}" type="currency"/>
                                         </td>
                                     </tr>
