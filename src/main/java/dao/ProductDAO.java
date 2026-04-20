@@ -15,6 +15,7 @@ public class ProductDAO {
         this.ds = ds;
     }
 
+
     public List<Product> getProducts(Integer categoryId, Integer promotionId, String sort, Double maxPrice, int index, int size) {
 
         return getProducts(categoryId, promotionId, sort, maxPrice, index, size, "active");

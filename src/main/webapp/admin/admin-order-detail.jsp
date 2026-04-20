@@ -93,6 +93,11 @@
                                             <img src="${item.product.imageUrl}" class="item-thumb" alt="">
                                             <div class="item-text">
                                                 <h4>${item.product.name}</h4>
+                                                <c:if test="${not empty item.variant}">
+                                                    <div style="font-size: 0.85rem; color: #666; margin-top: 4px;">
+                                                        Phân loại: ${item.variant.variantName}
+                                                    </div>
+                                                </c:if>
                                                 <p>ID: #${item.productId}</p>
                                             </div>
                                         </div>

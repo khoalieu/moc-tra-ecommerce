@@ -77,7 +77,7 @@ public class LoginServlet extends HttpServlet {
             Cart sessionCart = (Cart) session.getAttribute("cart");
             if (sessionCart != null && sessionCart.getItems().size() > 0) {
                 for (CartItem item : sessionCart.getItems()) {
-                    cartDAO.addToCart(user.getId(), item.getProduct().getId(), item.getQuantity());
+                    cartDAO.addToCart(user.getId(), item.getProduct().getId(),item.getVariantId(), item.getQuantity());
                 }
             }
             Cart userCartFromDB = cartDAO.getCartByUserId(user.getId());
