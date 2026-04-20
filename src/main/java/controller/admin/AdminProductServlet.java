@@ -2,11 +2,23 @@ package controller.admin;
 
 import dao.DAOFactory;
 import dao.ProductDAO;
+import dao.CategoryDAO;
+import dao.ProductVariantDAO; // Bổ sung import
 import model.product.Product;
+import model.product.Category;
+import model.product.ProductVariant; // Bổ sung import
 import model.enums.ProductStatus;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Collection;
+import java.util.List;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Paths;
+import java.time.LocalDateTime;
+
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.MultipartConfig;
 import jakarta.servlet.annotation.WebServlet;
@@ -14,15 +26,6 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.Part;
-
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Paths;
-import java.time.LocalDateTime;
-import dao.CategoryDAO;
-import model.product.Category;
-import java.util.Collection;
-import java.util.List;
 
 @WebServlet(name = "AdminProductServlet", urlPatterns = {"/admin/product/add", "/admin/product/delete"})
 @MultipartConfig(
@@ -34,11 +37,14 @@ public class AdminProductServlet extends HttpServlet {
 
     private ProductDAO productDAO;
     private CategoryDAO categoryDAO;
+    private ProductVariantDAO variantDAO;
 
     @Override
     public void init() {
         productDAO = DAOFactory.getInstance().getProductDAO();
         categoryDAO = DAOFactory.getInstance().getCategoryDAO();
+
+        variantDAO = DAOFactory.getInstance().getProductVariantDAO();
     }
 
     @Override
@@ -133,10 +139,30 @@ public class AdminProductServlet extends HttpServlet {
             product.setUsageInstructions(usage);
             product.setImageUrl(mainImageUrl);
             product.setCreatedAt(LocalDateTime.now());
-
             int newProductId = productDAO.insertProduct(product);
 
             if (newProductId > 0) {
+                String[] variantNames = request.getParameterValues("variantNames");
+                String[] variantPrices = request.getParameterValues("variantPrices");
+                String[] variantSalePrices = request.getParameterValues("variantSalePrices");
+                String[] variantStocks = request.getParameterValues("variantStocks");
+
+                if (variantNames != null && variantNames.length > 0) {
+                    for (int i = 0; i < variantNames.length; i++) {
+                        String vName = variantNames[i];
+                        if (vName != null && !vName.trim().isEmpty()) {
+                            ProductVariant variant = new ProductVariant();
+                            variant.setProductId(newProductId);
+                            variant.setVariantName(vName.trim());
+                            variant.setPrice(parseDoubleSafe(variantPrices != null && variantPrices.length > i ? variantPrices[i] : "0"));
+                            variant.setSalePrice(parseDoubleSafe(variantSalePrices != null && variantSalePrices.length > i ? variantSalePrices[i] : "0"));
+                            variant.setStockQuantity(parseIntSafe(variantStocks != null && variantStocks.length > i ? variantStocks[i] : "0"));
+
+                            variantDAO.addVariant(variant);
+                        }
+                    }
+                }
+
                 Collection<Part> parts = request.getParts();
                 int sortOrder = 1;
 
@@ -171,6 +197,7 @@ public class AdminProductServlet extends HttpServlet {
             request.getRequestDispatcher("/admin/admin-product-add.jsp").forward(request, response);
         }
     }
+
     private double parseDoubleSafe(String value) {
         if (value == null || value.trim().isEmpty()) return 0.0;
         try { return Double.parseDouble(value); } catch (NumberFormatException e) { return 0.0; }
@@ -180,6 +207,7 @@ public class AdminProductServlet extends HttpServlet {
         if (value == null || value.trim().isEmpty()) return 0;
         try { return Integer.parseInt(value); } catch (NumberFormatException e) { return 0; }
     }
+
     private void deleteProduct(HttpServletRequest request, HttpServletResponse response) throws IOException {
         String idStr = request.getParameter("id");
         if (idStr != null) {

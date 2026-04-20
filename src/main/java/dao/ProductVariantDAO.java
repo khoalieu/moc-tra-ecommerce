@@ -83,4 +83,29 @@ public class ProductVariantDAO {
             e.printStackTrace();
         }
     }
+    public void addVariant(ProductVariant variant) {
+        String sql = "INSERT INTO product_variants (product_id, variant_name, price, sale_price, stock_quantity) VALUES (?, ?, ?, ?, ?)";
+        try (Connection conn = ds.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, variant.getProductId());
+            ps.setString(2, variant.getVariantName());
+            ps.setDouble(3, variant.getPrice());
+            ps.setDouble(4, variant.getSalePrice());
+            ps.setInt(5, variant.getStockQuantity());
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void deleteVariantsByProductId(int productId) {
+        String sql = "DELETE FROM product_variants WHERE product_id = ?";
+        try (Connection conn = ds.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, productId);
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
 }
