@@ -17,7 +17,6 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-</head>
 <body>
 
 <jsp:include page="/common/header.jsp"></jsp:include>
@@ -58,80 +57,176 @@
         </c:if>
     </section>
 
-    <div class="container">
-        <c:forEach var="entry" items="${promoMap}">
-            <c:set var="promo" value="${entry.key}" />
-            <c:set var="productList" value="${entry.value}" />
+        <div class="container">
+            <c:forEach var="entry" items="${promoMap}">
+                <c:set var="promo" value="${entry.key}" />
+                <c:set var="productList" value="${entry.value}" />
 
-            <section class="campaign-section" id="promo-${promo.id}">
-                <div class="campaign-header">
-                    <div class="campaign-header__left">
-                        <h2>🎉 ${promo.name}</h2>
+                <section class="campaign-section" id="promo-${promo.id}">
+                    <div class="campaign-header">
+                        <div class="campaign-header__left">
+                            <h2>🎉 ${promo.name}</h2>
 
-                        <div class="campaign-timer">
-                            <i class="fa-regular fa-clock"></i>
-                            Kết thúc: ${fn:replace(promo.endDate, 'T', ' ')}
+                            <div class="campaign-timer">
+                                <i class="fa-regular fa-clock"></i>
+                                Kết thúc: ${fn:replace(promo.endDate, 'T', ' ')}
+                            </div>
+                        </div>
+
+                        <div class="campaign-header__right">
+                            <a href="${pageContext.request.contextPath}/san-pham?promotionId=${promo.id}" class="btn-view-all">
+                                Xem tất cả <i class="fa-solid fa-arrow-right"></i>
+                            </a>
                         </div>
                     </div>
 
-                    <div class="campaign-header__right">
-                        <a href="${pageContext.request.contextPath}/san-pham?promotionId=${promo.id}" class="btn-view-all">
-                            Xem tất cả <i class="fa-solid fa-arrow-right"></i>
-                        </a>
-                    </div>
-                </div>
+                    <div class="product-grid" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px;">
+                        <c:forEach var="p" items="${productList}">
+                            <div class="product-card">
+                                <c:if test="${p.salePrice > 0 && p.salePrice < p.price}">
+                                    <span class="sale-tag">
+                                        <c:choose>
+                                            <c:when test="${p.currentPromotionType == 'PERCENT'}">
+                                                -<fmt:formatNumber value="${p.currentPromotionValue}" maxFractionDigits="0"/>%
+                                            </c:when>
+                                            <c:otherwise>
+                                                -<fmt:formatNumber value="${p.currentPromotionValue}" pattern="#,###"/>₫
+                                            </c:otherwise>
+                                        </c:choose>
+                                    </span>
+                                </c:if>
 
-                <div class="product-grid" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px;">
-                    <c:forEach var="p" items="${productList}">
-                        <div class="product-card">
-                            <c:if test="${p.salePrice > 0 && p.salePrice < p.price}">
-                                <span class="sale-tag">
-                                    <c:choose>
-                                        <c:when test="${p.currentPromotionType == 'PERCENT'}">
-                                            -<fmt:formatNumber value="${p.currentPromotionValue}" maxFractionDigits="0"/>%
-                                        </c:when>
-                                        <c:otherwise>
-                                            -<fmt:formatNumber value="${p.currentPromotionValue}" pattern="#,###"/>₫
-                                        </c:otherwise>
-                                    </c:choose>
-                                </span>
-                            </c:if>
+                                <div class="product-image">
+                                    <a href="${pageContext.request.contextPath}/chi-tiet-san-pham?id=${p.id}">
+                                        <img src="${pageContext.request.contextPath}/${p.imageUrl}" alt="${p.name}" style="width: 100%; height: auto;">
+                                    </a>
+                                </div>
 
-                            <div class="product-image">
-                                <a href="${pageContext.request.contextPath}/chi-tiet-san-pham?id=${p.id}">
-                                    <img src="${pageContext.request.contextPath}/${p.imageUrl}" alt="${p.name}" style="width: 100%; height: auto;">
-                                </a>
-                            </div>
+                                <div class="product-info" style="padding: 15px;">
+                                    <h3 style="margin-bottom: 10px; font-size: 1.1rem;">
+                                        <a href="${pageContext.request.contextPath}/chi-tiet-san-pham?id=${p.id}" style="color: #333; text-decoration: none;">${p.name}</a>
+                                    </h3>
 
-                            <div class="product-info" style="padding: 15px;">
-                                <h3 style="margin-bottom: 10px; font-size: 1.1rem;">
-                                    <a href="${pageContext.request.contextPath}/chi-tiet-san-pham?id=${p.id}" style="color: #333; text-decoration: none;">${p.name}</a>
-                                </h3>
-
-                                <div class="price-box">
-                                    <c:choose>
-                                        <c:when test="${p.salePrice > 0 && p.salePrice < p.price}">
-                                            <span class="new-price" style="color: #d32f2f; font-weight: bold; font-size: 1.1rem; margin-right: 10px;">
-                                                <fmt:formatNumber value="${p.salePrice}" pattern="#,###"/>₫
-                                            </span>
-                                            <span class="old-price" style="color: #999; text-decoration: line-through; font-size: 0.9rem;">
-                                                <fmt:formatNumber value="${p.price}" pattern="#,###"/>₫
-                                            </span>
-                                        </c:when>
-                                        <c:otherwise>
-                                            <span class="new-price" style="font-weight: bold; font-size: 1.1rem;">
-                                                <fmt:formatNumber value="${p.price}" pattern="#,###"/>₫
-                                            </span>
-                                        </c:otherwise>
-                                    </c:choose>
+                                    <div class="price-box">
+                                        <c:choose>
+                                            <c:when test="${p.salePrice > 0 && p.salePrice < p.price}">
+                                                <span class="new-price" style="color: #d32f2f; font-weight: bold; font-size: 1.1rem; margin-right: 10px;">
+                                                    <fmt:formatNumber value="${p.salePrice}" pattern="#,###"/>₫
+                                                </span>
+                                                <span class="old-price" style="color: #999; text-decoration: line-through; font-size: 0.9rem;">
+                                                    <fmt:formatNumber value="${p.price}" pattern="#,###"/>₫
+                                                </span>
+                                            </c:when>
+                                            <c:otherwise>
+                                                <span class="new-price" style="font-weight: bold; font-size: 1.1rem;">
+                                                    <fmt:formatNumber value="${p.price}" pattern="#,###"/>₫
+                                                </span>
+                                            </c:otherwise>
+                                        </c:choose>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
+                        </c:forEach>
+                    </div>
+                </section>
+            </c:forEach>
+        </div>
+
+        <!-- vip khuyen mai secction -->
+        <c:if test="${isVipUser && not empty vipPromoMap}">
+            <section class="vip-promotions-section">
+                <div class="container">
+                    <div class="vip-header">
+                        <h2>⭐ Giảm Thêm Cho Khách Hàng VIP</h2>
+                        <p>Những ưu đãi độc quyền dành riêng cho bạn</p>
+                    </div>
+
+                    <c:forEach var="entry" items="${vipPromoMap}">
+                        <c:set var="promo" value="${entry.key}" />
+                        <c:set var="productList" value="${entry.value}" />
+
+                        <section class="campaign-section vip-campaign" id="promo-vip-${promo.id}">
+                            <div class="campaign-header">
+                                <div class="campaign-header__left">
+                                    <h3>✨ ${promo.name}</h3>
+                                    <div class="campaign-timer">
+                                        <i class="fa-regular fa-clock"></i>
+                                        Kết thúc: ${fn:replace(promo.endDate, 'T', ' ')}
+                                    </div>
+                                </div>
+                                <div class="campaign-header__right">
+                                    <a href="${pageContext.request.contextPath}/san-pham?promotionId=${promo.id}&type=vip"
+                                       class="btn-view-all">
+                                        Xem tất cả <i class="fa-solid fa-arrow-right"></i>
+                                    </a>
+                                </div>
+                            </div>
+
+                            <div class="product-grid" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px;">
+                                <c:forEach var="p" items="${productList}">
+                                    <div class="product-card vip-product">
+                                        <span class="vip-badge">VIP</span>
+
+                                        <c:if test="${p.salePrice > 0 && p.salePrice < p.price}">
+                                            <span class="sale-tag vip-sale-tag">
+                                                <c:choose>
+                                                    <c:when test="${p.currentPromotionType == 'PERCENT'}">
+                                                        -<fmt:formatNumber value="${p.currentPromotionValue}" maxFractionDigits="0"/>%
+                                                    </c:when>
+                                                    <c:otherwise>
+                                                        -<fmt:formatNumber value="${p.currentPromotionValue}" pattern="#,###"/>₫
+                                                    </c:otherwise>
+                                                </c:choose>
+                                            </span>
+                                        </c:if>
+
+                                        <div class="product-image">
+                                            <a href="${pageContext.request.contextPath}/chi-tiet-san-pham?id=${p.id}">
+                                                <img src="${pageContext.request.contextPath}/${p.imageUrl}" alt="${p.name}" style="width: 100%; height: auto;">
+                                            </a>
+                                        </div>
+
+                                        <div class="product-info" style="padding: 15px;">
+                                            <h3 style="margin-bottom: 10px; font-size: 1.1rem;">
+                                                <a href="${pageContext.request.contextPath}/chi-tiet-san-pham?id=${p.id}"
+                                                   style="color: #333; text-decoration: none;">${p.name}</a>
+                                            </h3>
+
+                                            <div class="price-box">
+                                                <c:if test="${p.salePrice > 0 && p.salePrice < p.price}">
+                                                    <span class="new-price" style="color: #d32f2f; font-weight: bold; font-size: 1.1rem; margin-right: 10px;">
+                                                        <fmt:formatNumber value="${p.salePrice}" pattern="#,###"/>₫
+                                                    </span>
+                                                    <span class="old-price" style="color: #999; text-decoration: line-through; font-size: 0.9rem;">
+                                                        <fmt:formatNumber value="${p.price}" pattern="#,###"/>₫
+                                                    </span>
+                                                </c:if>
+                                                <c:if test="${p.salePrice <= 0 || p.salePrice >= p.price}">
+                                                    <span class="new-price" style="font-weight: bold; font-size: 1.1rem;">
+                                                        <fmt:formatNumber value="${p.price}" pattern="#,###"/>₫
+                                                    </span>
+                                                </c:if>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </c:forEach>
+                            </div>
+                        </section>
                     </c:forEach>
                 </div>
             </section>
-        </c:forEach>
-    </div>
+        </c:if>
+
+        <c:if test="${!isVipUser && sessionScope.user != null}">
+            <section class="vip-upgrade-banner">
+                <div class="container">
+                    <div class="upgrade-content">
+                        <h3>🌟 Nâng cấp thành Khách Hàng VIP</h3>
+                        <p>Đạt các tiêu chí để trở thành VIP và nhận những ưu đãi độc quyền!</p>
+                    </div>
+                </div>
+            </section>
+        </c:if>
 
 </main>
 

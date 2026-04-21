@@ -197,3 +197,79 @@ transform: translateX(5px);
 .promo-hero__overlay p { font-size: 1rem; display: none; }
 .campaign-header { flex-direction: column; align-items: flex-start; gap: 10px; }
 }
+.vip-promotions-section {
+    background: linear-gradient(135deg, #fff5e1 0%, #ffe0b2 100%);
+    padding: 40px 0;
+    margin: 40px 0;
+}
+
+.vip-header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.vip-header h2 {
+    font-size: 2rem;
+    color: var(--color-primary, #107e84);
+    margin-bottom: 10px;
+}
+
+.vip-header p {
+    color: #666;
+    font-size: 1rem;
+}
+
+.vip-campaign {
+    border: 2px solid #ffd54f;
+    border-radius: 8px;
+    padding: 20px;
+    background: white;
+    margin-bottom: 20px;
+}
+
+.product-card.vip-product {
+    position: relative;
+    border: 2px solid #ffd54f;
+    box-shadow: 0 2px 8px rgba(16, 126, 132, 0.15);
+}
+
+.vip-badge {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: linear-gradient(135deg, var(--color-primary, #107e84), color-mix(in srgb, var(--color-primary, #107e84) 70%, white 30%));
+    color: white;
+    padding: 5px 10px;
+    border-radius: 20px;
+    font-weight: bold;
+    font-size: 0.85rem;
+    z-index: 10;
+}
+
+.vip-sale-tag {
+    background: linear-gradient(135deg, var(--color-primary, #107e84), color-mix(in srgb, var(--color-primary, #107e84) 70%, white 30%)) !important;
+}
+
+.vip-upgrade-banner {
+    background: var(--color-primary, #107e84);
+    padding: 40px 0;
+    margin: 40px 0;
+    border-radius: 8px;
+}
+
+.upgrade-content {
+    text-align: center;
+    color: white;
+}
+
+.upgrade-content h3 {
+    font-size: 1.8rem;
+    margin-bottom: 10px;
+    color: white;
+}
+
+.upgrade-content p {
+    font-size: 1.1rem;
+    margin-bottom: 0;
+    color: white;
+}

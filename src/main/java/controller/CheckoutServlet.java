@@ -1,11 +1,9 @@
 package controller;
 
-import dao.CartDAO;
-import dao.OrderDAO;
-import dao.ProductDAO;
-import dao.UserAddressDAO;
+import dao.*;
 import model.cart.Cart;
 import model.cart.CartItem;
+import model.promotion.VipVoucher;
 import model.user.User;
 import model.user.UserAddress;
 import model.order.Order;
@@ -22,11 +20,13 @@ import java.util.List;
 
 @WebServlet(name = "CheckoutServlet", value = "/thanh-toan")
 public class CheckoutServlet extends HttpServlet {
+
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         HttpSession session = request.getSession();
         User user = (User) session.getAttribute("user");
         Cart cart = (Cart) session.getAttribute("cart");
+
         if (user == null) {
             response.sendRedirect(request.getContextPath() + "/auth/login.jsp");
             return;
@@ -61,6 +61,12 @@ public class CheckoutServlet extends HttpServlet {
         request.setAttribute("totalAmount", subtotal + defaultShipping);
         session.setAttribute("selectedItemIds", selectedItems);
 
+        if (Boolean.TRUE.equals(user.getIsVip())) {
+            VipVoucherDAO voucherDAO = new VipVoucherDAO();
+            List<VipVoucher> userVipVouchers = voucherDAO.getActiveVouchersForUser(user.getId());
+            request.setAttribute("userVipVouchers", userVipVouchers);
+        }
+
         request.getRequestDispatcher("/cart/thanh-toan.jsp").forward(request, response);
     }
 
@@ -71,7 +77,9 @@ public class CheckoutServlet extends HttpServlet {
         User user = (User) session.getAttribute("user");
         Cart cart = (Cart) session.getAttribute("cart");
         String[] selectedItemIds = (String[]) session.getAttribute("selectedItemIds");
-        if (user == null || cart == null || cart.getTotalQuantity() == 0 || selectedItemIds == null || selectedItemIds.length == 0) {
+
+        if (user == null || cart == null || cart.getTotalQuantity() == 0
+                || selectedItemIds == null || selectedItemIds.length == 0) {
             response.sendRedirect(request.getContextPath() + "/gio-hang");
             return;
         }
@@ -103,6 +111,7 @@ public class CheckoutServlet extends HttpServlet {
             try {
                 shippingAddressId = Integer.parseInt(selectedAddressVal);
             } catch (NumberFormatException e) {
+                shippingAddressId = 0;
             }
         }
         List<CartItem> selectedCartItems = new ArrayList<>();
@@ -118,14 +127,55 @@ public class CheckoutServlet extends HttpServlet {
                         break;
                     }
                 } catch (NumberFormatException e) {
+                    e.printStackTrace();
                 }
             }
         }
 
         double shippingFee = 20000;
-        if ("express".equals(shippingMethod)) shippingFee = 35000;
-        else if ("instant".equals(shippingMethod)) shippingFee = 60000;
-        double totalAmount = subtotal + shippingFee;
+        if ("express".equals(shippingMethod)) {
+            shippingFee = 35000;
+        } else if ("instant".equals(shippingMethod)) {
+            shippingFee = 60000;
+        }
+
+        double vipDiscount = 0;
+        Integer appliedVoucherId = null;
+
+        String applyVipVoucher = request.getParameter("applyVipVoucher");
+        String selectedVoucherId = request.getParameter("selectedVoucher");
+
+        if ("true".equals(applyVipVoucher)
+                && selectedVoucherId != null
+                && !selectedVoucherId.isEmpty()
+                && Boolean.TRUE.equals(user.getIsVip())) {
+            try {
+                int voucherId = Integer.parseInt(selectedVoucherId);
+                VipVoucherDAO voucherDAO = new VipVoucherDAO();
+                VipVoucher voucher = voucherDAO.getActiveVoucherForUser(user.getId(), voucherId);
+
+                if (voucher != null) {
+                    if ("PERCENT".equals(voucher.getDiscountType())) {
+                        vipDiscount = subtotal * voucher.getDiscountValue() / 100.0;
+                    } else if ("FIXED_AMOUNT".equals(voucher.getDiscountType())) {
+                        vipDiscount = voucher.getDiscountValue();
+                    }
+
+                    if (vipDiscount > subtotal) {
+                        vipDiscount = subtotal;
+                    }
+
+                    appliedVoucherId = voucherId;
+                }
+            } catch (NumberFormatException e) {
+                e.printStackTrace();
+            }
+        }
+
+        double totalAmount = subtotal - vipDiscount + shippingFee;
+        if (totalAmount < 0) {
+            totalAmount = 0;
+        }
 
         Order order = new Order();
         order.setUserId(user.getId());
@@ -148,6 +198,13 @@ public class CheckoutServlet extends HttpServlet {
                 productDAO.decreaseStock(item.getProduct().getId(), item.getQuantity());
                 cartDAO.removeProduct(user.getId(), item.getProduct().getId());
             }
+
+            if (appliedVoucherId != null) {
+                VipVoucherDAO voucherDAO = new VipVoucherDAO();
+                voucherDAO.incrementVoucherUsage(appliedVoucherId);
+                voucherDAO.markVoucherUsed(user.getId(), appliedVoucherId);
+            }
+
             cart.removeItems(selectedItemIds);
             session.setAttribute("cart", cart);
             session.removeAttribute("selectedItemIds");
