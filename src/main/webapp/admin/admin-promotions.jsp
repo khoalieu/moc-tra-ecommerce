@@ -71,42 +71,6 @@
                         <p>Voucher VIP</p>
                     </div>
                 </div>
-
-                <div class="stat-card">
-                    <div class="stat-icon stat-icon-vip">
-                        <i class="fas fa-star"></i>
-                    </div>
-                    <div class="stat-info">
-                        <h3>
-                            <c:set var="vipPromoCount" value="0"/>
-                            <c:forEach var="promo" items="${promotionList}">
-                                <c:if test="${promo.promotionType == 'VIP'}">
-                                    <c:set var="vipPromoCount" value="${vipPromoCount + 1}"/>
-                                </c:if>
-                            </c:forEach>
-                            ${vipPromoCount}
-                        </h3>
-                        <p>Khuyến mãi VIP</p>
-                    </div>
-                </div>
-
-                <div class="stat-card">
-                    <div class="stat-icon stat-icon-all">
-                        <i class="fas fa-globe"></i>
-                    </div>
-                    <div class="stat-info">
-                        <h3>
-                            <c:set var="allPromoCount" value="0"/>
-                            <c:forEach var="promo" items="${promotionList}">
-                                <c:if test="${promo.promotionType == 'ALL'}">
-                                    <c:set var="allPromoCount" value="${allPromoCount + 1}"/>
-                                </c:if>
-                            </c:forEach>
-                            ${allPromoCount}
-                        </h3>
-                        <p>Khuyến mãi toàn hệ thống</p>
-                    </div>
-                </div>
             </div>
 
             <div class="tabs-container">
@@ -119,7 +83,7 @@
                     </button>
                 </div>
 
-                <!-- PROMOTION TAB -->
+                <!-- promotionn tab -->
                 <div id="promotionTab" class="tab-content active">
                     <div class="table-header">
                         <div class="table-header__info">
@@ -134,10 +98,10 @@
                         <table class="orders-table promotions-table">
                             <thead>
                             <tr>
+                                <th>Hình ảnh</th>
                                 <th>Tên chương trình</th>
                                 <th>Loại</th>
                                 <th>Giảm giá</th>
-                                <th>Đối tượng</th>
                                 <th>Thời gian</th>
                                 <th>Trạng thái</th>
                                 <th class="actions-col">Hành động</th>
@@ -146,6 +110,20 @@
                             <tbody>
                             <c:forEach var="promo" items="${promotionList}">
                                 <tr>
+                                    <td class="promo-image-col">
+                                        <div class="promo-image-box">
+                                            <c:choose>
+                                                <c:when test="${not empty promo.imageUrl}">
+                                                    <img src="${pageContext.request.contextPath}/${promo.imageUrl}" alt="${promo.name}" class="promo-list-image">
+                                                </c:when>
+                                                <c:otherwise>
+                                                    <div class="promo-image-placeholder">
+                                                        <i class="fas fa-image"></i>
+                                                    </div>
+                                                </c:otherwise>
+                                            </c:choose>
+                                        </div>
+                                    </td>
                                     <td>
                                         <div class="cell-title">${promo.name}</div>
                                         <div class="cell-subtitle">${promo.description}</div>
@@ -170,16 +148,6 @@
                                             </c:otherwise>
                                         </c:choose>
                                     </td>
-                                    <td>
-                                        <c:choose>
-                                            <c:when test="${promo.promotionType == 'VIP'}">
-                                                <span class="badge badge-vip">VIP</span>
-                                            </c:when>
-                                            <c:otherwise>
-                                                <span class="badge badge-all">Tất cả khách hàng</span>
-                                            </c:otherwise>
-                                        </c:choose>
-                                    </td>
                                     <td class="time-cell">
                                         <div>Bắt đầu: <span class="time-start">${fn:replace(promo.startDate, 'T', ' ')}</span></div>
                                         <div>Kết thúc: <span class="time-end">${fn:replace(promo.endDate, 'T', ' ')}</span></div>
@@ -197,7 +165,6 @@
                                                 data-description="${promo.description}"
                                                 data-discounttype="${promo.discountType}"
                                                 data-discountvalue="${promo.discountValue}"
-                                                data-promotiontype="${promo.promotionType}"
                                                 data-start="${promo.startDate}"
                                                 data-end="${promo.endDate}"
                                                 data-imageurl="${promo.imageUrl}">
@@ -208,8 +175,7 @@
                                             <input type="hidden" name="action" value="togglePromotion">
                                             <input type="hidden" name="id" value="${promo.id}">
                                             <input type="hidden" name="active" value="${!promo.active}">
-                                            <button type="submit" class="btn-action"
-                                                    title="${promo.active ? 'Tắt khuyến mãi' : 'Bật khuyến mãi'}">
+                                            <button type="submit" class="btn-action" title="${promo.active ? 'Tắt khuyến mãi' : 'Bật khuyến mãi'}">
                                                 <i class="fas ${promo.active ? 'fa-toggle-on' : 'fa-toggle-off'}"></i>
                                             </button>
                                         </form>
@@ -229,7 +195,7 @@
                     </div>
                 </div>
 
-                <!-- VOUCHER TAB -->
+                <!-- voucher tab -->
                 <div id="voucherTab" class="tab-content tab-hidden">
                     <div class="table-header">
                         <div class="table-header__info">
@@ -332,32 +298,28 @@
                 </div>
             </div>
 
-            <!-- MODAL CREATE/EDIT PROMOTION -->
+            <!-- tạo sửa khuyến mã -->
             <div id="promotionModal" class="modal modal-hidden">
                 <div class="modal-overlay" onclick="closePromotionModal()"></div>
-                <div class="modal-content">
+                <div class="modal-content promotion-modal-content">
                     <div class="modal-header">
                         <h3 id="promotionModalTitle">Thêm khuyến mãi</h3>
                         <button type="button" class="modal-close" onclick="closePromotionModal()">&times;</button>
                     </div>
 
-                    <div class="modal-body">
-                        <form id="promotionForm" action="${pageContext.request.contextPath}/admin/promotions" method="post">
+                    <div class="modal-body promotion-modal-body">
+                        <form id="promotionForm"
+                              action="${pageContext.request.contextPath}/admin/promotions"
+                              method="post"
+                              enctype="multipart/form-data">
                             <input type="hidden" name="action" id="promotionAction" value="createPromotion">
                             <input type="hidden" name="id" id="promotionId">
+                            <input type="hidden" name="oldImageUrl" id="promotionOldImageUrl">
 
                             <div class="form-grid-layout">
                                 <div class="form-group">
                                     <label>Tên chương trình</label>
                                     <input type="text" class="form-control" name="name" id="promotionName" required>
-                                </div>
-
-                                <div class="form-group">
-                                    <label>Đối tượng</label>
-                                    <select class="form-control" name="promotionType" id="promotionType" required>
-                                        <option value="ALL">Tất cả khách hàng</option>
-                                        <option value="VIP">Khách hàng VIP</option>
-                                    </select>
                                 </div>
 
                                 <div class="form-group">
@@ -389,9 +351,15 @@
                                 </div>
 
                                 <div class="form-group full-width">
-                                    <label>Ảnh banner / ảnh chương trình</label>
-                                    <input type="text" class="form-control" name="imageUrl" id="promotionImageUrl"
-                                           placeholder="vd: assets/images/promo/banner1.jpg">
+                                    <label>Hình ảnh khuyến mãi</label>
+                                    <div class="image-upload" onclick="document.getElementById('promotionImage').click()">
+                                        <img id="promotionImagePreview" alt="Preview" class="promotion-preview-image preview-hidden">
+                                        <i id="promotionImageIcon" class="fas fa-cloud-upload-alt"></i>
+                                        <p id="promotionImageText">Nhấp để tải lên hình ảnh</p>
+                                        <small>JPG, PNG, GIF tối đa 2MB<br>Khuyến nghị: 800x450px</small>
+                                    </div>
+                                    <input type="file" id="promotionImage" name="image" accept="image/*" class="hidden-file-input">
+                                    <div class="help-text">Ảnh sẽ hiển thị trong danh sách khuyến mãi.</div>
                                 </div>
                             </div>
 
@@ -404,7 +372,7 @@
                 </div>
             </div>
 
-            <!-- MODAL CREATE/EDIT VOUCHER -->
+            <!-- tạo sửa VOUCHER -->
             <div id="voucherModal" class="modal modal-hidden">
                 <div class="modal-overlay" onclick="closeVoucherModal()"></div>
                 <div class="modal-content">
@@ -495,6 +463,9 @@
         document.getElementById('promotionAction').value = 'createPromotion';
         document.getElementById('promotionForm').reset();
         document.getElementById('promotionId').value = '';
+        document.getElementById('promotionOldImageUrl').value = '';
+
+        resetPromotionImagePreview();
         document.getElementById('promotionModal').classList.remove('modal-hidden');
     }
 
@@ -507,10 +478,11 @@
         document.getElementById('promotionDescription').value = btn.dataset.description || '';
         document.getElementById('promotionDiscountType').value = btn.dataset.discounttype || 'PERCENT';
         document.getElementById('promotionDiscountValue').value = btn.dataset.discountvalue || '';
-        document.getElementById('promotionType').value = btn.dataset.promotiontype || 'ALL';
-        document.getElementById('promotionImageUrl').value = btn.dataset.imageurl || '';
         document.getElementById('promotionStartDate').value = convertToDateTimeLocal(btn.dataset.start);
         document.getElementById('promotionEndDate').value = convertToDateTimeLocal(btn.dataset.end);
+        document.getElementById('promotionOldImageUrl').value = btn.dataset.imageurl || '';
+
+        setPromotionImagePreview(btn.dataset.imageurl || null);
 
         document.getElementById('promotionModal').classList.remove('modal-hidden');
     }
@@ -554,6 +526,65 @@
         if (!value) return '';
         return value.replace(' ', 'T').substring(0, 16);
     }
+
+    function resetPromotionImagePreview() {
+        const preview = document.getElementById('promotionImagePreview');
+        const icon = document.getElementById('promotionImageIcon');
+        const text = document.getElementById('promotionImageText');
+        const input = document.getElementById('promotionImage');
+
+        preview.src = '';
+        preview.classList.add('preview-hidden');
+        icon.style.display = 'block';
+        text.textContent = 'Nhấp để tải lên hình ảnh';
+        input.value = '';
+    }
+
+    function setPromotionImagePreview(imageUrl) {
+        const preview = document.getElementById('promotionImagePreview');
+        const icon = document.getElementById('promotionImageIcon');
+        const text = document.getElementById('promotionImageText');
+
+        if (imageUrl) {
+            preview.src = '${pageContext.request.contextPath}/' + imageUrl;
+            preview.classList.remove('preview-hidden');
+            icon.style.display = 'none';
+            text.textContent = 'Nhấp để thay đổi hình ảnh';
+        } else {
+            resetPromotionImagePreview();
+        }
+    }
+
+    (function () {
+        const fileInput = document.getElementById('promotionImage');
+        const preview = document.getElementById('promotionImagePreview');
+        const icon = document.getElementById('promotionImageIcon');
+        const text = document.getElementById('promotionImageText');
+
+        if (!fileInput) return;
+
+        fileInput.addEventListener('change', function () {
+            const f = this.files && this.files[0];
+            if (!f) return;
+
+            if (!f.type || !f.type.startsWith('image/')) {
+                alert('Vui lòng chọn đúng file ảnh.');
+                this.value = '';
+                return;
+            }
+
+            if (f.size > 2 * 1024 * 1024) {
+                alert('Ảnh tối đa 2MB. Vui lòng chọn ảnh nhỏ hơn.');
+                this.value = '';
+                return;
+            }
+
+            preview.src = URL.createObjectURL(f);
+            preview.classList.remove('preview-hidden');
+            icon.style.display = 'none';
+            text.textContent = 'Đã chọn ảnh. Nhấp để đổi ảnh';
+        });
+    })();
 </script>
 </body>
 </html>

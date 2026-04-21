@@ -257,6 +257,10 @@ public class PromotionDAO {
                 p.setStartDate(rs.getTimestamp("start_date").toLocalDateTime());
                 p.setEndDate(rs.getTimestamp("end_date").toLocalDateTime());
                 p.setActive(rs.getBoolean("is_active"));
+
+                p.setImageUrl(rs.getString("image_url"));
+                p.setPromotionType(rs.getString("promotion_type"));
+
                 list.add(p);
             }
         } catch (Exception e) {

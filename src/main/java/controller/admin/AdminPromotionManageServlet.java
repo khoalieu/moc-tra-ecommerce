@@ -3,18 +3,29 @@ package controller.admin;
 import dao.PromotionDAO;
 import dao.VipVoucherDAO;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.annotation.MultipartConfig;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.Part;
 import model.enums.DiscountType;
 import model.promotion.Promotion;
 
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.time.LocalDateTime;
 import java.util.List;
 
 @WebServlet(name = "AdminPromotionManageServlet", urlPatterns = {"/admin/promotions", "/admin/vouchers"})
+@MultipartConfig(
+        fileSizeThreshold = 1024 * 1024,
+        maxFileSize = 2L * 1024 * 1024,
+        maxRequestSize = 5L * 1024 * 1024
+)
 public class AdminPromotionManageServlet extends HttpServlet {
 
     private PromotionDAO promotionDAO;
@@ -48,32 +59,25 @@ public class AdminPromotionManageServlet extends HttpServlet {
                 response.sendRedirect(redirectPath);
                 return;
             }
-
             switch (action) {
                 case "createPromotion":
                     handleCreatePromotion(request);
                     break;
-
                 case "updatePromotion":
                     handleUpdatePromotion(request);
                     break;
-
                 case "togglePromotion":
                     handleTogglePromotion(request);
                     break;
-
                 case "createVoucher":
                     handleCreateVoucher(request);
                     break;
-
                 case "updateVoucher":
                     handleUpdateVoucher(request);
                     break;
-
                 case "deleteVoucher":
                     handleDeleteVoucher(request);
                     break;
-
                 default:
                     break;
             }
@@ -114,40 +118,43 @@ public class AdminPromotionManageServlet extends HttpServlet {
 
     private Promotion buildPromotionFromRequest(HttpServletRequest request, boolean isUpdate) {
         try {
-            String name = request.getParameter("name");
-            String description = request.getParameter("description");
-            String discountTypeStr = request.getParameter("discountType");
-            String discountValueStr = request.getParameter("discountValue");
-            String promotionType = request.getParameter("promotionType");
-            String startDateStr = request.getParameter("startDate");
-            String endDateStr = request.getParameter("endDate");
-            String imageUrl = request.getParameter("imageUrl");
+            String name = trimOrNull(request.getParameter("name"));
+            String description = trimOrNull(request.getParameter("description"));
+            String discountTypeStr = trimOrNull(request.getParameter("discountType"));
+            String discountValueStr = trimOrNull(request.getParameter("discountValue"));
+            String startDateStr = trimOrNull(request.getParameter("startDate"));
+            String endDateStr = trimOrNull(request.getParameter("endDate"));
 
-            if (name == null || name.trim().isEmpty())
+            if (name == null || discountTypeStr == null || discountValueStr == null ||
+                    startDateStr == null || endDateStr == null) {
                 return null;
-            if (discountTypeStr == null || discountTypeStr.trim().isEmpty())
-                return null;
-            if (discountValueStr == null || discountValueStr.trim().isEmpty()) return null;
-            if (startDateStr == null || startDateStr.trim().isEmpty())
-                return null;
-            if (endDateStr == null || endDateStr.trim().isEmpty()) return null;
+            }
             Promotion p = new Promotion();
 
             if (isUpdate) {
-                String idStr = request.getParameter("id");
-                if (idStr == null || idStr.trim().isEmpty()) return null;
+                String idStr = trimOrNull(request.getParameter("id"));
+                if (idStr == null) return null;
                 p.setId(Integer.parseInt(idStr));
             }
-
-            p.setName(name.trim());
+            p.setName(name);
             p.setDescription(description);
-            p.setDiscountType(DiscountType.valueOf(discountTypeStr.trim().toUpperCase()));
+            p.setDiscountType(DiscountType.valueOf(discountTypeStr.toUpperCase()));
             p.setDiscountValue(Double.parseDouble(discountValueStr));
-            p.setPromotionType(promotionType != null && !promotionType.trim().isEmpty() ? promotionType.trim().toUpperCase() : "ALL");
+
+            p.setPromotionType("ALL");
+
             p.setStartDate(LocalDateTime.parse(startDateStr));
             p.setEndDate(LocalDateTime.parse(endDateStr));
-            p.setImageUrl(imageUrl);
             p.setActive(true);
+
+            String oldImage = trimOrNull(request.getParameter("oldImageUrl"));
+            String uploadedPath = savePromotionImage(request.getPart("image"), !isUpdate);
+
+            if (uploadedPath != null) {
+                p.setImageUrl(uploadedPath);
+            } else {
+                p.setImageUrl(oldImage);
+            }
 
             return p;
         } catch (Exception e) {
@@ -166,10 +173,8 @@ public class AdminPromotionManageServlet extends HttpServlet {
             String endDateStr = request.getParameter("endDate");
 
             if (code == null || code.trim().isEmpty()) return;
-            if (discountType == null || discountType.trim().isEmpty())
-                return;
-            if (discountValueStr == null || discountValueStr.trim().isEmpty())
-                return;
+            if (discountType == null || discountType.trim().isEmpty()) return;
+            if (discountValueStr == null || discountValueStr.trim().isEmpty()) return;
             if (startDateStr == null || startDateStr.trim().isEmpty()) return;
             if (endDateStr == null || endDateStr.trim().isEmpty()) return;
 
@@ -213,6 +218,7 @@ public class AdminPromotionManageServlet extends HttpServlet {
             if (maxUsesStr != null && !maxUsesStr.trim().isEmpty()) {
                 maxUses = Integer.parseInt(maxUsesStr.trim());
             }
+
             LocalDateTime startDate = LocalDateTime.parse(startDateStr);
             LocalDateTime endDate = LocalDateTime.parse(endDateStr);
             boolean isActive = activeStr != null && (
@@ -235,6 +241,43 @@ public class AdminPromotionManageServlet extends HttpServlet {
             vipVoucherDAO.deleteVoucher(voucherId);
         } catch (Exception e) {
             e.printStackTrace();
+        }
+    }
+
+    private String trimOrNull(String s) {
+        if (s == null) return null;
+        s = s.trim();
+        return s.isEmpty() ? null : s;
+    }
+
+    private String savePromotionImage(Part part, boolean required) {
+        try {
+            if (part == null || part.getSize() == 0) {
+                if (required) {
+                    throw new IllegalArgumentException("vuii lòng chọn ảnh");
+                }
+                return null;
+            }
+
+            String relDir = "assets/images";
+            String absDir = getServletContext().getRealPath("/" + relDir);
+            Files.createDirectories(Paths.get(absDir));
+
+            String submitted = Paths.get(part.getSubmittedFileName()).getFileName().toString();
+            String ext = "";
+            int dot = submitted.lastIndexOf('.');
+            if (dot >= 0) ext = submitted.substring(dot);
+
+            String fileName = System.currentTimeMillis() + ext;
+            Path target = Paths.get(absDir, fileName);
+
+            try (java.io.InputStream in = part.getInputStream()) {
+                Files.copy(in, target, StandardCopyOption.REPLACE_EXISTING);
+            }
+
+            return relDir + "/" + fileName;
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Upload ảnh khuyến mãi lỗi.");
         }
     }
 }
