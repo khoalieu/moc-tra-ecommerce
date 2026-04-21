@@ -4,6 +4,7 @@ import db.DBConnect;
 import model.promotion.VipVoucher;
 
 import java.sql.*;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -50,23 +51,6 @@ public class VipVoucherDAO {
             ps.setInt(2, voucherId);
 
             ResultSet rs = ps.executeQuery();
-            if (rs.next()) {
-                return mapVoucher(rs);
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return null;
-    }
-
-    public VipVoucher getVoucherByCode(String code) {
-        String sql = "SELECT * FROM vip_vouchers WHERE code = ? AND is_active = 1";
-
-        try (Connection conn = DBConnect.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setString(1, code);
-            ResultSet rs = ps.executeQuery();
-
             if (rs.next()) {
                 return mapVoucher(rs);
             }
@@ -149,6 +133,80 @@ public class VipVoucherDAO {
             e.printStackTrace();
         }
         return null;
+    }
+// admin
+    public boolean insertVoucher(String code, String discountType, double discountValue,
+                                 Integer maxUses, LocalDateTime startDate, LocalDateTime endDate) {
+        String sql = "INSERT INTO vip_vouchers " +
+                "(code, discount_type, discount_value, max_uses, current_uses, start_date, end_date, is_active, created_at) " +
+                "VALUES (?, ?, ?, ?, 0, ?, ?, 1, NOW())";
+
+        try (Connection conn = DBConnect.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, code);
+            ps.setString(2, discountType);
+            ps.setDouble(3, discountValue);
+
+            if (maxUses == null) {
+                ps.setNull(4, Types.INTEGER);
+            } else {
+                ps.setInt(4, maxUses);
+            }
+
+            ps.setTimestamp(5, Timestamp.valueOf(startDate));
+            ps.setTimestamp(6, Timestamp.valueOf(endDate));
+
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    public boolean updateVoucher(int id, String code, String discountType, double discountValue,
+                                 Integer maxUses, LocalDateTime startDate, LocalDateTime endDate, boolean isActive) {
+        String sql = "UPDATE vip_vouchers SET " +
+                "code = ?, discount_type = ?, discount_value = ?, max_uses = ?, " +
+                "start_date = ?, end_date = ?, is_active = ? " +
+                "WHERE id = ?";
+
+        try (Connection conn = DBConnect.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, code);
+            ps.setString(2, discountType);
+            ps.setDouble(3, discountValue);
+
+            if (maxUses == null) {
+                ps.setNull(4, Types.INTEGER);
+            } else {
+                ps.setInt(4, maxUses);
+            }
+
+            ps.setTimestamp(5, Timestamp.valueOf(startDate));
+            ps.setTimestamp(6, Timestamp.valueOf(endDate));
+            ps.setBoolean(7, isActive);
+            ps.setInt(8, id);
+
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    public boolean deleteVoucher(int voucherId) {
+        String sql = "DELETE FROM vip_vouchers WHERE id = ?";
+
+        try (Connection conn = DBConnect.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, voucherId);
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
     }
 
     private VipVoucher mapVoucher(ResultSet rs) throws SQLException {
