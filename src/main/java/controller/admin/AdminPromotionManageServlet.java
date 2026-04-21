@@ -53,7 +53,7 @@ public class AdminPromotionManageServlet extends HttpServlet {
 
         String action = request.getParameter("action");
         String redirectPath = request.getContextPath() + "/admin/promotions";
-
+        boolean keepVoucherTab = false;
         try {
             if (action == null || action.trim().isEmpty()) {
                 response.sendRedirect(redirectPath);
@@ -66,21 +66,26 @@ public class AdminPromotionManageServlet extends HttpServlet {
                 case "updatePromotion":
                     handleUpdatePromotion(request);
                     break;
-                case "deletePromotion":
-                    handleDeletePromotion(request);
-                    break;
                 case "togglePromotion":
                     handleTogglePromotion(request);
                     break;
+                case "deletePromotion":
+                    handleDeletePromotion(request);
+                    break;
+
                 case "createVoucher":
                     handleCreateVoucher(request);
+                    keepVoucherTab = true;
                     break;
                 case "updateVoucher":
                     handleUpdateVoucher(request);
+                    keepVoucherTab = true;
                     break;
                 case "deleteVoucher":
                     handleDeleteVoucher(request);
+                    keepVoucherTab = true;
                     break;
+
                 default:
                     break;
             }
@@ -88,7 +93,11 @@ public class AdminPromotionManageServlet extends HttpServlet {
             e.printStackTrace();
         }
 
-        response.sendRedirect(redirectPath);
+        if (keepVoucherTab) {
+            response.sendRedirect(redirectPath + "?tab=voucher");
+        } else {
+            response.sendRedirect(redirectPath + "?tab=promotion");
+        }
     }
 
     private void handleCreatePromotion(HttpServletRequest request) {
