@@ -179,6 +179,16 @@
                                                 <i class="fas ${promo.active ? 'fa-toggle-on' : 'fa-toggle-off'}"></i>
                                             </button>
                                         </form>
+
+                                        <form action="${pageContext.request.contextPath}/admin/promotions" method="post"
+                                              class="inline-form"
+                                              onsubmit="return confirm('Bạn có chắc muốn xóa chương trình khuyến mãi này?');">
+                                            <input type="hidden" name="action" value="deletePromotion">
+                                            <input type="hidden" name="id" value="${promo.id}">
+                                            <button type="submit" class="btn-action btn-action-danger" title="Xóa">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </form>
                                     </td>
                                 </tr>
                             </c:forEach>

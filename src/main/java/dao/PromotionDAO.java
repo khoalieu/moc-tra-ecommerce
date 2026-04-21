@@ -423,4 +423,40 @@ public class PromotionDAO {
         }
         return list;
     }
+    public boolean deletePromotion(int promoId) {
+        String resetPriceSql = "UPDATE products p " +
+                "JOIN promotion_items pi ON p.id = pi.product_id " +
+                "SET p.sale_price = 0 " +
+                "WHERE pi.promotion_id = ?";
+
+        String deleteItemsSql = "DELETE FROM promotion_items WHERE promotion_id = ?";
+        String deletePromoSql = "DELETE FROM promotions WHERE id = ?";
+
+        try (Connection conn = DBConnect.getConnection()) {
+            conn.setAutoCommit(false);
+
+            try (PreparedStatement ps1 = conn.prepareStatement(resetPriceSql);
+                 PreparedStatement ps2 = conn.prepareStatement(deleteItemsSql);
+                 PreparedStatement ps3 = conn.prepareStatement(deletePromoSql)) {
+
+                ps1.setInt(1, promoId);
+                ps1.executeUpdate();
+
+                ps2.setInt(1, promoId);
+                ps2.executeUpdate();
+
+                ps3.setInt(1, promoId);
+                boolean deleted = ps3.executeUpdate() > 0;
+
+                conn.commit();
+                return deleted;
+            } catch (Exception e) {
+                conn.rollback();
+                e.printStackTrace();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
 }
