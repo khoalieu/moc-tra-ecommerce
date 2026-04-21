@@ -451,21 +451,48 @@
         </div>
     </main>
 </div>
-
 <script>
+    function activateTab(tabName) {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(tab => {
+            tab.classList.remove('active');
+            tab.classList.add('tab-hidden');
+        });
+
+        const targetBtn = document.querySelector('.tab-btn[data-tab="' + tabName + '"]');
+        const targetTab = document.getElementById(tabName);
+
+        if (targetBtn && targetTab) {
+            targetBtn.classList.add('active');
+            targetTab.classList.add('active');
+            targetTab.classList.remove('tab-hidden');
+        }
+    }
+
     document.querySelectorAll('.tab-btn').forEach(btn => {
         btn.addEventListener('click', function () {
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            document.querySelectorAll('.tab-content').forEach(tab => {
-                tab.classList.remove('active');
-                tab.classList.add('tab-hidden');
-            });
-
-            this.classList.add('active');
-            const tab = document.getElementById(this.dataset.tab);
-            tab.classList.add('active');
-            tab.classList.remove('tab-hidden');
+            const tabName = this.dataset.tab;
+            activateTab(tabName);
+            localStorage.setItem('adminPromotionActiveTab', tabName);
         });
+    });
+
+    document.addEventListener('DOMContentLoaded', function () {
+        const urlParams = new URLSearchParams(window.location.search);
+        const tabFromUrl = urlParams.get('tab');
+
+        if (tabFromUrl === 'voucher') {
+            activateTab('voucherTab');
+            localStorage.setItem('adminPromotionActiveTab', 'voucherTab');
+        } else if (tabFromUrl === 'promotion') {
+            activateTab('promotionTab');
+            localStorage.setItem('adminPromotionActiveTab', 'promotionTab');
+        } else {
+            const savedTab = localStorage.getItem('adminPromotionActiveTab');
+            if (savedTab === 'voucherTab' || savedTab === 'promotionTab') {
+                activateTab(savedTab);
+            }
+        }
     });
 
     function openCreatePromotionModal() {
@@ -493,7 +520,6 @@
         document.getElementById('promotionOldImageUrl').value = btn.dataset.imageurl || '';
 
         setPromotionImagePreview(btn.dataset.imageurl || null);
-
         document.getElementById('promotionModal').classList.remove('modal-hidden');
     }
 
