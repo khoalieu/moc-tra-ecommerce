@@ -66,6 +66,9 @@ public class AdminPromotionManageServlet extends HttpServlet {
                 case "updatePromotion":
                     handleUpdatePromotion(request);
                     break;
+                case "deletePromotion":
+                    handleDeletePromotion(request);
+                    break;
                 case "togglePromotion":
                     handleTogglePromotion(request);
                     break;
@@ -278,6 +281,17 @@ public class AdminPromotionManageServlet extends HttpServlet {
             return relDir + "/" + fileName;
         } catch (Exception e) {
             throw new IllegalArgumentException("Upload ảnh khuyến mãi lỗi.");
+        }
+    }
+    private void handleDeletePromotion(HttpServletRequest request) {
+        try {
+            String idStr = request.getParameter("id");
+            if (idStr == null || idStr.trim().isEmpty()) return;
+
+            int promoId = Integer.parseInt(idStr);
+            promotionDAO.deletePromotion(promoId);
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 }
