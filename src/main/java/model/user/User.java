@@ -92,5 +92,9 @@ public class User {
 
     public LocalDateTime getLockUntil() { return lockUntil; }
     public void setLockUntil(LocalDateTime lockUntil) { this.lockUntil = lockUntil; }
+    private Boolean isVip;
+
+    public Boolean getIsVip() { return isVip; }
+    public void setIsVip(Boolean vip) { this.isVip = vip; }
 
 }

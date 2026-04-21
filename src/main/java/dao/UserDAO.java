@@ -38,6 +38,7 @@ public class UserDAO {
                     user.setFirstName(rs.getString("first_name"));
                     user.setLastName(rs.getString("last_name"));
                     user.setPhone(rs.getString("phone"));
+                    user.setIsVip(rs.getBoolean("is_vip"));
                     java.sql.Timestamp ts = rs.getTimestamp("dateOfBirth");
                     if (ts != null) {
                         user.setDateOfBirth(ts.toLocalDateTime());
@@ -274,6 +275,7 @@ public class UserDAO {
         u.setFirstName(rs.getString("first_name"));
         u.setLastName(rs.getString("last_name"));
         u.setAvatar(rs.getString("avatar"));
+        u.setIsVip(rs.getBoolean("is_vip"));
 
         String role = rs.getString("role");
         if (role != null) u.setRole(UserRole.valueOf(role.trim().toUpperCase()));
@@ -310,6 +312,7 @@ public class UserDAO {
                     u.setLastName(rs.getString("last_name"));
                     u.setPhone(rs.getString("phone"));
                     u.setAvatar(rs.getString("avatar"));
+                    u.setIsVip(rs.getBoolean("is_vip"));
 
                     try {
                         String roleStr = rs.getString("role");
@@ -627,6 +630,7 @@ public class UserDAO {
                 user.setFirstName(rs.getString("first_name"));
                 user.setLastName(rs.getString("last_name"));
                 user.setAvatar(rs.getString("avatar"));
+                user.setIsVip(rs.getBoolean("is_vip"));
                 // Set role và các thông tin khác tương tự hàm checkLogin
                 try {
                     user.setRole(UserRole.valueOf(rs.getString("role").toUpperCase()));
@@ -731,6 +735,7 @@ public class UserDAO {
                     user.setFirstName(rs.getString("first_name"));
                     user.setLastName(rs.getString("last_name"));
                     user.setAvatar(rs.getString("avatar"));
+                    user.setIsVip(rs.getBoolean("is_vip"));
 
                     String roleStr = rs.getString("role");
                     if (roleStr != null){
