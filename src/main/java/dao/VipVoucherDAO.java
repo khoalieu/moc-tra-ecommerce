@@ -243,4 +243,95 @@ public class VipVoucherDAO {
 
         return voucher;
     }
+    public boolean hasVoucherAssigned(int userId, int voucherId) {
+        String sql = "SELECT 1 FROM user_vip_vouchers WHERE user_id = ? AND voucher_id = ? LIMIT 1";
+        try (Connection conn = DBConnect.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, userId);
+            ps.setInt(2, voucherId);
+            ResultSet rs = ps.executeQuery();
+            return rs.next();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    public boolean addVoucherToUsers(List<Integer> userIds, int voucherId) {
+        String sql = "INSERT INTO user_vip_vouchers (user_id, voucher_id) VALUES (?, ?)";
+        try (Connection conn = DBConnect.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            for (Integer userId : userIds) {
+                if (userId == null) continue;
+                if (hasVoucherAssigned(userId, voucherId)) continue;
+
+                ps.setInt(1, userId);
+                ps.setInt(2, voucherId);
+                ps.addBatch();
+            }
+            ps.executeBatch();
+            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+    public List<VipVoucher> getAssignedVouchersByUser(int userId) {
+        List<VipVoucher> list = new ArrayList<>();
+        String sql = "SELECT vv.*, uvv.used_at " +
+                "FROM vip_vouchers vv " +
+                "JOIN user_vip_vouchers uvv ON vv.id = uvv.voucher_id " +
+                "WHERE uvv.user_id = ? " +
+                "ORDER BY vv.created_at DESC";
+
+        try (Connection conn = DBConnect.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, userId);
+            ResultSet rs = ps.executeQuery();
+
+            while (rs.next()) {
+                VipVoucher voucher = new VipVoucher();
+                voucher.setId(rs.getInt("id"));
+                voucher.setCode(rs.getString("code"));
+                voucher.setDiscountType(rs.getString("discount_type"));
+                voucher.setDiscountValue(rs.getDouble("discount_value"));
+                voucher.setMaxUses(rs.getInt("max_uses"));
+                voucher.setCurrentUses(rs.getInt("current_uses"));
+                voucher.setStartDate(rs.getTimestamp("start_date") != null
+                        ? rs.getTimestamp("start_date").toLocalDateTime() : null);
+                voucher.setEndDate(rs.getTimestamp("end_date") != null
+                        ? rs.getTimestamp("end_date").toLocalDateTime() : null);
+                voucher.setActive(rs.getBoolean("is_active"));
+                voucher.setCreatedAt(rs.getTimestamp("created_at") != null
+                        ? rs.getTimestamp("created_at").toLocalDateTime() : null);
+                voucher.setUsedAt(
+                        rs.getTimestamp("used_at") != null
+                                ? rs.getTimestamp("used_at").toLocalDateTime()
+                                : null
+                );
+
+                list.add(voucher);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+
+    public boolean removeVoucherFromUser(int userId, int voucherId) {
+        String sql = "DELETE FROM user_vip_vouchers WHERE user_id = ? AND voucher_id = ? AND used_at IS NULL";
+
+        try (Connection conn = DBConnect.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, userId);
+            ps.setInt(2, voucherId);
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
 }

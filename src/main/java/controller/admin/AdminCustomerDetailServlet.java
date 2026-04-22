@@ -1,8 +1,6 @@
 package controller.admin;
 
-import dao.OrderDAO;
-import dao.UserAddressDAO;
-import dao.UserDAO;
+import dao.*;
 import model.order.Order;
 import model.user.User;
 import model.user.UserAddress;
@@ -14,12 +12,12 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
-import dao.BlogCommentDAO;
+
 import model.blog.BlogComment;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.text.DecimalFormat;
-import dao.ReviewDAO;
+
 import model.product.ProductReview;
 import model.user.UserActivityDTO;
 
@@ -148,6 +146,12 @@ public class AdminCustomerDetailServlet extends HttpServlet {
             int reviewCount = (reviews != null) ? reviews.size() : 0;
             int commentCount = (comments != null) ? comments.size() : 0;
 
+            VipVoucherDAO vipVoucherDAO = new VipVoucherDAO();
+
+            if (Boolean.TRUE.equals(customer.getIsVip())) {
+                request.setAttribute("voucherList", vipVoucherDAO.getAllVouchers());
+                request.setAttribute("customerVouchers", vipVoucherDAO.getAssignedVouchersByUser(userId));
+            }
             request.setAttribute("customer", customer);
             request.setAttribute("addresses", addresses);
             request.setAttribute("orders", orders);
@@ -169,5 +173,45 @@ public class AdminCustomerDetailServlet extends HttpServlet {
         } catch (NumberFormatException e) {
             response.sendRedirect(request.getContextPath() + "/admin/customers");
         }
+    }
+    @Override
+    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        request.setCharacterEncoding("UTF-8");
+
+        String action = request.getParameter("action");
+        String customerIdStr = request.getParameter("customerId");
+
+        if (customerIdStr == null || customerIdStr.trim().isEmpty()) {
+            response.sendRedirect(request.getContextPath() + "/admin/customers");
+            return;
+        }
+
+        int customerId = Integer.parseInt(customerIdStr);
+
+        try {
+            VipVoucherDAO vipVoucherDAO = new VipVoucherDAO();
+
+            if ("assignVoucher".equals(action)) {
+                String voucherIdStr = request.getParameter("voucherId");
+                if (voucherIdStr != null && !voucherIdStr.trim().isEmpty()) {
+                    int voucherId = Integer.parseInt(voucherIdStr);
+
+                    if (!vipVoucherDAO.hasVoucherAssigned(customerId, voucherId)) {
+                        vipVoucherDAO.addVoucherToUser(customerId, voucherId);
+                    }
+                }
+            } else if ("removeVoucher".equals(action)) {
+                String voucherIdStr = request.getParameter("voucherId");
+                if (voucherIdStr != null && !voucherIdStr.trim().isEmpty()) {
+                    int voucherId = Integer.parseInt(voucherIdStr);
+                    vipVoucherDAO.removeVoucherFromUser(customerId, voucherId);
+                }
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        response.sendRedirect(request.getContextPath() + "/admin/customer/detail?id=" + customerId);
     }
 }

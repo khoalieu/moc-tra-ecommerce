@@ -823,5 +823,60 @@ public class UserDAO {
         }
         return false;
     }
+    public boolean updateVipStatus(int userId, boolean isVip) {
+        String sql = "UPDATE users SET is_vip = ? WHERE id = ?";
+        try (Connection conn = DBConnect.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setBoolean(1, isVip);
+            ps.setInt(2, userId);
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    public boolean updateVipStatusBulk(List<Integer> userIds, boolean isVip) {
+        String sql = "UPDATE users SET is_vip = ? WHERE id = ?";
+        try (Connection conn = DBConnect.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            for (Integer userId : userIds) {
+                ps.setBoolean(1, isVip);
+                ps.setInt(2, userId);
+                ps.addBatch();
+            }
+            ps.executeBatch();
+            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    public List<Integer> getVipCustomerIds(List<Integer> ids) {
+        List<Integer> result = new ArrayList<>();
+        if (ids == null || ids.isEmpty()) return result;
+
+        StringBuilder sql = new StringBuilder("SELECT id FROM users WHERE is_vip = 1 AND id IN (");
+        for (int i = 0; i < ids.size(); i++) {
+            sql.append("?");
+            if (i < ids.size() - 1) sql.append(",");
+        }
+        sql.append(")");
+
+        try (Connection conn = DBConnect.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+            for (int i = 0; i < ids.size(); i++) {
+                ps.setInt(i + 1, ids.get(i));
+            }
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                result.add(rs.getInt("id"));
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return result;
+    }
 
 }
