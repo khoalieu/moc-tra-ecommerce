@@ -1,6 +1,7 @@
 package controller.auth;
 
 import dao.CartDAO;
+import dao.DAOFactory;
 import dao.UserDAO;
 import model.GooglePojo;
 import model.cart.Cart;
@@ -23,7 +24,7 @@ public class LoginGoogleServlet extends HttpServlet {
         try {
             String accessToken = GoogleUtils.getToken(code);
             GooglePojo googlePojo = GoogleUtils.getUserInfo(accessToken);
-            UserDAO userDAO = new UserDAO();
+            UserDAO userDAO = DAOFactory.getInstance().getUserDAO();
             User user = userDAO.loginWithGoogle(googlePojo);
 
             if (user != null) {
@@ -38,11 +39,11 @@ public class LoginGoogleServlet extends HttpServlet {
 
                 userDAO.resetFailedAttempts(user.getId());
 
-                CartDAO cartDAO = new CartDAO();
+                CartDAO cartDAO = DAOFactory.getInstance().getCartDAO();
                 Cart sessionCart = (Cart) session.getAttribute("cart");
                 if (sessionCart != null && !sessionCart.getItems().isEmpty()) {
                     for (CartItem item : sessionCart.getItems()) {
-                        cartDAO.addToCart(user.getId(), item.getProduct().getId(), item.getQuantity());
+                        cartDAO.addToCart(user.getId(), item.getProduct().getId(), item.getVariantId(), item.getQuantity());
                     }
                 }
                 Cart userCartFromDB = cartDAO.getCartByUserId(user.getId());

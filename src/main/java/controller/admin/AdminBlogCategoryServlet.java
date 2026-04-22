@@ -1,5 +1,6 @@
 package controller.admin;
 import dao.BlogCategoryDAO;
+import dao.DAOFactory;
 import model.blog.BlogCategory;
 import model.user.User;
 import model.enums.UserRole;
@@ -23,7 +24,7 @@ public class AdminBlogCategoryServlet extends HttpServlet {
         if (me == null) return;
 
         String path = request.getServletPath();
-        BlogCategoryDAO dao = new BlogCategoryDAO();
+        BlogCategoryDAO dao = DAOFactory.getInstance().getBlogCategoryDAO();
 
         if ("/admin/blog-categories".equals(path)) {
             request.setAttribute("categories", dao.getAllCategories());
@@ -63,7 +64,7 @@ public class AdminBlogCategoryServlet extends HttpServlet {
         request.setCharacterEncoding("UTF-8");
 
         String path = request.getServletPath();
-        BlogCategoryDAO dao = new BlogCategoryDAO();
+        BlogCategoryDAO dao = DAOFactory.getInstance().getBlogCategoryDAO();
 
         if ("/admin/blog-categories".equals(path)) {
             String action = request.getParameter("action");

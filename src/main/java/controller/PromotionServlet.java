@@ -1,5 +1,6 @@
 package controller;
 
+import dao.DAOFactory;
 import dao.PromotionDAO;
 import model.product.Product;
 import model.promotion.Promotion;
@@ -22,7 +23,7 @@ public class PromotionServlet extends HttpServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
-        PromotionDAO dao = new PromotionDAO();
+        PromotionDAO dao = DAOFactory.getInstance().getPromotionDAO();
         User loggedInUser = (User) request.getSession().getAttribute("user");
 
         boolean isVipUser = loggedInUser != null && Boolean.TRUE.equals(loggedInUser.getIsVip());

@@ -1,40 +1,42 @@
 package model.cart;
 
 import model.product.Product;
+import model.product.ProductVariant;
 
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class Cart {
-    // Key: Product ID, Value: CartItem
     private Map<Integer, CartItem> items;
 
     public Cart() {
         items = new HashMap<>();
     }
 
-    public void add(Product product, int quantity) {
-        if (items.containsKey(product.getId())) {
-            CartItem existingItem = items.get(product.getId());
+    public void add(Product product, ProductVariant variant, int quantity) {
+        int key = variant.getId();
+
+        if (items.containsKey(key)) {
+            CartItem existingItem = items.get(key);
             existingItem.setQuantity(existingItem.getQuantity() + quantity);
         } else {
-            CartItem newItem = new CartItem(product, quantity);
-            items.put(product.getId(), newItem);
+            CartItem newItem = new CartItem(product, variant, quantity);
+            items.put(key, newItem);
         }
     }
-    public void update(int productId, int quantity) {
-        if (items.containsKey(productId)) {
+    public void update(int variantId, int quantity) {
+        if (items.containsKey(variantId)) {
             if (quantity <= 0) {
-                items.remove(productId);
+                items.remove(variantId);
             } else {
-                items.get(productId).setQuantity(quantity);
+                items.get(variantId).setQuantity(quantity);
             }
         }
     }
-
-    public void remove(int productId) {
-        items.remove(productId);
+    public void remove(int variantId) {
+        items.remove(variantId);
     }
 
     public Collection<CartItem> getItems() {
@@ -55,14 +57,18 @@ public class Cart {
         }
         return count;
     }
-    public void removeItems(String[] ids) {
-        if (ids == null) return;
-        for (String id : ids) {
-            int productId = Integer.parseInt(id);
-            if (items.containsKey(productId)) {
-                CartItem item = items.get(productId);
-                items.remove(productId);
+    public void removeItems(String[] variantIds) {
+        if (variantIds == null) return;
+        for (String id : variantIds) {
+            try {
+                int vId = Integer.parseInt(id);
+                items.remove(vId);
+            } catch (NumberFormatException e) {
             }
         }
+    }
+
+    public void clear() {
+        items.clear();
     }
 }

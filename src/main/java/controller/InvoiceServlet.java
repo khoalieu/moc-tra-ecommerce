@@ -1,5 +1,6 @@
 package controller;
 
+import dao.DAOFactory;
 import dao.OrderDAO;
 import model.order.Order;
 import model.user.User;
@@ -29,7 +30,7 @@ public class InvoiceServlet extends HttpServlet {
 
         try {
             int orderId = Integer.parseInt(idStr);
-            OrderDAO orderDAO = new OrderDAO();
+            OrderDAO orderDAO = DAOFactory.getInstance().getOrderDAO();
             Order order = orderDAO.getOrderById(orderId);
             if (order != null && order.getUserId() == user.getId()) {
                 request.setAttribute("order", order);

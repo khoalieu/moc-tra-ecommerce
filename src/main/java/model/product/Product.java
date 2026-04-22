@@ -3,8 +3,9 @@ package model.product;
 import model.enums.ProductStatus;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
-public class    Product {
+public class Product {
     private int id;
     private String name;
     private String slug;
@@ -24,6 +25,7 @@ public class    Product {
     private int currentPromotionId;
     private String currentPromotionType;
     private Double currentPromotionValue;
+    private List<ProductVariant> variants;
     public Product() {}
 
     public int getId() { return id; }
@@ -82,4 +84,11 @@ public class    Product {
 
     public Double getCurrentPromotionValue() { return currentPromotionValue; }
     public void setCurrentPromotionValue(Double currentPromotionValue) { this.currentPromotionValue = currentPromotionValue; }
+    public List<ProductVariant> getVariants() {
+        return variants;
+    }
+
+    public void setVariants(List<ProductVariant> variants) {
+        this.variants = variants;
+    }
 }

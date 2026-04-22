@@ -1,5 +1,6 @@
 package controller.user;
 
+import dao.DAOFactory;
 import dao.UserAddressDAO;
 import model.user.User;
 import model.user.UserAddress;
@@ -23,7 +24,7 @@ public class UserAddressServlet extends HttpServlet {
             response.sendRedirect(request.getContextPath() + "/auth/login.jsp");
             return;
         }
-        UserAddressDAO dao = new UserAddressDAO();
+        UserAddressDAO dao = DAOFactory.getInstance().getUserAddressDAO();
         List<UserAddress> list = dao.getListAddress(user.getId());
 
         request.setAttribute("addressList", list);
@@ -42,7 +43,7 @@ public class UserAddressServlet extends HttpServlet {
         }
 
         String action = request.getParameter("action");
-        UserAddressDAO dao = new UserAddressDAO();
+        UserAddressDAO dao = DAOFactory.getInstance().getUserAddressDAO();
         if ("add".equals(action)) {
             String fullName = request.getParameter("fullName");
             String phone = request.getParameter("phoneNumber");

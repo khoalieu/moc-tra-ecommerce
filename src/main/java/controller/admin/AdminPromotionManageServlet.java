@@ -1,5 +1,6 @@
 package controller.admin;
 
+import dao.DAOFactory;
 import dao.PromotionDAO;
 import dao.VipVoucherDAO;
 import jakarta.servlet.ServletException;
@@ -33,8 +34,8 @@ public class AdminPromotionManageServlet extends HttpServlet {
 
     @Override
     public void init() {
-        promotionDAO = new PromotionDAO();
-        vipVoucherDAO = new VipVoucherDAO();
+        promotionDAO = DAOFactory.getInstance().getPromotionDAO();
+        vipVoucherDAO = DAOFactory.getInstance().getVipVoucherDAO();
     }
 
     @Override

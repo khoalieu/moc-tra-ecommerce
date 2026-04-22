@@ -1,5 +1,6 @@
 package controller.admin;
 
+import dao.DAOFactory;
 import dao.ProductDAO;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -13,7 +14,7 @@ import java.util.List;
 @WebServlet(name = "AdminProductStatusServlet", urlPatterns = {"/admin/product/status"})
 public class AdminProductStatusServlet extends HttpServlet {
 
-    private final ProductDAO productDAO = new ProductDAO();
+    private final ProductDAO productDAO = DAOFactory.getInstance().getProductDAO();
 
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {

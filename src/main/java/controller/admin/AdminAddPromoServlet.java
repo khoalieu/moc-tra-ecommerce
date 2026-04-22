@@ -1,15 +1,13 @@
 package controller.admin;
 
+import dao.DAOFactory;
 import dao.PromotionDAO;
-import db.DBConnect;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
 
 @WebServlet(name = "AdminAddPromoServlet", urlPatterns = {"/admin/promotion/add-products"})
 public class AdminAddPromoServlet extends HttpServlet {
@@ -20,7 +18,7 @@ public class AdminAddPromoServlet extends HttpServlet {
         String action = request.getParameter("action");
         String productIdsStr = request.getParameter("productIds");
 
-        PromotionDAO dao = new PromotionDAO();
+        PromotionDAO dao = DAOFactory.getInstance().getPromotionDAO();
 
         if ("remove".equals(action) && productIdsStr != null) {
             try {

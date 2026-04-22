@@ -1,6 +1,7 @@
 package controller.admin;
 
 import dao.CategoryDAO;
+import dao.DAOFactory;
 import model.product.Category;
 import model.user.User;
 import model.enums.UserRole;
@@ -24,7 +25,7 @@ public class AdminCategoryServlet extends HttpServlet {
         if (me == null) return;
 
         String path = request.getServletPath();
-        CategoryDAO dao = new CategoryDAO();
+        CategoryDAO dao = DAOFactory.getInstance().getCategoryDAO();
 
         if ("/admin/categories".equals(path)) {
             request.setAttribute("categories", dao.fetchAdminCategoryList());
@@ -66,7 +67,7 @@ public class AdminCategoryServlet extends HttpServlet {
         request.setCharacterEncoding("UTF-8");
 
         String path = request.getServletPath();
-        CategoryDAO dao = new CategoryDAO();
+        CategoryDAO dao = DAOFactory.getInstance().getCategoryDAO();
 
         if ("/admin/categories".equals(path)) {
             String action = request.getParameter("action"); // add | delete

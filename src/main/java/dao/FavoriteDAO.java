@@ -1,7 +1,8 @@
 package dao;
 
-import db.DBConnect;
 import model.product.Product;
+
+import javax.sql.DataSource;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -9,10 +10,15 @@ import java.sql.ResultSet;
 import java.util.*;
 
 public class FavoriteDAO {
+    private final DataSource ds;
+
+    public FavoriteDAO(DataSource ds) {
+        this.ds = ds;
+    }
 
     public boolean addFavorite(int userId, int productId) {
         String sql = "INSERT IGNORE INTO favorite_products(user_id, product_id) VALUES(?, ?)";
-        try (Connection conn = DBConnect.getConnection();
+        try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, userId);
             ps.setInt(2, productId);
@@ -25,7 +31,7 @@ public class FavoriteDAO {
 
     public boolean removeFavorite(int userId, int productId) {
         String sql = "DELETE FROM favorite_products WHERE user_id = ? AND product_id = ?";
-        try (Connection conn = DBConnect.getConnection();
+        try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, userId);
             ps.setInt(2, productId);
@@ -45,7 +51,7 @@ public class FavoriteDAO {
         }
         sql.append(")");
 
-        try (Connection conn = DBConnect.getConnection();
+        try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql.toString())) {
 
             ps.setInt(1, userId);
@@ -62,7 +68,7 @@ public class FavoriteDAO {
 
     public boolean isFavorite(int userId, int productId) {
         String sql = "SELECT 1 FROM favorite_products WHERE user_id = ? AND product_id = ? LIMIT 1";
-        try (Connection conn = DBConnect.getConnection();
+        try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, userId);
             ps.setInt(2, productId);
@@ -78,7 +84,7 @@ public class FavoriteDAO {
     public Set<Integer> getFavoriteProductIds(int userId) {
         Set<Integer> ids = new HashSet<>();
         String sql = "SELECT product_id FROM favorite_products WHERE user_id = ?";
-        try (Connection conn = DBConnect.getConnection();
+        try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, userId);
             try (ResultSet rs = ps.executeQuery()) {
@@ -137,7 +143,7 @@ public class FavoriteDAO {
 
         sql.append(" LIMIT ? OFFSET ? ");
 
-        try (Connection conn = DBConnect.getConnection();
+        try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql.toString())) {
 
             int paramIndex = 1;
@@ -195,7 +201,7 @@ public class FavoriteDAO {
             sql.append(" AND (CASE WHEN p.sale_price > 0 AND p.sale_price < p.price THEN p.sale_price ELSE p.price END) <= ? ");
         }
 
-        try (Connection conn = DBConnect.getConnection();
+        try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql.toString())) {
 
             int paramIndex = 1;
