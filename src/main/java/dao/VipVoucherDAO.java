@@ -1,6 +1,6 @@
 package dao;
 
-import db.DBConnect;
+import javax.sql.DataSource;
 import model.promotion.VipVoucher;
 
 import java.sql.*;
@@ -9,6 +9,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class VipVoucherDAO {
+    private final DataSource ds;
+
+    public VipVoucherDAO(DataSource ds) {
+        this.ds = ds;
+    }
 
     public List<VipVoucher> getActiveVouchersForUser(int userId) {
         List<VipVoucher> list = new ArrayList<>();
@@ -20,7 +25,7 @@ public class VipVoucherDAO {
                 "AND vv.start_date <= NOW() AND vv.end_date >= NOW() " +
                 "AND (vv.max_uses IS NULL OR vv.current_uses < vv.max_uses)";
 
-        try (Connection conn = DBConnect.getConnection();
+        try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, userId);
             ResultSet rs = ps.executeQuery();
@@ -45,7 +50,7 @@ public class VipVoucherDAO {
                 "AND (vv.max_uses IS NULL OR vv.current_uses < vv.max_uses) " +
                 "LIMIT 1";
 
-        try (Connection conn = DBConnect.getConnection();
+        try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, userId);
             ps.setInt(2, voucherId);
@@ -63,7 +68,7 @@ public class VipVoucherDAO {
     public void incrementVoucherUsage(int voucherId) {
         String sql = "UPDATE vip_vouchers SET current_uses = current_uses + 1 WHERE id = ?";
 
-        try (Connection conn = DBConnect.getConnection();
+        try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, voucherId);
             ps.executeUpdate();
@@ -78,7 +83,7 @@ public class VipVoucherDAO {
                 "WHERE user_id = ? AND voucher_id = ? AND used_at IS NULL " +
                 "LIMIT 1";
 
-        try (Connection conn = DBConnect.getConnection();
+        try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, userId);
             ps.setInt(2, voucherId);
@@ -91,7 +96,7 @@ public class VipVoucherDAO {
     public void addVoucherToUser(int userId, int voucherId) {
         String sql = "INSERT INTO user_vip_vouchers (user_id, voucher_id) VALUES (?, ?)";
 
-        try (Connection conn = DBConnect.getConnection();
+        try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, userId);
             ps.setInt(2, voucherId);
@@ -105,7 +110,7 @@ public class VipVoucherDAO {
         List<VipVoucher> list = new ArrayList<>();
         String sql = "SELECT * FROM vip_vouchers ORDER BY created_at DESC";
 
-        try (Connection conn = DBConnect.getConnection();
+        try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
 
@@ -121,7 +126,7 @@ public class VipVoucherDAO {
     public VipVoucher getVoucherById(int voucherId) {
         String sql = "SELECT * FROM vip_vouchers WHERE id = ?";
 
-        try (Connection conn = DBConnect.getConnection();
+        try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, voucherId);
             ResultSet rs = ps.executeQuery();
@@ -141,7 +146,7 @@ public class VipVoucherDAO {
                 "(code, discount_type, discount_value, max_uses, current_uses, start_date, end_date, is_active, created_at) " +
                 "VALUES (?, ?, ?, ?, 0, ?, ?, 1, NOW())";
 
-        try (Connection conn = DBConnect.getConnection();
+        try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setString(1, code);
@@ -171,7 +176,7 @@ public class VipVoucherDAO {
                 "start_date = ?, end_date = ?, is_active = ? " +
                 "WHERE id = ?";
 
-        try (Connection conn = DBConnect.getConnection();
+        try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setString(1, code);
@@ -199,7 +204,7 @@ public class VipVoucherDAO {
     public boolean deleteVoucher(int voucherId) {
         String sql = "DELETE FROM vip_vouchers WHERE id = ?";
 
-        try (Connection conn = DBConnect.getConnection();
+        try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, voucherId);
             return ps.executeUpdate() > 0;
@@ -245,7 +250,7 @@ public class VipVoucherDAO {
     }
     public boolean hasVoucherAssigned(int userId, int voucherId) {
         String sql = "SELECT 1 FROM user_vip_vouchers WHERE user_id = ? AND voucher_id = ? LIMIT 1";
-        try (Connection conn = DBConnect.getConnection();
+        try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, userId);
             ps.setInt(2, voucherId);
@@ -259,7 +264,7 @@ public class VipVoucherDAO {
 
     public boolean addVoucherToUsers(List<Integer> userIds, int voucherId) {
         String sql = "INSERT INTO user_vip_vouchers (user_id, voucher_id) VALUES (?, ?)";
-        try (Connection conn = DBConnect.getConnection();
+        try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             for (Integer userId : userIds) {
@@ -285,7 +290,7 @@ public class VipVoucherDAO {
                 "WHERE uvv.user_id = ? " +
                 "ORDER BY vv.created_at DESC";
 
-        try (Connection conn = DBConnect.getConnection();
+        try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setInt(1, userId);
@@ -323,7 +328,7 @@ public class VipVoucherDAO {
     public boolean removeVoucherFromUser(int userId, int voucherId) {
         String sql = "DELETE FROM user_vip_vouchers WHERE user_id = ? AND voucher_id = ? AND used_at IS NULL";
 
-        try (Connection conn = DBConnect.getConnection();
+        try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setInt(1, userId);

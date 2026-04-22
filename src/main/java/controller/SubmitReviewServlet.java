@@ -1,5 +1,6 @@
 package controller;
 
+import dao.DAOFactory;
 import dao.ReviewDAO;
 import model.user.User;
 import jakarta.servlet.*;
@@ -13,23 +14,32 @@ public class SubmitReviewServlet extends HttpServlet {
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         request.setCharacterEncoding("UTF-8");
 
-        HttpSession session = request.getSession();
-        User user = (User) session.getAttribute("user");
+        HttpSession session = request.getSession(false);
+        User user = session != null ? (User) session.getAttribute("user") : null;
+
+        int productId = Integer.parseInt(request.getParameter("productId"));
+        ReviewDAO reviewDAO = DAOFactory.getInstance().getReviewDAO();
 
         if (user == null) {
-            response.sendRedirect(request.getContextPath() + "/auth/login.jsp");
+            String redirect = java.net.URLEncoder.encode(
+                    "/chi-tiet-san-pham?id=" + productId + "&tab=review",
+                    java.nio.charset.StandardCharsets.UTF_8.toString()
+            );
+            response.sendRedirect(request.getContextPath() + "/auth/login.jsp?redirect=" + redirect);
             return;
         }
-        try {
-            int productId = Integer.parseInt(request.getParameter("productId"));
-            int rating = Integer.parseInt(request.getParameter("rating"));
-            String comment = request.getParameter("comment");
-            ReviewDAO reviewDAO = new ReviewDAO();
-            reviewDAO.addReview(productId, user.getId(), rating, comment);
-            response.sendRedirect(request.getContextPath() + "/chi-tiet-san-pham?id=" + productId);
-        } catch (NumberFormatException e) {
-            e.printStackTrace();
-            response.sendRedirect(request.getContextPath() + "/index.jsp");
+
+        if (!reviewDAO.hasPurchasedProduct(user.getId(), productId)) {
+            response.sendRedirect(request.getContextPath()
+                    + "/chi-tiet-san-pham?id=" + productId + "&tab=review&reviewError=not_purchased");
+            return;
         }
+
+        int rating = Integer.parseInt(request.getParameter("rating"));
+        String comment = request.getParameter("comment");
+        reviewDAO.addReview(productId, user.getId(), rating, comment);
+
+        response.sendRedirect(request.getContextPath()
+                + "/chi-tiet-san-pham?id=" + productId + "&tab=review&reviewSuccess=1");
     }
 }

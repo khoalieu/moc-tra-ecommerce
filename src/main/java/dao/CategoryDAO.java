@@ -1,8 +1,8 @@
 package dao;
 
-import db.DBConnect;
 import model.product.Category;
 
+import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -12,12 +12,16 @@ import java.util.List;
 import java.util.*;
 
 public class CategoryDAO {
+    private final DataSource ds;
+    public CategoryDAO(DataSource ds) {
+        this.ds = ds;
+    }
 
     public List<Category> getAllCategories() {
         List<Category> list = new ArrayList<>();
         String sql = "SELECT * FROM categories WHERE is_active = 1";
 
-        try (Connection conn = DBConnect.getConnection();
+        try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
 
@@ -37,7 +41,7 @@ public class CategoryDAO {
         Map<Integer, Integer> map = new HashMap<>();
         String sql = "SELECT category_id, COUNT(id) as count FROM products WHERE status = 'active' GROUP BY category_id";
 
-        try (Connection conn = DBConnect.getConnection();
+        try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
 
@@ -53,7 +57,7 @@ public class CategoryDAO {
     public List<Category> getAllActiveCategories() {
         List<Category> list = new ArrayList<>();
         String sql = "SELECT * FROM categories WHERE is_active = 1 ORDER BY parent_id ASC, id ASC";
-        try (Connection conn = DBConnect.getConnection();
+        try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
             while (rs.next()) {
@@ -74,7 +78,7 @@ public class CategoryDAO {
         Map<Integer, String> map = new LinkedHashMap<>();
         String sql = "SELECT id, name FROM categories WHERE is_active = 1 ORDER BY parent_id IS NULL DESC, parent_id ASC, name ASC";
 
-        try (Connection conn = DBConnect.getConnection();
+        try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
 
@@ -104,7 +108,7 @@ public class CategoryDAO {
                 "SELECT * FROM categories " +
                         "ORDER BY (parent_id IS NOT NULL) ASC, parent_id ASC, name ASC";
 
-        try (Connection conn = DBConnect.getConnection();
+        try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
 
@@ -122,7 +126,7 @@ public class CategoryDAO {
                         "WHERE id <> ? " +
                         "ORDER BY name ASC";
 
-        try (Connection conn = DBConnect.getConnection();
+        try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setInt(1, excludeId);
@@ -139,7 +143,7 @@ public class CategoryDAO {
 
     public Category fetchById(int id) {
         String sql = "SELECT * FROM categories WHERE id = ? LIMIT 1";
-        try (Connection conn = DBConnect.getConnection();
+        try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setInt(1, id);
@@ -154,7 +158,7 @@ public class CategoryDAO {
 
     public boolean existsSlug(String slug) {
         String sql = "SELECT 1 FROM categories WHERE slug = ? LIMIT 1";
-        try (Connection conn = DBConnect.getConnection();
+        try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setString(1, slug);
@@ -169,7 +173,7 @@ public class CategoryDAO {
 
     public boolean existsSlugExceptId(String slug, int excludeId) {
         String sql = "SELECT 1 FROM categories WHERE slug = ? AND id <> ? LIMIT 1";
-        try (Connection conn = DBConnect.getConnection();
+        try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setString(1, slug);
@@ -185,7 +189,7 @@ public class CategoryDAO {
 
     public int create(Category cat) {
         String sql = "INSERT INTO categories (name, slug, parent_id, is_active) VALUES (?, ?, ?, ?)";
-        try (Connection conn = DBConnect.getConnection();
+        try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql, PreparedStatement.RETURN_GENERATED_KEYS)) {
 
             ps.setString(1, cat.getName());
@@ -211,7 +215,7 @@ public class CategoryDAO {
 
     public boolean update(Category cat) {
         String sql = "UPDATE categories SET name=?, slug=?, parent_id=?, is_active=? WHERE id=? LIMIT 1";
-        try (Connection conn = DBConnect.getConnection();
+        try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setString(1, cat.getName());
@@ -232,7 +236,7 @@ public class CategoryDAO {
 
     public boolean removeById(int id) {
         String sql = "DELETE FROM categories WHERE id = ? LIMIT 1";
-        try (Connection conn = DBConnect.getConnection();
+        try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setInt(1, id);

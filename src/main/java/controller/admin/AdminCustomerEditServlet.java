@@ -1,6 +1,7 @@
 
 package controller.admin;
 
+import dao.DAOFactory;
 import dao.UserDAO;
 import model.user.User;
 import model.enums.UserRole;
@@ -27,7 +28,7 @@ public class AdminCustomerEditServlet extends HttpServlet {
             return;
         }
 
-        UserDAO userDAO = new UserDAO();
+        UserDAO userDAO = DAOFactory.getInstance().getUserDAO();
         User customer = userDAO.getUserDetailById(Integer.parseInt(idParam));
         if (customer == null) {
             response.sendError(404, "Khách hàng không tồn tại");
@@ -50,7 +51,7 @@ public class AdminCustomerEditServlet extends HttpServlet {
             String roleStr = request.getParameter("role");
             boolean isActive = request.getParameter("isActive") != null;
 
-            UserDAO userDAO = new UserDAO();
+            UserDAO userDAO = DAOFactory.getInstance().getUserDAO();
             User user = userDAO.getUserDetailById(id);
 
             user.setFirstName(firstName);

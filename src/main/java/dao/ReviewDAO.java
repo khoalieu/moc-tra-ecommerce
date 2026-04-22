@@ -1,12 +1,19 @@
 package dao;
 
-import db.DBConnect;
 import model.ReviewDTO;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 import model.product.ProductReview;
+
+import javax.sql.DataSource;
+
 public class ReviewDAO {
+    private final DataSource ds;
+    public ReviewDAO(DataSource ds) {
+        this.ds = ds;
+    }
+
     public List<ReviewDTO> getReviewsByProductId(int productId) {
         List<ReviewDTO> list = new ArrayList<>();
         String sql = "SELECT r.*, u.username, u.avatar " +
@@ -14,7 +21,7 @@ public class ReviewDAO {
                 "JOIN users u ON r.user_id = u.id " +
                 "WHERE r.product_id = ? " +
                 "ORDER BY r.created_at DESC";
-        try (Connection conn = DBConnect.getConnection();
+        try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, productId);
             ResultSet rs = ps.executeQuery();
@@ -40,7 +47,7 @@ public class ReviewDAO {
 
     public boolean addReview(int productId, int userId, int rating, String comment) {
         String sql = "INSERT INTO product_reviews (product_id, user_id, rating, comment_text, created_at) VALUES (?, ?, ?, ?, NOW())";
-        try (Connection conn = DBConnect.getConnection();
+        try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setInt(1, productId);
@@ -64,7 +71,7 @@ public class ReviewDAO {
                 "WHERE r.user_id = ? " +
                 "ORDER BY r.created_at DESC";
 
-        try (Connection conn = DBConnect.getConnection();
+        try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setInt(1, userId);
@@ -87,5 +94,44 @@ public class ReviewDAO {
             e.printStackTrace();
         }
         return list;
+    }
+    public boolean hasPurchasedProduct(int userId, int productId) {
+        String sql = "SELECT 1 " +
+                "FROM orders o " +
+                "JOIN order_items oi ON o.id = oi.order_id " +
+                "WHERE o.user_id = ? " +
+                "AND oi.product_id = ? " +
+                "AND o.status = 'completed' " +
+                "LIMIT 1";
+
+        try (Connection conn = ds.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, userId);
+            ps.setInt(2, productId);
+
+            ResultSet rs = ps.executeQuery();
+            return rs.next();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    public boolean hasReviewed(int userId, int productId) {
+        String sql = "SELECT 1 FROM product_reviews WHERE user_id = ? AND product_id = ? LIMIT 1";
+
+        try (Connection conn = ds.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, userId);
+            ps.setInt(2, productId);
+
+            ResultSet rs = ps.executeQuery();
+            return rs.next();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
     }
 }

@@ -1,17 +1,20 @@
 package dao;
 
-import db.DBConnect;
 import model.product.Product;
 import model.enums.ProductStatus;
 
+import javax.sql.DataSource;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
 public class ProductDAO {
+    private final DataSource ds;
 
-    public ProductDAO() {
+    public ProductDAO(DataSource ds) {
+        this.ds = ds;
     }
+
 
     public List<Product> getProducts(Integer categoryId, Integer promotionId, String sort, Double maxPrice, int index, int size) {
 
@@ -98,7 +101,7 @@ public class ProductDAO {
 
         sql.append(" LIMIT ? OFFSET ?");
 
-        try (Connection conn = DBConnect.getConnection();
+        try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql.toString())) {
 
             int paramIndex = 1;
@@ -204,7 +207,7 @@ public class ProductDAO {
             else if ("out-of-stock".equals(status)) sql.append(" AND p.stock_quantity = 0 ");
         }
 
-        try (Connection conn = DBConnect.getConnection();
+        try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql.toString())) {
 
             int paramIndex = 1;
@@ -236,7 +239,7 @@ public class ProductDAO {
                 "LEFT JOIN promotions pr ON pr.id = pi.promotion_id " +
                 "WHERE p.id = ? " +
                 "LIMIT 1";
-        try (Connection conn = DBConnect.getConnection();
+        try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, id);
             ResultSet rs = ps.executeQuery();
@@ -291,7 +294,7 @@ public class ProductDAO {
     public List<Product> getRelatedProducts(int categoryId, int currentProductId) {
         List<Product> list = new ArrayList<>();
         String sql = "SELECT * FROM products WHERE category_id = ? AND id != ? AND status = 'active' ORDER BY RAND() LIMIT 4";
-        try (Connection conn = DBConnect.getConnection();
+        try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, categoryId);
             ps.setInt(2, currentProductId);
@@ -318,7 +321,7 @@ public class ProductDAO {
                 "ingredients, usage_instructions, created_at) " +
                 "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
-        try (Connection conn = DBConnect.getConnection();
+        try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
             ps.setString(1, p.getName());
@@ -354,7 +357,7 @@ public class ProductDAO {
 
     public void insertProductImage(int productId, String imageUrl, String altText, int sortOrder) {
         String sql = "INSERT INTO product_images (product_id, image_url, alt_text, sort_order) VALUES (?, ?, ?, ?)";
-        try (Connection conn = DBConnect.getConnection();
+        try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setInt(1, productId);
@@ -370,7 +373,7 @@ public class ProductDAO {
 
     public void softDeleteProduct(int id) {
         String sql = "UPDATE products SET status = 'inactive' WHERE id = ?";
-        try (Connection conn = DBConnect.getConnection();
+        try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, id);
             ps.executeUpdate();
@@ -384,7 +387,7 @@ public class ProductDAO {
                 "sku=?, stock_quantity=?, category_id=?, is_bestseller=?, status=?, ingredients=?, usage_instructions=?, " +
                 "image_url=? WHERE id=?";
 
-        try (Connection conn = DBConnect.getConnection();
+        try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setString(1, p.getName());
@@ -417,7 +420,7 @@ public class ProductDAO {
     public void decreaseStock(int productId, int quantityPurchased) {
         String sql = "UPDATE products SET stock_quantity = stock_quantity - ? WHERE id = ?";
 
-        try (Connection conn = DBConnect.getConnection();
+        try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, quantityPurchased);
             ps.setInt(2, productId);
@@ -437,7 +440,7 @@ public class ProductDAO {
         }
         sql.append(")");
 
-        try (Connection conn = DBConnect.getConnection();
+        try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql.toString())) {
 
             ps.setString(1, newStatus); // 'ACTIVE' hoặc 'INACTIVE'
@@ -463,7 +466,7 @@ public class ProductDAO {
                 + "WHERE p.status = 'active' AND c.parent_id = ? "
                 + "GROUP BY p.id "
                 + "ORDER BY sold_qty DESC, p.created_at DESC " + "LIMIT ?";
-        try (Connection conn = DBConnect.getConnection();
+        try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, parentId);
             ps.setInt(2, limit);
@@ -493,7 +496,7 @@ public class ProductDAO {
         List<Product> list = new ArrayList<>();
         String sql = "SELECT * FROM products WHERE category_id = ? AND is_bestseller = 1 AND status = 'ACTIVE' LIMIT ?";
 
-        try (Connection conn = DBConnect.getConnection();
+        try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setInt(1, categoryId);
@@ -546,9 +549,27 @@ public class ProductDAO {
         }
         return p;
     }
+
+    public void updateProductDiscounts(String type, double value, String[] ids) throws Exception {
+        String sql = "percent".equals(type)
+                ? "UPDATE products SET sale_price = price * (100 - ?) / 100 WHERE id = ?"
+                : "UPDATE products SET sale_price = GREATEST(0, price - ?) WHERE id = ?";
+
+        try (Connection conn = ds.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            for (String id : ids) {
+                ps.setDouble(1, value);
+                ps.setInt(2, Integer.parseInt(id.trim()));
+                ps.addBatch();
+            }
+            ps.executeBatch();
+        }
+    }
+
     public boolean increaseStock(int productId, int quantity) {
         String sql = "UPDATE products SET stock_quantity = stock_quantity + ? WHERE id = ?";
-        try (Connection conn = DBConnect.getConnection();
+        try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, quantity);
             ps.setInt(2, productId);

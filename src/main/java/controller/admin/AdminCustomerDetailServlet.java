@@ -43,11 +43,11 @@ public class AdminCustomerDetailServlet extends HttpServlet {
             int userId = Integer.parseInt(idParam);
 
 
-            UserDAO userDAO = new UserDAO();
-            UserAddressDAO addressDAO = new UserAddressDAO();
-            OrderDAO orderDAO = new OrderDAO();
-            ReviewDAO reviewDAO = new ReviewDAO();
-            BlogCommentDAO blogCommentDAO = new BlogCommentDAO();
+            UserDAO userDAO = DAOFactory.getInstance().getUserDAO();
+            UserAddressDAO addressDAO = DAOFactory.getInstance().getUserAddressDAO();
+            OrderDAO orderDAO = DAOFactory.getInstance().getOrderDAO();
+            ReviewDAO reviewDAO = DAOFactory.getInstance().getReviewDAO();
+            BlogCommentDAO blogCommentDAO = DAOFactory.getInstance().getBlogCommentDAO();
 
 
             User customer = userDAO.getUserDetailById(userId);
@@ -146,7 +146,7 @@ public class AdminCustomerDetailServlet extends HttpServlet {
             int reviewCount = (reviews != null) ? reviews.size() : 0;
             int commentCount = (comments != null) ? comments.size() : 0;
 
-            VipVoucherDAO vipVoucherDAO = new VipVoucherDAO();
+            VipVoucherDAO vipVoucherDAO = DAOFactory.getInstance().getVipVoucherDAO();
 
             if (Boolean.TRUE.equals(customer.getIsVip())) {
                 request.setAttribute("voucherList", vipVoucherDAO.getAllVouchers());
@@ -189,7 +189,7 @@ public class AdminCustomerDetailServlet extends HttpServlet {
         int customerId = Integer.parseInt(customerIdStr);
 
         try {
-            VipVoucherDAO vipVoucherDAO = new VipVoucherDAO();
+            VipVoucherDAO vipVoucherDAO = DAOFactory.getInstance().getVipVoucherDAO();
 
             if ("assignVoucher".equals(action)) {
                 String voucherIdStr = request.getParameter("voucherId");

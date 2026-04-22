@@ -1,4 +1,4 @@
-<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %>
 
@@ -28,7 +28,8 @@
                     <li>
                         <div class="logo">
                             <a href="${pageContext.request.contextPath}/">
-                                <img src="${pageContext.request.contextPath}/assets/images/logoweb.png" alt="Tea Shop Logo">
+                                <img src="${pageContext.request.contextPath}/assets/images/logoweb.png"
+                                     alt="Tea Shop Logo">
                             </a>
                         </div>
                     </li>
@@ -42,13 +43,15 @@
                             <div class="dropdown-column">
                                 <h3>Trà Thảo Mộc</h3>
                                 <ul>
-                                    <li><a href="${pageContext.request.contextPath}/san-pham?category=1">Tất cả Trà Thảo Mộc</a></li>
+                                    <li><a href="${pageContext.request.contextPath}/san-pham?category=1">Tất cả Trà Thảo
+                                        Mộc</a></li>
                                 </ul>
                             </div>
                             <div class="dropdown-column">
                                 <h3>Nguyên Liệu Trà Sữa</h3>
                                 <ul>
-                                    <li><a href="${pageContext.request.contextPath}/san-pham?category=2">Nguyên Liệu Pha Chế</a></li>
+                                    <li><a href="${pageContext.request.contextPath}/san-pham?category=2">Nguyên Liệu Pha
+                                        Chế</a></li>
                                 </ul>
                             </div>
                         </div>
@@ -63,19 +66,26 @@
                             <div class="dropdown-column">
                                 <h3>Câu Chuyện Về Trà</h3>
                                 <ul>
-                                    <li><a href="${pageContext.request.contextPath}/ve-chung-toi">Câu Chuyện Của Chúng Tôi</a></li>
-                                    <li><a href="${pageContext.request.contextPath}/tra-thao-moc">Hành Trình Của Những Tách Trà</a></li>
-                                    <li><a href="${pageContext.request.contextPath}/tra-sua-nguyen-lieu">Thông Tin Về Trà Sữa Nguyên Liệu</a></li>
+                                    <li><a href="${pageContext.request.contextPath}/ve-chung-toi">Câu Chuyện Của Chúng
+                                        Tôi</a></li>
+                                    <li><a href="${pageContext.request.contextPath}/tra-thao-moc">Hành Trình Của Những
+                                        Tách Trà</a></li>
+                                    <li><a href="${pageContext.request.contextPath}/tra-sua-nguyen-lieu">Thông Tin Về
+                                        Trà Sữa Nguyên Liệu</a></li>
                                 </ul>
                             </div>
 
                             <div class="dropdown-column">
                                 <h3>Thông Tin Và Chính Sách</h3>
                                 <ul>
-                                    <li><a href="${pageContext.request.contextPath}/chinh-sach-ban-hang">Chính Sách Bán Hàng</a></li>
-                                    <li><a href="${pageContext.request.contextPath}/chinh-sach-thanh-toan">Chính Sách Thanh Toán</a></li>
-                                    <li><a href="${pageContext.request.contextPath}/chinh-sach-bao-hanh">Chính Sách Bảo Hành</a></li>
-                                    <li><a href="${pageContext.request.contextPath}/dieu-khoan-dich-vu">Điều Khoản Dịch Vụ</a></li>
+                                    <li><a href="${pageContext.request.contextPath}/chinh-sach-ban-hang">Chính Sách Bán
+                                        Hàng</a></li>
+                                    <li><a href="${pageContext.request.contextPath}/chinh-sach-thanh-toan">Chính Sách
+                                        Thanh Toán</a></li>
+                                    <li><a href="${pageContext.request.contextPath}/chinh-sach-bao-hanh">Chính Sách Bảo
+                                        Hành</a></li>
+                                    <li><a href="${pageContext.request.contextPath}/dieu-khoan-dich-vu">Điều Khoản Dịch
+                                        Vụ</a></li>
                                 </ul>
                             </div>
                         </div>
@@ -130,22 +140,22 @@
 
                                     <div class="cart-item-info">
                                         <h4>
-                                            <a href="${pageContext.request.contextPath}/chi-tiet-san-pham?id=${item.product.id}" style="color: inherit; text-decoration: none;">
+                                            <a href="${pageContext.request.contextPath}/chi-tiet-san-pham?id=${item.product.id}"
+                                               style="color: inherit; text-decoration: none;">
                                                     ${item.product.name}
                                             </a>
                                         </h4>
+
+                                        <c:if test="${not empty item.variant}">
+                                            <p style="font-size: 0.8rem; color: #888; margin: 2px 0 5px 0;">
+                                                Phân loại: ${item.variant.variantName}
+                                            </p>
+                                        </c:if>
                                         <p class="cart-item-quantity">
                                                 ${item.quantity} ×
                                             <span class="cart-item-price">
-                                <c:choose>
-                                    <c:when test="${item.product.salePrice > 0}">
-                                        <fmt:formatNumber value="${item.product.salePrice}" type="currency"/>
-                                    </c:when>
-                                    <c:otherwise>
-                                        <fmt:formatNumber value="${item.product.price}" type="currency"/>
-                                    </c:otherwise>
-                                </c:choose>
-                            </span>
+                                                <fmt:formatNumber value="${item.unitPrice}" type="currency"/>
+                                            </span>
                                         </p>
                                     </div>
                                 </div>
@@ -164,16 +174,40 @@
                             </c:if>
 
                             <div class="cart-actions">
-                                <a href="${pageContext.request.contextPath}/gio-hang" class="btn-view-cart">XEM GIỎ HÀNG</a>
-                                <a href="${pageContext.request.contextPath}/thanh-toan" class="btn-checkout">THANH TOÁN</a>
+                                <a href="${pageContext.request.contextPath}/gio-hang" class="btn-view-cart">XEM GIỎ
+                                    HÀNG</a>
+                                <a href="${pageContext.request.contextPath}/thanh-toan" class="btn-checkout">THANH
+                                    TOÁN</a>
                             </div>
                         </div>
                     </div>
                 </div>
-                <div class="user-account">
-                    <span class="user-icons">
-                        <i class="fa-solid fa-user"></i>
-                    </span>
+                <div class="user-account" style="display: flex; align-items: center; justify-content: center;">
+                    <%-- Kiểm tra class an toàn hơn --%>
+                    <c:choose>
+                        <%-- Nếu có avatar: Ép kích thước TRỰC TIẾP --%>
+                        <c:when test="${not empty sessionScope.user and not empty sessionScope.user.avatar}">
+                            <div class="avatar-wrapper" style="width: 35px !important; height: 35px !important; border-radius: 50% !important; overflow: hidden !important; border: 2px solid #107e84; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                <img src="${pageContext.request.contextPath}/image/${sessionScope.user.avatar}?t=<%=System.currentTimeMillis()%>"
+                                     alt="User Avatar"
+                                     style="width: 100% !important; height: 100% !important; object-fit: cover !important; display: block;">
+                            </div>
+                        </c:when>
+
+                        <%-- Nếu chưa có avatar hoặc chưa đăng nhập --%>
+                        <c:otherwise>
+                            <span class="user-icons" style="display: flex; align-items: center; justify-content: center; width: 35px; height: 35px; border-radius: 4px; border: 1px solid #ddd; flex-shrink: 0;">
+                                <c:choose>
+                                    <c:when test="${not empty sessionScope.user}">
+                                        <i class="fa-solid fa-user-circle" style="font-size: 20px; color: #e67e22;"></i>
+                                    </c:when>
+                                    <c:otherwise>
+                                        <i class="fa-solid fa-user" style="font-size: 16px;"></i>
+                                    </c:otherwise>
+                                </c:choose>
+                            </span>
+                        </c:otherwise>
+                    </c:choose>
 
                     <div class="user-dropdown">
                         <c:choose>

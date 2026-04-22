@@ -1,25 +1,36 @@
 package model.cart;
 
 import model.product.Product;
+import model.product.ProductVariant;
 
 public class CartItem {
     private Product product;
     private int quantity;
+    private int variantId;
+    private ProductVariant variant;
 
     public CartItem() {
     }
 
-    public CartItem(Product product, int quantity) {
+    public CartItem(Product product, ProductVariant variant, int quantity) {
         this.product = product;
+        this.variant = variant;
         this.quantity = quantity;
+        if (variant != null) {
+            this.variantId = variant.getId();
+        }
+    }
+
+    public double getUnitPrice() {
+        if (variant != null) {
+            return (variant.getSalePrice() > 0) ? variant.getSalePrice() : variant.getPrice();
+        }
+        return (product.getSalePrice() > 0) ? product.getSalePrice() : product.getPrice();
     }
 
     public double getTotalPrice() {
-        if (product == null) return 0;
-        double price = (product.getSalePrice() > 0) ? product.getSalePrice() : product.getPrice();
-        return price * quantity;
+        return getUnitPrice() * quantity;
     }
-
     public Product getProduct() {
         return product;
     }
@@ -34,5 +45,24 @@ public class CartItem {
 
     public void setQuantity(int quantity) {
         this.quantity = quantity;
+    }
+
+    public int getVariantId() {
+        return variantId;
+    }
+
+    public void setVariantId(int variantId) {
+        this.variantId = variantId;
+    }
+
+    public ProductVariant getVariant() {
+        return variant;
+    }
+
+    public void setVariant(ProductVariant variant) {
+        this.variant = variant;
+        if (variant != null) {
+            this.variantId = variant.getId();
+        }
     }
 }

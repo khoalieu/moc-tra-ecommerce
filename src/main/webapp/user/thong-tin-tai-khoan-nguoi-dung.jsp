@@ -53,6 +53,15 @@
             from { opacity: 0; transform: translateY(-20px); }
             to { opacity: 1; transform: translateY(0); }
         }
+        .avatar-wrapper:hover img {
+            opacity: 0.8;
+            transition: 0.3s;
+        }
+        .btn-save-changes:hover {
+            filter: brightness(1.1);
+            transform: translateY(-1px);
+            transition: 0.2s;
+        }
     </style>
 </head>
 <body class="user-dashboard-page">
@@ -78,7 +87,7 @@
         </c:if>
 
         <form action="${pageContext.request.contextPath}/tai-khoan-cua-toi" method="post" class="profile-form" style="margin-bottom: 40px; border-bottom: 1px solid #eee; padding-bottom: 20px;">
-            <input type="hidden" name="action" value="update_info">
+            <input type="hidden" name="action" value="updateinfo">
 
             <div class="form-row">
                 <div class="input-group">
@@ -201,7 +210,7 @@
 <button id="backToTop" class="back-to-top" title="Lên đầu trang">
     <i class="fa-solid fa-chevron-up"></i>
 </button>
-<script>t
+<script>
     function openEmailPopup() {
         document.getElementById('emailPopup').style.display = 'flex';
     }
@@ -214,6 +223,12 @@
             popup.style.display = "none";
         }
     }
+    function submitAvatar() {
+    const fileInput = document.getElementById('avatarInput');
+    if (fileInput.files && fileInput.files[0]) {
+        document.getElementById('avatarForm').submit();
+    }
+}
 </script>
 </body>
 </html>

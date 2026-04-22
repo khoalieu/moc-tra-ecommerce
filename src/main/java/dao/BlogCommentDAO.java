@@ -1,8 +1,8 @@
 package dao;
 
-import db.DBConnect;
 import model.blog.BlogComment;
 
+import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -11,13 +11,18 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class BlogCommentDAO {
+    private final DataSource ds;
+
+    public BlogCommentDAO(DataSource ds) {
+        this.ds = ds;
+    }
 
     public List<BlogComment> getByPostId(int postId) {
         List<BlogComment> list = new ArrayList<>();
 
         String sql = "SELECT* FROM blog_comments " +
                 "WHERE post_id = ? ORDER BY created_at DESC";
-        try (Connection conn = DBConnect.getConnection();
+        try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, postId);
             try (ResultSet rs = ps.executeQuery()) {
@@ -33,7 +38,7 @@ public class BlogCommentDAO {
         String sql =
                 "INSERT INTO blog_comments(post_id, user_id, comment_text, created_at) " +
                         "VALUES(?, ?, ?, NOW())";
-        try (Connection conn = DBConnect.getConnection();
+        try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, postId);
             ps.setInt(2, userId);
@@ -59,7 +64,7 @@ public class BlogCommentDAO {
     }
     public BlogComment getById(int id) {
         String sql = "SELECT * FROM blog_comments WHERE id = ? LIMIT 1";
-        try (Connection conn = DBConnect.getConnection();
+        try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, id);
             try (ResultSet rs = ps.executeQuery()) {
@@ -73,7 +78,7 @@ public class BlogCommentDAO {
 
     public boolean deleteById(int id) {
         String sql = "DELETE FROM blog_comments WHERE id = ? LIMIT 1";
-        try (Connection conn = DBConnect.getConnection();
+        try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, id);
             return ps.executeUpdate() > 0;
@@ -89,7 +94,7 @@ public class BlogCommentDAO {
                 "JOIN blog_posts p ON c.post_id = p.id " +
                 "WHERE c.user_id = ? ORDER BY c.created_at DESC";
 
-        try (Connection conn = DBConnect.getConnection();
+        try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setInt(1, userId);

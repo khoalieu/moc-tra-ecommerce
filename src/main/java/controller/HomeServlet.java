@@ -2,6 +2,7 @@ package controller;
 
 import dao.BannerDAO;
 import dao.BlogPostDAO;
+import dao.DAOFactory;
 import dao.ProductDAO;
 import model.Banner;
 import model.blog.BlogPost;
@@ -21,9 +22,9 @@ public class HomeServlet extends HttpServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
-        BannerDAO bannerDAO = new BannerDAO();
-        ProductDAO productDAO = new ProductDAO();
-        BlogPostDAO blogDAO = new BlogPostDAO();
+        BannerDAO bannerDAO = DAOFactory.getInstance().getBannerDAO();
+        ProductDAO productDAO = DAOFactory.getInstance().getProductDAO();
+        BlogPostDAO blogDAO = DAOFactory.getInstance().getBlogPostDAO();
 
         List<Banner> listBanners = bannerDAO.getHomeActive();
         request.setAttribute("listBanners", listBanners);
