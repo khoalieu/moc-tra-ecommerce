@@ -355,3 +355,277 @@
     font-size: 12px;
     color: #999;
 }
+.customer-detail-hero {
+    background: linear-gradient(135deg, #ffffff 0%, #f6fbfb 100%);
+    border: 1px solid #e8f1f1;
+    border-radius: 16px;
+    padding: 22px 24px;
+    margin-bottom: 24px;
+    box-shadow: 0 6px 20px rgba(16, 126, 132, 0.06);
+}
+
+.customer-detail-header {
+    margin-bottom: 0;
+    padding-bottom: 0;
+    border-bottom: none;
+}
+
+.customer-info-header h2 {
+    font-size: 26px;
+    margin-bottom: 8px;
+}
+
+.customer-info-header .customer-subline {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    margin-top: 8px;
+}
+
+.customer-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: #f4f7f8;
+    color: #445;
+    padding: 8px 12px;
+    border-radius: 999px;
+    font-size: 13px;
+    border: 1px solid #e7ecef;
+}
+
+.customer-chip.vip {
+    background: #e8f7f7;
+    color: #107e84;
+    border-color: rgba(16, 126, 132, 0.18);
+    font-weight: 600;
+}
+
+.customer-actions-top .btn {
+    min-width: 130px;
+    justify-content: center;
+}
+
+.vip-card {
+    background: linear-gradient(135deg, #fff 0%, #f5fbfb 100%);
+    border: 1px solid rgba(16, 126, 132, 0.12);
+}
+
+.voucher-cart-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.voucher-cart-item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 16px;
+    background: #f8fbfb;
+    border: 1px solid #e8eeee;
+    border-radius: 12px;
+}
+
+.voucher-cart-icon {
+    width: 52px;
+    height: 52px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #107e84, #4CAF50);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    flex-shrink: 0;
+}
+
+.voucher-cart-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.voucher-cart-name {
+    font-weight: 700;
+    color: #107e84;
+    margin-bottom: 6px;
+    font-size: 15px;
+}
+
+.voucher-cart-meta {
+    color: #666;
+    font-size: 13px;
+    line-height: 1.5;
+    margin-bottom: 3px;
+}
+
+.voucher-cart-action {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+}
+
+.btn-assign-inline {
+    min-width: 132px;
+    height: 42px;
+    padding: 0 18px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+
+    background: #fff;
+    color: #107e84;
+    border: 1.5px solid #107e84;
+    border-radius: 10px;
+
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    box-shadow: 0 2px 8px rgba(16, 126, 132, 0.06);
+}
+
+.btn-assign-inline i {
+    font-size: 14px;
+}
+
+.btn-assign-inline:hover {
+    background: #107e84;
+    color: #fff;
+    border-color: #107e84;
+    transform: translateY(-1px);
+    box-shadow: 0 8px 18px rgba(16, 126, 132, 0.18);
+}
+
+.btn-assign-inline:active {
+    transform: translateY(0);
+}
+
+.btn-assign-inline:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(16, 126, 132, 0.14);
+}
+
+.btn-remove-voucher {
+    border: none;
+    background: #fff1f2;
+    color: #c62828;
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.btn-remove-voucher:hover {
+    background: #ffe4e6;
+}
+
+.soft-empty {
+    padding: 18px;
+    text-align: center;
+    color: #777;
+    background: #fafafa;
+    border: 1px dashed #ddd;
+    border-radius: 12px;
+}
+
+.vip-upgrade-card {
+    padding: 0;
+    overflow: hidden;
+}
+
+.vip-upgrade-box {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding: 24px;
+}
+
+.vip-upgrade-icon {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #107e84, #4CAF50);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 30px;
+    flex-shrink: 0;
+    box-shadow: 0 8px 20px rgba(16, 126, 132, 0.18);
+}
+
+.vip-upgrade-content {
+    flex: 1;
+}
+
+.vip-upgrade-title {
+    margin-bottom: 8px;
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.vip-upgrade-note {
+    margin-bottom: 16px;
+    color: #667085;
+    line-height: 1.6;
+}
+
+.btn-upgrade-vip-disabled {
+    background-color: #107e84;
+    color: #fff;
+}
+
+.btn-upgrade-vip-disabled:hover {
+    background-color: #0d6a6f;
+}
+
+@media (max-width: 768px) {
+    .voucher-cart-item,
+    .vip-upgrade-box {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .voucher-cart-action,
+    .voucher-cart-action form,
+    .btn-assign-inline,
+    .btn-remove-voucher {
+        width: 100%;
+    }
+
+    .vip-upgrade-icon {
+        width: 60px;
+        height: 60px;
+        font-size: 24px;
+    }
+}
+.customer-overview-card {
+    margin-bottom: 30px;
+}
+
+.active-time-text {
+    color: #28a745;
+}
+
+.cart-item-total {
+    text-align: right;
+    font-weight: 600;
+    color: #107e84;
+    font-size: 16px;
+}
+
+.center-cell {
+    text-align: center;
+    padding: 15px;
+}
+
+.soft-note {
+    padding: 15px;
+    color: #666;
+    font-style: italic;
+}

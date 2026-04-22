@@ -13,7 +13,7 @@ public class VipVoucher {
     private LocalDateTime endDate;
     private Boolean isActive;
     private LocalDateTime createdAt;
-
+    private LocalDateTime usedAt;
 
     public VipVoucher() {
     }
@@ -77,6 +77,13 @@ public class VipVoucher {
     }
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
+    }
+    public LocalDateTime getUsedAt() {
+        return usedAt;
+    }
+
+    public void setUsedAt(LocalDateTime usedAt) {
+        this.usedAt = usedAt;
     }
 
 }
