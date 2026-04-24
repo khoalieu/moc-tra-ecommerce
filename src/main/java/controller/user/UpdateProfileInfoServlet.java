@@ -168,13 +168,13 @@ public class UpdateProfileInfoServlet extends HttpServlet {
             // 1. Tạo tên file đầy đủ có cả đuôi file
             String uniqueFileName = "avatar_" + currentUser.getId() + "_" + UUID.randomUUID().toString().substring(0, 8) + extension;
 
-            // 2. Lưu file vào ổ đĩa (Đoạn này bạn đã làm đúng)
+            // 2. Lưu file vào ổ đĩa
             Path filePath = Paths.get(uploadPath, uniqueFileName);
             try (InputStream input = filePart.getInputStream()) {
                 Files.copy(input, filePath, StandardCopyOption.REPLACE_EXISTING);
             }
 
-            // 3. QUAN TRỌNG: Cập nhật Database với ĐẦY ĐỦ tên file (uniqueFileName)
+            // Cập nhật Database với ĐẦY ĐỦ tên file (uniqueFileName)
             // Hãy đảm bảo biến uniqueFileName truyền vào đây có đuôi .png/.jpg
             userDAO.updateAvatar(currentUser.getId(), uniqueFileName);
             // Refresh user from database and update session

@@ -1,4 +1,4 @@
-<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %>
 <%@ taglib prefix="fn" uri="jakarta.tags.functions" %>
@@ -9,331 +9,618 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Quản lý Khuyến Mãi - Mộc Trà Admin</title>
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/base.css">
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/components.css">
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/admin/assets/css/admin.css">
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/admin-promotions.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css">
+
+    <base href="${pageContext.request.contextPath}/">
+
+    <link rel="stylesheet" href="assets/css/base.css">
+    <link rel="stylesheet" href="assets/css/components.css">
+    <link rel="stylesheet" href="admin/assets/css/admin.css">
+    <link rel="stylesheet" href="admin/assets/css/admin-promotions.css">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
 <div class="admin-container">
-    <aside class="admin-sidebar">
-        <jsp:include page="/common/admin-sidebar.jsp">
-            <jsp:param name="activePage" value="promotions"/>
-        </jsp:include>
-        <nav class="admin-nav">
-            <ul>
-                <li class="nav-item">
-                    <a href="${pageContext.request.contextPath}/admin/dashboard.jsp"><i
-                            class="fas fa-tachometer-alt"></i><span>Dashboard</span></a>
-                </li>
-                <li class="nav-item active">
-                    <a href="${pageContext.request.contextPath}/admin/promotions"><i class="fas fa-tags"></i><span>Quản lý Khuyến Mãi</span></a>
-                </li>
-            </ul>
-        </nav>
-    </aside>
+
+    <jsp:include page="/common/admin-sidebar.jsp">
+        <jsp:param name="activePage" value="promotions"/>
+    </jsp:include>
 
     <main class="admin-main">
         <header class="admin-header">
             <div class="header-left">
-                <h1>Chương trình khuyến mãi</h1>
+                <h1>Quản lý Khuyến mãi</h1>
             </div>
             <div class="header-right">
-                <button class="btn btn-primary" onclick="openCreateModal()">
-                    <i class="fas fa-plus"></i> Tạo chương trình mới
-                </button>
+                <a href="${pageContext.request.contextPath}/" class="view-site-btn" target="_blank">
+                    <i class="fas fa-external-link-alt"></i>
+                    <span>Xem trang web</span>
+                </a>
             </div>
         </header>
 
         <div class="admin-content">
-            <div class="products-container">
-                <div class="table-responsive">
-                    <table class="orders-table">
-                        <thead>
-                        <tr>
-                            <th>Ảnh</th>
-                            <th>Thông tin chương trình</th>
-                            <th>Giảm giá</th>
-                            <th>Thời gian</th>
-                            <th>Trạng thái</th>
-                            <th>Hành động</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        <c:forEach var="p" items="${promotionList}">
-                            <fmt:formatNumber value="${p.discountValue}" pattern="#" var="cleanValue"/>
 
+            <div class="page-header">
+                <div class="page-title">
+                    <h2>Chương trình khuyến mãi & Voucher VIP</h2>
+                    <p>Quản lý khuyến mãi sản phẩm và voucher dành cho khách hàng VIP</p>
+                </div>
+            </div>
+
+            <div class="promotion-stats">
+                <div class="stat-card">
+                    <div class="stat-icon stat-icon-promo">
+                        <i class="fas fa-bullhorn"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3>${promotionList.size()}</h3>
+                        <p>Tổng chương trình</p>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon stat-icon-voucher">
+                        <i class="fas fa-ticket-alt"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3>${voucherList.size()}</h3>
+                        <p>Voucher VIP</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tabs-container">
+                <div class="tabs-header">
+                    <button class="tab-btn active" data-tab="promotionTab">
+                        <i class="fas fa-tags"></i> Khuyến mãi
+                    </button>
+                    <button class="tab-btn" data-tab="voucherTab">
+                        <i class="fas fa-ticket-alt"></i> Voucher VIP
+                    </button>
+                </div>
+
+                <!-- promotionn tab -->
+                <div id="promotionTab" class="tab-content active">
+                    <div class="table-header">
+                        <div class="table-header__info">
+                            <strong>Tổng cộng: ${promotionList.size()} chương trình</strong>
+                        </div>
+                        <button type="button" class="btn btn-create-promotion" onclick="openCreatePromotionModal()">
+                            <i class="fas fa-plus"></i> Thêm khuyến mãi
+                        </button>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="orders-table promotions-table">
+                            <thead>
                             <tr>
-                                <td>
-                                    <img src="${pageContext.request.contextPath}/${p.imageUrl}"
-                                         alt="Promo"
-                                         style="width: 60px; height: 40px; object-fit: cover; border-radius: 4px;">
-                                </td>
-                                <td>
-                                    <strong>${p.name}</strong><br>
-                                    <small style="color: #666;">${p.description}</small>
-                                </td>
-                                <td>
-                                    <c:if test="${p.discountType == 'PERCENT'}">
-                                        <span class="badge"
-                                              style="background: #e3f2fd; color: #0d47a1;">-${cleanValue}%</span>
-                                    </c:if>
-                                    <c:if test="${p.discountType == 'FIXED_AMOUNT'}">
-                    <span class="badge" style="background: #fff3e0; color: #e65100;">
-                        -<fmt:formatNumber value="${p.discountValue}" pattern="#,###"/>₫
-                    </span>
-                                    </c:if>
-                                </td>
-                                <td>
-                                    <div style="font-size: 0.85rem;">
-                                        Start: <span
-                                            style="color: green">${fn:replace(p.startDate, 'T', ' ')}</span><br>
-                                        End: <span style="color: red">${fn:replace(p.endDate, 'T', ' ')}</span>
-                                    </div>
-                                </td>
-                                <td>
-                <span class="status-badge ${p.active ? 'status-active' : 'status-inactive'}">
-                        ${p.active ? 'Đang chạy' : 'Đã tắt'}
-                </span>
-                                </td>
-                                <td>
-                                    <div class="action-buttons">
-                                        <button class="btn-action" title="Chỉnh sửa"
-                                                onclick="openEditModal(this)"
-                                                data-id="${p.id}"
-                                                data-name="${p.name}"
-                                                data-desc="${p.description}"
-                                                data-type="${p.discountType}"
-                                                data-value="${cleanValue}"
-                                                data-start="${p.startDate}"
-                                                data-end="${p.endDate}"
-                                                data-image="${p.imageUrl}">
+                                <th>Hình ảnh</th>
+                                <th>Tên chương trình</th>
+                                <th>Loại</th>
+                                <th>Giảm giá</th>
+                                <th>Thời gian</th>
+                                <th>Trạng thái</th>
+                                <th class="actions-col">Hành động</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <c:forEach var="promo" items="${promotionList}">
+                                <tr>
+                                    <td class="promo-image-col">
+                                        <div class="promo-image-box">
+                                            <c:choose>
+                                                <c:when test="${not empty promo.imageUrl}">
+                                                    <img src="${pageContext.request.contextPath}/${promo.imageUrl}" alt="${promo.name}" class="promo-list-image">
+                                                </c:when>
+                                                <c:otherwise>
+                                                    <div class="promo-image-placeholder">
+                                                        <i class="fas fa-image"></i>
+                                                    </div>
+                                                </c:otherwise>
+                                            </c:choose>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="cell-title">${promo.name}</div>
+                                        <div class="cell-subtitle">${promo.description}</div>
+                                    </td>
+                                    <td>
+                                        <c:choose>
+                                            <c:when test="${promo.discountType == 'PERCENT'}">
+                                                <span class="badge badge-blue">Phần trăm</span>
+                                            </c:when>
+                                            <c:otherwise>
+                                                <span class="badge badge-orange">Tiền mặt</span>
+                                            </c:otherwise>
+                                        </c:choose>
+                                    </td>
+                                    <td>
+                                        <c:choose>
+                                            <c:when test="${promo.discountType == 'PERCENT'}">
+                                                <strong>${promo.discountValue}%</strong>
+                                            </c:when>
+                                            <c:otherwise>
+                                                <strong><fmt:formatNumber value="${promo.discountValue}" pattern="#,###"/>₫</strong>
+                                            </c:otherwise>
+                                        </c:choose>
+                                    </td>
+                                    <td class="time-cell">
+                                        <div>Bắt đầu: <span class="time-start">${fn:replace(promo.startDate, 'T', ' ')}</span></div>
+                                        <div>Kết thúc: <span class="time-end">${fn:replace(promo.endDate, 'T', ' ')}</span></div>
+                                    </td>
+                                    <td>
+                                        <span class="status-badge ${promo.active ? 'status-active' : 'status-inactive'}">
+                                                ${promo.active ? 'Hoạt động' : 'Tắt'}
+                                        </span>
+                                    </td>
+                                    <td class="actions-col">
+                                        <button type="button" class="btn-action" title="Chỉnh sửa"
+                                                onclick="openEditPromotionModal(this)"
+                                                data-id="${promo.id}"
+                                                data-name="${promo.name}"
+                                                data-description="${promo.description}"
+                                                data-discounttype="${promo.discountType}"
+                                                data-discountvalue="${promo.discountValue}"
+                                                data-start="${promo.startDate}"
+                                                data-end="${promo.endDate}"
+                                                data-imageurl="${promo.imageUrl}">
                                             <i class="fas fa-edit"></i>
                                         </button>
 
-                                        <c:if test="${!p.active}">
-                                            <button class="btn-action" title="Kích hoạt"
-                                                    onclick="toggleStatus(${p.id}, true)" style="color: green;">
-                                                <i class="fas fa-play"></i>
+                                        <form action="${pageContext.request.contextPath}/admin/promotions" method="post" class="inline-form">
+                                            <input type="hidden" name="action" value="togglePromotion">
+                                            <input type="hidden" name="id" value="${promo.id}">
+                                            <input type="hidden" name="active" value="${!promo.active}">
+                                            <button type="submit" class="btn-action" title="${promo.active ? 'Tắt khuyến mãi' : 'Bật khuyến mãi'}">
+                                                <i class="fas ${promo.active ? 'fa-toggle-on' : 'fa-toggle-off'}"></i>
                                             </button>
-                                        </c:if>
-                                        <c:if test="${p.active}">
-                                            <button class="btn-action" title="Tắt chương trình"
-                                                    onclick="toggleStatus(${p.id}, false)" style="color: red;">
-                                                <i class="fas fa-stop"></i>
+                                        </form>
+
+                                        <form action="${pageContext.request.contextPath}/admin/promotions" method="post"
+                                              class="inline-form"
+                                              onsubmit="return confirm('Bạn có chắc muốn xóa chương trình khuyến mãi này?');">
+                                            <input type="hidden" name="action" value="deletePromotion">
+                                            <input type="hidden" name="id" value="${promo.id}">
+                                            <button type="submit" class="btn-action btn-action-danger" title="Xóa">
+                                                <i class="fas fa-trash"></i>
                                             </button>
-                                        </c:if>
-                                    </div>
-                                </td>
+                                        </form>
+                                    </td>
+                                </tr>
+                            </c:forEach>
+
+                            <c:if test="${empty promotionList}">
+                                <tr>
+                                    <td colspan="7" class="empty-cell">
+                                        Chưa có chương trình khuyến mãi nào.
+                                    </td>
+                                </tr>
+                            </c:if>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- voucher tab -->
+                <div id="voucherTab" class="tab-content tab-hidden">
+                    <div class="table-header">
+                        <div class="table-header__info">
+                            <strong>Tổng cộng: ${voucherList.size()} voucher VIP</strong>
+                        </div>
+                        <button type="button" class="btn btn-create-voucher" onclick="openCreateVoucherModal()">
+                            <i class="fas fa-plus"></i> Thêm voucher VIP
+                        </button>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="orders-table promotions-table">
+                            <thead>
+                            <tr>
+                                <th>Mã voucher</th>
+                                <th>Loại</th>
+                                <th>Giá trị</th>
+                                <th>Lượt dùng</th>
+                                <th>Thời gian</th>
+                                <th>Trạng thái</th>
+                                <th class="actions-col">Hành động</th>
                             </tr>
-                        </c:forEach>
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody>
+                            <c:forEach var="voucher" items="${voucherList}">
+                                <tr>
+                                    <td><strong>${voucher.code}</strong></td>
+                                    <td>
+                                        <c:if test="${voucher.discountType == 'PERCENT'}">
+                                            <span class="badge badge-blue">Phần trăm</span>
+                                        </c:if>
+                                        <c:if test="${voucher.discountType == 'FIXED_AMOUNT'}">
+                                            <span class="badge badge-orange">Tiền mặt</span>
+                                        </c:if>
+                                    </td>
+                                    <td>
+                                        <c:if test="${voucher.discountType == 'PERCENT'}">
+                                            <strong>${voucher.discountValue}%</strong>
+                                        </c:if>
+                                        <c:if test="${voucher.discountType == 'FIXED_AMOUNT'}">
+                                            <strong><fmt:formatNumber value="${voucher.discountValue}" pattern="#,###"/>₫</strong>
+                                        </c:if>
+                                    </td>
+                                    <td>
+                                        <c:choose>
+                                            <c:when test="${voucher.maxUses != null}">
+                                                ${voucher.currentUses} / ${voucher.maxUses}
+                                            </c:when>
+                                            <c:otherwise>
+                                                ${voucher.currentUses} / Không giới hạn
+                                            </c:otherwise>
+                                        </c:choose>
+                                    </td>
+                                    <td class="time-cell">
+                                        <div>Start: <span class="time-start">${fn:replace(voucher.startDate, 'T', ' ')}</span></div>
+                                        <div>End: <span class="time-end">${fn:replace(voucher.endDate, 'T', ' ')}</span></div>
+                                    </td>
+                                    <td>
+                                        <span class="status-badge ${voucher.active ? 'status-active' : 'status-inactive'}">
+                                                ${voucher.active ? 'Hoạt động' : 'Tắt'}
+                                        </span>
+                                    </td>
+                                    <td class="actions-col">
+                                        <button type="button" class="btn-action" title="Chỉnh sửa"
+                                                onclick="openEditVoucherModal(this)"
+                                                data-id="${voucher.id}"
+                                                data-code="${voucher.code}"
+                                                data-type="${voucher.discountType}"
+                                                data-value="${voucher.discountValue}"
+                                                data-maxuses="${voucher.maxUses}"
+                                                data-start="${voucher.startDate}"
+                                                data-end="${voucher.endDate}"
+                                                data-active="${voucher.active}">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+
+                                        <form action="${pageContext.request.contextPath}/admin/promotions" method="post"
+                                              class="inline-form"
+                                              onsubmit="return confirm('Bạn có chắc muốn xóa voucher này?');">
+                                            <input type="hidden" name="action" value="deleteVoucher">
+                                            <input type="hidden" name="id" value="${voucher.id}">
+                                            <button type="submit" class="btn-action btn-action-danger" title="Xóa">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            </c:forEach>
+
+                            <c:if test="${empty voucherList}">
+                                <tr>
+                                    <td colspan="7" class="empty-cell">
+                                        Chưa có voucher VIP nào.
+                                    </td>
+                                </tr>
+                            </c:if>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
+
+            <!-- tạo sửa khuyến mã -->
+            <div id="promotionModal" class="modal modal-hidden">
+                <div class="modal-overlay" onclick="closePromotionModal()"></div>
+                <div class="modal-content promotion-modal-content">
+                    <div class="modal-header">
+                        <h3 id="promotionModalTitle">Thêm khuyến mãi</h3>
+                        <button type="button" class="modal-close" onclick="closePromotionModal()">&times;</button>
+                    </div>
+
+                    <div class="modal-body promotion-modal-body">
+                        <form id="promotionForm"
+                              action="${pageContext.request.contextPath}/admin/promotions"
+                              method="post"
+                              enctype="multipart/form-data">
+                            <input type="hidden" name="action" id="promotionAction" value="createPromotion">
+                            <input type="hidden" name="id" id="promotionId">
+                            <input type="hidden" name="oldImageUrl" id="promotionOldImageUrl">
+
+                            <div class="form-grid-layout">
+                                <div class="form-group">
+                                    <label>Tên chương trình</label>
+                                    <input type="text" class="form-control" name="name" id="promotionName" required>
+                                </div>
+
+                                <div class="form-group">
+                                    <label>Loại giảm giá</label>
+                                    <select class="form-control" name="discountType" id="promotionDiscountType" required>
+                                        <option value="PERCENT">Phần trăm (%)</option>
+                                        <option value="FIXED_AMOUNT">Tiền mặt (₫)</option>
+                                    </select>
+                                </div>
+
+                                <div class="form-group">
+                                    <label>Giá trị giảm</label>
+                                    <input type="number" step="0.01" class="form-control" name="discountValue" id="promotionDiscountValue" required>
+                                </div>
+
+                                <div class="form-group">
+                                    <label>Ngày bắt đầu</label>
+                                    <input type="datetime-local" class="form-control" name="startDate" id="promotionStartDate" required>
+                                </div>
+
+                                <div class="form-group">
+                                    <label>Ngày kết thúc</label>
+                                    <input type="datetime-local" class="form-control" name="endDate" id="promotionEndDate" required>
+                                </div>
+
+                                <div class="form-group full-width">
+                                    <label>Mô tả</label>
+                                    <textarea class="form-control" name="description" id="promotionDescription" rows="4"></textarea>
+                                </div>
+
+                                <div class="form-group full-width">
+                                    <label>Hình ảnh khuyến mãi</label>
+                                    <div class="image-upload" onclick="document.getElementById('promotionImage').click()">
+                                        <img id="promotionImagePreview" alt="Preview" class="promotion-preview-image preview-hidden">
+                                        <i id="promotionImageIcon" class="fas fa-cloud-upload-alt"></i>
+                                        <p id="promotionImageText">Nhấp để tải lên hình ảnh</p>
+                                        <small>JPG, PNG, GIF tối đa 2MB<br>Khuyến nghị: 800x450px</small>
+                                    </div>
+                                    <input type="file" id="promotionImage" name="image" accept="image/*" class="hidden-file-input">
+                                    <div class="help-text">Ảnh sẽ hiển thị trong danh sách khuyến mãi.</div>
+                                </div>
+                            </div>
+
+                            <div class="form-actions">
+                                <button type="button" class="btn btn-cancel" onclick="closePromotionModal()">Hủy</button>
+                                <button type="submit" class="btn btn-save-promotion">Lưu khuyến mãi</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- tạo sửa VOUCHER -->
+            <div id="voucherModal" class="modal modal-hidden">
+                <div class="modal-overlay" onclick="closeVoucherModal()"></div>
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h3 id="voucherModalTitle">Thêm voucher VIP</h3>
+                        <button type="button" class="modal-close" onclick="closeVoucherModal()">&times;</button>
+                    </div>
+
+                    <div class="modal-body">
+                        <form id="voucherForm" action="${pageContext.request.contextPath}/admin/promotions" method="post">
+                            <input type="hidden" name="action" id="voucherAction" value="createVoucher">
+                            <input type="hidden" name="id" id="voucherId">
+
+                            <div class="form-grid-layout">
+                                <div class="form-group">
+                                    <label>Mã voucher</label>
+                                    <input type="text" class="form-control" name="code" id="voucherCode" required>
+                                </div>
+
+                                <div class="form-group">
+                                    <label>Loại giảm giá</label>
+                                    <select class="form-control" name="discountType" id="voucherDiscountType" required>
+                                        <option value="PERCENT">Phần trăm (%)</option>
+                                        <option value="FIXED_AMOUNT">Tiền mặt (₫)</option>
+                                    </select>
+                                </div>
+
+                                <div class="form-group">
+                                    <label>Giá trị giảm</label>
+                                    <input type="number" step="0.01" class="form-control" name="discountValue" id="voucherDiscountValue" required>
+                                </div>
+
+                                <div class="form-group">
+                                    <label>Số lượt dùng tối đa</label>
+                                    <input type="number" class="form-control" name="maxUses" id="voucherMaxUses"
+                                           placeholder="Để trống nếu không giới hạn">
+                                </div>
+
+                                <div class="form-group">
+                                    <label>Ngày bắt đầu</label>
+                                    <input type="datetime-local" class="form-control" name="startDate" id="voucherStartDate" required>
+                                </div>
+
+                                <div class="form-group">
+                                    <label>Ngày kết thúc</label>
+                                    <input type="datetime-local" class="form-control" name="endDate" id="voucherEndDate" required>
+                                </div>
+
+                                <div class="form-group full-width active-checkbox-wrap" id="voucherActiveWrap">
+                                    <label class="checkbox-inline">
+                                        <input type="checkbox" name="active" id="voucherActive">
+                                        <span>Voucher đang hoạt động</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div class="form-actions">
+                                <button type="button" class="btn btn-cancel" onclick="closeVoucherModal()">Hủy</button>
+                                <button type="submit" class="btn btn-save-voucher">Lưu voucher</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
         </div>
     </main>
 </div>
-
-<div id="promoModal" class="modal-overlay">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h3 id="modalTitle">Tạo chương trình khuyến mãi</h3>
-            <span class="close-modal" onclick="closeModal()">&times;</span>
-        </div>
-
-        <form action="promotions" method="POST" enctype="multipart/form-data" id="promoForm">
-            <input type="hidden" name="action" id="formAction" value="create">
-            <input type="hidden" name="id" id="promoId" value="">
-            <input type="hidden" name="current_image" id="currentImage" value="">
-
-            <div class="modal-body">
-                <div class="form-grid-layout">
-                    <div class="left-col">
-                        <div class="form-group">
-                            <label>Tên chương trình <span class="required">*</span></label>
-                            <input type="text" name="name" id="pName" class="form-control" required
-                                   placeholder="Ví dụ: Sale 8/3">
-                        </div>
-                        <div class="form-group">
-                            <label>Mô tả ngắn</label>
-                            <input type="text" name="description" id="pDesc" class="form-control"
-                                   placeholder="Mô tả hiển thị bên dưới tên">
-                        </div>
-                        <div class="form-grid-layout" style="gap: 10px;">
-                            <div class="form-group">
-                                <label>Loại giảm giá</label>
-                                <select name="discount_type" id="pType" class="form-control">
-                                    <option value="PERCENT">Phần trăm (%)</option>
-                                    <option value="FIXED_AMOUNT">Tiền mặt (VNĐ)</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label>Giá trị <span class="required">*</span></label>
-                                <input type="number" name="discount_value" id="pValue" class="form-control" required
-                                       min="1">
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="right-col">
-                        <div class="form-group">
-                            <label>Thời gian bắt đầu</label>
-                            <input type="datetime-local" name="start_date" id="pStart" class="form-control" required
-                                   step="1">
-                        </div>
-                        <div class="form-group">
-                            <label>Thời gian kết thúc</label>
-                            <input type="datetime-local" name="end_date" id="pEnd" class="form-control" required
-                                   step="1">
-                        </div>
-
-                        <div class="form-group">
-                            <label>Banner / Ảnh đại diện</label>
-
-                            <div class="image-upload-box"
-                                 onclick="document.getElementById('imageInput').click()"
-                                 style="
-            border: 2px dashed #ddd;
-            border-radius: 8px;
-            background: #fafafa;
-            position: relative;
-
-
-            height: 200px;
-            width: 100%;
-            overflow: hidden;
-
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-         ">
-
-                                <div class="image-upload-label" id="uploadLabel"
-                                     style="pointer-events: none; text-align: center;">
-                                    <i class="fas fa-cloud-upload-alt"
-                                       style="font-size: 2rem; color: #ccc; margin-bottom: 10px;"></i>
-                                    <p style="margin: 0; color: #666;">Nhấn để chọn ảnh</p>
-                                </div>
-
-                                <img id="imagePreview" class="image-preview" src="" alt="Preview"
-                                     style="
-
-                max-width: 100%;
-                max-height: 100%;
-                object-fit: contain;
-                display: none;
-             ">
-                            </div>
-
-                            <input type="file" name="image" id="imageInput" style="display: none;" accept="image/*"
-                                   onchange="previewImage(this)">
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" onclick="closeModal()">Hủy</button>
-                <button type="submit" class="btn btn-primary" id="btnSubmit">Lưu chương trình</button>
-            </div>
-        </form>
-    </div>
-</div>
-
 <script>
-    const modal = document.getElementById('promoModal');
-    const form = document.getElementById('promoForm');
+    function activateTab(tabName) {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(tab => {
+            tab.classList.remove('active');
+            tab.classList.add('tab-hidden');
+        });
 
-    function previewImage(input) {
-        if (input.files && input.files[0]) {
-            const reader = new FileReader();
-            reader.onload = function (e) {
-                document.getElementById('imagePreview').src = e.target.result;
-                document.getElementById('imagePreview').style.display = 'block';
-                document.getElementById('uploadLabel').style.display = 'none';
+        const targetBtn = document.querySelector('.tab-btn[data-tab="' + tabName + '"]');
+        const targetTab = document.getElementById(tabName);
+
+        if (targetBtn && targetTab) {
+            targetBtn.classList.add('active');
+            targetTab.classList.add('active');
+            targetTab.classList.remove('tab-hidden');
+        }
+    }
+
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', function () {
+            const tabName = this.dataset.tab;
+            activateTab(tabName);
+            localStorage.setItem('adminPromotionActiveTab', tabName);
+        });
+    });
+
+    document.addEventListener('DOMContentLoaded', function () {
+        const urlParams = new URLSearchParams(window.location.search);
+        const tabFromUrl = urlParams.get('tab');
+
+        if (tabFromUrl === 'voucher') {
+            activateTab('voucherTab');
+            localStorage.setItem('adminPromotionActiveTab', 'voucherTab');
+        } else if (tabFromUrl === 'promotion') {
+            activateTab('promotionTab');
+            localStorage.setItem('adminPromotionActiveTab', 'promotionTab');
+        } else {
+            const savedTab = localStorage.getItem('adminPromotionActiveTab');
+            if (savedTab === 'voucherTab' || savedTab === 'promotionTab') {
+                activateTab(savedTab);
             }
-            reader.readAsDataURL(input.files[0]);
+        }
+    });
+
+    function openCreatePromotionModal() {
+        document.getElementById('promotionModalTitle').innerText = 'Thêm khuyến mãi';
+        document.getElementById('promotionAction').value = 'createPromotion';
+        document.getElementById('promotionForm').reset();
+        document.getElementById('promotionId').value = '';
+        document.getElementById('promotionOldImageUrl').value = '';
+
+        resetPromotionImagePreview();
+        document.getElementById('promotionModal').classList.remove('modal-hidden');
+    }
+
+    function openEditPromotionModal(btn) {
+        document.getElementById('promotionModalTitle').innerText = 'Cập nhật khuyến mãi';
+        document.getElementById('promotionAction').value = 'updatePromotion';
+
+        document.getElementById('promotionId').value = btn.dataset.id;
+        document.getElementById('promotionName').value = btn.dataset.name || '';
+        document.getElementById('promotionDescription').value = btn.dataset.description || '';
+        document.getElementById('promotionDiscountType').value = btn.dataset.discounttype || 'PERCENT';
+        document.getElementById('promotionDiscountValue').value = btn.dataset.discountvalue || '';
+        document.getElementById('promotionStartDate').value = convertToDateTimeLocal(btn.dataset.start);
+        document.getElementById('promotionEndDate').value = convertToDateTimeLocal(btn.dataset.end);
+        document.getElementById('promotionOldImageUrl').value = btn.dataset.imageurl || '';
+
+        setPromotionImagePreview(btn.dataset.imageurl || null);
+        document.getElementById('promotionModal').classList.remove('modal-hidden');
+    }
+
+    function closePromotionModal() {
+        document.getElementById('promotionModal').classList.add('modal-hidden');
+    }
+
+    function openCreateVoucherModal() {
+        document.getElementById('voucherModalTitle').innerText = 'Thêm voucher VIP';
+        document.getElementById('voucherAction').value = 'createVoucher';
+        document.getElementById('voucherForm').reset();
+        document.getElementById('voucherId').value = '';
+        document.getElementById('voucherActiveWrap').classList.add('hidden');
+        document.getElementById('voucherModal').classList.remove('modal-hidden');
+    }
+
+    function openEditVoucherModal(btn) {
+        document.getElementById('voucherModalTitle').innerText = 'Cập nhật voucher VIP';
+        document.getElementById('voucherAction').value = 'updateVoucher';
+
+        document.getElementById('voucherId').value = btn.dataset.id;
+        document.getElementById('voucherCode').value = btn.dataset.code || '';
+        document.getElementById('voucherDiscountType').value = btn.dataset.type || 'PERCENT';
+        document.getElementById('voucherDiscountValue').value = btn.dataset.value || '';
+        document.getElementById('voucherMaxUses').value = (btn.dataset.maxuses === 'null' ? '' : btn.dataset.maxuses) || '';
+        document.getElementById('voucherStartDate').value = convertToDateTimeLocal(btn.dataset.start);
+        document.getElementById('voucherEndDate').value = convertToDateTimeLocal(btn.dataset.end);
+
+        document.getElementById('voucherActiveWrap').classList.remove('hidden');
+        document.getElementById('voucherActive').checked = (btn.dataset.active === 'true');
+
+        document.getElementById('voucherModal').classList.remove('modal-hidden');
+    }
+
+    function closeVoucherModal() {
+        document.getElementById('voucherModal').classList.add('modal-hidden');
+    }
+
+    function convertToDateTimeLocal(value) {
+        if (!value) return '';
+        return value.replace(' ', 'T').substring(0, 16);
+    }
+
+    function resetPromotionImagePreview() {
+        const preview = document.getElementById('promotionImagePreview');
+        const icon = document.getElementById('promotionImageIcon');
+        const text = document.getElementById('promotionImageText');
+        const input = document.getElementById('promotionImage');
+
+        preview.src = '';
+        preview.classList.add('preview-hidden');
+        icon.style.display = 'block';
+        text.textContent = 'Nhấp để tải lên hình ảnh';
+        input.value = '';
+    }
+
+    function setPromotionImagePreview(imageUrl) {
+        const preview = document.getElementById('promotionImagePreview');
+        const icon = document.getElementById('promotionImageIcon');
+        const text = document.getElementById('promotionImageText');
+
+        if (imageUrl) {
+            preview.src = '${pageContext.request.contextPath}/' + imageUrl;
+            preview.classList.remove('preview-hidden');
+            icon.style.display = 'none';
+            text.textContent = 'Nhấp để thay đổi hình ảnh';
+        } else {
+            resetPromotionImagePreview();
         }
     }
 
-    function openCreateModal() {
-        form.reset(); // Xóa trắng form
-        document.getElementById('modalTitle').innerText = "Tạo chương trình mới";
-        document.getElementById('formAction').value = "create"; // Action = create
-        document.getElementById('btnSubmit').innerText = "Tạo mới";
+    (function () {
+        const fileInput = document.getElementById('promotionImage');
+        const preview = document.getElementById('promotionImagePreview');
+        const icon = document.getElementById('promotionImageIcon');
+        const text = document.getElementById('promotionImageText');
 
-        // Reset ảnh preview
-        document.getElementById('imagePreview').style.display = 'none';
-        document.getElementById('uploadLabel').style.display = 'block';
+        if (!fileInput) return;
 
-        modal.classList.add('active');
-    }
+        fileInput.addEventListener('change', function () {
+            const f = this.files && this.files[0];
+            if (!f) return;
 
-    function openEditModal(btn) {
-        const id = btn.getAttribute('data-id');
-        const name = btn.getAttribute('data-name');
-        const desc = btn.getAttribute('data-desc');
-        const type = btn.getAttribute('data-type');
-        const value = btn.getAttribute('data-value');
-        const start = btn.getAttribute('data-start'); // Định dạng yyyy-MM-ddTHH:mm
-        const end = btn.getAttribute('data-end');
-        const image = btn.getAttribute('data-image');
+            if (!f.type || !f.type.startsWith('image/')) {
+                alert('Vui lòng chọn đúng file ảnh.');
+                this.value = '';
+                return;
+            }
 
-        document.getElementById('modalTitle').innerText = "Cập nhật chương trình #" + id;
-        document.getElementById('formAction').value = "update"; // Action = update
-        document.getElementById('promoId').value = id;
+            if (f.size > 2 * 1024 * 1024) {
+                alert('Ảnh tối đa 2MB. Vui lòng chọn ảnh nhỏ hơn.');
+                this.value = '';
+                return;
+            }
 
-        document.getElementById('pName').value = name;
-        document.getElementById('pDesc').value = desc;
-        document.getElementById('pType').value = type;
-        document.getElementById('pValue').value = value;
-        document.getElementById('pStart').value = start;
-        document.getElementById('pEnd').value = end;
-
-        document.getElementById('currentImage').value = image;
-        if (image) {
-            document.getElementById('imagePreview').src = '${pageContext.request.contextPath}/' + image;
-            document.getElementById('imagePreview').style.display = 'block';
-            document.getElementById('uploadLabel').style.display = 'none';
-        }
-
-        document.getElementById('btnSubmit').innerText = "Lưu thay đổi";
-        modal.classList.add('active');
-    }
-
-    function closeModal() {
-        modal.classList.remove('active');
-    }
-
-    function toggleStatus(id, status) {
-        let msg = status ?
-            "Kích hoạt chương trình này?" :
-            "CẢNH BÁO: Tắt chương trình này sẽ tự động GỠ BỎ tất cả sản phẩm đang tham gia và reset giá về mức gốc. Bạn có chắc chắn không?";
-
-        if (confirm(msg)) {
-            const params = new URLSearchParams();
-            params.append('action', 'toggle');
-            params.append('id', id);
-            params.append('status', status);
-
-            fetch('${pageContext.request.contextPath}/admin/promotions', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-                body: params
-            }).then(res => {
-                if (res.ok) {
-                    alert("Thành công!");
-                    location.reload();
-                } else {
-                    alert("Lỗi server.");
-                }
-            });
-        }
-    }
+            preview.src = URL.createObjectURL(f);
+            preview.classList.remove('preview-hidden');
+            icon.style.display = 'none';
+            text.textContent = 'Đã chọn ảnh. Nhấp để đổi ảnh';
+        });
+    })();
 </script>
 </body>
 </html>

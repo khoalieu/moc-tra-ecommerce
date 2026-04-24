@@ -109,6 +109,8 @@ public class DAOFactory {
         return new PromotionDAO(dataSource);
     }
 
+    public VipVoucherDAO getVipVoucherDAO() {return new VipVoucherDAO(dataSource);}
+
     public ReviewDAO getReviewDAO() {
         return new ReviewDAO(dataSource);
     }
@@ -121,6 +123,7 @@ public class DAOFactory {
     public UserDAO getUserDAO() {
         return new UserDAO(dataSource);
     }
+
 
     /**
      * Closes the connection pool. Should be called on application shutdown.

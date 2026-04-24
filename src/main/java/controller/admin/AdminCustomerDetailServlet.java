@@ -146,6 +146,12 @@ public class AdminCustomerDetailServlet extends HttpServlet {
             int reviewCount = (reviews != null) ? reviews.size() : 0;
             int commentCount = (comments != null) ? comments.size() : 0;
 
+            VipVoucherDAO vipVoucherDAO = DAOFactory.getInstance().getVipVoucherDAO();
+
+            if (Boolean.TRUE.equals(customer.getIsVip())) {
+                request.setAttribute("voucherList", vipVoucherDAO.getAllVouchers());
+                request.setAttribute("customerVouchers", vipVoucherDAO.getAssignedVouchersByUser(userId));
+            }
             request.setAttribute("customer", customer);
             request.setAttribute("addresses", addresses);
             request.setAttribute("orders", orders);
@@ -167,5 +173,45 @@ public class AdminCustomerDetailServlet extends HttpServlet {
         } catch (NumberFormatException e) {
             response.sendRedirect(request.getContextPath() + "/admin/customers");
         }
+    }
+    @Override
+    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        request.setCharacterEncoding("UTF-8");
+
+        String action = request.getParameter("action");
+        String customerIdStr = request.getParameter("customerId");
+
+        if (customerIdStr == null || customerIdStr.trim().isEmpty()) {
+            response.sendRedirect(request.getContextPath() + "/admin/customers");
+            return;
+        }
+
+        int customerId = Integer.parseInt(customerIdStr);
+
+        try {
+            VipVoucherDAO vipVoucherDAO = DAOFactory.getInstance().getVipVoucherDAO();
+
+            if ("assignVoucher".equals(action)) {
+                String voucherIdStr = request.getParameter("voucherId");
+                if (voucherIdStr != null && !voucherIdStr.trim().isEmpty()) {
+                    int voucherId = Integer.parseInt(voucherIdStr);
+
+                    if (!vipVoucherDAO.hasVoucherAssigned(customerId, voucherId)) {
+                        vipVoucherDAO.addVoucherToUser(customerId, voucherId);
+                    }
+                }
+            } else if ("removeVoucher".equals(action)) {
+                String voucherIdStr = request.getParameter("voucherId");
+                if (voucherIdStr != null && !voucherIdStr.trim().isEmpty()) {
+                    int voucherId = Integer.parseInt(voucherIdStr);
+                    vipVoucherDAO.removeVoucherFromUser(customerId, voucherId);
+                }
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        response.sendRedirect(request.getContextPath() + "/admin/customer/detail?id=" + customerId);
     }
 }

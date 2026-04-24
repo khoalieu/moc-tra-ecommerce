@@ -146,9 +146,17 @@
                             <div class="product-card">
                                 <div class="product-image-wrapper">
                                     <img src="${p.imageUrl}" alt="${p.name}">
-
                                     <c:if test="${p.salePrice > 0 && p.salePrice < p.price}">
-                                        <span class="badge-sale">Giảm giá</span>
+                                        <span class="sale-tag">
+                                            <c:choose>
+                                                <c:when test="${not empty p.currentPromotionType and p.currentPromotionType eq 'PERCENT'}">
+                                                    -<fmt:formatNumber value="${p.currentPromotionValue}" maxFractionDigits="0"/>%
+                                                </c:when>
+                                                <c:when test="${not empty p.currentPromotionValue}">
+                                                    -<fmt:formatNumber value="${p.currentPromotionValue}" pattern="#,###"/>₫
+                                                </c:when>
+                                            </c:choose>
+                                        </span>
                                     </c:if>
                                 </div>
 

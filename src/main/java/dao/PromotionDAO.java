@@ -44,8 +44,10 @@ public class PromotionDAO {
     public List<Product> getProductsByPromotionId(int promoId, int limit) {
         List<Product> list = new ArrayList<>();
 
-        String sql = "SELECT p.* FROM products p " +
+        String sql = "SELECT p.*, pi.promotion_id AS current_promo_id, pr.discount_type, pr.discount_value " +
+                "FROM products p " +
                 "JOIN promotion_items pi ON p.id = pi.product_id " +
+                "JOIN promotions pr ON pr.id = pi.promotion_id " +
                 "WHERE pi.promotion_id = ? AND p.status = 'active' " +
                 "LIMIT ?";
 
@@ -65,6 +67,11 @@ public class PromotionDAO {
                 p.setSalePrice(rs.getDouble("sale_price"));
                 p.setImageUrl(rs.getString("image_url"));
                 p.setShortDescription(rs.getString("short_description"));
+
+                p.setCurrentPromotionId(rs.getInt("current_promo_id"));
+                p.setCurrentPromotionType(rs.getString("discount_type"));
+                p.setCurrentPromotionValue(rs.getDouble("discount_value"));
+
                 list.add(p);
             }
         } catch (Exception e) {
@@ -254,6 +261,10 @@ public class PromotionDAO {
                 p.setStartDate(rs.getTimestamp("start_date").toLocalDateTime());
                 p.setEndDate(rs.getTimestamp("end_date").toLocalDateTime());
                 p.setActive(rs.getBoolean("is_active"));
+
+                p.setImageUrl(rs.getString("image_url"));
+                p.setPromotionType(rs.getString("promotion_type"));
+
                 list.add(p);
             }
         } catch (Exception e) {
@@ -263,18 +274,21 @@ public class PromotionDAO {
     }
 
     public boolean insertPromotion(Promotion p) {
-        String sql = "INSERT INTO promotions (name, description, discount_type, discount_value, start_date, end_date, is_active, image_url, created_at) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())";
+        String sql = "INSERT INTO promotions " +
+                "(name, description, discount_type, discount_value, promotion_type, start_date, end_date, is_active, image_url, created_at) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())";
+
         try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, p.getName());
             ps.setString(2, p.getDescription());
             ps.setString(3, p.getDiscountType().name());
             ps.setDouble(4, p.getDiscountValue());
-            ps.setTimestamp(5, Timestamp.valueOf(p.getStartDate()));
-            ps.setTimestamp(6, Timestamp.valueOf(p.getEndDate()));
-            ps.setBoolean(7, p.isActive());
-            ps.setString(8, p.getImageUrl());
+            ps.setString(5, p.getPromotionType() != null ? p.getPromotionType() : "ALL");
+            ps.setTimestamp(6, Timestamp.valueOf(p.getStartDate()));
+            ps.setTimestamp(7, Timestamp.valueOf(p.getEndDate()));
+            ps.setBoolean(8, p.isActive());
+            ps.setString(9, p.getImageUrl());
 
             return ps.executeUpdate() > 0;
         } catch (Exception e) {
@@ -329,7 +343,7 @@ public class PromotionDAO {
     }
 
     public boolean updatePromotion(Promotion p) {
-        String sql = "UPDATE promotions SET name=?, description=?, discount_type=?, discount_value=?, " +
+        String sql = "UPDATE promotions SET name=?, description=?, discount_type=?, discount_value=?, promotion_type=?, " +
                 "start_date=?, end_date=?, image_url=? WHERE id=?";
         try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -338,12 +352,114 @@ public class PromotionDAO {
             ps.setString(2, p.getDescription());
             ps.setString(3, p.getDiscountType().name());
             ps.setDouble(4, p.getDiscountValue());
-            ps.setTimestamp(5, Timestamp.valueOf(p.getStartDate()));
-            ps.setTimestamp(6, Timestamp.valueOf(p.getEndDate()));
-            ps.setString(7, p.getImageUrl());
-            ps.setInt(8, p.getId());
+            ps.setString(5, p.getPromotionType() != null ? p.getPromotionType() : "ALL");
+            ps.setTimestamp(6, Timestamp.valueOf(p.getStartDate()));
+            ps.setTimestamp(7, Timestamp.valueOf(p.getEndDate()));
+            ps.setString(8, p.getImageUrl());
+            ps.setInt(9, p.getId());
 
             return ps.executeUpdate() > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return false;
+    }
+
+    public List<Promotion> getPromotionsByType(String type) {
+        List<Promotion> list = new ArrayList<>();
+        String sql = "SELECT * FROM promotions WHERE is_active = 1 " +
+                "AND start_date <= NOW() AND end_date >= NOW() " +
+                "AND promotion_type = ?";
+
+        try (Connection conn = ds.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, type);
+            ResultSet rs = ps.executeQuery();
+
+            while (rs.next()) {
+                Promotion p = new Promotion();
+                p.setId(rs.getInt("id"));
+                p.setName(rs.getString("name"));
+                p.setDescription(rs.getString("description"));
+                p.setPromotionType(rs.getString("promotion_type"));
+                p.setDiscountType(DiscountType.valueOf(rs.getString("discount_type")));
+                p.setDiscountValue(rs.getDouble("discount_value"));
+                p.setImageUrl(rs.getString("image_url"));
+                p.setStartDate(rs.getTimestamp("start_date").toLocalDateTime());
+                p.setEndDate(rs.getTimestamp("end_date").toLocalDateTime());
+                list.add(p);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+
+    public List<Product> getProductsByPromotionAndType(int promoId, String type, int limit) {
+        List<Product> list = new ArrayList<>();
+        String sql = "SELECT p.*, pi.promotion_id AS current_promo_id, pr.discount_type, pr.discount_value " +
+                "FROM products p " +
+                "JOIN promotion_items pi ON p.id = pi.product_id " +
+                "JOIN promotions pr ON pr.id = pi.promotion_id " +
+                "WHERE pi.promotion_id = ? AND pr.promotion_type = ? AND p.status = 'active' " +
+                "LIMIT ?";
+
+        try (Connection conn = ds.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, promoId);
+            ps.setString(2, type);
+            ps.setInt(3, limit);
+            ResultSet rs = ps.executeQuery();
+
+            while (rs.next()) {
+                Product p = new Product();
+                p.setId(rs.getInt("id"));
+                p.setName(rs.getString("name"));
+                p.setPrice(rs.getDouble("price"));
+                p.setSalePrice(rs.getDouble("sale_price"));
+                p.setImageUrl(rs.getString("image_url"));
+                p.setCurrentPromotionId(rs.getInt("current_promo_id"));
+                p.setCurrentPromotionType(rs.getString("discount_type"));
+                p.setCurrentPromotionValue(rs.getDouble("discount_value"));
+                list.add(p);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+    public boolean deletePromotion(int promoId) {
+        String resetPriceSql = "UPDATE products p " +
+                "JOIN promotion_items pi ON p.id = pi.product_id " +
+                "SET p.sale_price = 0 " +
+                "WHERE pi.promotion_id = ?";
+
+        String deleteItemsSql = "DELETE FROM promotion_items WHERE promotion_id = ?";
+        String deletePromoSql = "DELETE FROM promotions WHERE id = ?";
+
+        try (Connection conn = ds.getConnection()) {
+            conn.setAutoCommit(false);
+
+            try (PreparedStatement ps1 = conn.prepareStatement(resetPriceSql);
+                 PreparedStatement ps2 = conn.prepareStatement(deleteItemsSql);
+                 PreparedStatement ps3 = conn.prepareStatement(deletePromoSql)) {
+
+                ps1.setInt(1, promoId);
+                ps1.executeUpdate();
+
+                ps2.setInt(1, promoId);
+                ps2.executeUpdate();
+
+                ps3.setInt(1, promoId);
+                boolean deleted = ps3.executeUpdate() > 0;
+
+                conn.commit();
+                return deleted;
+            } catch (Exception e) {
+                conn.rollback();
+                e.printStackTrace();
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }

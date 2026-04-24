@@ -251,3 +251,25 @@ CREATE TABLE `users`  (
 ) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = Dynamic;
 
 SET FOREIGN_KEY_CHECKS = 1;
+ALTER TABLE users ADD COLUMN is_vip TINYINT(1) DEFAULT 0;ALTER TABLE promotions ADD COLUMN promotion_type ENUM('ALL', 'VIP') DEFAULT 'ALL';
+ALTER TABLE promotions ADD COLUMN promotion_type ENUM('ALL', 'VIP') DEFAULT 'ALL';
+CREATE TABLE vip_vouchers (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    code VARCHAR(50) NOT NULL UNIQUE,
+    discount_type VARCHAR(20) NOT NULL,
+    discount_value DECIMAL(15, 2) NOT NULL,
+    max_uses INT DEFAULT NULL,
+    current_uses INT DEFAULT 0,
+    start_date DATETIME,
+    end_date DATETIME,
+    is_active TINYINT(1) DEFAULT 1,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+CREATE TABLE user_vip_vouchers (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    voucher_id INT NOT NULL,
+    used_at DATETIME NULL,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (voucher_id) REFERENCES vip_vouchers(id) ON DELETE CASCADE
+);

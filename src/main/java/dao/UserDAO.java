@@ -44,6 +44,7 @@ public class UserDAO {
                     user.setFirstName(rs.getString("first_name"));
                     user.setLastName(rs.getString("last_name"));
                     user.setPhone(rs.getString("phone"));
+                    user.setIsVip(rs.getBoolean("is_vip"));
                     java.sql.Timestamp ts = rs.getTimestamp("dateOfBirth");
                     if (ts != null) {
                         user.setDateOfBirth(ts.toLocalDateTime());
@@ -280,6 +281,7 @@ public class UserDAO {
         u.setFirstName(rs.getString("first_name"));
         u.setLastName(rs.getString("last_name"));
         u.setAvatar(rs.getString("avatar"));
+        u.setIsVip(rs.getBoolean("is_vip"));
 
         String role = rs.getString("role");
         if (role != null) u.setRole(UserRole.valueOf(role.trim().toUpperCase()));
@@ -316,6 +318,7 @@ public class UserDAO {
                     u.setLastName(rs.getString("last_name"));
                     u.setPhone(rs.getString("phone"));
                     u.setAvatar(rs.getString("avatar"));
+                    u.setIsVip(rs.getBoolean("is_vip"));
 
                     try {
                         String roleStr = rs.getString("role");
@@ -631,6 +634,8 @@ public class UserDAO {
                 user.setFirstName(rs.getString("first_name"));
                 user.setLastName(rs.getString("last_name"));
                 user.setAvatar(rs.getString("avatar"));
+                user.setIsVip(rs.getBoolean("is_vip"));
+                // Set role và các thông tin khác tương tự hàm checkLogin
                 try {
                     user.setRole(UserRole.valueOf(rs.getString("role").toUpperCase()));
                 } catch (Exception e) {
@@ -729,6 +734,7 @@ public class UserDAO {
                     user.setFirstName(rs.getString("first_name"));
                     user.setLastName(rs.getString("last_name"));
                     user.setAvatar(rs.getString("avatar"));
+                    user.setIsVip(rs.getBoolean("is_vip"));
 
                     String roleStr = rs.getString("role");
                     if (roleStr != null){
@@ -816,7 +822,6 @@ public class UserDAO {
         }
         return false;
     }
-
     public boolean updateAvatar(int userId, String avatarPath) throws SQLException {
         String query = "UPDATE users SET avatar = ? WHERE id = ?";
         try (Connection conn = ds.getConnection();
@@ -826,6 +831,61 @@ public class UserDAO {
             ps.setInt(2, userId);
             return ps.executeUpdate() > 0;
         }
+    }
+    public boolean updateVipStatus(int userId, boolean isVip) {
+        String sql = "UPDATE users SET is_vip = ? WHERE id = ?";
+        try (Connection conn = ds.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setBoolean(1, isVip);
+            ps.setInt(2, userId);
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    public boolean updateVipStatusBulk(List<Integer> userIds, boolean isVip) {
+        String sql = "UPDATE users SET is_vip = ? WHERE id = ?";
+        try (Connection conn = ds.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            for (Integer userId : userIds) {
+                ps.setBoolean(1, isVip);
+                ps.setInt(2, userId);
+                ps.addBatch();
+            }
+            ps.executeBatch();
+            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    public List<Integer> getVipCustomerIds(List<Integer> ids) {
+        List<Integer> result = new ArrayList<>();
+        if (ids == null || ids.isEmpty()) return result;
+
+        StringBuilder sql = new StringBuilder("SELECT id FROM users WHERE is_vip = 1 AND id IN (");
+        for (int i = 0; i < ids.size(); i++) {
+            sql.append("?");
+            if (i < ids.size() - 1) sql.append(",");
+        }
+        sql.append(")");
+
+        try (Connection conn = ds.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+            for (int i = 0; i < ids.size(); i++) {
+                ps.setInt(i + 1, ids.get(i));
+            }
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                result.add(rs.getInt("id"));
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return result;
     }
 
 }

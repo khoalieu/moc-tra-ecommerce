@@ -160,15 +160,20 @@
 /* --- THẺ KHUYẾN MÃI (SALE TAG) --- */
 .sale-tag {
     position: absolute;
-    top: 10px;
-    left: 10px;
+    top: 0;
+    right: 0;
+    left: auto;
     background-color: #e53935;
     color: #fff;
-    padding: 5px 10px;
-    font-size: 12px;
+    padding: 6px 12px;
+    font-size: 16px;
     font-weight: 700;
-    border-radius: 5px;
+    border-radius: 0 0 0 8px;
     z-index: 2;
+    line-height: 1.2;
+    min-width: 75px;
+    text-align: center;
+    white-space: nowrap;
 }
 .product-card .price .new-price {
     color: #e53935;
