@@ -23,6 +23,8 @@ public class Product {
     private String usageInstructions;
     private LocalDateTime createdAt;
     private int currentPromotionId;
+    private String currentPromotionType;
+    private Double currentPromotionValue;
     private List<ProductVariant> variants;
     public Product() {}
 
@@ -75,6 +77,13 @@ public class Product {
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
     public int getCurrentPromotionId() { return currentPromotionId; }
     public void setCurrentPromotionId(int currentPromotionId) { this.currentPromotionId = currentPromotionId; }
+
+
+    public String getCurrentPromotionType() { return currentPromotionType; }
+    public void setCurrentPromotionType(String currentPromotionType) { this.currentPromotionType = currentPromotionType; }
+
+    public Double getCurrentPromotionValue() { return currentPromotionValue; }
+    public void setCurrentPromotionValue(Double currentPromotionValue) { this.currentPromotionValue = currentPromotionValue; }
     public List<ProductVariant> getVariants() {
         return variants;
     }

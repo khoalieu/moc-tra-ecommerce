@@ -112,6 +112,52 @@
                                     <textarea id="note" name="note" rows="3" placeholder="Ví dụ: Gọi trước khi giao, giao giờ hành chính,..."></textarea>
                                 </div>
                             </div>
+                        </div>
+
+                        <!-- VIP Voucher Section -->
+                        <c:if test="${sessionScope.user != null && sessionScope.user.isVip}">
+                            <div class="checkout-card vip-voucher-card">
+                                <h2 class="checkout-card__title">💎 Voucher Khách Hàng VIP</h2>
+
+                                <div class="vip-voucher-section">
+                                    <label class="checkbox-field">
+                                        <input type="checkbox" id="applyVipVoucher" name="applyVipVoucher" value="true">
+                                        <span style="font-weight: 500;">Áp dụng voucher VIP để giảm giá thêm</span>
+                                    </label>
+
+                                    <div id="vipVoucherOptions" style="display: none; margin-top: 15px;">
+                                        <div class="form-field">
+                                            <label for="selectedVoucher" style="font-weight: 500;">Chọn voucher:</label>
+                                            <select id="selectedVoucher" name="selectedVoucher" class="form-control">
+                                                <option value="">-- Không áp dụng voucher --</option>
+                                                <c:forEach var="voucher" items="${userVipVouchers}">
+                                                    <option value="${voucher.id}"
+                                                            data-discount="${voucher.discountValue}"
+                                                            data-type="${voucher.discountType}">
+                                                            ${voucher.code}
+                                                        <c:if test="${voucher.discountType == 'PERCENT'}">
+                                                            - Giảm ${voucher.discountValue}%
+                                                        </c:if>
+                                                        <c:if test="${voucher.discountType == 'FIXED_AMOUNT'}">
+                                                            - Giảm <fmt:formatNumber value="${voucher.discountValue}" pattern="#,###"/>đ
+                                                        </c:if>
+                                                    </option>
+                                                </c:forEach>
+                                            </select>
+                                        </div>
+
+                                        <div id="vipDiscountInfo" style="margin-top: 15px; padding: 12px; background: #fff9c4; border-radius: 6px; border-left: 4px solid #ffd54f; display: none;">
+                                            <p style="margin: 0; font-size: 0.95rem; color: #333;">
+                                                <strong>Giảm giá VIP:</strong>
+                                                <span id="vipDiscountDisplay" style="color: #ff6f00; font-weight: bold;">0đ</span>
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </c:if>
+
+                        <div class="checkout-card">
 
                             <div class="checkout-card">
                                 <h2 class="checkout-card__title">Phương thức giao hàng</h2>
@@ -184,21 +230,28 @@
                                 <div class="order-summary__row">
                                     <span>Tạm tính</span>
                                     <span>
-                                            <fmt:formatNumber value="${subtotal}" type="currency" currencySymbol="đ" maxFractionDigits="0"/>
-                                        </span>
-                                </div>
-                                <div class="order-summary__row">
-                                    <span>Phí vận chuyển</span>
-                                    <span id="shippingFeeDisplay">
+                                        <fmt:formatNumber value="${subtotal}" type="currency" currencySymbol="đ" maxFractionDigits="0"/>
+                                    </span>
+                                    </div>
+
+                                    <div class="order-summary__row">
+                                        <span>Phí vận chuyển</span>
+                                        <span id="shippingFeeDisplay">
                                             <fmt:formatNumber value="${shippingFee}" type="currency" currencySymbol="đ" maxFractionDigits="0"/>
                                         </span>
-                                </div>
-                                <div class="order-summary__row order-summary__row--total">
-                                    <span>Tổng cộng</span>
-                                    <span id="totalAmountDisplay">
+                                    </div>
+
+                                    <div class="order-summary__row" id="vipDiscountRow" style="display: none;">
+                                        <span>Giảm voucher VIP</span>
+                                        <span id="vipDiscountAmount" style="color: #d32f2f;">-0đ</span>
+                                    </div>
+
+                                    <div class="order-summary__row order-summary__row--total">
+                                        <span>Tổng cộng</span>
+                                        <span id="totalAmountDisplay">
                                             <fmt:formatNumber value="${totalAmount}" type="currency" currencySymbol="đ" maxFractionDigits="0"/>
                                         </span>
-                                </div>
+                                    </div>
                             </div>
                         </div>
 
@@ -250,7 +303,6 @@
     <i class="fa-solid fa-chevron-up"></i>
 </button>
 </body>
-
 <script>
     document.addEventListener("DOMContentLoaded", function () {
         const addressRadios = document.querySelectorAll('input[name="selectedAddress"]');
@@ -259,63 +311,109 @@
         const provinceSelect = document.getElementById("province");
         const wardSelect = document.getElementById("ward");
 
+        const shippingRadios = document.querySelectorAll('input[name="shippingMethod"]');
+        const subtotal = parseFloat(document.getElementById('hiddenSubtotal').value) || 0;
+        const shippingFeeDisplay = document.getElementById('shippingFeeDisplay');
+        const totalAmountDisplay = document.getElementById('totalAmountDisplay');
+        const btnTotalDisplay = document.getElementById('btnTotalDisplay');
+
+        const applyVipCheckbox = document.getElementById('applyVipVoucher');
+        const vipVoucherOptions = document.getElementById('vipVoucherOptions');
+        const selectedVoucherSelect = document.getElementById('selectedVoucher');
+        const vipDiscountInfo = document.getElementById('vipDiscountInfo');
+        const vipDiscountDisplay = document.getElementById('vipDiscountDisplay');
+
+        const DATA_URL = "${pageContext.request.contextPath}/assets/data/openapi.json";
+        let provincesData = [];
+
+        function formatCurrency(amount) {
+            return new Intl.NumberFormat('vi-VN', {
+                style: 'currency',
+                currency: 'VND'
+            }).format(amount);
+        }
+
+        function getSelectedShippingPrice() {
+            const selectedShip = document.querySelector('input[name="shippingMethod"]:checked');
+            return selectedShip ? parseFloat(selectedShip.getAttribute('data-price')) || 0 : 0;
+        }
+
+        const vipDiscountRow = document.getElementById('vipDiscountRow');
+        const vipDiscountAmount = document.getElementById('vipDiscountAmount');
+
+        function getVipDiscountAmount() {
+            if (!applyVipCheckbox || !applyVipCheckbox.checked || !selectedVoucherSelect || !selectedVoucherSelect.value) {
+                return 0;
+            }
+
+            const option = selectedVoucherSelect.options[selectedVoucherSelect.selectedIndex];
+            const discountType = option.getAttribute('data-type');
+            const discountValue = parseFloat(option.getAttribute('data-discount')) || 0;
+
+            let discount = 0;
+            if (discountType === 'PERCENT') {
+                discount = subtotal * discountValue / 100;
+            } else if (discountType === 'FIXED_AMOUNT') {
+                discount = discountValue;
+            }
+
+            if (discount > subtotal) {
+                discount = subtotal;
+            }
+
+            return discount;
+        }
+
+        function updateTotal() {
+            const shipPrice = getSelectedShippingPrice();
+            const vipDiscount = getVipDiscountAmount();
+            const newTotal = Math.max(0, subtotal - vipDiscount + shipPrice);
+
+            shippingFeeDisplay.innerText = formatCurrency(shipPrice);
+            totalAmountDisplay.innerText = formatCurrency(newTotal);
+            btnTotalDisplay.innerText = formatCurrency(newTotal);
+
+            if (vipDiscount > 0) {
+                vipDiscountRow.style.display = 'flex';
+                vipDiscountAmount.innerText = '-' + formatCurrency(vipDiscount);
+                vipDiscountDisplay.innerText = formatCurrency(vipDiscount);
+                vipDiscountInfo.style.display = 'block';
+            } else {
+                vipDiscountRow.style.display = 'none';
+                vipDiscountAmount.innerText = '-0đ';
+                if (vipDiscountInfo) {
+                    vipDiscountInfo.style.display = 'none';
+                }
+            }
+        }
+
         function updateFormState() {
             const selected = document.querySelector('input[name="selectedAddress"]:checked');
             if (selected && selected.value === "new") {
                 manualAddressForm.classList.remove("disabled");
 
                 manualInputs.forEach(input => {
-                    if(input.id !== "ward") {
+                    if (input.id !== "ward") {
                         input.disabled = false;
                     }
                 });
-                if(provinceSelect.value !== "") {
+                if (provinceSelect.value !== "") {
                     wardSelect.disabled = false;
                 }
 
                 const firstInput = manualAddressForm.querySelector('input');
-                if(firstInput) firstInput.focus();
+                if (firstInput) {
+                    firstInput.focus();
+                }
             } else {
                 manualAddressForm.classList.add("disabled");
                 manualInputs.forEach(input => input.disabled = true);
             }
         }
 
-        addressRadios.forEach(radio => {
-            radio.addEventListener("change", updateFormState);
-        });
-        updateFormState();
-
-        const shippingRadios = document.querySelectorAll('input[name="shippingMethod"]');
-        const subtotal = parseFloat(document.getElementById('hiddenSubtotal').value);
-        const shippingFeeDisplay = document.getElementById('shippingFeeDisplay');
-        const totalAmountDisplay = document.getElementById('totalAmountDisplay');
-        const btnTotalDisplay = document.getElementById('btnTotalDisplay');
-
-        function formatCurrency(amount) {
-            return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
-        }
-
-        function updateTotal() {
-            const selectedShip = document.querySelector('input[name="shippingMethod"]:checked');
-            const shipPrice = parseFloat(selectedShip.getAttribute('data-price'));
-            const newTotal = subtotal + shipPrice;
-
-            shippingFeeDisplay.innerText = formatCurrency(shipPrice);
-            totalAmountDisplay.innerText = formatCurrency(newTotal);
-            btnTotalDisplay.innerText = formatCurrency(newTotal);
-        }
-
-        shippingRadios.forEach(radio => {
-            radio.addEventListener("change", updateTotal);
-        });
-        const DATA_URL = "${pageContext.request.contextPath}/assets/data/openapi.json";
-        let provincesData = [];
-
         async function loadData() {
             try {
                 const response = await fetch(DATA_URL);
-                if (!response.ok) throw new Error("Không thể đọc file JSON");
                 provincesData = await response.json();
                 provincesData.forEach(p => {
                     const option = document.createElement("option");
@@ -328,6 +426,14 @@
                 console.error("Lỗi khi tải dữ liệu địa giới:", error);
             }
         }
+
+        addressRadios.forEach(radio => {
+            radio.addEventListener("change", updateFormState);
+        });
+        shippingRadios.forEach(radio => {
+            radio.addEventListener("change", updateTotal);
+        });
+
         provinceSelect.addEventListener("change", function () {
             wardSelect.innerHTML = '<option value="">-- Chọn phường / xã --</option>';
             wardSelect.disabled = true;
@@ -351,6 +457,25 @@
                 }
             }
         });
+
+        if (applyVipCheckbox) {
+            applyVipCheckbox.addEventListener('change', function () {
+                if (this.checked) {
+                    vipVoucherOptions.style.display = 'block';
+                } else {
+                    vipVoucherOptions.style.display = 'none';
+                    selectedVoucherSelect.value = '';
+                }
+                updateTotal();
+            });
+        }
+
+        if (selectedVoucherSelect) {
+            selectedVoucherSelect.addEventListener('change', updateTotal);
+        }
+
+        updateFormState();
+        updateTotal();
         loadData();
     });
 </script>
