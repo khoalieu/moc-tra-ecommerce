@@ -133,7 +133,10 @@ public class OrderDAO {
     }
 
     public void addOrderItems(int orderId, List<CartItem> items) {
-        String sql = "INSERT INTO order_items (order_id, product_id, variant_id, quantity, price) VALUES (?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO order_items " +
+                "(order_id, product_id, variant_id, quantity, price, original_price, discount_amount) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?)";
+
         try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
@@ -149,18 +152,14 @@ public class OrderDAO {
                 }
                 ps.setInt(4, item.getQuantity());
 
-                double finalPrice;
-                if (item.getVariant() != null) {
-                    finalPrice = item.getVariant().getSalePrice() > 0 ?
-                            item.getVariant().getSalePrice() :
-                            item.getVariant().getPrice();
-                } else {
-                    finalPrice = item.getProduct().getSalePrice() > 0 ?
-                            item.getProduct().getSalePrice() :
-                            item.getProduct().getPrice();
-                }
+                double finalPrice = item.getUnitPrice();
+                double originalPrice = item.getOriginalUnitPrice();
+                double discountAmount = item.getDiscountPerItem();
 
                 ps.setDouble(5, finalPrice);
+                ps.setDouble(6, originalPrice);
+                ps.setDouble(7, discountAmount);
+
                 ps.addBatch();
             }
             ps.executeBatch();
@@ -186,11 +185,13 @@ public class OrderDAO {
 
             while (rs.next()) {
                 OrderItem item = new OrderItem();
-                item.setId(rs.getInt("id")); // Lấy ID của item nếu cần
+                item.setId(rs.getInt("id"));
                 item.setOrderId(orderId);
                 item.setProductId(rs.getInt("product_id"));
                 item.setQuantity(rs.getInt("quantity"));
                 item.setPrice(rs.getDouble("price"));
+                item.setOriginalPrice(rs.getDouble("original_price"));
+                item.setDiscountAmount(rs.getDouble("discount_amount"));
 
                 Integer variantId = (Integer) rs.getObject("order_variant_id");
                 if (variantId != null && variantId > 0) {
