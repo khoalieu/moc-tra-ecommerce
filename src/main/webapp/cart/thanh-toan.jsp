@@ -219,8 +219,31 @@
                                             </c:if>
                                             <div class="order-item__meta" style="margin-top: 5px;">Số lượng: ${item.quantity}</div>
                                         </div>
-                                        <div class="order-item__price">
-                                            <fmt:formatNumber value="${item.totalPrice}" type="currency" currencySymbol="đ" maxFractionDigits="0"/>
+                                        <div class="order-item__price" style="text-align: right; min-width: 160px;">
+                                            <div style="font-size: 0.85rem; color: #666;">
+                                                Giá gốc:
+                                                <fmt:formatNumber value="${item.originalUnitPrice}" type="currency" currencySymbol="đ" maxFractionDigits="0"/>
+                                                x ${item.quantity}
+                                                =
+                                                <fmt:formatNumber value="${item.totalOriginalPrice}" type="currency" currencySymbol="đ" maxFractionDigits="0"/>
+                                            </div>
+
+                                            <div style="font-size: 0.85rem; color: #2e7d32; font-weight: 600;">
+                                                Khuyến mãi:
+                                                <c:choose>
+                                                    <c:when test="${item.totalDiscount > 0}">
+                                                        -
+                                                        <fmt:formatNumber value="${item.totalDiscount}" type="currency" currencySymbol="đ" maxFractionDigits="0"/>
+                                                    </c:when>
+                                                    <c:otherwise>
+                                                        0đ
+                                                    </c:otherwise>
+                                                </c:choose>
+                                            </div>
+
+                                            <div style="font-size: 1rem; color: #d9534f; font-weight: bold; margin-top: 4px;">
+                                                <fmt:formatNumber value="${item.totalPrice}" type="currency" currencySymbol="đ" maxFractionDigits="0"/>
+                                            </div>
                                         </div>
                                     </div>
                                 </c:forEach>

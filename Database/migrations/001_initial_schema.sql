@@ -308,3 +308,9 @@ ALTER TABLE `order_items`
             ON DELETE SET NULL ON UPDATE RESTRICT;
 
 TRUNCATE TABLE `cart`;
+
+-- thêm giá gốc và giá khuyến mãi để lưu lại lịch sử đơn hhangfkhi xóa khuyến mãi
+ALTER TABLE order_items
+    ADD COLUMN original_price DECIMAL(15,2) DEFAULT 0 AFTER price,
+    ADD COLUMN discount_amount DECIMAL(15,2) DEFAULT 0 AFTER original_price;
+

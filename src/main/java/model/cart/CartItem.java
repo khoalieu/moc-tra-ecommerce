@@ -65,4 +65,32 @@ public class CartItem {
             this.variantId = variant.getId();
         }
     }
+    public double getOriginalUnitPrice() {
+        if (variant != null) {
+            return variant.getPrice();
+        }
+
+        if (product != null) {
+            return product.getPrice();
+        }
+
+        return 0;
+    }
+
+    public double getDiscountPerItem() {
+        double originalPrice = getOriginalUnitPrice();
+        double finalPrice = getUnitPrice();
+
+        double discount = originalPrice - finalPrice;
+
+        return Math.max(discount, 0);
+    }
+
+    public double getTotalOriginalPrice() {
+        return getOriginalUnitPrice() * quantity;
+    }
+
+    public double getTotalDiscount() {
+        return getDiscountPerItem() * quantity;
+    }
 }
