@@ -76,6 +76,14 @@
         </header>
 
         <div class="admin-content">
+
+            <%-- THÔNG BÁO CẬP NHẬT THÀNH CÔNG --%>
+            <c:if test="${param.msg == 'update_success'}">
+                <div class="alert alert-success" style="background-color: #d4edda; color: #155724; padding: 15px; border-radius: 5px; margin-bottom: 20px; border: 1px solid #c3e6cb; font-weight: 500;">
+                    <i class="fas fa-check-circle" style="margin-right: 5px;"></i> Cập nhật sản phẩm thành công!
+                </div>
+            </c:if>
+
             <form class="form-container" action="${pageContext.request.contextPath}/admin/product/edit" method="POST"
                   enctype="multipart/form-data">
 
@@ -120,7 +128,7 @@
                             </div>
 
                             <div class="form-section">
-                                <h3><i class="fas fa-leaf"></i> Thông tin bổ sung</h3>
+                                <h3><i class="fas fa-leaf"></i> Thông cải bổ sung</h3>
 
                                 <div class="form-group">
                                     <label for="ingredients">Thành phần nguyên liệu</label>
@@ -212,6 +220,8 @@
                                         <c:when test="${not empty variants}">
                                             <c:forEach var="v" items="${variants}">
                                                 <div class="variant-row" style="display: flex; gap: 8px; margin-bottom: 10px; align-items: center;">
+                                                    <input type="hidden" name="variantIds" value="${v.id}">
+
                                                     <input type="text" name="variantNames" value="${v.variantName}" placeholder="Tên loại" class="form-control" style="flex: 2;" required>
 
                                                     <input type="number" name="variantPrices" value="<fmt:formatNumber value='${v.price}' pattern='#' groupingUsed='false'/>" placeholder="Giá gốc" class="form-control" style="flex: 1.5;" min="0">
@@ -226,6 +236,8 @@
                                         </c:when>
                                         <c:otherwise>
                                             <div class="variant-row" style="display: flex; gap: 8px; margin-bottom: 10px; align-items: center;">
+                                                <input type="hidden" name="variantIds" value="0">
+
                                                 <input type="text" name="variantNames" placeholder="Tên loại" class="form-control" style="flex: 2;" required>
                                                 <input type="number" name="variantPrices" placeholder="Giá gốc" class="form-control" style="flex: 1.5;" min="0">
                                                 <input type="number" name="variantSalePrices" value="0" placeholder="Giá Sale" class="form-control" style="flex: 1.5;" min="0">
@@ -286,6 +298,8 @@
         const container = document.getElementById('variantsContainer');
         const rowHTML = `
             <div class="variant-row" style="display: flex; gap: 8px; margin-bottom: 10px; align-items: center;">
+                <input type="hidden" name="variantIds" value="0">
+
                 <input type="text" name="variantNames" placeholder="Tên loại (VD: Hộp 10 gói)" class="form-control" style="flex: 2;" required>
                 <input type="number" name="variantPrices" placeholder="Giá gốc" class="form-control" style="flex: 1.5;" min="0">
                 <input type="number" name="variantSalePrices" value="0" placeholder="Giá Sale" class="form-control" style="flex: 1.5;" min="0">

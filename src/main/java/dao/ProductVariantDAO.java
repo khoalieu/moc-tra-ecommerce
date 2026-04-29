@@ -108,4 +108,32 @@ public class ProductVariantDAO {
             e.printStackTrace();
         }
     }
+
+    public void updateVariant(ProductVariant variant) {
+        String sql = "UPDATE product_variants SET variant_name = ?, price = ?, sale_price = ?, stock_quantity = ? WHERE id = ?";
+        try (Connection conn = ds.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, variant.getVariantName());
+            ps.setDouble(2, variant.getPrice());
+            ps.setDouble(3, variant.getSalePrice());
+            ps.setInt(4, variant.getStockQuantity());
+            ps.setInt(5, variant.getId());
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            System.err.println("Lỗi updateVariant: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    public void deactivateVariant(int variantId) {
+        String sql = "UPDATE product_variants SET is_active = 0 WHERE id = ?";
+        try (Connection conn = ds.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, variantId);
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            System.err.println("Lỗi deactivateVariant: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
 }
