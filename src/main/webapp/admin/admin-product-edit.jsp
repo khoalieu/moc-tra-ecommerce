@@ -85,7 +85,7 @@
             </c:if>
 
             <form class="form-container" action="${pageContext.request.contextPath}/admin/product/edit" method="POST"
-                  enctype="multipart/form-data">
+                  enctype="multipart/form-data" onsubmit="return validateForm()">
 
                 <input type="hidden" name="id" value="${product.id}">
                 <input type="hidden" name="current_image" value="${product.imageUrl}">
@@ -294,6 +294,46 @@
 </div>
 
 <script>
+    function validateForm() {
+        const mainPriceInput = document.getElementById('price');
+        const mainSalePriceInput = document.getElementById('sale_price');
+
+        const mainPrice = parseFloat(mainPriceInput.value) || 0;
+        const mainSalePrice = parseFloat(mainSalePriceInput.value) || 0;
+
+        if (mainSalePrice > mainPrice) {
+            alert('Lỗi: Giá khuyến mãi của sản phẩm chính không được lớn hơn giá gốc!');
+            mainSalePriceInput.focus();
+            return false;
+        }
+
+        const variantRows = document.querySelectorAll('.variant-row');
+        for (let i = 0; i < variantRows.length; i++) {
+            const row = variantRows[i];
+            const priceInput = row.querySelector('input[name="variantPrices"]');
+            const salePriceInput = row.querySelector('input[name="variantSalePrices"]');
+
+            if (priceInput && salePriceInput) {
+                const price = parseFloat(priceInput.value) || 0;
+                const salePrice = parseFloat(salePriceInput.value) || 0;
+
+                if (salePrice > price) {
+                    alert('Lỗi ở phân loại thứ ' + (i + 1) + ': Giá khuyến mãi không được lớn hơn giá gốc!');
+                    salePriceInput.focus();
+                    row.style.border = "1px solid red";
+                    row.style.padding = "5px";
+                    row.style.borderRadius = "5px";
+                    return false;
+                } else {
+                    row.style.border = "none";
+                    row.style.padding = "0";
+                }
+            }
+        }
+
+        return true;
+    }
+
     function addVariantRow() {
         const container = document.getElementById('variantsContainer');
         const rowHTML = `

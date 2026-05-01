@@ -25,16 +25,15 @@ public class AdminProductVariantServlet extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         int productId = Integer.parseInt(request.getParameter("id"));
-
         String[] variantIds = request.getParameterValues("variantIds");
         String[] variantNames = request.getParameterValues("variantNames");
         String[] variantPrices = request.getParameterValues("variantPrices");
         String[] variantSalePrices = request.getParameterValues("variantSalePrices");
         String[] variantStocks = request.getParameterValues("variantStocks");
-        
         List<ProductVariant> oldVariants = variantDAO.getVariantsByProductId(productId);
 
         List<Integer> keptIds = new ArrayList<>();
+
         if (variantNames != null) {
             for (int i = 0; i < variantNames.length; i++) {
                 if (variantNames[i] == null || variantNames[i].trim().isEmpty()) continue;
@@ -42,8 +41,13 @@ public class AdminProductVariantServlet extends HttpServlet {
                 ProductVariant v = new ProductVariant();
                 v.setProductId(productId);
                 v.setVariantName(variantNames[i].trim());
-                v.setPrice(parseDouble(variantPrices[i]));
-                v.setSalePrice(parseDouble(variantSalePrices[i]));
+                double price = parseDouble(variantPrices[i]);
+                double salePrice = parseDouble(variantSalePrices[i]);
+                if (salePrice > price) {
+                    salePrice = price;
+                }
+                v.setPrice(price);
+                v.setSalePrice(salePrice);
                 v.setStockQuantity(parseInt(variantStocks[i]));
 
                 int vId = parseInt(variantIds != null && variantIds.length > i ? variantIds[i] : "0");
@@ -64,6 +68,11 @@ public class AdminProductVariantServlet extends HttpServlet {
         }
     }
 
-    private double parseDouble(String s) { try { return Double.parseDouble(s); } catch (Exception e) { return 0; } }
-    private int parseInt(String s) { try { return Integer.parseInt(s); } catch (Exception e) { return 0; } }
+    private double parseDouble(String s) {
+        try { return Double.parseDouble(s); } catch (Exception e) { return 0; }
+    }
+
+    private int parseInt(String s) {
+        try { return Integer.parseInt(s); } catch (Exception e) { return 0; }
+    }
 }

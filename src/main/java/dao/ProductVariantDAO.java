@@ -83,7 +83,12 @@ public class ProductVariantDAO {
             e.printStackTrace();
         }
     }
+
     public void addVariant(ProductVariant variant) {
+        if (variant.getSalePrice() > variant.getPrice()) {
+            variant.setSalePrice(variant.getPrice());
+        }
+
         String sql = "INSERT INTO product_variants (product_id, variant_name, price, sale_price, stock_quantity, is_active) VALUES (?, ?, ?, ?, ?, 1)";
         try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -110,6 +115,10 @@ public class ProductVariantDAO {
     }
 
     public void updateVariant(ProductVariant variant) {
+        if (variant.getSalePrice() > variant.getPrice()) {
+            variant.setSalePrice(variant.getPrice());
+        }
+
         String sql = "UPDATE product_variants SET variant_name = ?, price = ?, sale_price = ?, stock_quantity = ? WHERE id = ?";
         try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
