@@ -223,6 +223,8 @@ public class CheckoutServlet extends HttpServlet {
             try {
                 if ("bank".equals(paymentMethod)) {
                     paymentResult = PaymentUtils.createPayosPayment(createdOrder);
+                } else if ("momo".equals(paymentMethod)) {
+                    paymentResult = PaymentUtils.createMomoPayment(createdOrder);
                 }
 
                 if (paymentResult != null) {
@@ -241,14 +243,6 @@ public class CheckoutServlet extends HttpServlet {
 
                     PaymentTransactionDAO txDAO = DAOFactory.getInstance().getPaymentTransactionDAO();
                     int txId = txDAO.create(tx);
-
-                    System.out.println("===== DEBUG SAVE PAYMENT =====");
-                    System.out.println("orderId = " + orderId);
-                    System.out.println("paymentMethod = " + paymentMethod);
-                    System.out.println("provider = " + paymentResult.getProvider());
-                    System.out.println("txId = " + txId);
-                    System.out.println("==============================");
-
                     if (txId <= 0) {
                         request.setAttribute("errorMessage", "Không lưu được giao dịch thanh toán.");
                         doGet(request, response);
