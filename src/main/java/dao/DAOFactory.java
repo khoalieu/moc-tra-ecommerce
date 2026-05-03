@@ -123,6 +123,9 @@ public class DAOFactory {
     public UserDAO getUserDAO() {
         return new UserDAO(dataSource);
     }
+    public PaymentTransactionDAO getPaymentTransactionDAO() {
+        return new PaymentTransactionDAO(dataSource);
+    }
 
 
     /**
