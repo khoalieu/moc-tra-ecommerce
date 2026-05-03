@@ -314,3 +314,31 @@ ALTER TABLE order_items
     ADD COLUMN original_price DECIMAL(15,2) DEFAULT 0 AFTER price,
     ADD COLUMN discount_amount DECIMAL(15,2) DEFAULT 0 AFTER original_price;
 
+-- thay đôi phần thanh toán khi tích hợp API
+ALTER TABLE orders
+    MODIFY payment_status ENUM(
+    'pending',
+    'paid',
+    'failed',
+    'expired',
+    'refunded'
+    ) DEFAULT 'pending';
+
+CREATE TABLE payment_transactions (
+                                      id INT AUTO_INCREMENT PRIMARY KEY,
+                                      order_id INT NOT NULL,
+                                      payment_method VARCHAR(50) NOT NULL,
+                                      provider VARCHAR(50) NOT NULL,
+                                      request_id VARCHAR(100),
+                                      provider_order_id VARCHAR(100),
+                                      amount DECIMAL(15,2) NOT NULL,
+                                      qr_code_url TEXT,
+                                      pay_url TEXT,
+                                      deeplink TEXT,
+                                      transaction_status VARCHAR(50) DEFAULT 'pending',
+                                      raw_response TEXT,
+                                      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                                      paid_at DATETIME NULL,
+                                      FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE
+);
+

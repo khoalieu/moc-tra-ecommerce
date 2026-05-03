@@ -298,8 +298,12 @@
                                 <label class="payment-option">
                                     <input type="radio" name="paymentMethod" value="bank">
                                     <div class="payment-option__content">
-                                        <span class="payment-option__name"><i class="fa-solid fa-building-columns"></i> Chuyển khoản ngân hàng</span>
-                                        <p class="payment-option__desc">Thông tin số tài khoản và nội dung chuyển khoản sẽ được hiển thị sau khi đặt hàng thành công.</p>
+                                        <span class="payment-option__name">
+                                            <i class="fa-solid fa-building-columns"></i> Chuyển khoản ngân hàng
+                                        </span>
+                                        <p class="payment-option__desc">
+                                            Hệ thống sẽ tạo mã QR ngân hàng để bạn thanh toán.
+                                        </p>
                                     </div>
                                 </label>
                             </div>

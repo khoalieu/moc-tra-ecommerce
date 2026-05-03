@@ -2,6 +2,8 @@ package model.enums;
 
 public enum PaymentStatus {
     PENDING,
-    PAID
+    PAID,
+    FAILED,
+    EXPIRED,
+    REFUNDED
 }
-
