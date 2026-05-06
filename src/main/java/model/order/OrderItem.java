@@ -12,6 +12,8 @@ public class OrderItem {
     private Product product;
     private Integer variantId;
     private ProductVariant variant;
+    private double originalPrice;
+    private double discountAmount;
 
     public OrderItem() {}
 
@@ -47,4 +49,8 @@ public class OrderItem {
             this.variantId = variant.getId();
         }
     }
+    public double getOriginalPrice() { return originalPrice; }
+    public void setOriginalPrice(double originalPrice) { this.originalPrice = originalPrice; }
+    public double getDiscountAmount() { return discountAmount; }
+    public void setDiscountAmount(double discountAmount) { this.discountAmount = discountAmount; }
 }

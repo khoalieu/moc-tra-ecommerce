@@ -42,6 +42,7 @@
                                     <th>Ảnh</th>
                                     <th>Tên sản phẩm</th>
                                     <th>Đơn giá</th>
+                                    <th>Khuyến mãi</th>
                                     <th>Số lượng</th>
                                     <th>Thành tiền</th>
                                     <th>Thao tác</th>
@@ -49,7 +50,7 @@
                                 </thead>
                                 <tbody>
                                 <c:if test="${empty sessionScope.cart or sessionScope.cart.items.size() == 0}">
-                                    <tr><td colspan="7" style="text-align:center; padding: 20px;">Giỏ hàng trống!</td></tr>
+                                    <tr><td colspan="8" style="text-align:center; padding: 20px;">Giỏ hàng trống!</td></tr>
                                 </c:if>
 
                                 <c:forEach var="item" items="${sessionScope.cart.items}">
@@ -80,7 +81,19 @@
                                         </td>
 
                                         <td>
-                                            <fmt:formatNumber value="${item.unitPrice}" type="currency"/>
+                                            <fmt:formatNumber value="${item.originalUnitPrice}" type="currency" currencySymbol="đ" maxFractionDigits="0"/>
+                                        </td>
+
+                                        <td style="color: #2e7d32; font-weight: bold;">
+                                            <c:choose>
+                                                <c:when test="${item.discountPerItem > 0}">
+                                                    -
+                                                    <fmt:formatNumber value="${item.totalDiscount}" type="currency" currencySymbol="đ" maxFractionDigits="0"/>
+                                                </c:when>
+                                                <c:otherwise>
+                                                    0đ
+                                                </c:otherwise>
+                                            </c:choose>
                                         </td>
 
                                         <td>
@@ -91,9 +104,8 @@
                                         </td>
 
                                         <td style="color: #d9534f; font-weight: bold;">
-                                            <fmt:formatNumber value="${item.totalPrice}" type="currency"/>
+                                            <fmt:formatNumber value="${item.totalPrice}" type="currency" currencySymbol="đ" maxFractionDigits="0"/>
                                         </td>
-
                                         <td>
                                             <a href="javascript:void(0);" onclick="removeItem(${item.variantId})" class="cart-item-remove" title="Xóa sản phẩm"
                                                style="color:red; font-size: 1.1rem; text-decoration: none;">
