@@ -554,4 +554,40 @@ public class OrderDAO {
         }
         return false;
     }
+    public boolean updatePaymentStatus(int orderId, model.enums.PaymentStatus status) {
+        String sql = "UPDATE orders SET payment_status = ? WHERE id = ?";
+
+        try (Connection conn = ds.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, status.name().toLowerCase());
+            ps.setInt(2, orderId);
+
+            return ps.executeUpdate() > 0;
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return false;
+    }
+
+    public Integer getOrderIdByOrderNumber(String orderNumber) {
+        String sql = "SELECT id FROM orders WHERE order_number = ? LIMIT 1";
+
+        try (Connection conn = ds.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, orderNumber);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) return rs.getInt("id");
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return null;
+    }
 }
