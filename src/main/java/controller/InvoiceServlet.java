@@ -32,11 +32,8 @@ public class InvoiceServlet extends HttpServlet {
             int orderId = Integer.parseInt(idStr);
             OrderDAO orderDAO = DAOFactory.getInstance().getOrderDAO();
             Order order = orderDAO.getOrderById(orderId);
-            if (order != null) {
-                // Ép kiểu hoặc đảm bảo Items đã được load
+            if (order != null && order.getUserId() == user.getId()) {
                 request.setAttribute("order", order);
-                // Quan trọng: Đôi khi JSP cần list riêng nếu bạn viết ${orderItems}
-                request.setAttribute("orderItems", order.getItems());
                 request.getRequestDispatcher("/cart/hoa-don.jsp").forward(request, response);
             } else {
                 response.sendRedirect(request.getContextPath() + "/don-hang");

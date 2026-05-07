@@ -1,10 +1,6 @@
 package dao;
 
 import java.io.InputStream;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.Properties;
 import javax.sql.DataSource;
 import com.zaxxer.hikari.HikariConfig;
@@ -131,10 +127,7 @@ public class DAOFactory {
         return new PaymentTransactionDAO(dataSource);
     }
 
-    //ship
-    public ShippingDAO getShippingDAO(){
-        return new ShippingDAO(dataSource);
-    }
+
     /**
      * Closes the connection pool. Should be called on application shutdown.
      */
