@@ -24,9 +24,8 @@
             <h1 class="checkout-title">Thanh toán</h1>
 
             <form class="checkout-form" action="thanh-toan" method="post">
-
+                <input type="hidden" name="action" id="formAction" value="checkout">
                 <input type="hidden" id="hiddenSubtotal" value="${subtotal}">
-
                 <div class="checkout-layout">
                     <div class="checkout-left">
                         <div class="checkout-card">
@@ -38,7 +37,8 @@
                                 <div class="address-list">
                                     <c:forEach var="addr" items="${addresses}">
                                         <label class="address-option">
-                                            <input type="radio" name="selectedAddress" value="${addr.id}" ${addr.isDefault ? 'checked' : ''}>
+                                            <input type="radio" name="selectedAddress" value="${addr.id}"
+                                                ${(param.selectedAddress == addr.id || (empty param.selectedAddress && addr.isDefault)) ? 'checked' : ''}>
                                             <div class="address-content">
                                                 <strong class="address-label">${addr.label}</strong>
                                                 <div class="address-detail">
@@ -68,33 +68,18 @@
                                 <div class="form-row form-row--2">
                                     <div class="form-field">
                                         <label for="fullName">Họ và tên <span class="required">*</span></label>
-                                        <input type="text" id="fullName" name="fullName" placeholder="Nguyễn Văn A" required minlength="2" title="Vui lòng nhập họ tên hợp lệ">
+                                        <input type="text" id="fullName" name="fullName" value="${param.fullName}" data-required required>
                                     </div>
                                     <div class="form-field">
                                         <label for="phoneNumber">Số điện thoại <span class="required">*</span></label>
-                                        <input type="tel" id="phoneNumber" name="phoneNumber" placeholder="0888 531 015" required pattern="^(0[3|5|7|8|9])+([0-9]{8})$" title="Số điện thoại phải bắt đầu bằng 0 và gồm 10 chữ số">
-                                    </div>
-                                </div>
-
-                                <div class="form-row form-row--2">
-                                    <div class="form-field">
-                                        <label for="province">Tỉnh / Thành phố <span class="required">*</span></label>
-                                        <select id="province" name="province" required>
-                                            <option value="">-- Chọn tỉnh / thành --</option>
-                                        </select>
-                                    </div>
-                                    <div class="form-field">
-                                        <label for="ward">Phường / Xã <span class="required">*</span></label>
-                                        <select id="ward" name="ward" disabled required>
-                                            <option value="">-- Chọn phường / xã --</option>
-                                        </select>
+                                        <input type="tel" id="phoneNumber" name="phoneNumber" value="${param.phoneNumber}" data-required required>
                                     </div>
                                 </div>
 
                                 <div class="form-row">
                                     <div class="form-field">
                                         <label for="addressLine">Địa chỉ cụ thể <span class="required">*</span></label>
-                                        <input type="text" id="addressLine" name="addressLine" placeholder="Số nhà, tên đường, tòa nhà..." required>
+                                        <input type="text" id="addressLine" name="addressLine" value="${param.addressLine}" placeholder="Số nhà, tên đường, tòa nhà..." data-required required>
                                     </div>
                                 </div>
                             </div>
@@ -109,7 +94,7 @@
                             <div class="form-row">
                                 <div class="form-field">
                                     <label for="note">Ghi chú khi giao hàng</label>
-                                    <textarea id="note" name="note" rows="3" placeholder="Ví dụ: Gọi trước khi giao, giao giờ hành chính,..."></textarea>
+                                    <textarea id="note" name="note" rows="3" placeholder="...">${param.note}</textarea>
                                 </div>
                             </div>
                         </div>
@@ -164,39 +149,33 @@
 
                                 <div class="shipping-methods">
                                     <label class="shipping-option">
-                                        <input type="radio" name="shippingMethod" value="standard" data-price="20000" checked>
-                                        <div class="shipping-option__content">
+                                        <input type="radio" name="shippingMethod" value="standard"
+                                               data-price="0" checked>
+                                        <div>
                                             <div class="shipping-option__top">
                                                 <span class="shipping-option__name">Tiêu chuẩn</span>
-                                                <span class="shipping-option__price">+ 20.000đ</span>
+                                                <span class="shipping-option__price">+ 0đ</span>
                                             </div>
                                             <div class="shipping-option__desc">Giao trong 3-5 ngày làm việc.</div>
                                         </div>
                                     </label>
 
                                     <label class="shipping-option">
-                                        <input type="radio" name="shippingMethod" value="express" data-price="35000">
-                                        <div class="shipping-option__content">
-                                            <div class="shipping-option__top">
-                                                <span class="shipping-option__name">Nhanh</span>
-                                                <span class="shipping-option__price">+ 35.000đ</span>
-                                            </div>
-                                            <div class="shipping-option__desc">Giao trong 1-2 ngày làm việc.</div>
+                                        <input type="radio" name="shippingMethod" value="express" data-price="15000">
+                                        <div class="shipping-option__top">
+                                            <span class="shipping-option__name">Nhanh</span>
+                                            <span class="shipping-option__price">+ 15.000đ</span>
                                         </div>
                                     </label>
 
                                     <label class="shipping-option">
-                                        <input type="radio" name="shippingMethod" value="instant" data-price="60000">
-                                        <div class="shipping-option__content">
-                                            <div class="shipping-option__top">
-                                                <span class="shipping-option__name">Hỏa tốc</span>
-                                                <span class="shipping-option__price">+ 60.000đ</span>
-                                            </div>
-                                            <div class="shipping-option__desc">Giao trong 2-4 giờ (nội thành).</div>
+                                        <input type="radio" name="shippingMethod" value="instant" data-price="30000">
+                                        <div class="shipping-option__top">
+                                            <span class="shipping-option__name">Hỏa tốc</span>
+                                            <span class="shipping-option__price">+ 30.000đ</span>
                                         </div>
                                     </label>
                                 </div>
-                            </div>
                         </div>
                     </div>
 
@@ -229,29 +208,32 @@
                             <div class="order-summary">
                                 <div class="order-summary__row">
                                     <span>Tạm tính</span>
-                                    <span>
-                                        <fmt:formatNumber value="${subtotal}" type="currency" currencySymbol="đ" maxFractionDigits="0"/>
+                                    <span><fmt:formatNumber value="${subtotal}" type="currency" currencySymbol="đ" maxFractionDigits="0"/></span>
+                                </div>
+
+                                <div class="order-summary__row">
+                                    <span>Phí vận chuyển (vùng)</span>
+                                    <span><fmt:formatNumber value="${baseProvinceFee}" type="currency" currencySymbol="đ" maxFractionDigits="0"/></span>
+                                </div>
+
+                                <c:set var="extraFee" value="0"/>
+                                <c:choose>
+                                    <c:when test="${param.shippingMethod == 'express'}"><c:set var="extraFee" value="15000"/></c:when>
+                                    <c:when test="${param.shippingMethod == 'instant'}"><c:set var="extraFee" value="30000"/></c:when>
+                                </c:choose>
+
+                                <div class="order-summary__row" id="extraFeeRow" style="display: none;">
+                                    <span>Phí dịch vụ cộng thêm</span>
+                                    <span style="color: #2e7d32;" id="extraFeeValue"></span>
+                                </div>
+
+                                <div class="order-summary__row order-summary__row--total">
+                                    <span>Tổng cộng</span>
+                                    <span style="color: #d32f2f; font-weight: bold; font-size: 1.2rem;">
+                                        <fmt:formatNumber value="${subtotal + baseProvinceFee + extraFee - (vipDiscount != null ? vipDiscount : 0)}"
+                                                          type="currency" currencySymbol="đ" maxFractionDigits="0"/>
                                     </span>
-                                    </div>
-
-                                    <div class="order-summary__row">
-                                        <span>Phí vận chuyển</span>
-                                        <span id="shippingFeeDisplay">
-                                            <fmt:formatNumber value="${shippingFee}" type="currency" currencySymbol="đ" maxFractionDigits="0"/>
-                                        </span>
-                                    </div>
-
-                                    <div class="order-summary__row" id="vipDiscountRow" style="display: none;">
-                                        <span>Giảm voucher VIP</span>
-                                        <span id="vipDiscountAmount" style="color: #d32f2f;">-0đ</span>
-                                    </div>
-
-                                    <div class="order-summary__row order-summary__row--total">
-                                        <span>Tổng cộng</span>
-                                        <span id="totalAmountDisplay">
-                                            <fmt:formatNumber value="${totalAmount}" type="currency" currencySymbol="đ" maxFractionDigits="0"/>
-                                        </span>
-                                    </div>
+                                </div>
                             </div>
                         </div>
 
@@ -283,8 +265,13 @@
                         </div>
 
                         <div class="checkout-submit">
-                            <button type="submit" class="btn btn-primary checkout-submit__btn" id="btnSubmitOrder">
-                                Thanh toán <span id="btnTotalDisplay"><fmt:formatNumber value="${totalAmount}" type="currency" currencySymbol="đ" maxFractionDigits="0"/></span>
+                            <button type="submit" class="btn btn-primary checkout-submit__btn"
+                                    onclick="document.getElementById('formAction').value='checkout';"
+                                    id="btnSubmitOrder">
+                                Thanh toán
+                                <span id="btnTotalDisplay">
+                                    <fmt:formatNumber value="${subtotal + baseProvinceFee + extraFee}" type="currency" currencySymbol="đ" maxFractionDigits="0"/>
+                                </span>
                             </button>
                             <p class="checkout-submit__note">
                                 Bằng cách nhấn "Thanh toán", bạn đồng ý với
@@ -293,6 +280,9 @@
                         </div>
                     </div>
                 </div>
+                    <c:forEach var="item" items="${checkoutItems}">
+                    <input type="hidden" name="selectedItems" value="${item.variantId}">
+                    </c:forEach>
             </form>
         </div>
     </section>
@@ -364,50 +354,68 @@
             return discount;
         }
 
+        // Thêm sự kiện lắng nghe cho các radio ship
+        document.querySelectorAll('input[name="shippingMethod"]').forEach(radio => {
+            radio.addEventListener('change', updateTotal);
+        });
+
+        document.getElementById('btnSubmitOrder').addEventListener('click', function() {
+            if (this.form.checkValidity()) {
+                this.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Đang xử lý...';
+                this.style.pointerEvents = 'none';
+                this.style.opacity = '0.7';
+            }
+        });
+
         function updateTotal() {
-            const shipPrice = getSelectedShippingPrice();
-            const vipDiscount = getVipDiscountAmount();
-            const newTotal = Math.max(0, subtotal - vipDiscount + shipPrice);
+            const baseProvinceFee = parseFloat("${baseProvinceFee}") || 0;
+            const subtotal = parseFloat(document.getElementById('hiddenSubtotal').value) || 0;
+            const selectedShip = document.querySelector('input[name="shippingMethod"]:checked');
+            const extraFee = parseFloat(selectedShip.getAttribute('data-price')) || 0;
 
-            shippingFeeDisplay.innerText = formatCurrency(shipPrice);
-            totalAmountDisplay.innerText = formatCurrency(newTotal);
-            btnTotalDisplay.innerText = formatCurrency(newTotal);
+            const totalShipping = baseProvinceFee + extraFee;
+            const finalTotal = subtotal + totalShipping;
 
-            if (vipDiscount > 0) {
-                vipDiscountRow.style.display = 'flex';
-                vipDiscountAmount.innerText = '-' + formatCurrency(vipDiscount);
-                vipDiscountDisplay.innerText = formatCurrency(vipDiscount);
-                vipDiscountInfo.style.display = 'block';
+            // 1. Cập nhật số tiền trên nút bấm
+            document.getElementById('btnTotalDisplay').innerText = formatCurrency(finalTotal);
+
+            // 2. Cập nhật Phí dịch vụ cộng thêm ở phần Tóm tắt (Summary)
+            const extraFeeRow = document.getElementById('extraFeeRow');
+            const extraFeeValue = document.getElementById('extraFeeValue');
+            if (extraFee > 0) {
+                extraFeeRow.style.display = 'flex';
+                extraFeeValue.innerText = '+ ' + formatCurrency(extraFee);
             } else {
-                vipDiscountRow.style.display = 'none';
-                vipDiscountAmount.innerText = '-0đ';
-                if (vipDiscountInfo) {
-                    vipDiscountInfo.style.display = 'none';
-                }
+                extraFeeRow.style.display = 'none';
+            }
+
+            // 3. Cập nhật Tổng cộng cuối cùng ở phần Tóm tắt
+            const totalAmountSpan = document.querySelector('.order-summary__row--total span:last-child');
+            if (totalAmountSpan) {
+                totalAmountSpan.innerText = formatCurrency(finalTotal);
             }
         }
 
         function updateFormState() {
             const selected = document.querySelector('input[name="selectedAddress"]:checked');
-            if (selected && selected.value === "new") {
-                manualAddressForm.classList.remove("disabled");
+            const isNew = (selected && selected.value === "new");
 
+            if (isNew) {
+                manualAddressForm.classList.remove("disabled");
                 manualInputs.forEach(input => {
-                    if (input.id !== "ward") {
-                        input.disabled = false;
+                    input.disabled = false;
+                    // Nếu input có đánh dấu data-required thì bật required lên
+                    if (input.hasAttribute('data-required')) {
+                        input.required = true;
                     }
                 });
-                if (provinceSelect.value !== "") {
-                    wardSelect.disabled = false;
-                }
-
-                const firstInput = manualAddressForm.querySelector('input');
-                if (firstInput) {
-                    firstInput.focus();
-                }
             } else {
                 manualAddressForm.classList.add("disabled");
-                manualInputs.forEach(input => input.disabled = true);
+                manualInputs.forEach(input => {
+                    input.disabled = true;
+                    // Khi chọn địa chỉ có sẵn, phải TẮT required đi thì mới Submit được
+                    input.required = false;
+                });
             }
         }
 
@@ -420,8 +428,20 @@
                     option.value = p.name;
                     option.dataset.code = p.code;
                     option.textContent = p.name;
+                    // GIỮ LẠI TỈNH CŨ
+                    if (p.name === "${param.province}") option.selected = true;
                     provinceSelect.appendChild(option);
                 });
+
+                // NẾU CÓ TỈNH CŨ THÌ LOAD TIẾP PHƯỜNG CŨ
+                if (provinceSelect.value !== "") {
+                    provinceSelect.dispatchEvent(new Event('change'));
+                    setTimeout(() => {
+                        wardSelect.value = "${param.ward}";
+                        // Kích hoạt lại trạng thái disabled nếu cần
+                        updateFormState();
+                    }, 200);
+                }
             } catch (error) {
                 console.error("Lỗi khi tải dữ liệu địa giới:", error);
             }
