@@ -198,8 +198,31 @@
                                             </c:if>
                                             <div class="order-item__meta" style="margin-top: 5px;">Số lượng: ${item.quantity}</div>
                                         </div>
-                                        <div class="order-item__price">
-                                            <fmt:formatNumber value="${item.totalPrice}" type="currency" currencySymbol="đ" maxFractionDigits="0"/>
+                                        <div class="order-item__price" style="text-align: right; min-width: 160px;">
+                                            <div style="font-size: 0.85rem; color: #666;">
+                                                Giá gốc:
+                                                <fmt:formatNumber value="${item.originalUnitPrice}" type="currency" currencySymbol="đ" maxFractionDigits="0"/>
+                                                x ${item.quantity}
+                                                =
+                                                <fmt:formatNumber value="${item.totalOriginalPrice}" type="currency" currencySymbol="đ" maxFractionDigits="0"/>
+                                            </div>
+
+                                            <div style="font-size: 0.85rem; color: #2e7d32; font-weight: 600;">
+                                                Khuyến mãi:
+                                                <c:choose>
+                                                    <c:when test="${item.totalDiscount > 0}">
+                                                        -
+                                                        <fmt:formatNumber value="${item.totalDiscount}" type="currency" currencySymbol="đ" maxFractionDigits="0"/>
+                                                    </c:when>
+                                                    <c:otherwise>
+                                                        0đ
+                                                    </c:otherwise>
+                                                </c:choose>
+                                            </div>
+
+                                            <div style="font-size: 1rem; color: #d9534f; font-weight: bold; margin-top: 4px;">
+                                                <fmt:formatNumber value="${item.totalPrice}" type="currency" currencySymbol="đ" maxFractionDigits="0"/>
+                                            </div>
                                         </div>
                                     </div>
                                 </c:forEach>
@@ -241,10 +264,14 @@
                             <h2 class="checkout-card__title">Phương thức thanh toán</h2>
                             <div class="payment-methods">
                                 <label class="payment-option">
-                                    <input type="radio" name="paymentMethod" value="momo" checked>
+                                    <input type="radio" name="paymentMethod" value="momo">
                                     <div class="payment-option__content">
-                                        <span class="payment-option__name"><i class="fa-solid fa-mobile-screen"></i> Ví MoMo</span>
-                                        <p class="payment-option__desc">Sau khi đặt hàng, hệ thống sẽ hiển thị QR / số điện thoại để bạn thanh toán bằng MoMo.</p>
+                                        <span class="payment-option__name">
+                                            <i class="fa-solid fa-wallet"></i> Ví MoMo
+                                        </span>
+                                        <p class="payment-option__desc">
+                                            Thanh toán bằng ví MoMo. Hệ thống sẽ tạo mã QR hoặc link thanh toán.
+                                        </p>
                                     </div>
                                 </label>
                                 <label class="payment-option">
@@ -257,8 +284,12 @@
                                 <label class="payment-option">
                                     <input type="radio" name="paymentMethod" value="bank">
                                     <div class="payment-option__content">
-                                        <span class="payment-option__name"><i class="fa-solid fa-building-columns"></i> Chuyển khoản ngân hàng</span>
-                                        <p class="payment-option__desc">Thông tin số tài khoản và nội dung chuyển khoản sẽ được hiển thị sau khi đặt hàng thành công.</p>
+                                        <span class="payment-option__name">
+                                            <i class="fa-solid fa-building-columns"></i> Chuyển khoản ngân hàng
+                                        </span>
+                                        <p class="payment-option__desc">
+                                            Hệ thống sẽ tạo mã QR ngân hàng để bạn thanh toán.
+                                        </p>
                                     </div>
                                 </label>
                             </div>
