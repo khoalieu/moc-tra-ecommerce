@@ -102,7 +102,9 @@ public class PromotionDAO {
         PreparedStatement psGetPromo = null;
         PreparedStatement psInsert = null;
         PreparedStatement psUpdatePrice = null;
+        PreparedStatement psUpdateVariantPrice = null;
         PreparedStatement psCleanOld = null;
+        PreparedStatement psResetOldVariantPrice = null;
 
         try {
             conn = ds.getConnection();
@@ -126,16 +128,25 @@ public class PromotionDAO {
             String sqlClean = "DELETE FROM promotion_items WHERE product_id = ?";
             psCleanOld = conn.prepareStatement(sqlClean);
 
+            String sqlResetOldVariantPrice = "UPDATE product_variants SET sale_price = 0 WHERE product_id = ?";
+            psResetOldVariantPrice = conn.prepareStatement(sqlResetOldVariantPrice);
+
             String sqlInsert = "INSERT INTO promotion_items (promotion_id, product_id) VALUES (?, ?)";
             psInsert = conn.prepareStatement(sqlInsert);
 
             String sqlUpdatePrice = "";
+            String sqlUpdateVariantPrice = "";
+
             if ("PERCENT".equals(type)) {
                 sqlUpdatePrice = "UPDATE products SET sale_price = price * (100 - ?) / 100 WHERE id = ?";
+                sqlUpdateVariantPrice = "UPDATE product_variants SET sale_price = price * (100 - ?) / 100 WHERE product_id = ?";
             } else {
                 sqlUpdatePrice = "UPDATE products SET sale_price = GREATEST(0, price - ?) WHERE id = ?";
+                sqlUpdateVariantPrice = "UPDATE product_variants SET sale_price = GREATEST(0, price - ?) WHERE product_id = ?";
             }
+
             psUpdatePrice = conn.prepareStatement(sqlUpdatePrice);
+            psUpdateVariantPrice = conn.prepareStatement(sqlUpdateVariantPrice);
 
             for (String idStr : productIds) {
                 try {
@@ -143,6 +154,9 @@ public class PromotionDAO {
 
                     psCleanOld.setInt(1, pid);
                     psCleanOld.executeUpdate();
+
+                    psResetOldVariantPrice.setInt(1, pid);
+                    psResetOldVariantPrice.executeUpdate();
 
                     psInsert.setInt(1, promoId);
                     psInsert.setInt(2, pid);
@@ -152,13 +166,17 @@ public class PromotionDAO {
                     psUpdatePrice.setInt(2, pid);
                     psUpdatePrice.executeUpdate();
 
+                    psUpdateVariantPrice.setDouble(1, value);
+                    psUpdateVariantPrice.setInt(2, pid);
+                    psUpdateVariantPrice.executeUpdate();
+
                 } catch (NumberFormatException e) {
                     System.err.println("Lỗi ID sản phẩm: " + idStr);
                 }
             }
 
             conn.commit();
-            System.out.println("Đã thêm vào KM và cập nhật giá (Loại: " + type + ")");
+            System.out.println("Đã thêm vào KM và cập nhật giá sản phẩm + phân loại (Loại: " + type + ")");
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -167,9 +185,12 @@ public class PromotionDAO {
             } catch (SQLException ex) {
             }
         } finally {
-
             try {
                 if (psCleanOld != null) psCleanOld.close();
+            } catch (Exception e) {
+            }
+            try {
+                if (psResetOldVariantPrice != null) psResetOldVariantPrice.close();
             } catch (Exception e) {
             }
             try {
@@ -185,6 +206,10 @@ public class PromotionDAO {
             } catch (Exception e) {
             }
             try {
+                if (psUpdateVariantPrice != null) psUpdateVariantPrice.close();
+            } catch (Exception e) {
+            }
+            try {
                 if (conn != null) conn.close();
             } catch (Exception e) {
             }
@@ -195,6 +220,7 @@ public class PromotionDAO {
         Connection conn = null;
         PreparedStatement psDelete = null;
         PreparedStatement psResetPrice = null;
+        PreparedStatement psResetVariantPrice = null;
 
         try {
             conn = ds.getConnection();
@@ -206,6 +232,9 @@ public class PromotionDAO {
             String sqlResetPrice = "UPDATE products SET sale_price = 0 WHERE id = ?";
             psResetPrice = conn.prepareStatement(sqlResetPrice);
 
+            String sqlResetVariantPrice = "UPDATE product_variants SET sale_price = 0 WHERE product_id = ?";
+            psResetVariantPrice = conn.prepareStatement(sqlResetVariantPrice);
+
             for (String idStr : productIds) {
                 try {
                     int pid = Integer.parseInt(idStr);
@@ -216,18 +245,23 @@ public class PromotionDAO {
                     psResetPrice.setInt(1, pid);
                     psResetPrice.executeUpdate();
 
+                    psResetVariantPrice.setInt(1, pid);
+                    psResetVariantPrice.executeUpdate();
+
                 } catch (NumberFormatException e) {
+                    System.err.println("Lỗi ID sản phẩm: " + idStr);
                 }
             }
 
             conn.commit();
-            System.out.println("Đã gỡ sản phẩm khỏi KM và reset giá!");
+            System.out.println("Đã gỡ sản phẩm khỏi KM và reset giá sản phẩm + phân loại!");
 
         } catch (Exception e) {
             e.printStackTrace();
             try {
                 if (conn != null) conn.rollback();
             } catch (SQLException ex) {
+                ex.printStackTrace();
             }
         } finally {
             try {
@@ -239,12 +273,15 @@ public class PromotionDAO {
             } catch (Exception e) {
             }
             try {
+                if (psResetVariantPrice != null) psResetVariantPrice.close();
+            } catch (Exception e) {
+            }
+            try {
                 if (conn != null) conn.close();
             } catch (Exception e) {
             }
         }
     }
-
     public List<Promotion> getAllPromotions() {
         List<Promotion> list = new ArrayList<>();
         String sql = "SELECT * FROM promotions ORDER BY created_at DESC";
@@ -320,6 +357,15 @@ public class PromotionDAO {
                     ps.executeUpdate();
                 }
 
+                String sqlResetVariantPrice = "UPDATE product_variants v " +
+                        "JOIN promotion_items pi ON v.product_id = pi.product_id " +
+                        "SET v.sale_price = 0 " +
+                        "WHERE pi.promotion_id = ?";
+                try (PreparedStatement ps = conn.prepareStatement(sqlResetVariantPrice)) {
+                    ps.setInt(1, promoId);
+                    ps.executeUpdate();
+                }
+
                 String sqlDeleteItems = "DELETE FROM promotion_items WHERE promotion_id = ?";
                 try (PreparedStatement ps = conn.prepareStatement(sqlDeleteItems)) {
                     ps.setInt(1, promoId);
@@ -333,15 +379,16 @@ public class PromotionDAO {
             try {
                 if (conn != null) conn.rollback();
             } catch (SQLException ex) {
+                ex.printStackTrace();
             }
         } finally {
             try {
                 if (conn != null) conn.close();
             } catch (SQLException ex) {
+                ex.printStackTrace();
             }
         }
     }
-
     public boolean updatePromotion(Promotion p) {
         String sql = "UPDATE promotions SET name=?, description=?, discount_type=?, discount_value=?, promotion_type=?, " +
                 "start_date=?, end_date=?, image_url=? WHERE id=?";
@@ -435,6 +482,11 @@ public class PromotionDAO {
                 "SET p.sale_price = 0 " +
                 "WHERE pi.promotion_id = ?";
 
+        String resetVariantPriceSql = "UPDATE product_variants v " +
+                "JOIN promotion_items pi ON v.product_id = pi.product_id " +
+                "SET v.sale_price = 0 " +
+                "WHERE pi.promotion_id = ?";
+
         String deleteItemsSql = "DELETE FROM promotion_items WHERE promotion_id = ?";
         String deletePromoSql = "DELETE FROM promotions WHERE id = ?";
 
@@ -442,8 +494,9 @@ public class PromotionDAO {
             conn.setAutoCommit(false);
 
             try (PreparedStatement ps1 = conn.prepareStatement(resetPriceSql);
-                 PreparedStatement ps2 = conn.prepareStatement(deleteItemsSql);
-                 PreparedStatement ps3 = conn.prepareStatement(deletePromoSql)) {
+                 PreparedStatement ps2 = conn.prepareStatement(resetVariantPriceSql);
+                 PreparedStatement ps3 = conn.prepareStatement(deleteItemsSql);
+                 PreparedStatement ps4 = conn.prepareStatement(deletePromoSql)) {
 
                 ps1.setInt(1, promoId);
                 ps1.executeUpdate();
@@ -452,10 +505,14 @@ public class PromotionDAO {
                 ps2.executeUpdate();
 
                 ps3.setInt(1, promoId);
-                boolean deleted = ps3.executeUpdate() > 0;
+                ps3.executeUpdate();
+
+                ps4.setInt(1, promoId);
+                boolean deleted = ps4.executeUpdate() > 0;
 
                 conn.commit();
                 return deleted;
+
             } catch (Exception e) {
                 conn.rollback();
                 e.printStackTrace();
@@ -463,6 +520,7 @@ public class PromotionDAO {
         } catch (Exception e) {
             e.printStackTrace();
         }
+
         return false;
     }
 }

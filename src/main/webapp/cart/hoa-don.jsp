@@ -70,6 +70,32 @@
                         <div class="invoice-info">
                             <p><strong>Phương thức:</strong> ${order.paymentMethod.toUpperCase()}</p>
                             <p><strong>Trạng thái:</strong> ${order.paymentStatus}</p>
+                            <p><strong>Phương thức:</strong>
+                                <span class="pill pill-payment" id="paymentMethod">
+                                    <c:choose>
+                                        <c:when test="${order.paymentMethod == 'cod'}">Thanh toán khi nhận hàng (COD)</c:when>
+                                        <c:when test="${order.paymentMethod == 'momo'}">Ví MoMo</c:when>
+                                        <c:when test="${order.paymentMethod == 'bank'}">Chuyển khoản ngân hàng</c:when>                                        <c:otherwise>${order.paymentMethod}</c:otherwise>
+                                    </c:choose>
+                                </span>
+                            </p>
+                            <p><strong>Trạng thái thanh toán:</strong>
+                                <span id="paymentStatus">
+                                    <c:choose>
+                                        <c:when test="${order.paymentStatus.toString() == 'PAID'}">
+                                            <span style="color: green; font-weight: bold;">Đã thanh toán</span>
+                                        </c:when>
+
+                                        <c:when test="${order.paymentStatus.toString() == 'FAILED'}">
+                                            <span style="color: red; font-weight: bold;">Thanh toán thất bại</span>
+                                        </c:when>
+
+                                        <c:otherwise>
+                                            <span style="color: orange; font-weight: bold;">Chờ thanh toán</span>
+                                        </c:otherwise>
+                                    </c:choose>
+                                </span>
+                            </p>
                         </div>
                     </div>
 

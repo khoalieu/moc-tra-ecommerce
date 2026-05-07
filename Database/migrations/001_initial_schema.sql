@@ -251,7 +251,7 @@ CREATE TABLE `users`  (
 ) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = Dynamic;
 
 SET FOREIGN_KEY_CHECKS = 1;
-ALTER TABLE users ADD COLUMN is_vip TINYINT(1) DEFAULT 0;ALTER TABLE promotions ADD COLUMN promotion_type ENUM('ALL', 'VIP') DEFAULT 'ALL';
+ALTER TABLE users ADD COLUMN is_vip TINYINT(1) DEFAULT 0;
 ALTER TABLE promotions ADD COLUMN promotion_type ENUM('ALL', 'VIP') DEFAULT 'ALL';
 CREATE TABLE vip_vouchers (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -273,3 +273,72 @@ CREATE TABLE user_vip_vouchers (
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (voucher_id) REFERENCES vip_vouchers(id) ON DELETE CASCADE
 );
+DROP TABLE IF EXISTS `product_variants`;
+CREATE TABLE `product_variants` (
+                                    `id` int NOT NULL AUTO_INCREMENT,
+                                    `product_id` int NOT NULL,
+                                    `variant_name` varchar(255) NOT NULL, -- Ví dụ: "Hộp 10 gói", "Hộp 20 gói"
+                                    `sku` varchar(50) UNIQUE,              -- SKU riêng cho từng phân loại
+                                    `price` decimal(15, 2) NOT NULL,       -- Giá gốc của phân loại này
+                                    `sale_price` decimal(15, 2) DEFAULT 0, -- Giá khuyến mãi
+                                    `stock_quantity` int DEFAULT 0,        -- Số lượng tồn kho riêng
+                                    `is_active` tinyint(1) DEFAULT 1,
+                                    PRIMARY KEY (`id`),
+                                    CONSTRAINT `fk_variant_product` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE
+) ENGINE = InnoDB;
+
+ALTER TABLE `cart`
+    ADD COLUMN `variant_id` int NULL AFTER `product_id`;
+
+ALTER TABLE `cart`
+    ADD CONSTRAINT `fk_cart_variant`
+        FOREIGN KEY (`variant_id`) REFERENCES `product_variants` (`id`)
+            ON DELETE CASCADE ON UPDATE RESTRICT;
+
+
+ALTER TABLE `order_items`
+    ADD COLUMN `variant_id` int NULL AFTER `product_id`;
+
+-- 2. Tạo khóa ngoại
+-- Lưu ý: Ở đây dùng ON DELETE SET NULL để nếu sau này bạn có xóa phân loại sản phẩm,
+-- thì lịch sử đơn hàng cũ vẫn còn (chỉ là cột variant_id về null).
+ALTER TABLE `order_items`
+    ADD CONSTRAINT `fk_item_variant`
+        FOREIGN KEY (`variant_id`) REFERENCES `product_variants` (`id`)
+            ON DELETE SET NULL ON UPDATE RESTRICT;
+
+TRUNCATE TABLE `cart`;
+
+-- thêm giá gốc và giá khuyến mãi để lưu lại lịch sử đơn hhangfkhi xóa khuyến mãi
+ALTER TABLE order_items
+    ADD COLUMN original_price DECIMAL(15,2) DEFAULT 0 AFTER price,
+    ADD COLUMN discount_amount DECIMAL(15,2) DEFAULT 0 AFTER original_price;
+
+-- thay đôi phần thanh toán khi tích hợp API
+ALTER TABLE orders
+    MODIFY payment_status ENUM(
+    'pending',
+    'paid',
+    'failed',
+    'expired',
+    'refunded'
+    ) DEFAULT 'pending';
+
+CREATE TABLE payment_transactions (
+                                      id INT AUTO_INCREMENT PRIMARY KEY,
+                                      order_id INT NOT NULL,
+                                      payment_method VARCHAR(50) NOT NULL,
+                                      provider VARCHAR(50) NOT NULL,
+                                      request_id VARCHAR(100),
+                                      provider_order_id VARCHAR(100),
+                                      amount DECIMAL(15,2) NOT NULL,
+                                      qr_code_url TEXT,
+                                      pay_url TEXT,
+                                      deeplink TEXT,
+                                      transaction_status VARCHAR(50) DEFAULT 'pending',
+                                      raw_response TEXT,
+                                      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                                      paid_at DATETIME NULL,
+                                      FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE
+);
+
