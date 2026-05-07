@@ -222,6 +222,7 @@ public class OrderDAO {
 
     public Order getOrderById(int orderId) {
         Order o = null;
+        // Query lấy thông tin Order kèm thông tin Địa chỉ từ bảng user_addresses
         String sql = "SELECT o.*, a.full_name, a.phone_number, a.street_address, a.ward, a.province " +
                 "FROM orders o " +
                 "LEFT JOIN user_addresses a ON o.shipping_address_id = a.id " +
@@ -242,34 +243,46 @@ public class OrderDAO {
                 o.setTotalAmount(rs.getDouble("total_amount"));
                 o.setShippingFee(rs.getDouble("shipping_fee"));
                 o.setPaymentMethod(rs.getString("payment_method"));
-                Timestamp ts = rs.getTimestamp("created_at");
-                if (ts != null) {
-                    o.setCreatedAt(Timestamp.valueOf(ts.toLocalDateTime()));
-                }
+                o.setCreatedAt(rs.getTimestamp("created_at"));
+
+                // 1. Xử lý Status & Payment Status an toàn (Tránh lỗi Enum khiến trang bị trắng)
                 try {
                     String statusStr = rs.getString("status");
                     o.setStatus(statusStr != null ? OrderStatus.valueOf(statusStr.toUpperCase()) : OrderStatus.PENDING);
-                } catch (Exception e) {
+                } catch (IllegalArgumentException e) {
                     o.setStatus(OrderStatus.PENDING);
                 }
+
                 try {
                     String payStatusStr = rs.getString("payment_status");
                     o.setPaymentStatus(payStatusStr != null ? PaymentStatus.valueOf(payStatusStr.toUpperCase()) : PaymentStatus.PENDING);
-                } catch (Exception e) {
+                } catch (IllegalArgumentException e) {
                     o.setPaymentStatus(PaymentStatus.PENDING);
                 }
+
+                // 2. Xử lý Địa chỉ giao hàng
                 String fullName = rs.getString("full_name");
+                String dbNotes = rs.getString("notes"); // Lấy ghi chú thực tế từ Database
+
                 if (fullName != null) {
-                    String phone = rs.getString("phone_number");
-                    String street = rs.getString("street_address");
-                    String ward = rs.getString("ward");
-                    String province = rs.getString("province");
-                    String fullAddr = String.format("%s - %s<br>%s, %s, %s",
-                            fullName, phone, street, ward, province);
-                    o.setNotes(fullAddr);
+                    String fullAddr = String.format("<strong>%s - %s</strong><br>%s, %s, %s",
+                            fullName,
+                            rs.getString("phone_number"),
+                            rs.getString("street_address"),
+                            rs.getString("ward"),
+                            rs.getString("province"));
+
+                    // Nếu khách có nhập ghi chú, ta nối thêm vào sau địa chỉ để hiện ở trang hóa đơn
+                    if (dbNotes != null && !dbNotes.trim().isEmpty()) {
+                        o.setNotes(fullAddr + "<br><p style='margin-top:10px; color:#666;'><i>Ghi chú: " + dbNotes + "</i></p>");
+                    } else {
+                        o.setNotes(fullAddr);
+                    }
                 } else {
-                    o.setNotes(rs.getString("notes"));
+                    o.setNotes("Địa chỉ không xác định hoặc đã bị xóa.");
                 }
+
+                // 3. Nạp danh sách sản phẩm (OrderItem) - Đã bao gồm JOIN lấy Product Name/Image
                 o.setItems(getOrderItems(o.getId()));
             }
         } catch (SQLException e) {
