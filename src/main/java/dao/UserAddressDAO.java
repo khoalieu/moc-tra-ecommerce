@@ -177,4 +177,30 @@ public class UserAddressDAO {
         }
         return -1;
     }
+    public UserAddress getAddressById(int addressId) {
+        String sql = "SELECT * FROM user_addresses WHERE id = ?";
+        try (Connection conn = ds.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, addressId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    UserAddress a = new UserAddress();
+                    a.setId(rs.getInt("id"));
+                    a.setUserId(rs.getInt("user_id"));
+                    a.setFullName(rs.getString("full_name"));
+                    a.setPhoneNumber(rs.getString("phone_number"));
+                    a.setLabel(rs.getString("label"));
+                    a.setProvince(rs.getString("province"));
+                    a.setWard(rs.getString("ward"));
+                    a.setStreetAddress(rs.getString("street_address"));
+                    a.setIsDefault(rs.getBoolean("is_default"));
+                    return a;
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
 }
