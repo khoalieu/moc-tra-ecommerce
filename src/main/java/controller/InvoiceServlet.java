@@ -22,6 +22,7 @@ public class InvoiceServlet extends HttpServlet {
             response.sendRedirect(request.getContextPath() + "/auth/login.jsp");
             return;
         }
+
         String idStr = request.getParameter("id");
         if (idStr == null || idStr.isEmpty()) {
             response.sendRedirect(request.getContextPath() + "/don-hang");
@@ -32,8 +33,11 @@ public class InvoiceServlet extends HttpServlet {
             int orderId = Integer.parseInt(idStr);
             OrderDAO orderDAO = DAOFactory.getInstance().getOrderDAO();
             Order order = orderDAO.getOrderById(orderId);
+
             if (order != null && order.getUserId() == user.getId()) {
                 request.setAttribute("order", order);
+                request.setAttribute("orderItems", order.getItems());
+
                 request.getRequestDispatcher("/cart/hoa-don.jsp").forward(request, response);
             } else {
                 response.sendRedirect(request.getContextPath() + "/don-hang");

@@ -38,8 +38,15 @@ public class CheckoutServlet extends HttpServlet {
             response.sendRedirect(request.getContextPath() + "/san-pham");
             return;
         }
+
         String[] selectedItems = request.getParameterValues("selectedItems");
-        if (selectedItems == null || selectedItems.length == 0) {
+        if (selectedItems != null && selectedItems.length > 0) {
+            session.setAttribute("selectedItemIds", selectedItems);
+        } else {
+            selectedItems = (String[]) session.getAttribute("selectedItemIds");
+        }
+
+        if (selectedItems == null) {
             response.sendRedirect(request.getContextPath() + "/gio-hang");
             return;
         }
@@ -55,15 +62,47 @@ public class CheckoutServlet extends HttpServlet {
                 }
             }
         }
+
         UserAddressDAO addressDAO = DAOFactory.getInstance().getUserAddressDAO();
         List<UserAddress> addresses = addressDAO.getListAddress(user.getId());
+
+        UserAddress defaultAddr = null;
+        if (addresses != null && !addresses.isEmpty()) {
+            for (UserAddress a : addresses) {
+                if (a.getIsDefault()) {
+                    defaultAddr = a;
+                    break;
+                }
+            }
+            if (defaultAddr == null) defaultAddr = addresses.get(0);
+        }
+
+        String selectedAddressId = request.getParameter("selectedAddress");
+        String provinceFromForm = request.getParameter("province");
+        String shippingMethod = request.getParameter("shippingMethod");
+
+        String provinceToCalculate = (provinceFromForm != null && !provinceFromForm.isEmpty())
+                ? provinceFromForm : (defaultAddr != null ? defaultAddr.getProvince() : "");
+
+        ShippingDAO shippingDAO = DAOFactory.getInstance().getShippingDAO();
+        double baseProvinceFee = (provinceToCalculate != null && !provinceToCalculate.isEmpty())
+                ? shippingDAO.getFeeByProvince(provinceToCalculate) : 30000;
+
+        double extraFee = 0;
+        if ("express".equals(shippingMethod)) extraFee = 15000;
+        else if ("instant".equals(shippingMethod)) extraFee = 30000;
+
         request.setAttribute("addresses", addresses);
         request.setAttribute("checkoutItems", checkoutItems);
         request.setAttribute("subtotal", subtotal);
-        double defaultShipping = 20000;
-        request.setAttribute("shippingFee", defaultShipping);
-        request.setAttribute("totalAmount", subtotal + defaultShipping);
-        session.setAttribute("selectedItemIds", selectedItems);
+
+        request.setAttribute("baseProvinceFee", 0);
+        request.setAttribute("extraShippingFee", 0);
+        request.setAttribute("totalAmount", subtotal + baseProvinceFee + extraFee);
+
+        request.setAttribute("selectedAddressId", selectedAddressId);
+        request.setAttribute("selectedProvince", provinceFromForm);
+        request.setAttribute("selectedMethod", shippingMethod);
 
         if (Boolean.TRUE.equals(user.getIsVip())) {
             VipVoucherDAO voucherDAO = DAOFactory.getInstance().getVipVoucherDAO();
@@ -77,197 +116,173 @@ public class CheckoutServlet extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         request.setCharacterEncoding("UTF-8");
+        String action = request.getParameter("action");
+
+        if ("calculate".equals(action)) {
+            request.setAttribute("savedFullName", request.getParameter("fullName"));
+            request.setAttribute("savedPhone", request.getParameter("phoneNumber"));
+            request.setAttribute("savedNote", request.getParameter("note"));
+            request.setAttribute("savedAddressId", request.getParameter("selectedAddress"));
+            doGet(request, response);
+            return;
+        }
+
         HttpSession session = request.getSession();
         User user = (User) session.getAttribute("user");
         Cart cart = (Cart) session.getAttribute("cart");
         String[] selectedItemIds = (String[]) session.getAttribute("selectedItemIds");
 
-        if (user == null || cart == null || cart.getTotalQuantity() == 0 || selectedItemIds == null || selectedItemIds.length == 0) {
+        if (user == null || cart == null || selectedItemIds == null || selectedItemIds.length == 0) {
             response.sendRedirect(request.getContextPath() + "/gio-hang");
             return;
         }
 
         String selectedAddressVal = request.getParameter("selectedAddress");
-        String shippingMethod = request.getParameter("shippingMethod");
-        String paymentMethod = request.getParameter("paymentMethod");
-        String note = request.getParameter("note");
         UserAddressDAO addressDAO = DAOFactory.getInstance().getUserAddressDAO();
         int shippingAddressId = 0;
 
         if ("new".equals(selectedAddressVal)) {
-            String fullName = request.getParameter("fullName");
-            String phone = request.getParameter("phoneNumber");
-            String province = request.getParameter("province");
-            String ward = request.getParameter("ward");
-            String street = request.getParameter("addressLine");
-
             UserAddress newAddr = new UserAddress();
             newAddr.setUserId(user.getId());
-            newAddr.setFullName(fullName);
-            newAddr.setPhoneNumber(phone);
+            newAddr.setFullName(request.getParameter("fullName"));
+            newAddr.setPhoneNumber(request.getParameter("phoneNumber"));
+            newAddr.setProvince(request.getParameter("province"));
+            newAddr.setWard(request.getParameter("ward"));
+            newAddr.setStreetAddress(request.getParameter("addressLine"));
             newAddr.setLabel("Địa chỉ mới");
-            newAddr.setProvince(province);
-            newAddr.setWard(ward);
-            newAddr.setStreetAddress(street);
             newAddr.setIsDefault(false);
             shippingAddressId = addressDAO.addAddressAndGetId(newAddr);
         } else {
             try {
                 shippingAddressId = Integer.parseInt(selectedAddressVal);
-            } catch (NumberFormatException e) {
-            }
+            } catch (NumberFormatException e) { shippingAddressId = 0; }
         }
 
+        if (shippingAddressId <= 0) {
+            request.setAttribute("errorMessage", "Vui lòng chọn địa chỉ giao hàng hợp lệ!");
+            doGet(request, response);
+            return;
+        }
         List<CartItem> selectedCartItems = new ArrayList<>();
         double subtotal = 0;
         for (CartItem item : cart.getItems()) {
             for (String idStr : selectedItemIds) {
-                try {
-                    int id = Integer.parseInt(idStr);
-                    if (item.getVariantId() == id) {
-                        selectedCartItems.add(item);
-                        subtotal += item.getTotalPrice();
-                        break;
-                    }
-                } catch (NumberFormatException e) {
+                if (item.getVariantId() == Integer.parseInt(idStr)) {
+                    selectedCartItems.add(item);
+                    subtotal += item.getTotalPrice();
+                    break;
                 }
             }
         }
 
-        double shippingFee = 20000;
-        if ("express".equals(shippingMethod)) {
-            shippingFee = 35000;
-        } else if ("instant".equals(shippingMethod)) {
-            shippingFee = 60000;
+        ShippingDAO shippingDAO = DAOFactory.getInstance().getShippingDAO();
+        String province = null;
+
+        if ("new".equals(request.getParameter("selectedAddress"))) {
+            province = request.getParameter("province");
+        } else {
+            UserAddress addr = addressDAO.getAddressById(shippingAddressId);
+            if (addr != null) {
+                province = addr.getProvince();
+            }
         }
+
+        String shippingMethod = request.getParameter("shippingMethod");
+        double finalShippingFee = calculateFinalShippingFee(province, shippingMethod);
 
         double vipDiscount = 0;
         Integer appliedVoucherId = null;
-
-        String applyVipVoucher = request.getParameter("applyVipVoucher");
-        String selectedVoucherId = request.getParameter("selectedVoucher");
-
-        if ("true".equals(applyVipVoucher)
-                && selectedVoucherId != null
-                && !selectedVoucherId.isEmpty()
-                && Boolean.TRUE.equals(user.getIsVip())) {
+        if ("true".equals(request.getParameter("applyVipVoucher")) && Boolean.TRUE.equals(user.getIsVip())) {
             try {
-                int voucherId = Integer.parseInt(selectedVoucherId);
-                VipVoucherDAO voucherDAO = DAOFactory.getInstance().getVipVoucherDAO();
-                VipVoucher voucher = voucherDAO.getActiveVoucherForUser(user.getId(), voucherId);
-
+                int vId = Integer.parseInt(request.getParameter("selectedVoucher"));
+                VipVoucher voucher = DAOFactory.getInstance().getVipVoucherDAO().getActiveVoucherForUser(user.getId(), vId);
                 if (voucher != null) {
-                    if ("PERCENT".equals(voucher.getDiscountType())) {
-                        vipDiscount = subtotal * voucher.getDiscountValue() / 100.0;
-                    } else if ("FIXED_AMOUNT".equals(voucher.getDiscountType())) {
-                        vipDiscount = voucher.getDiscountValue();
-                    }
-
-                    if (vipDiscount > subtotal) {
-                        vipDiscount = subtotal;
-                    }
-
-                    appliedVoucherId = voucherId;
+                    vipDiscount = "PERCENT".equals(voucher.getDiscountType()) ? (subtotal * voucher.getDiscountValue() / 100.0) : voucher.getDiscountValue();
+                    if (vipDiscount > subtotal) vipDiscount = subtotal;
+                    appliedVoucherId = vId;
                 }
-            } catch (NumberFormatException e) {
-                e.printStackTrace();
-            }
+            } catch (Exception e) { e.printStackTrace(); }
         }
 
-        double totalAmount = subtotal - vipDiscount + shippingFee;
-        if (totalAmount < 0) {
-            totalAmount = 0;
-        }
+        double totalAmount = Math.max(0, subtotal - vipDiscount + finalShippingFee);
 
         Order order = new Order();
         order.setUserId(user.getId());
         order.setShippingAddressId(shippingAddressId);
         order.setOrderNumber(generateOrderNumber());
         order.setTotalAmount(totalAmount);
-        order.setShippingFee(shippingFee);
-        order.setPaymentMethod(paymentMethod);
-        order.setNotes(note);
+        order.setShippingFee(finalShippingFee);
+        order.setPaymentMethod(request.getParameter("paymentMethod"));
+        order.setNotes(request.getParameter("note"));
+
         OrderDAO orderDAO = DAOFactory.getInstance().getOrderDAO();
         int orderId = orderDAO.createOrder(order);
 
         if (orderId > 0) {
             orderDAO.addOrderItems(orderId, selectedCartItems);
 
-            ProductVariantDAO variantDAO = DAOFactory.getInstance().getProductVariantDAO();
-            CartDAO cartDAO = DAOFactory.getInstance().getCartDAO();
-
+            ProductVariantDAO vDAO = DAOFactory.getInstance().getProductVariantDAO();
+            CartDAO cDAO = DAOFactory.getInstance().getCartDAO();
             for (CartItem item : selectedCartItems) {
-                variantDAO.decreaseStock(item.getVariantId(), item.getQuantity());
-                cartDAO.removeProduct(user.getId(), item.getVariantId());
+                vDAO.decreaseStock(item.getVariantId(), item.getQuantity());
+                cDAO.removeProduct(user.getId(), item.getVariantId());
             }
 
             if (appliedVoucherId != null) {
-                VipVoucherDAO voucherDAO = DAOFactory.getInstance().getVipVoucherDAO();
-                voucherDAO.incrementVoucherUsage(appliedVoucherId);
-                voucherDAO.markVoucherUsed(user.getId(), appliedVoucherId);
+                VipVoucherDAO vvDAO = DAOFactory.getInstance().getVipVoucherDAO();
+                vvDAO.incrementVoucherUsage(appliedVoucherId);
+                vvDAO.markVoucherUsed(user.getId(), appliedVoucherId);
             }
 
             cart.removeItems(selectedItemIds);
             session.setAttribute("cart", cart);
             session.removeAttribute("selectedItemIds");
 
-            Order createdOrder = orderDAO.getOrderById(orderId);
+            String paymentMethod = request.getParameter("paymentMethod");
+            if (paymentMethod == null) paymentMethod = "cod";
+            if (!"cod".equals(paymentMethod)) {
+                try {
+                    Order createdOrder = orderDAO.getOrderById(orderId);
+                    PaymentResult res = "bank".equals(paymentMethod) ? PaymentUtils.createPayosPayment(createdOrder) : PaymentUtils.createMomoPayment(createdOrder);
 
-            if ("cod".equals(paymentMethod)) {
-                response.sendRedirect("hoa-don?id=" + orderId);
-                return;
-            }
+                    if (res != null) {
+                        PaymentTransaction tx = new PaymentTransaction();
+                        tx.setOrderId(orderId);
+                        tx.setPaymentMethod(paymentMethod);
+                        tx.setProvider(res.getProvider());
+                        tx.setRequestId(res.getRequestId());
+                        tx.setAmount(totalAmount);
+                        tx.setQrCodeUrl(res.getQrCodeUrl());
+                        tx.setPayUrl(res.getPayUrl());
+                        tx.setTransactionStatus("pending");
 
-            PaymentResult paymentResult = null;
-
-            try {
-                if ("bank".equals(paymentMethod)) {
-                    paymentResult = PaymentUtils.createPayosPayment(createdOrder);
-                } else if ("momo".equals(paymentMethod)) {
-                    paymentResult = PaymentUtils.createMomoPayment(createdOrder);
-                }
-
-                if (paymentResult != null) {
-                    PaymentTransaction tx = new PaymentTransaction();
-                    tx.setOrderId(orderId);
-                    tx.setPaymentMethod(paymentMethod);
-                    tx.setProvider(paymentResult.getProvider());
-                    tx.setRequestId(paymentResult.getRequestId());
-                    tx.setProviderOrderId(paymentResult.getProviderOrderId());
-                    tx.setAmount(createdOrder.getTotalAmount());
-                    tx.setQrCodeUrl(paymentResult.getQrCodeUrl());
-                    tx.setPayUrl(paymentResult.getPayUrl());
-                    tx.setDeeplink(paymentResult.getDeeplink());
-                    tx.setTransactionStatus("pending");
-                    tx.setRawResponse(paymentResult.getRawResponse());
-
-                    PaymentTransactionDAO txDAO = DAOFactory.getInstance().getPaymentTransactionDAO();
-                    int txId = txDAO.create(tx);
-                    if (txId <= 0) {
-                        request.setAttribute("errorMessage", "Không lưu được giao dịch thanh toán.");
-                        doGet(request, response);
+                        DAOFactory.getInstance().getPaymentTransactionDAO().create(tx);
+                        response.sendRedirect("thanh-toan-qr?orderId=" + orderId);
                         return;
                     }
-
-                    response.sendRedirect("thanh-toan-qr?orderId=" + orderId);
-                    return;
-                }
-
-            } catch (Exception e) {
-                e.printStackTrace();
-                request.setAttribute("errorMessage", "Không tạo được mã QR thanh toán: " + e.getMessage());
-                doGet(request, response);
-                return;
+                } catch (Exception e) { e.printStackTrace(); }
             }
-
             response.sendRedirect("hoa-don?id=" + orderId);
         } else {
-            request.setAttribute("errorMessage", "Đặt hàng thất bại. Vui lòng thử lại.");
+            request.setAttribute("errorMessage", "Lỗi khi tạo đơn hàng. Vui lòng thử lại!");
             doGet(request, response);
         }
-
     }
-    private String generateOrderNumber () {
+
+    private double calculateFinalShippingFee(String province, String shippingMethod) {
+        ShippingDAO shippingDAO = DAOFactory.getInstance().getShippingDAO();
+        double provinceFee = 30000;
+        if (province != null && !province.isEmpty()) {
+            provinceFee = shippingDAO.getFeeByProvince(province);
+        }
+        double serviceFee = 0;
+        if ("express".equals(shippingMethod)) serviceFee = 15000;
+        else if ("instant".equals(shippingMethod)) serviceFee = 30000;
+
+        return provinceFee + serviceFee;
+    }
+
+    private String generateOrderNumber() {
         return "ORD" + System.currentTimeMillis();
     }
 }
