@@ -38,7 +38,7 @@
                                 <div class="address-list">
                                     <c:forEach var="addr" items="${addresses}">
                                         <label class="address-option">
-                                            <input type="radio" name="selectedAddress" value="${addr.id}" ${addr.isDefault ? 'checked' : ''}>
+                                            <input type="radio" name="selectedAddress" value="${addr.id}" data-province="${addr.province}" ${addr.isDefault ? 'checked' : ''}>
                                             <div class="address-content">
                                                 <strong class="address-label">${addr.label}</strong>
                                                 <div class="address-detail">
@@ -164,33 +164,33 @@
 
                                 <div class="shipping-methods">
                                     <label class="shipping-option">
-                                        <input type="radio" name="shippingMethod" value="standard" data-price="20000" checked>
+                                        <input type="radio" name="shippingMethod" value="standard" data-price="0" checked>
                                         <div class="shipping-option__content">
                                             <div class="shipping-option__top">
                                                 <span class="shipping-option__name">Tiêu chuẩn</span>
-                                                <span class="shipping-option__price">+ 20.000đ</span>
+                                                <span class="shipping-option__price">+ 0đ</span>
                                             </div>
                                             <div class="shipping-option__desc">Giao trong 3-5 ngày làm việc.</div>
                                         </div>
                                     </label>
 
                                     <label class="shipping-option">
-                                        <input type="radio" name="shippingMethod" value="express" data-price="35000">
+                                        <input type="radio" name="shippingMethod" value="express" data-price="15000">
                                         <div class="shipping-option__content">
                                             <div class="shipping-option__top">
                                                 <span class="shipping-option__name">Nhanh</span>
-                                                <span class="shipping-option__price">+ 35.000đ</span>
+                                                <span class="shipping-option__price">+ 15.000đ</span>
                                             </div>
                                             <div class="shipping-option__desc">Giao trong 1-2 ngày làm việc.</div>
                                         </div>
                                     </label>
 
                                     <label class="shipping-option">
-                                        <input type="radio" name="shippingMethod" value="instant" data-price="60000">
+                                        <input type="radio" name="shippingMethod" value="instant" data-price="30000">
                                         <div class="shipping-option__content">
                                             <div class="shipping-option__top">
                                                 <span class="shipping-option__name">Hỏa tốc</span>
-                                                <span class="shipping-option__price">+ 60.000đ</span>
+                                                <span class="shipping-option__price">+ 30.000đ</span>
                                             </div>
                                             <div class="shipping-option__desc">Giao trong 2-4 giờ (nội thành).</div>
                                         </div>
@@ -255,26 +255,26 @@
                                     <span>
                                         <fmt:formatNumber value="${subtotal}" type="currency" currencySymbol="đ" maxFractionDigits="0"/>
                                     </span>
-                                    </div>
+                                </div>
 
-                                    <div class="order-summary__row">
-                                        <span>Phí vận chuyển</span>
-                                        <span id="shippingFeeDisplay">
+                                <div class="order-summary__row">
+                                    <span>Phí vận chuyển</span>
+                                    <span id="shippingFeeDisplay">
                                             <fmt:formatNumber value="${shippingFee}" type="currency" currencySymbol="đ" maxFractionDigits="0"/>
                                         </span>
-                                    </div>
+                                </div>
 
-                                    <div class="order-summary__row" id="vipDiscountRow" style="display: none;">
-                                        <span>Giảm voucher VIP</span>
-                                        <span id="vipDiscountAmount" style="color: #d32f2f;">-0đ</span>
-                                    </div>
+                                <div class="order-summary__row" id="vipDiscountRow" style="display: none;">
+                                    <span>Giảm voucher VIP</span>
+                                    <span id="vipDiscountAmount" style="color: #d32f2f;">-0đ</span>
+                                </div>
 
-                                    <div class="order-summary__row order-summary__row--total">
-                                        <span>Tổng cộng</span>
-                                        <span id="totalAmountDisplay">
+                                <div class="order-summary__row order-summary__row--total">
+                                    <span>Tổng cộng</span>
+                                    <span id="totalAmountDisplay">
                                             <fmt:formatNumber value="${totalAmount}" type="currency" currencySymbol="đ" maxFractionDigits="0"/>
                                         </span>
-                                    </div>
+                                </div>
                             </div>
                         </div>
 
@@ -355,7 +355,10 @@
         const vipDiscountDisplay = document.getElementById('vipDiscountDisplay');
 
         const DATA_URL = "${pageContext.request.contextPath}/assets/data/openapi.json";
+        const SHIPPING_API_URL = "${pageContext.request.contextPath}/api/get-shipping-fee";
+
         let provincesData = [];
+        let provinceFee = 0;
 
         function formatCurrency(amount) {
             return new Intl.NumberFormat('vi-VN', {
@@ -364,9 +367,22 @@
             }).format(amount);
         }
 
-        function getSelectedShippingPrice() {
-            const selectedShip = document.querySelector('input[name="shippingMethod"]:checked');
-            return selectedShip ? parseFloat(selectedShip.getAttribute('data-price')) || 0 : 0;
+        async function fetchProvinceFee(provinceName) {
+            if (!provinceName) {
+                provinceFee = 0;
+                updateTotal();
+                return;
+            }
+            try {
+                const response = await fetch(SHIPPING_API_URL + "?province=" + encodeURIComponent(provinceName));
+                const data = await response.json();
+                provinceFee = parseFloat(data.provinceFee) || 0;
+                updateTotal();
+            } catch (error) {
+                console.error("Lỗi khi lấy phí ship vùng:", error);
+                provinceFee = 30000;
+                updateTotal();
+            }
         }
 
         const vipDiscountRow = document.getElementById('vipDiscountRow');
@@ -376,69 +392,52 @@
             if (!applyVipCheckbox || !applyVipCheckbox.checked || !selectedVoucherSelect || !selectedVoucherSelect.value) {
                 return 0;
             }
-
             const option = selectedVoucherSelect.options[selectedVoucherSelect.selectedIndex];
             const discountType = option.getAttribute('data-type');
             const discountValue = parseFloat(option.getAttribute('data-discount')) || 0;
 
-            let discount = 0;
-            if (discountType === 'PERCENT') {
-                discount = subtotal * discountValue / 100;
-            } else if (discountType === 'FIXED_AMOUNT') {
-                discount = discountValue;
-            }
-
-            if (discount > subtotal) {
-                discount = subtotal;
-            }
-
-            return discount;
+            let discount = (discountType === 'PERCENT') ? (subtotal * discountValue / 100) : discountValue;
+            return Math.min(discount, subtotal);
         }
 
         function updateTotal() {
-            const shipPrice = getSelectedShippingPrice();
+            // 1. Lấy phí giảm giá VIP
             const vipDiscount = getVipDiscountAmount();
-            const newTotal = Math.max(0, subtotal - vipDiscount + shipPrice);
 
-            shippingFeeDisplay.innerText = formatCurrency(shipPrice);
+            const totalShipping = provinceFee + serviceFee;
+
+            // 3. Tính tổng cộng cuối cùng
+            const newTotal = Math.max(0, subtotal - vipDiscount + totalShipping);
+
+            // 4. Hiển thị ra màn hình
+            shippingFeeDisplay.innerText = formatCurrency(totalShipping);
             totalAmountDisplay.innerText = formatCurrency(newTotal);
             btnTotalDisplay.innerText = formatCurrency(newTotal);
-
             if (vipDiscount > 0) {
                 vipDiscountRow.style.display = 'flex';
                 vipDiscountAmount.innerText = '-' + formatCurrency(vipDiscount);
-                vipDiscountDisplay.innerText = formatCurrency(vipDiscount);
-                vipDiscountInfo.style.display = 'block';
             } else {
                 vipDiscountRow.style.display = 'none';
-                vipDiscountAmount.innerText = '-0đ';
-                if (vipDiscountInfo) {
-                    vipDiscountInfo.style.display = 'none';
-                }
             }
         }
+        shippingRadios.forEach(radio => {
+            radio.addEventListener("change", updateServiceFee);
+        });
 
         function updateFormState() {
             const selected = document.querySelector('input[name="selectedAddress"]:checked');
             if (selected && selected.value === "new") {
                 manualAddressForm.classList.remove("disabled");
-
                 manualInputs.forEach(input => {
-                    if (input.id !== "ward") {
-                        input.disabled = false;
-                    }
+                    if (input.id !== "ward") input.disabled = false;
                 });
-                if (provinceSelect.value !== "") {
-                    wardSelect.disabled = false;
-                }
-
-                const firstInput = manualAddressForm.querySelector('input');
-                if (firstInput) {
-                    firstInput.focus();
-                }
+                if (provinceSelect.value !== "") wardSelect.disabled = false;
+                fetchProvinceFee(provinceSelect.value);
             } else {
                 manualAddressForm.classList.add("disabled");
                 manualInputs.forEach(input => input.disabled = true);
+                const province = selected.getAttribute('data-province');
+                fetchProvinceFee(province);
             }
         }
 
@@ -457,46 +456,40 @@
                 console.error("Lỗi khi tải dữ liệu địa giới:", error);
             }
         }
-
         addressRadios.forEach(radio => {
             radio.addEventListener("change", updateFormState);
         });
         shippingRadios.forEach(radio => {
             radio.addEventListener("change", updateTotal);
         });
-
         provinceSelect.addEventListener("change", function () {
             wardSelect.innerHTML = '<option value="">-- Chọn phường / xã --</option>';
             wardSelect.disabled = true;
 
             const selectedOption = this.options[this.selectedIndex];
-            const provinceCode = parseInt(selectedOption.dataset.code);
+            if (!selectedOption.dataset.code) {
+                fetchProvinceFee("");
+                return;
+            }
 
-            if (!provinceCode) return;
+            const provinceCode = parseInt(selectedOption.dataset.code);
             const selectedProvince = provincesData.find(p => p.code === provinceCode);
 
-            if (selectedProvince && selectedProvince.wards && selectedProvince.wards.length > 0) {
+            if (selectedProvince && selectedProvince.wards) {
                 selectedProvince.wards.forEach(w => {
                     const option = document.createElement("option");
                     option.value = w.name;
                     option.textContent = w.name;
                     wardSelect.appendChild(option);
                 });
-                const selectedRadio = document.querySelector('input[name="selectedAddress"]:checked');
-                if (selectedRadio && selectedRadio.value === "new") {
-                    wardSelect.disabled = false;
-                }
+                wardSelect.disabled = false;
             }
+            fetchProvinceFee(this.value);
         });
-
         if (applyVipCheckbox) {
             applyVipCheckbox.addEventListener('change', function () {
-                if (this.checked) {
-                    vipVoucherOptions.style.display = 'block';
-                } else {
-                    vipVoucherOptions.style.display = 'none';
-                    selectedVoucherSelect.value = '';
-                }
+                vipVoucherOptions.style.display = this.checked ? 'block' : 'none';
+                if (!this.checked) selectedVoucherSelect.value = '';
                 updateTotal();
             });
         }
@@ -504,10 +497,17 @@
         if (selectedVoucherSelect) {
             selectedVoucherSelect.addEventListener('change', updateTotal);
         }
-
-        updateFormState();
-        updateTotal();
-        loadData();
+        loadData().then(() => {
+            updateFormState();
+        });
     });
+    let serviceFee = 0;
+    function updateServiceFee() {
+        const selectedShip = document.querySelector('input[name="shippingMethod"]:checked');
+        if (selectedShip) {
+            serviceFee = parseFloat(selectedShip.getAttribute('data-price')) || 0;
+        }
+        updateTotal();
+    }
 </script>
 </html>

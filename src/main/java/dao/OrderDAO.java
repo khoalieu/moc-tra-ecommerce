@@ -242,33 +242,32 @@ public class OrderDAO {
                 o.setTotalAmount(rs.getDouble("total_amount"));
                 o.setShippingFee(rs.getDouble("shipping_fee"));
                 o.setPaymentMethod(rs.getString("payment_method"));
-                Timestamp ts = rs.getTimestamp("created_at");
-                if (ts != null) {
-                    o.setCreatedAt(Timestamp.valueOf(ts.toLocalDateTime()));
-                }
+                o.setCreatedAt(rs.getTimestamp("created_at"));
                 try {
                     String statusStr = rs.getString("status");
                     o.setStatus(statusStr != null ? OrderStatus.valueOf(statusStr.toUpperCase()) : OrderStatus.PENDING);
-                } catch (Exception e) {
+                } catch (IllegalArgumentException e) {
                     o.setStatus(OrderStatus.PENDING);
                 }
+
                 try {
                     String payStatusStr = rs.getString("payment_status");
                     o.setPaymentStatus(payStatusStr != null ? PaymentStatus.valueOf(payStatusStr.toUpperCase()) : PaymentStatus.PENDING);
-                } catch (Exception e) {
+                } catch (IllegalArgumentException e) {
                     o.setPaymentStatus(PaymentStatus.PENDING);
                 }
+
                 String fullName = rs.getString("full_name");
                 if (fullName != null) {
-                    String phone = rs.getString("phone_number");
-                    String street = rs.getString("street_address");
-                    String ward = rs.getString("ward");
-                    String province = rs.getString("province");
-                    String fullAddr = String.format("%s - %s<br>%s, %s, %s",
-                            fullName, phone, street, ward, province);
+                    String fullAddr = String.format("<strong>%s - %s</strong><br>%s, %s, %s",
+                            fullName,
+                            rs.getString("phone_number"),
+                            rs.getString("street_address"),
+                            rs.getString("ward"),
+                            rs.getString("province"));
                     o.setNotes(fullAddr);
                 } else {
-                    o.setNotes(rs.getString("notes"));
+                    o.setNotes("Địa chỉ không xác định");
                 }
                 o.setItems(getOrderItems(o.getId()));
             }

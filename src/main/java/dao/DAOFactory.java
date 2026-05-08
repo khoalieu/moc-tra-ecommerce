@@ -126,7 +126,9 @@ public class DAOFactory {
     public PaymentTransactionDAO getPaymentTransactionDAO() {
         return new PaymentTransactionDAO(dataSource);
     }
-
+    public ShippingDAO getShippingDAO(){
+        return new ShippingDAO(dataSource);
+    }
 
     /**
      * Closes the connection pool. Should be called on application shutdown.

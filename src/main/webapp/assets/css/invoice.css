@@ -1,0 +1,71 @@
+.invoice-page .invoice-address-details p {
+    margin: 5px 0;
+    line-height: 1.5;
+}
+
+.invoice-page hr {
+    margin: 15px 0;
+    border: 0;
+    border-top: 1px solid #eee;
+}
+
+.invoice-page .invoice-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+.invoice-page .invoice-table th {
+    background-color: #f8f9fa;
+    padding: 12px;
+    border-bottom: 2px solid #eee;
+}
+
+.invoice-page .invoice-table td {
+    padding: 12px;
+    border-bottom: 1px solid #eee;
+    vertical-align: middle;
+}
+
+.invoice-page .invoice-table th.text-left,
+.invoice-page .invoice-table td.text-left {
+    text-align: left !important;
+}
+
+.invoice-page .invoice-table th.text-center,
+.invoice-page .invoice-table td.text-center {
+    text-align: center !important;
+}
+
+.invoice-page .invoice-table th.text-right,
+.invoice-page .invoice-table td.text-right {
+    text-align: right !important;
+}
+
+.invoice-page .price-highlight {
+    color: #d32f2f;
+    font-weight: 600;
+}
+
+/* Phần tổng kết tiền */
+.invoice-page .order-summary__row {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+}
+
+.invoice-page .order-summary__row span:last-child {
+    text-align: right;
+    min-width: 120px;
+}
+
+.invoice-page .order-summary__row--total {
+    border-top: 2px dashed #eee;
+    margin-top: 10px;
+    padding-top: 15px;
+    font-weight: bold;
+}
+
+.invoice-page .text-success {
+    color: green !important;
+}
