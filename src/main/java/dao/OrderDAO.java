@@ -79,6 +79,7 @@ public class OrderDAO {
                     String fullAddr = String.format("<strong>%s - %s</strong><br>%s, %s, %s",
                             fullName, phone, street, ward, province);
                     o.setNotes(fullAddr);
+                } else {
                     o.setNotes("Địa chỉ đã bị xóa hoặc không tồn tại.");
                 }
 
@@ -452,6 +453,7 @@ public class OrderDAO {
         }
         return list;
     }
+
     public boolean cancelOrder(int orderId) {
         Connection conn = null;
         try {
@@ -499,6 +501,7 @@ public class OrderDAO {
         }
         return false;
     }
+
     public boolean cancelOrder(int orderId, String reason) {
         Connection conn = null;
         try {
@@ -553,6 +556,7 @@ public class OrderDAO {
         }
         return false;
     }
+
     public boolean updatePaymentStatus(int orderId, model.enums.PaymentStatus status) {
         String sql = "UPDATE orders SET payment_status = ? WHERE id = ?";
 
@@ -588,5 +592,61 @@ public class OrderDAO {
         }
 
         return null;
+    }
+
+    // --- Các hàm mới thêm phục vụ Shipper ---
+
+    public List<Order> getOrdersForShipper(Integer shipperId) {
+        List<Order> list = new ArrayList<>();
+        String sql = "SELECT o.*, a.full_name, a.phone_number, a.street_address, a.ward, a.province " +
+                "FROM orders o " +
+                "LEFT JOIN user_addresses a ON o.shipping_address_id = a.id " +
+                "WHERE o.shipper_id = ? AND o.status = 'shipping' " +
+                "ORDER BY o.created_at DESC";
+
+        try (Connection conn = ds.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, shipperId);
+            ResultSet rs = ps.executeQuery();
+
+            while (rs.next()) {
+                Order o = mapRowToOrder(rs);
+
+                try {
+                    o.setCustomerName(rs.getString("full_name"));
+                    o.setCustomerPhone(rs.getString("phone_number"));
+                    String address = rs.getString("street_address") + ", " +
+                            rs.getString("ward") + ", " +
+                            rs.getString("province");
+                    o.setShippingAddress(address);
+
+                    o.setNotes(rs.getString("notes"));
+                } catch (Exception ignored) {
+                }
+
+                o.setItems(getOrderItems(o.getId()));
+                list.add(o);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+
+    public boolean updateOrderCancelReason(int orderId, OrderStatus status, String cancelReason) {
+        String sql = "UPDATE orders SET status = ?, cancel_reason = ?, updated_at = NOW() WHERE id = ?";
+        try (Connection conn = ds.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, status.name().toLowerCase());
+            ps.setString(2, cancelReason);
+            ps.setInt(3, orderId);
+
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
     }
 }
