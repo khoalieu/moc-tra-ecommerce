@@ -77,11 +77,6 @@ public class ProductServlet extends HttpServlet {
             } catch (Exception e) {
             }
         }
-        if (searchParam != null) {
-            categoryId = null;
-            maxPrice = null;
-            promotionId = null;
-        }
 
         int pageSize = 12;
         List<Product> products = productDAO.getProducts(categoryId, promotionId, sortParam, maxPrice,  searchParam, page, pageSize, "active");

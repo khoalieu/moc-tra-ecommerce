@@ -281,13 +281,20 @@ public class OrderDAO {
     public List<Order> getAllOrders(int index, int size, String search, String status, String timeFilter, String sortOrder) {
         List<Order> list = new ArrayList<>();
         StringBuilder sql = new StringBuilder(
-                "SELECT o.*, a.full_name, a.phone_number FROM orders o " +
+                "SELECT o.*, a.full_name, a.phone_number, u.email AS user_email FROM orders o " +
                         "LEFT JOIN user_addresses a ON o.shipping_address_id = a.id " +
+                        "LEFT JOIN users u ON o.user_id = u.id " +
                         "WHERE 1=1 "
         );
 
         if (search != null && !search.trim().isEmpty()) {
-            sql.append(" AND (o.order_number LIKE ? OR a.full_name LIKE ?) ");
+            sql.append(" AND (");
+            sql.append("o.order_number LIKE ? ");
+            sql.append("OR CAST(o.id AS CHAR) LIKE ? ");
+            sql.append("OR a.full_name LIKE ? ");
+            sql.append("OR a.phone_number LIKE ? ");
+            sql.append("OR u.email LIKE ? ");
+            sql.append(") ");
         }
 
         if (status != null && !status.isEmpty()) {
@@ -319,6 +326,10 @@ public class OrderDAO {
 
             if (search != null && !search.trim().isEmpty()) {
                 String kw = "%" + search.trim() + "%";
+
+                ps.setString(paramIndex++, kw);
+                ps.setString(paramIndex++, kw);
+                ps.setString(paramIndex++, kw);
                 ps.setString(paramIndex++, kw);
                 ps.setString(paramIndex++, kw);
             }
@@ -347,11 +358,18 @@ public class OrderDAO {
                 "SELECT COUNT(*) " +
                         "FROM orders o " +
                         "LEFT JOIN user_addresses a ON o.shipping_address_id = a.id " +
+                        "LEFT JOIN users u ON o.user_id = u.id " +
                         "WHERE 1=1 "
         );
 
         if (search != null && !search.trim().isEmpty()) {
-            sql.append(" AND (o.order_number LIKE ? OR a.full_name LIKE ?) ");
+            sql.append(" AND (");
+            sql.append("o.order_number LIKE ? ");
+            sql.append("OR CAST(o.id AS CHAR) LIKE ? ");
+            sql.append("OR a.full_name LIKE ? ");
+            sql.append("OR a.phone_number LIKE ? ");
+            sql.append("OR u.email LIKE ? ");
+            sql.append(") ");
         }
         if (status != null && !status.isEmpty()) {
             sql.append(" AND o.status = ? ");
@@ -369,6 +387,10 @@ public class OrderDAO {
 
             if (search != null && !search.trim().isEmpty()) {
                 String kw = "%" + search.trim() + "%";
+
+                ps.setString(paramIndex++, kw);
+                ps.setString(paramIndex++, kw);
+                ps.setString(paramIndex++, kw);
                 ps.setString(paramIndex++, kw);
                 ps.setString(paramIndex++, kw);
             }
@@ -377,7 +399,10 @@ public class OrderDAO {
                 ps.setString(paramIndex++, status.toLowerCase());
             }
             ResultSet rs = ps.executeQuery();
-            if (rs.next()) return rs.getInt(1);
+            if (rs.next()) {
+                return rs.getInt(1);
+            }
+
         } catch (SQLException e) {
             e.printStackTrace();
         }
