@@ -1,9 +1,7 @@
 package controller.admin;
 
-import dao.DAOFactory;
-import dao.ProductDAO;
-import dao.CategoryDAO;
-import dao.ProductVariantDAO; // Bổ sung import
+import controller.SystemLogServlet;
+import dao.*;
 import model.product.Product;
 import model.product.Category;
 import model.product.ProductVariant; // Bổ sung import
@@ -26,6 +24,8 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.Part;
+import model.user.User;
+import service.SystemLogService;
 
 @WebServlet(name = "AdminProductServlet", urlPatterns = {"/admin/product/add", "/admin/product/delete"})
 @MultipartConfig(
@@ -73,8 +73,16 @@ public class AdminProductServlet extends HttpServlet {
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         request.setCharacterEncoding("UTF-8");
         String servletPath = request.getServletPath();
+        SystemLogService log = new SystemLogService();
+        Product product = new Product();
+        User admin = (User) request.getSession().getAttribute("user");
         if ("/admin/product/delete".equals(servletPath)) {
-            deleteProduct(request, response);
+            String id = request.getParameter("id");
+            if (id != null){
+                int productId = Integer.parseInt(id);
+                deleteProduct(request, response);
+                log.log(admin.getId(), "Xóa sản phẩm", "Product", productId);
+            }
             return;
         }
         try {
@@ -116,8 +124,6 @@ public class AdminProductServlet extends HttpServlet {
                 mainImagePart.write(uploadPath + File.separator + uniqueFileName);
                 mainImageUrl = "assets/images/" + uniqueFileName;
             }
-
-            Product product = new Product();
             product.setName(name);
             product.setSlug(slug);
             product.setShortDescription(shortDesc);
@@ -157,7 +163,6 @@ public class AdminProductServlet extends HttpServlet {
                             variant.setPrice(parseDoubleSafe(variantPrices != null && variantPrices.length > i ? variantPrices[i] : "0"));
                             variant.setSalePrice(parseDoubleSafe(variantSalePrices != null && variantSalePrices.length > i ? variantSalePrices[i] : "0"));
                             variant.setStockQuantity(parseIntSafe(variantStocks != null && variantStocks.length > i ? variantStocks[i] : "0"));
-
                             variantDAO.addVariant(variant);
                         }
                     }
@@ -182,7 +187,7 @@ public class AdminProductServlet extends HttpServlet {
                         }
                     }
                 }
-
+                log.log(admin.getId(), "Thêm sản phẩm", "Product", newProductId);
                 response.sendRedirect(request.getContextPath() + "/admin/product/add?msg=success");
             } else {
                 loadCategoriesToRequest(request);
