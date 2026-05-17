@@ -130,6 +130,10 @@ public class DAOFactory {
         return new ShippingDAO(dataSource);
     }
 
+    public SystemLogDAO getSystemLogDAO(){
+        return new SystemLogDAO(dataSource);
+    }
+
     /**
      * Closes the connection pool. Should be called on application shutdown.
      */

@@ -13,6 +13,9 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.MultipartConfig;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.*;
+import model.user.User;
+import service.SystemLogService;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Paths;
@@ -131,6 +134,10 @@ public class AdminProductEditServlet extends HttpServlet {
             boolean success = productDAO.updateProduct(product);
 
             if (success) {
+                HttpSession session = request.getSession();
+                User admin = (User) session.getAttribute("user");
+                SystemLogService log = new SystemLogService();
+                log.log(admin.getId(), "Cập nhật sản phẩm", "Product", product.getId());
                 request.getRequestDispatcher("/admin/product/variant/process").include(request, response);
                 response.sendRedirect(request.getContextPath() + "/admin/product/edit?id=" + id + "&msg=update_success");
             } else {
