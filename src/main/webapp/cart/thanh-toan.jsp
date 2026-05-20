@@ -23,8 +23,7 @@
         <div class="container">
             <h1 class="checkout-title">Thanh toán</h1>
 
-            <form class="checkout-form" action="thanh-toan" method="post">
-
+            <form class="checkout-form" action="thanh-toan" method="post" id="checkoutForm">
                 <input type="hidden" id="hiddenSubtotal" value="${subtotal}">
 
                 <div class="checkout-layout">
@@ -351,14 +350,18 @@
         const applyVipCheckbox = document.getElementById('applyVipVoucher');
         const vipVoucherOptions = document.getElementById('vipVoucherOptions');
         const selectedVoucherSelect = document.getElementById('selectedVoucher');
-        const vipDiscountInfo = document.getElementById('vipDiscountInfo');
-        const vipDiscountDisplay = document.getElementById('vipDiscountDisplay');
+
+        const vipDiscountRow = document.getElementById('vipDiscountRow');
+        const vipDiscountAmount = document.getElementById('vipDiscountAmount');
+
+        const checkoutForm = document.getElementById("checkoutForm");
 
         const DATA_URL = "${pageContext.request.contextPath}/assets/data/openapi.json";
         const SHIPPING_API_URL = "${pageContext.request.contextPath}/api/get-shipping-fee";
 
         let provincesData = [];
         let provinceFee = 0;
+        let serviceFee = 0;
 
         function formatCurrency(amount) {
             return new Intl.NumberFormat('vi-VN', {
@@ -385,57 +388,86 @@
             }
         }
 
-        const vipDiscountRow = document.getElementById('vipDiscountRow');
-        const vipDiscountAmount = document.getElementById('vipDiscountAmount');
+        function updateServiceFee() {
+            const selectedShip = document.querySelector('input[name="shippingMethod"]:checked');
+
+            if (selectedShip) {
+                serviceFee = parseFloat(selectedShip.getAttribute('data-price')) || 0;
+            } else {
+                serviceFee = 0;
+            }
+
+            updateTotal();
+        }
 
         function getVipDiscountAmount() {
-            if (!applyVipCheckbox || !applyVipCheckbox.checked || !selectedVoucherSelect || !selectedVoucherSelect.value) {
+            if (
+                !applyVipCheckbox ||
+                !applyVipCheckbox.checked ||
+                !selectedVoucherSelect ||
+                !selectedVoucherSelect.value
+            ) {
                 return 0;
             }
             const option = selectedVoucherSelect.options[selectedVoucherSelect.selectedIndex];
             const discountType = option.getAttribute('data-type');
             const discountValue = parseFloat(option.getAttribute('data-discount')) || 0;
 
-            let discount = (discountType === 'PERCENT') ? (subtotal * discountValue / 100) : discountValue;
+            let discount = 0;
+
+            if (discountType === 'PERCENT') {
+                discount = subtotal * discountValue / 100;
+            } else {
+                discount = discountValue;
+            }
+
             return Math.min(discount, subtotal);
         }
 
         function updateTotal() {
-            // 1. Lấy phí giảm giá VIP
             const vipDiscount = getVipDiscountAmount();
-
             const totalShipping = provinceFee + serviceFee;
-
-            // 3. Tính tổng cộng cuối cùng
             const newTotal = Math.max(0, subtotal - vipDiscount + totalShipping);
 
-            // 4. Hiển thị ra màn hình
             shippingFeeDisplay.innerText = formatCurrency(totalShipping);
             totalAmountDisplay.innerText = formatCurrency(newTotal);
             btnTotalDisplay.innerText = formatCurrency(newTotal);
+
             if (vipDiscount > 0) {
                 vipDiscountRow.style.display = 'flex';
                 vipDiscountAmount.innerText = '-' + formatCurrency(vipDiscount);
             } else {
                 vipDiscountRow.style.display = 'none';
+                vipDiscountAmount.innerText = '-0đ';
             }
         }
-        shippingRadios.forEach(radio => {
-            radio.addEventListener("change", updateServiceFee);
-        });
-
         function updateFormState() {
             const selected = document.querySelector('input[name="selectedAddress"]:checked');
-            if (selected && selected.value === "new") {
+
+            if (!selected) {
+                return;
+            }
+
+            if (selected.value === "new") {
                 manualAddressForm.classList.remove("disabled");
                 manualInputs.forEach(input => {
-                    if (input.id !== "ward") input.disabled = false;
+                    if (input.id !== "ward") {
+                        input.disabled = false;
+                    }
                 });
-                if (provinceSelect.value !== "") wardSelect.disabled = false;
+
+                if (provinceSelect.value !== "") {
+                    wardSelect.disabled = false;
+                }
+
                 fetchProvinceFee(provinceSelect.value);
             } else {
                 manualAddressForm.classList.add("disabled");
-                manualInputs.forEach(input => input.disabled = true);
+
+                manualInputs.forEach(input => {
+                    input.disabled = true;
+                });
+
                 const province = selected.getAttribute('data-province');
                 fetchProvinceFee(province);
             }
@@ -460,7 +492,7 @@
             radio.addEventListener("change", updateFormState);
         });
         shippingRadios.forEach(radio => {
-            radio.addEventListener("change", updateTotal);
+            radio.addEventListener("change", updateServiceFee);
         });
         provinceSelect.addEventListener("change", function () {
             wardSelect.innerHTML = '<option value="">-- Chọn phường / xã --</option>';
@@ -489,7 +521,11 @@
         if (applyVipCheckbox) {
             applyVipCheckbox.addEventListener('change', function () {
                 vipVoucherOptions.style.display = this.checked ? 'block' : 'none';
-                if (!this.checked) selectedVoucherSelect.value = '';
+
+                if (!this.checked && selectedVoucherSelect) {
+                    selectedVoucherSelect.value = '';
+                }
+
                 updateTotal();
             });
         }
@@ -497,17 +533,42 @@
         if (selectedVoucherSelect) {
             selectedVoucherSelect.addEventListener('change', updateTotal);
         }
+
+        if (checkoutForm) {
+            checkoutForm.addEventListener("submit", function (e) {
+                const selectedPayment = document.querySelector('input[name="paymentMethod"]:checked');
+
+                if (!selectedPayment) {
+                    e.preventDefault();
+                    alert("Vui lòng chọn phương thức thanh toán!");
+                    return;
+                }
+
+                let paymentText = "Thanh toán khi nhận hàng (COD)";
+
+                if (selectedPayment.value === "momo") {
+                    paymentText = "Ví MoMo";
+                } else if (selectedPayment.value === "bank") {
+                    paymentText = "Chuyển khoản ngân hàng";
+                }
+
+                const totalText = btnTotalDisplay.innerText.trim();
+
+                const confirmMessage =
+                    "Xác nhận thanh toán đơn hàng?\n\n" +
+                    "Số tiền cần thanh toán: " + totalText + "\n" +
+                    "Phương thức thanh toán: " + paymentText;
+
+                if (!confirm(confirmMessage)) {
+                    e.preventDefault();
+                }
+            });
+        }
+
         loadData().then(() => {
+            updateServiceFee();
             updateFormState();
         });
     });
-    let serviceFee = 0;
-    function updateServiceFee() {
-        const selectedShip = document.querySelector('input[name="shippingMethod"]:checked');
-        if (selectedShip) {
-            serviceFee = parseFloat(selectedShip.getAttribute('data-price')) || 0;
-        }
-        updateTotal();
-    }
 </script>
 </html>
