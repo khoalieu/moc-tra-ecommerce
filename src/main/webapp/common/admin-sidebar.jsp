@@ -74,6 +74,12 @@
                     <span>Quản lý khuyến mãi</span>
                 </a>
             </li>
+            <li class="nav-item ${param.activePage == 'system-logs' ? 'active' : ''}">
+                <a href="${ctx}/admin/system-logs">
+                    <i class="fas fa-history"></i>
+                    <span>Nhật ký hệ thống</span>
+                </a>
+            </li>
         </ul>
     </nav>
 </aside>
