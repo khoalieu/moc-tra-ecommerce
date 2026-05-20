@@ -601,7 +601,7 @@ public class OrderDAO {
         String sql = "SELECT o.*, a.full_name, a.phone_number, a.street_address, a.ward, a.province " +
                 "FROM orders o " +
                 "LEFT JOIN user_addresses a ON o.shipping_address_id = a.id " +
-                "WHERE o.shipper_id = ? AND o.status = 'shipping' " +
+                "WHERE o.shipper_id = ? " +
                 "ORDER BY o.created_at DESC";
 
         try (Connection conn = ds.getConnection();
@@ -622,8 +622,7 @@ public class OrderDAO {
                     o.setShippingAddress(address);
 
                     o.setNotes(rs.getString("notes"));
-                } catch (Exception ignored) {
-                }
+                } catch (Exception ignored) {}
 
                 o.setItems(getOrderItems(o.getId()));
                 list.add(o);
@@ -635,7 +634,7 @@ public class OrderDAO {
     }
 
     public boolean updateOrderCancelReason(int orderId, OrderStatus status, String cancelReason) {
-        String sql = "UPDATE orders SET status = ?, cancel_reason = ?, updated_at = NOW() WHERE id = ?";
+        String sql = "UPDATE orders SET status = ?, cancel_reason = ? WHERE id = ?";
         try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
