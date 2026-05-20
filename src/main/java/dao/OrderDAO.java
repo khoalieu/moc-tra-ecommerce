@@ -79,6 +79,7 @@ public class OrderDAO {
                     String fullAddr = String.format("<strong>%s - %s</strong><br>%s, %s, %s",
                             fullName, phone, street, ward, province);
                     o.setNotes(fullAddr);
+                } else {
                     o.setNotes("Địa chỉ đã bị xóa hoặc không tồn tại.");
                 }
 
