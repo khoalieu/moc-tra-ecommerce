@@ -15,6 +15,7 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 import controller.utils.EmailService;
 import controller.utils.LogService;
+import service.SystemLogService;
 
 @WebServlet(name = "LoginServlet", value = "/login")
 public class LoginServlet extends HttpServlet {
@@ -73,6 +74,8 @@ public class LoginServlet extends HttpServlet {
 
             HttpSession session = request.getSession();
             session.setAttribute("user", user);
+            SystemLogService log = new SystemLogService();
+            log.log(user.getId(), "Đăng nhập", "Auth", null);
             CartDAO cartDAO = DAOFactory.getInstance().getCartDAO();
             Cart sessionCart = (Cart) session.getAttribute("cart");
             if (sessionCart != null && sessionCart.getItems().size() > 0) {

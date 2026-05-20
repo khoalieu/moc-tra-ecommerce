@@ -10,6 +10,9 @@ import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import model.user.User;
+import service.SystemLogService;
+
 import java.io.IOException;
 import java.util.List;
 
@@ -68,7 +71,8 @@ public class AdminOrderServlet extends HttpServlet {
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         String action = request.getParameter("action");
         String statusStr = request.getParameter("status");
-
+        SystemLogService log = new SystemLogService();
+        User admin = (User) request.getSession().getAttribute("user");
         try {
             OrderStatus newStatus = OrderStatus.valueOf(statusStr.toUpperCase());
 
@@ -77,12 +81,15 @@ public class AdminOrderServlet extends HttpServlet {
                 if (idsParam != null && !idsParam.isEmpty()) {
                     String[] ids = idsParam.split(",");
                     for (String idStr : ids) {
-                        orderDAO.updateOrderStatus(Integer.parseInt(idStr), newStatus);
+                        int orderID = Integer.parseInt(idStr);
+                        orderDAO.updateOrderStatus(orderID, newStatus);
+                        log.log(admin.getId(), "Cập nhật trạng thái đơn hàng thành "+newStatus, "Order", orderID);
                     }
                 }
             } else {
                 int orderId = Integer.parseInt(request.getParameter("orderId"));
                 orderDAO.updateOrderStatus(orderId, newStatus);
+                log.log(admin.getId(), "Cập nhật trạng thái đơn hàng thành "+newStatus, "Order", orderId);
             }
 
             response.setStatus(200);
