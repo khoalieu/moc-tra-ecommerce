@@ -648,4 +648,74 @@ public class OrderDAO {
         }
         return false;
     }
+    public boolean shipperCompleteOrder(int orderId, int shipperId) {
+        String sql = "UPDATE orders " +
+                "SET status = 'completed', " +
+                "    payment_status = CASE WHEN payment_status = 'pending' THEN 'paid' ELSE payment_status END " +
+                "WHERE id = ? AND shipper_id = ? AND status = 'shipping'";
+
+        try (Connection conn = ds.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, orderId);
+            ps.setInt(2, shipperId);
+
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    public boolean shipperFailOrder(int orderId, int shipperId, String reason) {
+        Connection conn = null;
+        try {
+            conn = ds.getConnection();
+            conn.setAutoCommit(false);
+            String sql = "UPDATE orders SET status = 'delivery_failed', cancel_reason = ? WHERE id = ? AND shipper_id = ? AND status = 'shipping'";
+            try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                ps.setString(1, reason);
+                ps.setInt(2, orderId);
+                ps.setInt(3, shipperId);
+                if (ps.executeUpdate() == 0) {
+                    conn.rollback();
+                    return false;
+                }
+            }
+            Order order = getOrderById(orderId);
+            if (order != null && order.getItems() != null) {
+                for (OrderItem item : order.getItems()) {
+                    Integer variantId = item.getVariantId();
+                    if (variantId != null && variantId > 0) {
+                        String sqlUpdateVariant = "UPDATE product_variants SET stock_quantity = stock_quantity + ? WHERE id = ?";
+                        try (PreparedStatement psStock = conn.prepareStatement(sqlUpdateVariant)) {
+                            psStock.setInt(1, item.getQuantity());
+                            psStock.setInt(2, variantId);
+                            psStock.executeUpdate();
+                        }
+                    } else {
+                        String sqlUpdateStock = "UPDATE products SET stock_quantity = stock_quantity + ? WHERE id = ?";
+                        try (PreparedStatement psStock = conn.prepareStatement(sqlUpdateStock)) {
+                            psStock.setInt(1, item.getQuantity());
+                            psStock.setInt(2, item.getProductId());
+                            psStock.executeUpdate();
+                        }
+                    }
+                }
+            }
+            conn.commit();
+            return true;
+
+        } catch (SQLException e) {
+            if (conn != null) {
+                try { conn.rollback(); } catch (SQLException ex) { ex.printStackTrace(); }
+            }
+            e.printStackTrace();
+        } finally {
+            if (conn != null) {
+                try { conn.setAutoCommit(true); conn.close(); } catch (SQLException e) { e.printStackTrace(); }
+            }
+        }
+        return false;
+    }
 }

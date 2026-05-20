@@ -2,9 +2,7 @@ package controller.shipper;
 
 import dao.DAOFactory;
 import dao.OrderDAO;
-import dao.ProductVariantDAO;
 import model.order.Order;
-import model.order.OrderItem;
 import model.user.User;
 import model.enums.OrderStatus;
 import model.enums.UserRole;
@@ -22,12 +20,10 @@ import java.util.List;
 public class ShipperServlet extends HttpServlet {
 
     private OrderDAO orderDAO;
-    private ProductVariantDAO variantDAO;
 
     @Override
     public void init() throws ServletException {
         orderDAO = DAOFactory.getInstance().getOrderDAO();
-        variantDAO = DAOFactory.getInstance().getProductVariantDAO();
     }
 
     @Override
@@ -39,7 +35,6 @@ public class ShipperServlet extends HttpServlet {
 
         if ("/shipper/dashboard".equals(path)) {
             List<Order> assignedOrders = orderDAO.getOrdersForShipper(shipper.getId());
-
             request.setAttribute("orders", assignedOrders);
             request.getRequestDispatcher("/shipper/shipper-dashboard.jsp").forward(request, response);
         } else {
@@ -59,34 +54,28 @@ public class ShipperServlet extends HttpServlet {
             try {
                 int orderId = Integer.parseInt(request.getParameter("orderId"));
                 String statusParam = request.getParameter("status");
-                Order order = orderDAO.getOrderById(orderId);
-                if (order == null || order.getShipperId() != shipper.getId()) {
-                    request.getSession().setAttribute("msg", "Lỗi: Không tìm thấy đơn hàng hoặc bạn không có quyền!");
-                    response.sendRedirect(request.getContextPath() + "/shipper/dashboard");
-                    return;
-                }
-
+                boolean success = false;
                 if ("completed".equals(statusParam)) {
-                    orderDAO.updateOrderStatus(orderId, OrderStatus.COMPLETED);
-                    request.getSession().setAttribute("msg", "Tuyệt vời! Đã cập nhật giao thành công đơn #" + order.getOrderNumber());
-
+                    success = orderDAO.shipperCompleteOrder(orderId, shipper.getId());
+                    if (success) {
+                        request.getSession().setAttribute("msg", "Tuyệt vời! Đã xác nhận giao thành công đơn #" + orderId);
+                    }
                 } else if ("delivery_failed".equals(statusParam)) {
                     String cancelReason = request.getParameter("cancelReason");
                     if ("other".equals(cancelReason)) {
                         cancelReason = request.getParameter("otherReason");
                     }
-                    orderDAO.updateOrderCancelReason(orderId, OrderStatus.CANCELLED, cancelReason);
-
-                    List<OrderItem> items = order.getItems();
-                    if (items != null) {
-                        for (OrderItem item : items) {
-                            variantDAO.increaseStock(item.getVariantId(), item.getQuantity());
-                        }
+                    success = orderDAO.shipperFailOrder(orderId, shipper.getId(), cancelReason);
+                    if (success) {
+                        request.getSession().setAttribute("msg", "Đã báo cáo giao thất bại đơn #" + orderId + " và hoàn lại tồn kho.");
                     }
-
-                    request.getSession().setAttribute("msg", "Đã ghi nhận giao thất bại đơn #" + order.getOrderNumber());
+                }
+                if (!success) {
+                    request.getSession().setAttribute("msg", "Lỗi thao tác: Đơn hàng không tồn tại hoặc bạn không có quyền truy cập!");
                 }
 
+            } catch (NumberFormatException e) {
+                request.getSession().setAttribute("msg", "Lỗi dữ liệu: Mã đơn hàng không hợp lệ.");
             } catch (Exception e) {
                 e.printStackTrace();
                 request.getSession().setAttribute("msg", "Lỗi hệ thống: Không thể cập nhật đơn hàng.");
