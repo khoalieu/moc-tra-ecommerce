@@ -27,7 +27,7 @@
 </c:if>
 
 <div class="shipper-container">
-    <h3>Đơn hàng cần giao (${orders.size()})</h3>
+    <h3>Đơn hàng của bạn (${orders.size()})</h3>
 
     <c:if test="${empty orders}">
         <p style="text-align: center; color: #7f8c8d;">Hiện tại bạn không có đơn hàng nào cần giao.</p>
@@ -37,14 +37,29 @@
         <div class="order-card">
             <div class="order-header">
                 <span class="order-id">#${order.orderNumber}</span>
-                <c:choose>
-                    <c:when test="${order.paymentStatus == 'PAID'}">
-                        <span class="payment-status">Đã thanh toán</span>
-                    </c:when>
-                    <c:otherwise>
-                        <span class="payment-status cod">Thu hộ (COD)</span>
-                    </c:otherwise>
-                </c:choose>
+
+                <div class="order-header-right">
+                    <c:choose>
+                        <c:when test="${order.status.name() == 'SHIPPING'}">
+                            <span class="order-status status-shipping">Đang giao</span>
+                        </c:when>
+                        <c:when test="${order.status.name() == 'COMPLETED'}">
+                            <span class="order-status status-completed">Giao thành công</span>
+                        </c:when>
+                        <c:when test="${order.status.name() == 'CANCELLED' || order.status.name() == 'DELIVERY_FAILED'}">
+                            <span class="order-status status-failed">Giao thất bại</span>
+                        </c:when>
+                    </c:choose>
+
+                    <c:choose>
+                        <c:when test="${order.paymentStatus.name() == 'PAID'}">
+                            <span class="payment-status">Đã thanh toán</span>
+                        </c:when>
+                        <c:otherwise>
+                            <span class="payment-status cod">Thu hộ (COD)</span>
+                        </c:otherwise>
+                    </c:choose>
+                </div>
             </div>
 
             <div class="order-body">
@@ -57,21 +72,46 @@
                 <p class="total-amount">
                     <i class="fas fa-money-bill-wave"></i> Cần thu:
                     <c:choose>
-                        <c:when test="${order.paymentStatus == 'PAID'}">0 VNĐ</c:when>
+                        <c:when test="${order.paymentStatus.name() == 'PAID'}">0 VNĐ</c:when>
                         <c:otherwise><fmt:formatNumber value="${order.totalAmount}" pattern="#,###"/> VNĐ</c:otherwise>
+                    </c:choose>
+                </p>
+                <p class="order-status-inline">
+                    <i class="fas fa-info-circle"></i> Trạng thái:
+                    <c:choose>
+                        <c:when test="${order.status.name() == 'SHIPPING'}">
+                            <span class="badge badge-shipping">Đang giao hàng</span>
+                        </c:when>
+                        <c:when test="${order.status.name() == 'COMPLETED'}">
+                            <span class="badge badge-success">Giao thành công</span>
+                        </c:when>
+                        <c:when test="${order.status.name() == 'CANCELLED' || order.status.name() == 'DELIVERY_FAILED'}">
+                            <span class="badge badge-danger">Giao thất bại</span>
+                        </c:when>
+                        <c:otherwise>
+                            <span class="badge badge-secondary">${order.status}</span>
+                        </c:otherwise>
                     </c:choose>
                 </p>
             </div>
 
-            <div class="order-actions">
-                <a href="tel:${order.customerPhone}" class="btn btn-call"><i class="fas fa-phone-alt"></i> Gọi</a>
-                <button class="btn btn-cancel" onclick="openCancelModal('${order.id}', '${order.orderNumber}')">Hủy đơn</button>
-                <form action="${pageContext.request.contextPath}/shipper/update-status" method="POST" style="flex: 1; display: flex;">
-                    <input type="hidden" name="orderId" value="${order.id}">
-                    <input type="hidden" name="status" value="completed">
-                    <button type="submit" class="btn btn-success" onclick="return confirm('Xác nhận đã giao thành công đơn ${order.orderNumber}?')"><i class="fas fa-check"></i> Đã giao</button>
-                </form>
-            </div>
+            <c:if test="${order.status.name() == 'SHIPPING'}">
+                <div class="order-actions">
+                    <a href="tel:${order.customerPhone}" class="btn btn-call"><i class="fas fa-phone-alt"></i> Gọi</a>
+                    <button class="btn btn-cancel" onclick="openCancelModal('${order.id}', '${order.orderNumber}')">Hủy đơn</button>
+                    <form action="${pageContext.request.contextPath}/shipper/update-status" method="POST" style="flex: 1; display: flex;">
+                        <input type="hidden" name="orderId" value="${order.id}">
+                        <input type="hidden" name="status" value="completed">
+                        <button type="submit" class="btn btn-success" onclick="return confirm('Xác nhận đã giao thành công đơn ${order.orderNumber}?')"><i class="fas fa-check"></i> Đã giao</button>
+                    </form>
+                </div>
+            </c:if>
+
+            <c:if test="${(order.status.name() == 'CANCELLED' || order.status.name() == 'DELIVERY_FAILED') && not empty order.cancelReason}">
+                <div style="margin-top: 10px; padding: 10px; background: #ffebee; color: #c0392b; border-radius: 5px; font-size: 13px;">
+                    <strong>Lý do hủy:</strong> ${order.cancelReason}
+                </div>
+            </c:if>
         </div>
     </c:forEach>
 </div>
@@ -104,6 +144,7 @@
         </form>
     </div>
 </div>
+
 <script>
     function openCancelModal(orderId, orderNumber) {
         document.getElementById('modalOrderId').value = orderId;
