@@ -718,4 +718,33 @@ public class OrderDAO {
         }
         return false;
     }
+    public boolean updateShippingInfo(int orderId, String status, String provider, String trackingCode) {
+        String sql = "UPDATE orders SET status = ?, shipping_provider = ?, tracking_code = ? WHERE id = ?";
+        try (Connection conn = ds.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, status);
+            ps.setString(2, provider);
+            ps.setString(3, trackingCode);
+            ps.setInt(4, orderId);
+
+            int rowsAffected = ps.executeUpdate();
+            return rowsAffected > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+    public boolean assignShipper(int orderId, int shipperId) {
+        String sql = "UPDATE orders SET shipper_id = ? WHERE id = ? AND status = 'pending'";
+        try (Connection conn = ds.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, shipperId);
+            ps.setInt(2, orderId);
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
 }
