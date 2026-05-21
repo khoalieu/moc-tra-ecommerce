@@ -46,10 +46,14 @@
                     <c:choose>
                         <c:when test="${order.status == 'PENDING'}"><span
                                 class="status-badge status-pending">Chờ xử lý</span></c:when>
+                        <c:when test="${order.status == 'SHIPPING'}"><span
+                                class="status-badge status-pending" style="background: #e3f2fd; color: #1565c0;">Đang giao</span></c:when>
                         <c:when test="${order.status == 'COMPLETED'}"><span
                                 class="status-badge status-active">Hoàn tất</span></c:when>
                         <c:when test="${order.status == 'CANCELLED'}"><span
                                 class="status-badge status-inactive">Đã hủy</span></c:when>
+                        <c:when test="${order.status == 'DELIVERY_FAILED'}"><span
+                                class="status-badge status-inactive">Giao thất bại</span></c:when>
                     </c:choose>
                 </div>
 
@@ -152,6 +156,123 @@
                             </div>
                         </div>
                     </div>
+
+                    <div class="detail-card">
+                        <h3 class="card-title"><i class="fa-solid fa-truck-fast" style="margin-right: 6px;"></i>Giao hàng</h3>
+                        <c:if test="${not empty order.shipperId && order.shipperId > 0}">
+                            <div class="info-row">
+                                <span class="info-label">Shipper phụ trách</span>
+                                <div class="info-value">
+                                    <c:set var="foundShipper" value="false"/>
+                                    <c:forEach var="s" items="${shippers}">
+                                        <c:if test="${s.id == order.shipperId}">
+                                            <div style="display: flex; align-items: center; gap: 8px;">
+                                                <div style="width: 32px; height: 32px; border-radius: 50%; background: #107e84; color: white; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 600;">
+                                                    <i class="fa-solid fa-user"></i>
+                                                </div>
+                                                <div>
+                                                    <strong>${s.lastName} ${s.firstName}</strong>
+                                                    <c:if test="${not empty s.phone}">
+                                                        <br><small style="color: #666;"><i class="fa-solid fa-phone" style="font-size: 11px;"></i> ${s.phone}</small>
+                                                    </c:if>
+                                                </div>
+                                            </div>
+                                            <c:set var="foundShipper" value="true"/>
+                                        </c:if>
+                                    </c:forEach>
+                                    <c:if test="${!foundShipper}">
+                                        <span style="color: #999;">Shipper ID: ${order.shipperId}</span>
+                                    </c:if>
+                                </div>
+                            </div>
+                        </c:if>
+
+                        <c:if test="${order.status == 'PENDING'}">
+                            <div class="info-row" style="margin-top: 12px;">
+                                <span class="info-label">
+                                    <c:choose>
+                                        <c:when test="${not empty order.shipperId && order.shipperId > 0}">Đổi shipper</c:when>
+                                        <c:otherwise>Gán shipper</c:otherwise>
+                                    </c:choose>
+                                </span>
+                                <div class="info-value" style="margin-top: 5px;">
+                                    <c:choose>
+                                        <c:when test="${not empty shippers && shippers.size() > 0}">
+                                            <select id="shipperSelect" style="width: 100%; padding: 9px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; background: #fff; cursor: pointer; transition: border-color 0.2s;" onfocus="this.style.borderColor='#107e84'" onblur="this.style.borderColor='#ddd'">
+                                                <option value="">-- Chọn shipper --</option>
+                                                <c:forEach var="s" items="${shippers}">
+                                                    <option value="${s.id}" ${s.id == order.shipperId ? 'selected' : ''}>
+                                                        ${s.lastName} ${s.firstName}<c:if test="${not empty s.phone}"> - ${s.phone}</c:if>
+                                                    </option>
+                                                </c:forEach>
+                                            </select>
+                                            <button id="btnAssignShipper" class="btn-sm btn-success" onclick="assignShipper()"
+                                                    style="cursor: pointer; padding: 9px 16px; margin-top: 10px; width: 100%; font-size: 14px; border: none; border-radius: 6px;">
+                                                <i class="fa-solid fa-user-plus"></i> Xác nhận gán
+                                            </button>
+                                        </c:when>
+                                        <c:otherwise>
+                                            <p style="color: #e74c3c; font-size: 13px; margin: 0;">
+                                                <i class="fa-solid fa-triangle-exclamation"></i>
+                                                Chưa có shipper nào trong hệ thống. Vui lòng tạo tài khoản shipper trước.
+                                            </p>
+                                        </c:otherwise>
+                                    </c:choose>
+                                </div>
+                            </div>
+                        </c:if>
+
+                        <c:if test="${order.status == 'SHIPPING'}">
+                            <div class="info-row">
+                                <span class="info-label">Trạng thái giao</span>
+                                <div class="info-value">
+                                    <span class="status-badge" style="background: #e3f2fd; color: #1565c0;">
+                                        <i class="fa-solid fa-truck" style="margin-right: 4px;"></i> Đang giao hàng
+                                    </span>
+                                </div>
+                            </div>
+                            <c:if test="${not empty order.shippingProvider}">
+                                <div class="info-row">
+                                    <span class="info-label">Đơn vị vận chuyển</span>
+                                    <div class="info-value"><strong>${order.shippingProvider}</strong></div>
+                                </div>
+                            </c:if>
+                            <c:if test="${not empty order.trackingCode}">
+                                <div class="info-row">
+                                    <span class="info-label">Mã vận đơn</span>
+                                    <div class="info-value">
+                                        <code style="background: #f5f5f5; padding: 4px 10px; border-radius: 4px; font-weight: 600; letter-spacing: 0.5px;">${order.trackingCode}</code>
+                                    </div>
+                                </div>
+                            </c:if>
+                        </c:if>
+
+                        <c:if test="${order.status == 'DELIVERY_FAILED'}">
+                            <div class="info-row">
+                                <span class="info-label">Trạng thái giao</span>
+                                <div class="info-value">
+                                    <span class="status-badge status-inactive">
+                                        <i class="fa-solid fa-xmark" style="margin-right: 4px;"></i> Giao thất bại
+                                    </span>
+                                </div>
+                            </div>
+                            <c:if test="${not empty order.cancelReason}">
+                                <div class="info-row">
+                                    <span class="info-label">Lý do</span>
+                                    <div class="info-value" style="color: #c0392b;">
+                                        <i class="fa-solid fa-circle-info" style="margin-right: 4px;"></i>${order.cancelReason}
+                                    </div>
+                                </div>
+                            </c:if>
+                        </c:if>
+
+                        <c:if test="${order.status == 'PENDING' && (empty order.shipperId || order.shipperId == 0)}">
+                            <div style="margin-top: 10px; padding: 10px 14px; background: #fff8e1; border-radius: 6px; font-size: 13px; color: #856404; border: 1px solid #ffeeba;">
+                                <i class="fa-solid fa-circle-info" style="margin-right: 4px;"></i>
+                                Đơn hàng này chưa được gán cho shipper. Vui lòng chọn shipper bên trên để bắt đầu xử lý giao hàng.
+                            </div>
+                        </c:if>
+                    </div>
                 </div>
             </div>
         </div>
@@ -174,6 +295,45 @@
         }).then(res => {
             if (res.ok) location.reload();
             else alert("Lỗi cập nhật!");
+        });
+    }
+
+    function assignShipper() {
+        const select = document.getElementById('shipperSelect');
+        const shipperId = select.value;
+        if (!shipperId) {
+            alert('Vui lòng chọn shipper!');
+            return;
+        }
+
+        if (!confirm('Xác nhận gán shipper cho đơn hàng #${order.orderNumber}?')) return;
+
+        const btn = document.getElementById('btnAssignShipper');
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang xử lý...';
+
+        const params = new URLSearchParams();
+        params.append('action', 'assign_shipper');
+        params.append('orderId', '${order.id}');
+        params.append('shipperId', shipperId);
+
+        fetch('admin/order/update', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+            body: params
+        }).then(res => {
+            if (res.ok) {
+                alert('Gán shipper thành công!');
+                location.reload();
+            } else {
+                alert('Lỗi: Chỉ gán được cho đơn ở trạng thái "Chờ xử lý"!');
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa-solid fa-user-plus"></i> Xác nhận gán';
+            }
+        }).catch(() => {
+            alert('Lỗi kết nối server!');
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fa-solid fa-user-plus"></i> Xác nhận gán';
         });
     }
 </script>

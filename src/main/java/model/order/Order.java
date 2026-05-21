@@ -26,6 +26,8 @@ public class Order {
     private String customerName;
     private String customerPhone;
     private String shippingAddress;
+    private String shippingProvider;
+    private String trackingCode;
 
     public Order() {}
 
@@ -108,4 +110,9 @@ public class Order {
     public void setShippingAddress(String shippingAddress) {
         this.shippingAddress = shippingAddress;
     }
+    public String getShippingProvider() { return shippingProvider; }
+    public void setShippingProvider(String shippingProvider) { this.shippingProvider = shippingProvider; }
+
+    public String getTrackingCode() { return trackingCode; }
+    public void setTrackingCode(String trackingCode) { this.trackingCode = trackingCode; }
 }

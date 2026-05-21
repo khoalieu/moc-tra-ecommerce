@@ -30,7 +30,7 @@
     <h3>Đơn hàng của bạn (${orders.size()})</h3>
 
     <c:if test="${empty orders}">
-        <p style="text-align: center; color: #7f8c8d;">Hiện tại bạn không có đơn hàng nào cần giao.</p>
+        <p style="text-align: center; color: #7f8c8d;">Hiện tại bạn không có đơn hàng nào cần xử lý.</p>
     </c:if>
 
     <c:forEach items="${orders}" var="order">
@@ -40,6 +40,9 @@
 
                 <div class="order-header-right">
                     <c:choose>
+                        <c:when test="${order.status.name() == 'PENDING'}">
+                            <span class="order-status status-pending">Chờ xử lý</span>
+                        </c:when>
                         <c:when test="${order.status.name() == 'SHIPPING'}">
                             <span class="order-status status-shipping">Đang giao</span>
                         </c:when>
@@ -66,6 +69,14 @@
                 <p><i class="fas fa-user"></i> <strong>${order.customerName}</strong></p>
                 <p><i class="fas fa-phone"></i> ${order.customerPhone}</p>
                 <p><i class="fas fa-map-marker-alt"></i> ${order.shippingAddress}</p>
+
+                <c:if test="${not empty order.trackingCode}">
+                    <p style="color: #2980b9;">
+                        <i class="fas fa-truck"></i> ĐVVC: <strong>${order.shippingProvider}</strong>
+                        | Mã VĐ: <strong>${order.trackingCode}</strong>
+                    </p>
+                </c:if>
+
                 <c:if test="${not empty order.notes}">
                     <p style="color: #e67e22;"><i class="fas fa-comment-dots"></i> Ghi chú: ${order.notes}</p>
                 </c:if>
@@ -79,6 +90,9 @@
                 <p class="order-status-inline">
                     <i class="fas fa-info-circle"></i> Trạng thái:
                     <c:choose>
+                        <c:when test="${order.status.name() == 'PENDING'}">
+                            <span class="badge badge-warning">Chờ xử lý</span>
+                        </c:when>
                         <c:when test="${order.status.name() == 'SHIPPING'}">
                             <span class="badge badge-shipping">Đang giao hàng</span>
                         </c:when>
@@ -94,6 +108,14 @@
                     </c:choose>
                 </p>
             </div>
+
+            <c:if test="${order.status.name() == 'PENDING'}">
+                <div class="order-actions">
+                    <button class="btn btn-primary" style="width: 100%;" onclick="openShippingModal('${order.id}', '${order.orderNumber}')">
+                        <i class="fas fa-box"></i> Bàn giao cho ĐVVC
+                    </button>
+                </div>
+            </c:if>
 
             <c:if test="${order.status.name() == 'SHIPPING'}">
                 <div class="order-actions">
@@ -116,7 +138,37 @@
     </c:forEach>
 </div>
 
-<div class="modal-overlay" id="cancelModal">
+<div class="modal-overlay" id="shippingModal" style="display: none;">
+    <div class="modal-content">
+        <h3>Bàn giao cho ĐVVC</h3>
+        <p>Mã đơn: <strong id="modalShippingOrderNumber"></strong></p>
+
+        <form action="${pageContext.request.contextPath}/shipper/update-status" method="POST">
+            <input type="hidden" name="orderId" id="modalShippingOrderId" value="">
+            <input type="hidden" name="status" value="shipping">
+
+            <label for="shippingProvider">Đơn vị vận chuyển <span style="color:red;">*</span></label>
+            <select name="shippingProvider" id="shippingProvider" class="form-input" required>
+                <option value="">-- Chọn đơn vị --</option>
+                <option value="GHTK">Giao Hàng Tiết Kiệm (GHTK)</option>
+                <option value="GHN">Giao Hàng Nhanh (GHN)</option>
+                <option value="ViettelPost">Viettel Post</option>
+                <option value="J&T">J&T Express</option>
+                <option value="NinjaVan">Ninja Van</option>
+            </select>
+
+            <label for="trackingCode">Mã vận đơn <span style="color:red;">*</span></label>
+            <input type="text" name="trackingCode" id="trackingCode" class="form-input" placeholder="Ví dụ: GHTK123456789..." required>
+
+            <div class="modal-actions">
+                <button type="button" class="btn btn-close" onclick="closeShippingModal()">Đóng</button>
+                <button type="submit" class="btn btn-primary">Xác nhận</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="modal-overlay" id="cancelModal" style="display: none;">
     <div class="modal-content">
         <h3>Báo cáo giao thất bại</h3>
         <p>Mã đơn: <strong id="modalOrderNumber"></strong></p>
@@ -125,8 +177,8 @@
             <input type="hidden" name="orderId" id="modalOrderId" value="">
             <input type="hidden" name="status" value="delivery_failed">
 
-            <label for="cancelReason">Chọn lý do:</label>
-            <select name="cancelReason" id="cancelReason" onchange="toggleOtherReason()" required>
+            <label for="cancelReason">Chọn lý do <span style="color:red;">*</span></label>
+            <select name="cancelReason" id="cancelReason" class="form-input" onchange="toggleOtherReason()" required>
                 <option value="">-- Chọn lý do --</option>
                 <option value="Khách không nghe máy">Khách không nghe máy</option>
                 <option value="Sai số điện thoại/địa chỉ">Sai số điện thoại/địa chỉ</option>
@@ -135,7 +187,7 @@
                 <option value="other">Lý do khác...</option>
             </select>
 
-            <textarea name="otherReason" id="otherReason" rows="3" placeholder="Nhập lý do khác..." style="display:none;"></textarea>
+            <textarea name="otherReason" id="otherReason" class="form-input" rows="3" placeholder="Nhập lý do khác..." style="display:none;"></textarea>
 
             <div class="modal-actions">
                 <button type="button" class="btn btn-close" onclick="closeCancelModal()">Đóng</button>
@@ -169,6 +221,18 @@
             otherTextarea.style.display = 'none';
             otherTextarea.removeAttribute('required');
         }
+    }
+
+    function openShippingModal(orderId, orderNumber) {
+        document.getElementById('modalShippingOrderId').value = orderId;
+        document.getElementById('modalShippingOrderNumber').innerText = '#' + orderNumber;
+        document.getElementById('shippingModal').style.display = 'flex';
+    }
+
+    function closeShippingModal() {
+        document.getElementById('shippingModal').style.display = 'none';
+        document.getElementById('shippingProvider').value = "";
+        document.getElementById('trackingCode').value = "";
     }
 </script>
 </body>

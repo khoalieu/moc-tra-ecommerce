@@ -32,7 +32,6 @@ public class ShipperServlet extends HttpServlet {
         if (shipper == null) return;
 
         String path = request.getServletPath();
-
         if ("/shipper/dashboard".equals(path)) {
             List<Order> assignedOrders = orderDAO.getOrdersForShipper(shipper.getId());
             request.setAttribute("orders", assignedOrders);
@@ -55,12 +54,29 @@ public class ShipperServlet extends HttpServlet {
                 int orderId = Integer.parseInt(request.getParameter("orderId"));
                 String statusParam = request.getParameter("status");
                 boolean success = false;
-                if ("completed".equals(statusParam)) {
+                if ("shipping".equals(statusParam)) {
+                    String shippingProvider = request.getParameter("shippingProvider");
+                    String trackingCode = request.getParameter("trackingCode");
+                    if (shippingProvider == null || shippingProvider.trim().isEmpty() ||
+                            trackingCode == null || trackingCode.trim().isEmpty()) {
+
+                        request.getSession().setAttribute("msg", "Lỗi: Bắt buộc chọn ĐVVC và nhập mã vận đơn khi chuyển sang Đang giao hàng!");
+                        response.sendRedirect(request.getContextPath() + "/shipper/dashboard");
+                        return;
+                    }
+                    success = orderDAO.updateShippingInfo(orderId, "shipping", shippingProvider, trackingCode);
+                    if (success) {
+                        request.getSession().setAttribute("msg", "Đã bàn giao đơn #" + orderId + " cho " + shippingProvider + " - Mã VĐ: " + trackingCode);
+                    }
+
+                }
+                else if ("completed".equals(statusParam)) {
                     success = orderDAO.shipperCompleteOrder(orderId, shipper.getId());
                     if (success) {
                         request.getSession().setAttribute("msg", "Tuyệt vời! Đã xác nhận giao thành công đơn #" + orderId);
                     }
-                } else if ("delivery_failed".equals(statusParam)) {
+                }
+                else if ("delivery_failed".equals(statusParam)) {
                     String cancelReason = request.getParameter("cancelReason");
                     if ("other".equals(cancelReason)) {
                         cancelReason = request.getParameter("otherReason");
@@ -71,7 +87,7 @@ public class ShipperServlet extends HttpServlet {
                     }
                 }
                 if (!success) {
-                    request.getSession().setAttribute("msg", "Lỗi thao tác: Đơn hàng không tồn tại hoặc bạn không có quyền truy cập!");
+                    request.getSession().setAttribute("msg", "Lỗi thao tác: Đơn hàng không tồn tại, sai trạng thái hoặc bạn không có quyền truy cập!");
                 }
 
             } catch (NumberFormatException e) {

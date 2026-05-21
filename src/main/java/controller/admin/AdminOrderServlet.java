@@ -4,6 +4,8 @@ import dao.DAOFactory;
 import dao.OrderDAO;
 import model.order.Order;
 import model.enums.OrderStatus;
+import dao.UserDAO;
+import model.user.User;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -20,6 +22,7 @@ import java.util.List;
 public class AdminOrderServlet extends HttpServlet {
 
     private final OrderDAO orderDAO = DAOFactory.getInstance().getOrderDAO();
+    private final UserDAO userDAO = DAOFactory.getInstance().getUserDAO();
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
@@ -29,7 +32,9 @@ public class AdminOrderServlet extends HttpServlet {
             String idStr = request.getParameter("id");
             if (idStr != null) {
                 Order order = orderDAO.getOrderById(Integer.parseInt(idStr));
+                List<User> shippers = userDAO.getAllShippers();
                 request.setAttribute("order", order);
+                request.setAttribute("shippers", shippers);
                 request.getRequestDispatcher("/admin/admin-order-detail.jsp").forward(request, response);
             } else {
                 response.sendRedirect(request.getContextPath() + "/admin/orders");
@@ -74,8 +79,14 @@ public class AdminOrderServlet extends HttpServlet {
         SystemLogService log = new SystemLogService();
         User admin = (User) request.getSession().getAttribute("user");
         try {
+            if ("assign_shipper".equals(action)) {
+                int orderId = Integer.parseInt(request.getParameter("orderId"));
+                int shipperId = Integer.parseInt(request.getParameter("shipperId"));
+                boolean success = orderDAO.assignShipper(orderId, shipperId);
+                response.setStatus(success ? 200 : 400);
+                return;
+            }
             OrderStatus newStatus = OrderStatus.valueOf(statusStr.toUpperCase());
-
             if ("bulk".equals(action)) {
                 String idsParam = request.getParameter("orderIds");
                 if (idsParam != null && !idsParam.isEmpty()) {
@@ -91,7 +102,6 @@ public class AdminOrderServlet extends HttpServlet {
                 orderDAO.updateOrderStatus(orderId, newStatus);
                 log.log(admin.getId(), "Cập nhật trạng thái đơn hàng thành "+newStatus, "Order", orderId);
             }
-
             response.setStatus(200);
         } catch (Exception e) {
             e.printStackTrace();
