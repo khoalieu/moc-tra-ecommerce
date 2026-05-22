@@ -899,5 +899,26 @@ public class UserDAO {
         }
         return result;
     }
-
+    public List<User> getAllShippers() {
+        List<User> list = new ArrayList<>();
+        String sql = "SELECT id, username, first_name, last_name, phone " +
+                "FROM users WHERE role = 'shipper' AND is_active = 1 ORDER BY username";
+        try (Connection conn = ds.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                User u = new User();
+                u.setId(rs.getInt("id"));
+                u.setUsername(rs.getString("username"));
+                u.setFirstName(rs.getString("first_name"));
+                u.setLastName(rs.getString("last_name"));
+                u.setPhone(rs.getString("phone"));
+                u.setRole(UserRole.SHIPPER);
+                list.add(u);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
 }

@@ -84,6 +84,18 @@ public class ProductVariantDAO {
         }
     }
 
+    public void increaseStock(int variantId, int quantity) {
+        String sql = "UPDATE product_variants SET stock_quantity = stock_quantity + ? WHERE id = ?";
+        try (Connection conn = ds.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, quantity);
+            ps.setInt(2, variantId);
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
     public void addVariant(ProductVariant variant) {
         if (variant.getSalePrice() > variant.getPrice()) {
             variant.setSalePrice(variant.getPrice());
