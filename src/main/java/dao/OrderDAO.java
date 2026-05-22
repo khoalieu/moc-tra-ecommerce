@@ -470,7 +470,7 @@ public class OrderDAO {
         return list;
     }
 
-    public boolean cancelOrder(int orderId) {
+    public boolean cancelOrder(int orderId, String cancelReason) {
         Connection conn = null;
         try {
             conn = ds.getConnection();
@@ -479,9 +479,10 @@ public class OrderDAO {
             if (order == null || order.getStatus() != OrderStatus.PENDING) {
                 return false;
             }
-            String sqlUpdateOrder = "UPDATE orders SET status = 'cancelled' WHERE id = ?";
+            String sqlUpdateOrder = "UPDATE orders SET status = 'cancelled', cancel_reason = ? WHERE id = ?";
             try (PreparedStatement ps = conn.prepareStatement(sqlUpdateOrder)) {
-                ps.setInt(1, orderId);
+                ps.setString(1, cancelReason);
+                ps.setInt(2, orderId);
                 ps.executeUpdate();
             }
             for (OrderItem item : order.getItems()) {
