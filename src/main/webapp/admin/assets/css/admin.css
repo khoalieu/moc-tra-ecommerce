@@ -2171,3 +2171,118 @@ ul {
 .action-card:hover i {
     transform: scale(1.1);
 }
+
+.dashboard-grid,
+.dashboard-bottom {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    margin-bottom: 24px;
+    align-items: stretch;
+}
+
+.dashboard-card,
+.dashboard-left .widget {
+    min-height: 300px;
+    height: 100%;
+}
+
+.dashboard-card {
+    background: #fff;
+    border-radius: 14px;
+    padding: 22px;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.06);
+    border: 1px solid #eee;
+}
+
+.dashboard-card h3,
+.widget-header h3 {
+    font-size: 18px;
+    margin: 0;
+}
+
+.chart-wrap {
+    height: 230px;
+}
+
+.dashboard-left .widget-content {
+    max-height: 230px;
+    overflow-y: auto;
+}
+
+@media (max-width: 992px) {
+    .dashboard-grid,
+    .dashboard-bottom {
+        grid-template-columns: 1fr;
+    }
+}
+.stat-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 18px;
+}
+
+.stat-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px;
+    border-radius: 14px;
+    background: #f8fbfb;
+    border: 1px solid #eef2f2;
+    transition: 0.2s ease;
+}
+
+.stat-row:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+.stat-left {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.rank-badge {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: #e5f7f6;
+    color: #008b83;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 14px;
+}
+
+.month-badge {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    background: #edf8f3;
+    color: #008b83;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.stat-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: #222;
+}
+
+.stat-sub {
+    font-size: 12px;
+    color: #888;
+    margin-top: 3px;
+}
+
+.stat-value {
+    font-size: 20px;
+    font-weight: 700;
+    color: #008b83;
+}

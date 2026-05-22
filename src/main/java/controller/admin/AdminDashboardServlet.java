@@ -1,6 +1,7 @@
 package controller.admin;
 
 import dao.DAOFactory;
+import dao.DashboardDAO;
 import dao.OrderDAO;
 import model.order.Order;
 import jakarta.servlet.ServletException;
@@ -19,7 +20,11 @@ public class AdminDashboardServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         List<Order> recentOrders = orderDAO.getRecentOrders(5);
+        DashboardDAO dashboardDAO = DAOFactory.getInstance().getDashboardDAO();
         request.setAttribute("recentOrders", recentOrders);
+        request.setAttribute("topProducts", dashboardDAO.getTop5BestSellingProducts());
+        request.setAttribute("newUsersByMonth", dashboardDAO.getNewUsersByMonth());
+        request.setAttribute("revenueByMonth", dashboardDAO.getRevenueByMonth());
 
         request.getRequestDispatcher("/admin/admin-dashboard.jsp").forward(request, response);
     }
