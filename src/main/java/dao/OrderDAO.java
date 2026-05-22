@@ -270,6 +270,13 @@ public class OrderDAO {
                 } else {
                     o.setNotes("Địa chỉ không xác định");
                 }
+
+                int sId = rs.getInt("shipper_id");
+                if (!rs.wasNull()) o.setShipperId(sId);
+                o.setShippingProvider(rs.getString("shipping_provider"));
+                o.setTrackingCode(rs.getString("tracking_code"));
+                o.setCancelReason(rs.getString("cancel_reason"));
+
                 o.setItems(getOrderItems(o.getId()));
             }
         } catch (SQLException e) {
@@ -426,6 +433,15 @@ public class OrderDAO {
         try {
             String customerName = rs.getString("full_name");
             if (customerName != null) o.setNotes(customerName);
+        } catch (Exception e) {
+        }
+
+        try {
+            int sId = rs.getInt("shipper_id");
+            if (!rs.wasNull()) o.setShipperId(sId);
+            o.setShippingProvider(rs.getString("shipping_provider"));
+            o.setTrackingCode(rs.getString("tracking_code"));
+            o.setCancelReason(rs.getString("cancel_reason"));
         } catch (Exception e) {
         }
 
@@ -718,8 +734,8 @@ public class OrderDAO {
         }
         return false;
     }
-    public boolean updateShippingInfo(int orderId, String status, String provider, String trackingCode) {
-        String sql = "UPDATE orders SET status = ?, shipping_provider = ?, tracking_code = ? WHERE id = ?";
+    public boolean updateShippingInfo(int orderId, int shipperId, String status, String provider, String trackingCode) {
+        String sql = "UPDATE orders SET status = ?, shipping_provider = ?, tracking_code = ? WHERE id = ? AND shipper_id = ? AND status = 'pending'";
         try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
@@ -727,6 +743,7 @@ public class OrderDAO {
             ps.setString(2, provider);
             ps.setString(3, trackingCode);
             ps.setInt(4, orderId);
+            ps.setInt(5, shipperId);
 
             int rowsAffected = ps.executeUpdate();
             return rowsAffected > 0;

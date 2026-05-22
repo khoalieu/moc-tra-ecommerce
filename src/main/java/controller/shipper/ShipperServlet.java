@@ -64,7 +64,7 @@ public class ShipperServlet extends HttpServlet {
                         response.sendRedirect(request.getContextPath() + "/shipper/dashboard");
                         return;
                     }
-                    success = orderDAO.updateShippingInfo(orderId, "shipping", shippingProvider, trackingCode);
+                    success = orderDAO.updateShippingInfo(orderId, shipper.getId(), "shipping", shippingProvider, trackingCode);
                     if (success) {
                         request.getSession().setAttribute("msg", "Đã bàn giao đơn #" + orderId + " cho " + shippingProvider + " - Mã VĐ: " + trackingCode);
                     }
