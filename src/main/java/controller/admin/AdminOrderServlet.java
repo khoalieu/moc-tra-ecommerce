@@ -82,6 +82,18 @@ public class AdminOrderServlet extends HttpServlet {
                 int orderId = Integer.parseInt(request.getParameter("orderId"));
                 int shipperId = Integer.parseInt(request.getParameter("shipperId"));
                 boolean success = orderDAO.assignShipper(orderId, shipperId);
+                log.log(admin.getId(), "Gán shipper #" + shipperId + " cho đơn hàng", "Order", orderId);
+                response.setStatus(success ? 200 : 400);
+                return;
+            }
+
+            if ("cancel_with_reason".equals(action)) {
+                int orderId = Integer.parseInt(request.getParameter("orderId"));
+                String cancelReason = request.getParameter("cancelReason");
+                boolean success = orderDAO.cancelOrder(orderId, cancelReason);
+                if (success) {
+                    log.log(admin.getId(), "Hủy đơn hàng - Lý do: " + cancelReason, "Order", orderId);
+                }
                 response.setStatus(success ? 200 : 400);
                 return;
             }

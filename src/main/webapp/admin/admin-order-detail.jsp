@@ -64,7 +64,7 @@
                     </button>
 
                     <c:if test="${order.status == 'PENDING'}">
-                        <button class="btn-sm btn-danger" onclick="updateSingleStatus(${order.id}, 'cancelled')"
+                        <button class="btn-sm btn-danger" onclick="openCancelModal()"
                                 style="cursor: pointer; padding: 10px 15px;">
                             <i class="fa-solid fa-ban"></i> Hủy đơn
                         </button>
@@ -266,6 +266,34 @@
                             </c:if>
                         </c:if>
 
+
+                        <c:if test="${order.status == 'CANCELLED'}">
+                            <div class="info-row">
+                                <span class="info-label">Trạng thái</span>
+                                <div class="info-value">
+                                    <span class="status-badge status-inactive">
+                                        <i class="fa-solid fa-ban" style="margin-right: 4px;"></i> Đã hủy
+                                    </span>
+                                </div>
+                            </div>
+                            <c:if test="${not empty order.cancelReason}">
+                                <div class="info-row">
+                                    <span class="info-label">Lý do hủy</span>
+                                    <div class="info-value" style="color: #c0392b; line-height: 1.5;">
+                                        <i class="fa-solid fa-circle-info" style="margin-right: 4px;"></i>${order.cancelReason}
+                                    </div>
+                                </div>
+                            </c:if>
+                            <c:if test="${empty order.cancelReason}">
+                                <div class="info-row">
+                                    <span class="info-label">Lý do hủy</span>
+                                    <div class="info-value" style="color: #999; font-style: italic;">
+                                        Không có lý do được ghi nhận
+                                    </div>
+                                </div>
+                            </c:if>
+                        </c:if>
+
                         <c:if test="${order.status == 'PENDING' && (empty order.shipperId || order.shipperId == 0)}">
                             <div style="margin-top: 10px; padding: 10px 14px; background: #fff8e1; border-radius: 6px; font-size: 13px; color: #856404; border: 1px solid #ffeeba;">
                                 <i class="fa-solid fa-circle-info" style="margin-right: 4px;"></i>
@@ -277,6 +305,37 @@
             </div>
         </div>
     </main>
+</div>
+
+<div id="cancelModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:9999; justify-content:center; align-items:center;">
+    <div style="background:#fff; border-radius:12px; padding:28px 32px; width:480px; max-width:90%; box-shadow: 0 20px 60px rgba(0,0,0,0.3);">
+        <h3 style="margin:0 0 6px 0; font-size:18px; color:#333;">
+            <i class="fa-solid fa-ban" style="color:#e74c3c; margin-right:8px;"></i>Hủy đơn hàng
+        </h3>
+        <p style="margin:0 0 18px 0; color:#666; font-size:14px;">Đơn hàng <strong>#${order.orderNumber}</strong></p>
+
+        <label style="font-weight:600; font-size:14px; color:#333; display:block; margin-bottom:6px;">Chọn lý do hủy <span style="color:red;">*</span></label>
+        <select id="cancelReasonSelect" style="width:100%; padding:10px 12px; border:1px solid #ddd; border-radius:6px; font-size:14px; margin-bottom:12px; cursor:pointer;" onchange="toggleAdminOtherReason()">
+            <option value="">-- Chọn lý do --</option>
+            <option value="Khách yêu cầu hủy">Khách yêu cầu hủy</option>
+            <option value="Hết hàng">Hết hàng</option>
+            <option value="Sai thông tin đơn hàng">Sai thông tin đơn hàng</option>
+            <option value="Không liên lạc được khách">Không liên lạc được khách</option>
+            <option value="Đơn trùng lặp">Đơn trùng lặp</option>
+            <option value="other">Lý do khác...</option>
+        </select>
+
+        <textarea id="cancelReasonOther" rows="3" placeholder="Nhập lý do khác..." style="display:none; width:100%; padding:10px 12px; border:1px solid #ddd; border-radius:6px; font-size:14px; margin-bottom:12px; resize:vertical; box-sizing:border-box;"></textarea>
+
+        <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:8px;">
+            <button onclick="closeCancelModal()" style="padding:10px 20px; border:1px solid #ddd; background:#fff; border-radius:6px; cursor:pointer; font-size:14px; color:#666;">
+                Đóng
+            </button>
+            <button id="btnConfirmCancel" onclick="confirmCancelOrder()" style="padding:10px 20px; border:none; background:#e74c3c; color:#fff; border-radius:6px; cursor:pointer; font-size:14px; font-weight:600;">
+                <i class="fa-solid fa-ban"></i> Xác nhận hủy
+            </button>
+        </div>
+    </div>
 </div>
 
 <script>
@@ -298,6 +357,76 @@
         });
     }
 
+    /* === Modal hủy đơn === */
+    function openCancelModal() {
+        document.getElementById('cancelModal').style.display = 'flex';
+    }
+
+    function closeCancelModal() {
+        document.getElementById('cancelModal').style.display = 'none';
+        document.getElementById('cancelReasonSelect').value = '';
+        document.getElementById('cancelReasonOther').style.display = 'none';
+        document.getElementById('cancelReasonOther').value = '';
+    }
+
+    function toggleAdminOtherReason() {
+        const select = document.getElementById('cancelReasonSelect');
+        const textarea = document.getElementById('cancelReasonOther');
+        if (select.value === 'other') {
+            textarea.style.display = 'block';
+        } else {
+            textarea.style.display = 'none';
+            textarea.value = '';
+        }
+    }
+
+    function confirmCancelOrder() {
+        const select = document.getElementById('cancelReasonSelect');
+        let reason = select.value;
+
+        if (!reason) {
+            alert('Vui lòng chọn lý do hủy!');
+            return;
+        }
+
+        if (reason === 'other') {
+            reason = document.getElementById('cancelReasonOther').value.trim();
+            if (!reason) {
+                alert('Vui lòng nhập lý do hủy!');
+                return;
+            }
+        }
+
+        const btn = document.getElementById('btnConfirmCancel');
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang xử lý...';
+
+        const params = new URLSearchParams();
+        params.append('action', 'cancel_with_reason');
+        params.append('orderId', '${order.id}');
+        params.append('cancelReason', reason);
+
+        fetch('admin/order/update', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+            body: params
+        }).then(res => {
+            if (res.ok) {
+                alert('Đã hủy đơn hàng thành công!');
+                location.reload();
+            } else {
+                alert('Lỗi: Không thể hủy đơn hàng!');
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa-solid fa-ban"></i> Xác nhận hủy';
+            }
+        }).catch(() => {
+            alert('Lỗi kết nối server!');
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fa-solid fa-ban"></i> Xác nhận hủy';
+        });
+    }
+
+    /* === Gán shipper === */
     function assignShipper() {
         const select = document.getElementById('shipperSelect');
         const shipperId = select.value;
