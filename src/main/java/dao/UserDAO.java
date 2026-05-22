@@ -365,7 +365,8 @@ public class UserDAO {
             sql.append(" AND (u.email LIKE ? OR u.phone LIKE ? OR CONCAT(u.last_name, ' ', u.first_name) LIKE ?) ");
         }
 
-        sql.append(" GROUP BY u.id HAVING 1=1 ");
+        sql.append("GROUP BY u.id, u.first_name, u.last_name, u.email, u.created_at, u.is_active, ua.province");
+        sql.append(" HAVING 1=1 ");
 
         if (spendingRange != null && !spendingRange.isEmpty()) {
             if (spendingRange.contains("-")) {
@@ -528,7 +529,7 @@ public class UserDAO {
             sql.append(" AND (u.email LIKE ? OR u.phone LIKE ? OR CONCAT(u.last_name, ' ', u.first_name) LIKE ?) ");
         }
 
-        sql.append(" GROUP BY u.id HAVING 1=1 ");
+        sql.append(" GROUP BY u.id ");
 
         if (spendingRange != null && !spendingRange.isEmpty()) {
             if (spendingRange.contains("-")) {
@@ -552,10 +553,21 @@ public class UserDAO {
 
         if (status != null && !status.isEmpty()) {
             switch (status) {
-                case "inactive": sql.append(" AND u.is_active = 0 "); break;
-                case "active": sql.append(" AND u.is_active = 1 "); break;
-                case "vip": sql.append(" AND total_spent > 5000000 AND u.is_active = 1 "); break;
-                case "new": sql.append(" AND DATEDIFF(NOW(), u.created_at) < 30 AND u.is_active = 1 "); break;
+                case "inactive":
+                    sql.append(" HAVING MAX(u.is_active) = 0 ");
+                    break;
+
+                case "active":
+                    sql.append(" HAVING MAX(u.is_active) = 1 ");
+                    break;
+
+                case "vip":
+                    sql.append(" HAVING total_spent > 5000000 AND MAX(u.is_active) = 1 ");
+                    break;
+
+                case "new":
+                    sql.append(" HAVING DATEDIFF(NOW(), MAX(u.created_at)) < 30 AND MAX(u.is_active) = 1 ");
+                    break;
             }
         }
 
