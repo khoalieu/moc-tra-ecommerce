@@ -519,61 +519,6 @@ public class OrderDAO {
         return false;
     }
 
-    public boolean cancelOrder(int orderId, String reason) {
-        Connection conn = null;
-        try {
-            conn = ds.getConnection();
-            conn.setAutoCommit(false);
-
-            Order order = getOrderById(orderId);
-            if (order == null || order.getStatus() != OrderStatus.PENDING) {
-                return false;
-            }
-
-            String sql = "UPDATE orders SET status = 'cancelled', cancel_reason = ? WHERE id = ? AND status = 'pending'";
-            try (PreparedStatement ps = conn.prepareStatement(sql)) {
-                ps.setString(1, reason);
-                ps.setInt(2, orderId);
-                if (ps.executeUpdate() == 0) {
-                    conn.rollback();
-                    return false;
-                }
-            }
-
-            for (OrderItem item : order.getItems()) {
-                Integer variantId = item.getVariantId();
-                if (variantId != null && variantId > 0) {
-                    String sqlUpdateVariant = "UPDATE product_variants SET stock_quantity = stock_quantity + ? WHERE id = ?";
-                    try (PreparedStatement psStock = conn.prepareStatement(sqlUpdateVariant)) {
-                        psStock.setInt(1, item.getQuantity());
-                        psStock.setInt(2, variantId);
-                        psStock.executeUpdate();
-                    }
-                } else {
-                    String sqlUpdateStock = "UPDATE products SET stock_quantity = stock_quantity + ? WHERE id = ?";
-                    try (PreparedStatement psStock = conn.prepareStatement(sqlUpdateStock)) {
-                        psStock.setInt(1, item.getQuantity());
-                        psStock.setInt(2, item.getProductId());
-                        psStock.executeUpdate();
-                    }
-                }
-            }
-
-            conn.commit();
-            return true;
-        } catch (SQLException e) {
-            if (conn != null) {
-                try { conn.rollback(); } catch (SQLException ex) { ex.printStackTrace(); }
-            }
-            e.printStackTrace();
-        } finally {
-            if (conn != null) {
-                try { conn.setAutoCommit(true); conn.close(); } catch (SQLException e) { e.printStackTrace(); }
-            }
-        }
-        return false;
-    }
-
     public boolean updatePaymentStatus(int orderId, model.enums.PaymentStatus status) {
         String sql = "UPDATE orders SET payment_status = ? WHERE id = ?";
 
