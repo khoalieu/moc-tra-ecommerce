@@ -18,25 +18,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Dropify/0.2.2/css/dropify.min.css">
-    <link href="https://unpkg.com/filepond/dist/filepond.css" rel="stylesheet">
-    <link href="https://unpkg.com/filepond-plugin-image-preview/dist/filepond-plugin-image-preview.css"
-          rel="stylesheet">
-
-    <style>
-        .filepond--root {
-            font-family: 'Roboto', sans-serif;
-        }
-
-        .filepond--panel-root {
-            background-color: #f7f9fc;
-            border: 1px dashed #ccc;
-        }
-
-        .dropify-wrapper {
-            border-radius: 8px;
-            border: 2px dashed #e5e5e5;
-        }
-    </style>
+    <link rel="stylesheet" href="https://unpkg.com/filepond/dist/filepond.css">
+    <link rel="stylesheet" href="https://unpkg.com/filepond-plugin-image-preview/dist/filepond-plugin-image-preview.css">
 </head>
 <body>
 <div class="admin-container">
@@ -64,6 +47,56 @@
                     <i class="fas fa-check-circle"></i> Thêm sản phẩm thành công!
                 </div>
             </c:if>
+
+            <!-- IMPORT EXCEL -->
+            <div class="import-box">
+                <div class="import-left">
+                    <div class="import-icon">
+                        <i class="fa-regular fa-file-excel"></i>
+                    </div>
+
+                    <div>
+                        <h3>Import sản phẩm bằng Excel</h3>
+                        <p>Tải file mẫu, nhập dữ liệu rồi upload để thêm/cập nhật hàng loạt sản phẩm.</p>
+                    </div>
+                </div>
+
+                <div class="import-right">
+                    <a href="${pageContext.request.contextPath}/admin/products/template"
+                       class="import-btn template-btn">
+                        <i class="fas fa-download"></i>
+                        Tải file mẫu
+                    </a>
+
+                    <form action="${pageContext.request.contextPath}/admin/products/import"
+                          method="post"
+                          enctype="multipart/form-data"
+                          class="import-form">
+
+                        <label class="file-upload-box">
+                            <i class="fas fa-paperclip"></i>
+                            <span id="excelFileName">Chọn file Excel</span>
+                            <input type="file"
+                                   name="excelFile"
+                                   accept=".xlsx"
+                                   required
+                                   onchange="document.getElementById('excelFileName').innerText = this.files[0].name">
+                        </label>
+
+                        <button type="submit" class="import-btn upload-btn">
+                            <i class="fas fa-upload"></i>
+                            Import
+                        </button>
+                    </form>
+                </div>
+
+                <c:if test="${not empty sessionScope.importMessage}">
+                    <div class="import-message">
+                            ${sessionScope.importMessage}
+                    </div>
+                    <c:remove var="importMessage" scope="session"/>
+                </c:if>
+            </div>
 
             <form class="form-container" action="admin/product/add" method="POST" enctype="multipart/form-data">
                 <div class="form-content">
