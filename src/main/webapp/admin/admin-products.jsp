@@ -8,72 +8,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Quản lý Sản phẩm - Mộc Trà Admin</title>
-
     <base href="${pageContext.request.contextPath}/">
-
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
     <link rel="stylesheet" href="assets/css/base.css">
     <link rel="stylesheet" href="assets/css/components.css">
-
     <link rel="stylesheet" href="admin/assets/css/admin.css">
     <link rel="stylesheet" href="admin/assets/css/admin-add-product.css">
-
-    <style>
-        .check-col {
-            width: 40px;
-            text-align: center;
-        }
-
-        .product-checkbox {
-            width: 18px;
-            height: 18px;
-            cursor: pointer;
-            accent-color: #107e84;
-        }
-
-        .modal-overlay {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.5);
-            z-index: 2000;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .modal-overlay.active {
-            display: flex;
-        }
-
-        .modal-content {
-            background: white;
-            padding: 25px;
-            border-radius: 8px;
-            width: 450px;
-            max-width: 90%;
-            animation: slideDown 0.3s;
-        }
-
-        @keyframes slideDown {
-            from {
-                transform: translateY(-20px);
-                opacity: 0;
-            }
-            to {
-                transform: translateY(0);
-                opacity: 1;
-            }
-        }
-
-        .full-width {
-            width: 100%;
-            margin-top: 5px;
-        }
-    </style>
+    <link rel="stylesheet" href="admin/assets/css/admin-products.css">
 </head>
 <body>
 
@@ -236,7 +177,9 @@
                                            onchange="updateBulkActions()">
                                 </td>
                                 <td>
-                                    <img src="${p.imageUrl}" alt="${p.name}" class="product-image-thumb"
+                                    <img src="${pageContext.request.contextPath}/${p.imageUrl}"
+                                         alt="${p.name}"
+                                         class="product-image-thumb"
                                          style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px;">
                                 </td>
                                 <td>

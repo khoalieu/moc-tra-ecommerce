@@ -579,4 +579,19 @@ public class ProductDAO {
         }
         return false;
     }
+
+    public Product getProductByName(String name) {
+        String sql = "SELECT * FROM products WHERE name = ? LIMIT 1";
+        try (Connection conn = ds.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, name);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                return mapRowToProduct(rs);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
 }
