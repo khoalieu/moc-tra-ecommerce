@@ -767,6 +767,89 @@ public class BlogPostDAO {
         }
         return false;
     }
+    public BlogPost searchBlogSuggestion(String keyword) {
+        if (keyword == null || keyword.trim().isEmpty()) {
+            return null;
+        }
+
+        String[] keywords = splitKeywords(keyword);
+        String phrase = "%" + keyword.trim().toLowerCase() + "%";
+
+        StringBuilder sql = new StringBuilder(
+                "SELECT id, title, slug, excerpt, featured_image, created_at " +
+                        "FROM blog_posts " +
+                        "WHERE status = 'published' "
+        );
+
+        sql.append(" AND (");
+        sql.append("LOWER(title) LIKE ? ");
+
+        if (keywords.length > 0) {
+            sql.append(" OR (");
+            for (int i = 0; i < keywords.length; i++) {
+                if (i > 0) {
+                    sql.append(" AND ");
+                }
+                sql.append("LOWER(title) LIKE ? ");
+            }
+            sql.append(") ");
+        }
+
+        sql.append(") ");
+
+        sql.append(" ORDER BY ");
+        sql.append("CASE ");
+        sql.append("WHEN LOWER(title) LIKE ? THEN 100 ");
+
+        if (keywords.length > 0) {
+            sql.append("WHEN ");
+            for (int i = 0; i < keywords.length; i++) {
+                if (i > 0) {
+                    sql.append(" AND ");
+                }
+                sql.append("LOWER(title) LIKE ? ");
+            }
+            sql.append("THEN 80 ");
+        }
+
+        sql.append("ELSE 10 END DESC, created_at DESC ");
+        sql.append("LIMIT 1");
+
+        try (Connection conn = ds.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+
+            int idx = 1;
+            ps.setString(idx++, phrase);
+            for (String word : keywords) {
+                ps.setString(idx++, "%" + word.toLowerCase() + "%");
+            }
+            ps.setString(idx++, phrase);
+            for (String word : keywords) {
+                ps.setString(idx++, "%" + word.toLowerCase() + "%");
+            }
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    BlogPost b = new BlogPost();
+
+                    b.setId(rs.getInt("id"));
+                    b.setTitle(rs.getString("title"));
+                    b.setSlug(rs.getString("slug"));
+                    b.setExcerpt(rs.getString("excerpt"));
+                    b.setFeaturedImage(rs.getString("featured_image"));
+
+                    Timestamp ts = rs.getTimestamp("created_at");
+                    if (ts != null) {
+                        b.setCreatedAt(ts.toLocalDateTime());
+                    }
+                    return b;
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
 
 }
 
