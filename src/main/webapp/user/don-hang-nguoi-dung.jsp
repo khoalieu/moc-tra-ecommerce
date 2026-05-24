@@ -248,7 +248,7 @@
 
         <div class="orders-list">
             <c:if test="${not empty orders}">
-                <c:forEach var="o" items="${orders}" varStatus="loop">
+                <c:forEach var="o" items="${orders}">
                     <c:set var="statusStr" value="${o.status.toString()}" />
                     <c:set var="statusClass" value="status-pending" />
                     <c:set var="statusText" value="Chờ xử lý" />
