@@ -361,8 +361,14 @@ public class UserDAO {
                         "WHERE u.role = 'customer' "
         );
 
-        if (search != null && !search.isEmpty()) {
-            sql.append(" AND (u.email LIKE ? OR u.phone LIKE ? OR CONCAT(u.last_name, ' ', u.first_name) LIKE ?) ");
+        if (search != null && !search.trim().isEmpty()) {
+            sql.append(" AND (");
+            sql.append("u.email LIKE ? ");
+            sql.append("OR u.phone LIKE ? ");
+            sql.append("OR u.username LIKE ? ");
+            sql.append("OR CONCAT(IFNULL(u.last_name,''), ' ', IFNULL(u.first_name,'')) LIKE ? ");
+            sql.append("OR CONCAT(IFNULL(u.first_name,''), ' ', IFNULL(u.last_name,'')) LIKE ? ");
+            sql.append(") ");
         }
 
         sql.append("GROUP BY u.id, u.first_name, u.last_name, u.email, u.created_at, u.is_active, ua.province");
@@ -432,8 +438,12 @@ public class UserDAO {
              PreparedStatement ps = conn.prepareStatement(sql.toString())) {
 
             int paramIndex = 1;
-            if (search != null && !search.isEmpty()) {
-                String searchPattern = "%" + search + "%";
+
+            if (search != null && !search.trim().isEmpty()) {
+                String searchPattern = "%" + search.trim() + "%";
+
+                ps.setString(paramIndex++, searchPattern);
+                ps.setString(paramIndex++, searchPattern);
                 ps.setString(paramIndex++, searchPattern);
                 ps.setString(paramIndex++, searchPattern);
                 ps.setString(paramIndex++, searchPattern);
@@ -525,8 +535,14 @@ public class UserDAO {
                         "WHERE u.role = 'customer' "
         );
 
-        if (search != null && !search.isEmpty()) {
-            sql.append(" AND (u.email LIKE ? OR u.phone LIKE ? OR CONCAT(u.last_name, ' ', u.first_name) LIKE ?) ");
+        if (search != null && !search.trim().isEmpty()) {
+            sql.append(" AND (");
+            sql.append("u.email LIKE ? ");
+            sql.append("OR u.phone LIKE ? ");
+            sql.append("OR u.username LIKE ? ");
+            sql.append("OR CONCAT(IFNULL(u.last_name,''), ' ', IFNULL(u.first_name,'')) LIKE ? ");
+            sql.append("OR CONCAT(IFNULL(u.first_name,''), ' ', IFNULL(u.last_name,'')) LIKE ? ");
+            sql.append(") ");
         }
 
         sql.append(" GROUP BY u.id ");
@@ -553,32 +569,26 @@ public class UserDAO {
 
         if (status != null && !status.isEmpty()) {
             switch (status) {
-                case "inactive":
-                    sql.append(" HAVING MAX(u.is_active) = 0 ");
-                    break;
-
-                case "active":
-                    sql.append(" HAVING MAX(u.is_active) = 1 ");
-                    break;
-
-                case "vip":
-                    sql.append(" HAVING total_spent > 5000000 AND MAX(u.is_active) = 1 ");
-                    break;
-
-                case "new":
-                    sql.append(" HAVING DATEDIFF(NOW(), MAX(u.created_at)) < 30 AND MAX(u.is_active) = 1 ");
-                    break;
+                case "inactive": sql.append(" AND u.is_active = 0 "); break;
+                case "active": sql.append(" AND u.is_active = 1 "); break;
+                case "vip": sql.append(" AND total_spent > 5000000 AND u.is_active = 1 "); break;
+                case "new": sql.append(" AND DATEDIFF(NOW(), u.created_at) < 30 AND u.is_active = 1 "); break;
             }
         }
 
         try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql.toString())) {
 
-            if (search != null && !search.isEmpty()) {
-                String searchPattern = "%" + search + "%";
-                ps.setString(1, searchPattern);
-                ps.setString(2, searchPattern);
-                ps.setString(3, searchPattern);
+            int paramIndex = 1;
+
+            if (search != null && !search.trim().isEmpty()) {
+                String searchPattern = "%" + search.trim() + "%";
+
+                ps.setString(paramIndex++, searchPattern);
+                ps.setString(paramIndex++, searchPattern);
+                ps.setString(paramIndex++, searchPattern);
+                ps.setString(paramIndex++, searchPattern);
+                ps.setString(paramIndex++, searchPattern);
             }
 
             ResultSet rs = ps.executeQuery();

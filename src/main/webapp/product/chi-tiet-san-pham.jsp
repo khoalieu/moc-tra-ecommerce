@@ -162,54 +162,106 @@
                 <div class="product-reviews">
                     <h3>Đánh Giá Của Khách Hàng</h3>
 
-                    <c:if test="${not empty sessionScope.user}">
-                        <div class="review-form-container">
-                            <form action="${pageContext.request.contextPath}/submit-review" method="post" class="review-form">
-                                <input type="hidden" name="productId" value="${product.id}">
+                    <c:if test="${param.reviewSuccess == '1'}">
+                        <p style="color: #2e7d32; margin-bottom: 15px; font-weight: bold;">
+                            Gửi đánh giá thành công.
+                        </p>
+                    </c:if>
 
-                                <div class="form-group">
-                                    <label>Đánh giá của bạn:</label>
-                                    <div class="star-rating">
-                                        <input type="radio" id="star5" name="rating" value="5" required/><label for="star5" title="Tuyệt vời"></label>
-                                        <input type="radio" id="star4" name="rating" value="4"/><label for="star4" title="Tốt"></label>
-                                        <input type="radio" id="star3" name="rating" value="3"/><label for="star3" title="Bình thường"></label>
-                                        <input type="radio" id="star2" name="rating" value="2"/><label for="star2" title="Tệ"></label>
-                                        <input type="radio" id="star1" name="rating" value="1"/><label for="star1" title="Rất tệ"></label>
+                    <c:if test="${not empty param.reviewError}">
+                        <p style="color: #c62828; margin-bottom: 15px; font-weight: bold;">
+                            <c:choose>
+                                <c:when test="${param.reviewError == 'not_allowed'}">
+                                    Bạn chưa còn lượt đánh giá cho sản phẩm này. Chỉ khách đã mua sản phẩm và đơn hàng đã hoàn tất mới được đánh giá.
+                                </c:when>
+                                <c:when test="${param.reviewError == 'invalid_rating'}">
+                                    Vui lòng chọn số sao đánh giá hợp lệ.
+                                </c:when>
+                                <c:when test="${param.reviewError == 'empty_comment'}">
+                                    Vui lòng nhập nội dung nhận xét.
+                                </c:when>
+                                <c:when test="${param.reviewError == 'comment_too_long'}">
+                                    Nội dung đánh giá quá dài, tối đa 1000 ký tự.
+                                </c:when>
+                                <c:otherwise>
+                                    Gửi đánh giá thất bại. Vui lòng thử lại.
+                                </c:otherwise>
+                            </c:choose>
+                        </p>
+                    </c:if>
+
+                    <c:choose>
+                        <c:when test="${empty sessionScope.user}">
+                            <c:url var="loginUrl" value="/auth/login.jsp">
+                                <c:param name="redirect" value="/chi-tiet-san-pham?id=${product.id}&tab=review" />
+                            </c:url>
+
+                            <p style="margin-bottom: 30px; color: #777;">
+                                Vui lòng
+                                <a href="${loginUrl}" style="color: #4CAF50; font-weight: bold;">
+                                    đăng nhập
+                                </a>
+                                để đánh giá sản phẩm.
+                            </p>
+                        </c:when>
+
+                        <c:when test="${not canReview}">
+                            <p style="margin-bottom: 30px; color: #777;">
+                                Bạn cần mua sản phẩm này và đơn hàng phải hoàn tất thì mới được đánh giá.
+                            </p>
+                        </c:when>
+
+                        <c:otherwise>
+                            <p style="margin-bottom: 15px; color: #2e7d32;">
+                                Bạn còn <b>${remainingReviewCount}</b> lượt đánh giá cho sản phẩm này.
+                            </p>
+
+                            <div class="review-form-container">
+                                <form action="${pageContext.request.contextPath}/submit-review" method="post" class="review-form">
+                                    <input type="hidden" name="productId" value="${product.id}">
+
+                                    <div class="form-group">
+                                        <label>Đánh giá của bạn:</label>
+                                        <div class="star-rating">
+                                            <input type="radio" id="star5" name="rating" value="5" required/>
+                                            <label for="star5" title="Tuyệt vời"></label>
+
+                                            <input type="radio" id="star4" name="rating" value="4"/>
+                                            <label for="star4" title="Tốt"></label>
+
+                                            <input type="radio" id="star3" name="rating" value="3"/>
+                                            <label for="star3" title="Bình thường"></label>
+
+                                            <input type="radio" id="star2" name="rating" value="2"/>
+                                            <label for="star2" title="Tệ"></label>
+
+                                            <input type="radio" id="star1" name="rating" value="1"/>
+                                            <label for="star1" title="Rất tệ"></label>
+                                        </div>
                                     </div>
-                                </div>
 
-                                <div class="form-group">
-                                    <label for="review-text">Nhận xét:</label>
-                                    <textarea id="review-text" name="comment" placeholder="Chia sẻ cảm nhận của bạn về sản phẩm..."></textarea>
-                                </div>
+                                    <div class="form-group">
+                                        <label for="review-text">Nhận xét:</label>
+                                        <textarea id="review-text"
+                                                  name="comment"
+                                                  placeholder="Chia sẻ cảm nhận của bạn về sản phẩm..."
+                                                  maxlength="1000"
+                                                  required></textarea>
+                                    </div>
 
-                                <button type="submit" class="cta-button" style="border: none; cursor: pointer;">Gửi Đánh Giá</button>
-                            </form>
-                        </div>
-                    </c:if>
-
-                    <c:if test="${empty sessionScope.user}">
-                        <c:url var="loginUrl" value="/auth/login.jsp">
-                            <c:param name="redirect" value="/chi-tiet-san-pham?id=${product.id}&tab=review" />
-                        </c:url>
-
-                        <p style="margin-bottom: 30px;">
-                            Vui lòng
-                            <a href="${loginUrl}" style="color: #4CAF50; font-weight: bold;">
-                                đăng nhập
-                            </a>
-                            để đánh giá sản phẩm.
-                        </p>
-                    </c:if>
-                    <c:if test="${not empty sessionScope.user and not canReview}">
-                        <p style="margin-bottom: 30px; color: #777;">
-                            Bạn cần mua sản phẩm này và đơn hàng phải hoàn tất thì mới được đánh giá.
-                        </p>
-                    </c:if>
+                                    <button type="submit" class="cta-button" style="border: none; cursor: pointer;">
+                                        Gửi Đánh Giá
+                                    </button>
+                                </form>
+                            </div>
+                        </c:otherwise>
+                    </c:choose>
 
                     <div class="review-list">
                         <c:if test="${empty reviews}">
-                            <p style="font-style: italic; color: #777;">(Chưa có đánh giá nào. Hãy là người đầu tiên!)</p>
+                            <p style="font-style: italic; color: #777;">
+                                (Chưa có đánh giá nào. Hãy là người đầu tiên!)
+                            </p>
                         </c:if>
 
                         <c:forEach var="r" items="${reviews}">
@@ -218,21 +270,29 @@
                                     <img src="${pageContext.request.contextPath}/${r.userAvatar}" alt="${r.userName}">
                                 </div>
                                 <div class="review-content">
-                                    <div class="review-author">${r.userName}</div>
+                                    <div class="review-author">
+                                        <c:out value="${r.userName}" />
+                                    </div>
 
                                     <div class="review-meta">
                                         <div class="star-rating-display">
-                                            <c:forEach begin="1" end="${r.rating}"><i class="fa-solid fa-star"></i></c:forEach>
-                                            <c:forEach begin="1" end="${5 - r.rating}"><i class="fa-regular fa-star" style="color: #ddd;"></i></c:forEach>
+                                            <c:forEach begin="1" end="${r.rating}">
+                                                <i class="fa-solid fa-star"></i>
+                                            </c:forEach>
+
+                                            <c:forEach begin="1" end="${5 - r.rating}">
+                                                <i class="fa-regular fa-star" style="color: #ddd;"></i>
+                                            </c:forEach>
                                         </div>
+
                                         <span class="review-date">
-                                            <fmt:parseDate value="${r.createdAt}" pattern="yyyy-MM-dd'T'HH:mm:ss" var="parsedDate" type="both" />
-                                            <fmt:formatDate value="${parsedDate}" pattern="dd/MM/yyyy HH:mm"/>
-                                        </span>
+                                <fmt:parseDate value="${r.createdAt}" pattern="yyyy-MM-dd'T'HH:mm:ss" var="parsedDate" type="both" />
+                                <fmt:formatDate value="${parsedDate}" pattern="dd/MM/yyyy HH:mm"/>
+                            </span>
                                     </div>
 
                                     <div class="review-body">
-                                            ${r.comment}
+                                        <c:out value="${r.comment}" />
                                     </div>
                                 </div>
                             </div>
@@ -278,50 +338,13 @@
 <button id="backToTop" class="back-to-top" title="Lên đầu trang"><i class="fa-solid fa-chevron-up"></i></button>
 
 <div id="favoriteToast" class="favorite-toast"></div>
-
 <script>
-        document.addEventListener('DOMContentLoaded', function() {
-        const tabLinks = document.querySelectorAll('.tab-link');
-        const tabContents = document.querySelectorAll('.tab-content');
-    // --- 1. CÁC HÀM TIỆN ÍCH (UTILITIES & ACTIONS) ---
-
-        function openTab(tabId) {
-        tabLinks.forEach(item => item.classList.remove('active'));
-        tabContents.forEach(item => item.classList.remove('active'));
-
-        const activeButton = document.querySelector('.tab-link[data-tab="' + tabId + '"]');
-        const activeContent = document.getElementById(tabId);
-
-        if (activeButton) activeButton.classList.add('active');
-        if (activeContent) activeContent.classList.add('active');
-    }
-
-        tabLinks.forEach(link => {
-        link.addEventListener('click', function() {
-        const tabId = this.getAttribute('data-tab');
-        openTab(tabId);
-    });
-    });
-
-        const params = new URLSearchParams(window.location.search);
-        if (params.get('tab') === 'review') {
-        openTab('tab-4');
-
-        const reviewSection = document.getElementById('tab-4');
-        if (reviewSection) {
-        reviewSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-    }
-    });
-
-    // Đổi ảnh chính khi click vào thumbnail
     function changeImage(element) {
         document.getElementById('mainImg').src = element.src;
         document.querySelectorAll('.thumbnail-images img').forEach(img => img.classList.remove('active'));
         element.classList.add('active');
     }
 
-    // Hiển thị thông báo Toast
     function showFavoriteToast(message, type) {
         let toast = document.getElementById('favoriteToast');
         const icon = type === 'success'
@@ -337,7 +360,6 @@
         }, 2000);
     }
 
-    // Gắn sự kiện cho nút Yêu thích
     function bindFavoriteButtons() {
         document.querySelectorAll('.favorite-btn').forEach(btn => {
             btn.addEventListener('click', function () {
@@ -356,8 +378,6 @@
                         if (data.success) {
                             this.dataset.favorited = data.favorited ? 'true' : 'false';
                             this.title = data.favorited ? 'Xóa khỏi yêu thích' : 'Thêm vào yêu thích';
-
-                            // Toggle class active để đổi màu tim
                             this.classList.toggle('active', data.favorited);
                             showFavoriteToast(data.message, 'success');
                         } else {
@@ -371,7 +391,6 @@
         });
     }
 
-    // Cập nhật giá và tồn kho khi đổi phân loại
     function updateVariantInfo(radioElement) {
         const price = parseFloat(radioElement.getAttribute('data-price'));
         const salePrice = parseFloat(radioElement.getAttribute('data-sale'));
@@ -393,7 +412,6 @@
             oldPriceElem.style.display = 'none';
         }
 
-        // Cập nhật tồn kho
         const safeStock = Number.isFinite(stock) ? stock : 0;
         stockElem.innerText = "(Còn " + safeStock + " sản phẩm)";
         quantityInput.max = safeStock;
@@ -403,38 +421,53 @@
         }
     }
 
-
-    // --- 2. KHỞI TẠO CÁC SỰ KIỆN KHI TRANG ĐÃ LOAD XONG ---
     document.addEventListener('DOMContentLoaded', function() {
-
-        // 2.1. Khởi tạo chức năng chuyển Tab
         const tabLinks = document.querySelectorAll('.tab-link');
         const tabContents = document.querySelectorAll('.tab-content');
+
+        function openTab(tabId) {
+            tabLinks.forEach(item => item.classList.remove('active'));
+            tabContents.forEach(item => item.classList.remove('active'));
+
+            const activeButton = document.querySelector('.tab-link[data-tab="' + tabId + '"]');
+            const activeContent = document.getElementById(tabId);
+
+            if (activeButton) activeButton.classList.add('active');
+            if (activeContent) activeContent.classList.add('active');
+        }
 
         tabLinks.forEach(link => {
             link.addEventListener('click', function() {
                 const tabId = this.getAttribute('data-tab');
-                tabLinks.forEach(item => item.classList.remove('active'));
-                tabContents.forEach(item => item.classList.remove('active'));
-                this.classList.add('active');
-                document.getElementById(tabId).classList.add('active');
+                openTab(tabId);
             });
         });
 
-        // 2.2. Kích hoạt nút thả tim
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('tab') === 'review') {
+            openTab('tab-4');
+
+            const reviewSection = document.getElementById('tab-4');
+            if (reviewSection) {
+                reviewSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        }
+
         bindFavoriteButtons();
 
-        // 2.3. Khởi tạo giá tiền theo phân loại mặc định (nếu có)
         const defaultCheckedVariant = document.querySelector('input[name="variantId"]:checked');
         if (defaultCheckedVariant) {
             updateVariantInfo(defaultCheckedVariant);
         } else {
             const stockElem = document.getElementById('variant-stock');
             const quantityInput = document.getElementById('quantity');
-            const defaultStock = parseInt(stockElem.getAttribute('data-default-stock'));
-            const safeStock = Number.isFinite(defaultStock) ? defaultStock : 0;
-            stockElem.innerText = "(Còn " + safeStock + " sản phẩm)";
-            quantityInput.max = safeStock;
+
+            if (stockElem && quantityInput) {
+                const defaultStock = parseInt(stockElem.getAttribute('data-default-stock'));
+                const safeStock = Number.isFinite(defaultStock) ? defaultStock : 0;
+                stockElem.innerText = "(Còn " + safeStock + " sản phẩm)";
+                quantityInput.max = safeStock;
+            }
         }
     });
 </script>
