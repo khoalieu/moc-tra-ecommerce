@@ -120,14 +120,56 @@
             </aside>
 
             <div class="shop-grid-wrapper">
-                <div class="sort-bar">
-                    <label for="sort-by">Sắp xếp theo:</label>
-                    <select id="sort-by" class="sort-select" onchange="location = this.value;">
-                        <option value="${pageContext.request.contextPath}/san-pham?sort=default&category=${currentCategory}&price=${currentPrice}&promotionId=${currentPromotion}&search=${currentSearch}" ${currentSort == 'default' ? 'selected' : ''}>Mặc định</option>
-                        <option value="${pageContext.request.contextPath}/san-pham?sort=newest&category=${currentCategory}&price=${currentPrice}&promotionId=${currentPromotion}&search=${currentSearch}" ${currentSort == 'newest' ? 'selected' : ''}>Mới nhất</option>
-                        <option value="${pageContext.request.contextPath}/san-pham?sort=price-asc&category=${currentCategory}&price=${currentPrice}&promotionId=${currentPromotion}&search=${currentSearch}" ${currentSort == 'price-asc' ? 'selected' : ''}>Giá: Thấp đến Cao</option>
-                        <option value="${pageContext.request.contextPath}/san-pham?sort=price-desc&category=${currentCategory}&price=${currentPrice}&promotionId=${currentPromotion}&search=${currentSearch}" ${currentSort == 'price-desc' ? 'selected' : ''}>Giá: Cao đến Thấp</option>
-                    </select>
+                <div class="sort-bar" style="display: flex; align-items: center; justify-content: space-between; gap: 15px; flex-wrap: wrap;">
+
+                    <form action="${pageContext.request.contextPath}/san-pham" method="get"
+                          style="display: flex; align-items: center; gap: 8px; flex: 1; max-width: 460px;">
+
+                        <input type="text"
+                               name="search"
+                               value="${currentSearch}"
+                               placeholder="Tìm sản phẩm..."
+                               style="flex: 1; padding: 9px 12px; border: 1px solid #ddd; border-radius: 6px; outline: none;">
+
+                        <c:if test="${currentCategory != null}">
+                            <input type="hidden" name="category" value="${currentCategory}">
+                        </c:if>
+
+                        <c:if test="${currentPrice != null}">
+                            <input type="hidden" name="price" value="${currentPrice}">
+                        </c:if>
+
+                        <c:if test="${currentPromotion != null}">
+                            <input type="hidden" name="promotionId" value="${currentPromotion}">
+                        </c:if>
+
+                        <c:if test="${currentSort != null}">
+                            <input type="hidden" name="sort" value="${currentSort}">
+                        </c:if>
+
+                        <button type="submit"
+                                style="padding: 9px 14px; border: none; border-radius: 6px; background: #107e84; color: white; cursor: pointer;">
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                            Tìm
+                        </button>
+
+                        <c:if test="${not empty currentSearch}">
+                            <a href="${pageContext.request.contextPath}/san-pham"
+                               style="padding: 9px 12px; border-radius: 6px; background: #f1f1f1; color: #333; text-decoration: none;">
+                                Xóa
+                            </a>
+                        </c:if>
+                    </form>
+
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <label for="sort-by">Sắp xếp theo:</label>
+                        <select id="sort-by" class="sort-select" onchange="location = this.value;">
+                            <option value="${pageContext.request.contextPath}/san-pham?sort=default&category=${currentCategory}&price=${currentPrice}&promotionId=${currentPromotion}&search=${currentSearch}" ${currentSort == 'default' ? 'selected' : ''}>Mặc định</option>
+                            <option value="${pageContext.request.contextPath}/san-pham?sort=newest&category=${currentCategory}&price=${currentPrice}&promotionId=${currentPromotion}&search=${currentSearch}" ${currentSort == 'newest' ? 'selected' : ''}>Mới nhất</option>
+                            <option value="${pageContext.request.contextPath}/san-pham?sort=price-asc&category=${currentCategory}&price=${currentPrice}&promotionId=${currentPromotion}&search=${currentSearch}" ${currentSort == 'price-asc' ? 'selected' : ''}>Giá: Thấp đến Cao</option>
+                            <option value="${pageContext.request.contextPath}/san-pham?sort=price-desc&category=${currentCategory}&price=${currentPrice}&promotionId=${currentPromotion}&search=${currentSearch}" ${currentSort == 'price-desc' ? 'selected' : ''}>Giá: Cao đến Thấp</option>
+                        </select>
+                    </div>
                 </div>
 
                 <section class="product-group">

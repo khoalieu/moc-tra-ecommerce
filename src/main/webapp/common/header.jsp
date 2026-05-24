@@ -101,12 +101,21 @@
         <div class="container">
             <div class="header-right__content">
 
-                <form action="${pageContext.request.contextPath}/san-pham" method="get" class="search-bar">
-                    <button type="submit" style="border:none; background:none;">
-                        <i class="fa-solid fa-magnifying-glass"></i>
-                    </button>
-                    <input type="text" name="search" value="${currentSearch}" placeholder="Bạn muốn tìm gì...">
-                </form>
+                <div class="search-wrapper">
+                    <form action="${pageContext.request.contextPath}/san-pham" method="get" class="search-bar" autocomplete="off">
+                        <button type="submit" style="border:none; background:none;">
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                        </button>
+
+                        <input type="text"
+                               id="headerSearchInput"
+                               name="search"
+                               value="${currentSearch}"
+                               placeholder="Bạn muốn tìm gì...">
+
+                        <div id="searchSuggestionBox" class="search-suggestion-box"></div>
+                    </form>
+                </div>
                 <div class="cart-container">
                     <%-- 1. Phần hiển thị Text và Icon ) --%>
                     <span class="cart-text">
@@ -250,3 +259,129 @@
         </div>
     </div>
 </header>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const searchInput = document.getElementById("headerSearchInput");
+        const suggestionBox = document.getElementById("searchSuggestionBox");
+        const contextPath = "${pageContext.request.contextPath}";
+
+        if (!searchInput || !suggestionBox) {
+            return;
+        }
+
+        let searchTimer = null;
+
+        searchInput.addEventListener("input", function () {
+            const keyword = searchInput.value.trim();
+
+            clearTimeout(searchTimer);
+
+            if (keyword.length < 2) {
+                hideSuggestions();
+                return;
+            }
+
+            searchTimer = setTimeout(function () {
+                fetch(contextPath + "/search-suggestions?keyword=" + encodeURIComponent(keyword))
+                    .then(function (response) {
+                        return response.json();
+                    })
+                    .then(function (data) {
+                        renderSuggestions(data, keyword);
+                    })
+                    .catch(function () {
+                        hideSuggestions();
+                    });
+            }, 250);
+        });
+
+        document.addEventListener("click", function (event) {
+            if (!event.target.closest(".search-wrapper")) {
+                hideSuggestions();
+            }
+        });
+
+        searchInput.addEventListener("focus", function () {
+            const keyword = searchInput.value.trim();
+            if (keyword.length >= 2) {
+                searchInput.dispatchEvent(new Event("input"));
+            }
+        });
+
+        function renderSuggestions(data, keyword) {
+            const products = data && data.products ? data.products : [];
+            const blog = data ? data.blog : null;
+
+            let html = "";
+
+            if (products.length > 0) {
+                html += '<div class="search-suggestion-header">Sản phẩm gợi ý</div>';
+
+                products.forEach(function (product) {
+                    const imageUrl = product.imageUrl && product.imageUrl.trim() !== ""
+                        ? product.imageUrl
+                        : contextPath + "/assets/images/no-image.png";
+
+                    html += '<a class="search-suggestion-item" href="' + contextPath + '/chi-tiet-san-pham?id=' + product.id + '">';
+                    html += '<img src="' + escapeHtml(imageUrl) + '" onerror="this.src=\'' + contextPath + '/assets/images/no-image.png\'">';
+                    html += '<div class="search-suggestion-info">';
+                    html += '<div class="search-suggestion-name">' + escapeHtml(product.name) + '</div>';
+                    html += '<div class="search-suggestion-price">' + formatCurrency(product.price) + '</div>';
+                    html += '</div>';
+                    html += '</a>';
+                });
+            }
+
+            if (blog) {
+                html += '<div class="search-suggestion-header">Bài viết liên quan</div>';
+
+                const blogImage = blog.imageUrl && blog.imageUrl.trim() !== ""
+                    ? blog.imageUrl
+                    : contextPath + "/assets/images/no-image.png";
+
+                html += '<a class="search-suggestion-item" href="' + contextPath + '/blog/' + encodeURIComponent(blog.slug) + '">';
+                html += '<img src="' + escapeHtml(blogImage) + '" onerror="this.src=\'' + contextPath + '/assets/images/no-image.png\'">';
+                html += '<div class="search-suggestion-info">';
+                html += '<div class="search-suggestion-name">' + escapeHtml(blog.title) + '</div>';
+                html += '<div class="search-suggestion-price" style="color:#107e84;">Xem bài viết</div>';
+                html += '</div>';
+                html += '</a>';
+            }
+
+            if (products.length === 0 && !blog) {
+                html += '<div class="search-suggestion-empty">Không tìm thấy kết quả phù hợp</div>';
+            }
+
+            html += '<a class="search-view-all" href="' + contextPath + '/san-pham?search=' + encodeURIComponent(keyword) + '">Xem tất cả sản phẩm cho "' + escapeHtml(keyword) + '"</a>';
+
+            suggestionBox.innerHTML = html;
+            suggestionBox.style.display = "block";
+        }
+
+        function hideSuggestions() {
+            suggestionBox.style.display = "none";
+            suggestionBox.innerHTML = "";
+        }
+
+        function formatCurrency(value) {
+            if (!value) {
+                value = 0;
+            }
+
+            return Number(value).toLocaleString("vi-VN") + "₫";
+        }
+
+        function escapeHtml(value) {
+            if (value === null || value === undefined) {
+                return "";
+            }
+
+            return String(value)
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+    });
+</script>

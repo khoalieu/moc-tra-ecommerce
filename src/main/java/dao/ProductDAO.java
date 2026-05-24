@@ -25,9 +25,10 @@ public class ProductDAO {
     }
 
     public List<Product> getProducts(Integer categoryId, Integer promotionId, String sort, Double maxPrice,
-                                     String search ,int index, int size, String status) {
+                                     String search, int index, int size, String status) {
 
         List<Product> list = new ArrayList<>();
+
         List<String> keywords = new ArrayList<>();
         if (search != null && !search.isBlank()) {
             for (String keyword : search.trim().toLowerCase().split("\\s+")) {
@@ -36,6 +37,11 @@ public class ProductDAO {
                 }
             }
         }
+
+        String phrase = search != null ? search.trim().toLowerCase() : "";
+        String phraseLike = "%" + phrase + "%";
+        String phraseStart = phrase + "%";
+
         StringBuilder sql = new StringBuilder(
                 "SELECT p.*, " +
                         "(SELECT pi.promotion_id FROM promotion_items pi WHERE pi.product_id = p.id LIMIT 1) AS current_promo_id, " +
@@ -62,41 +68,85 @@ public class ProductDAO {
         if (promotionId != null) {
             sql.append(" AND p.id IN (SELECT product_id FROM promotion_items WHERE promotion_id = ?) ");
         }
-        // chia keyword theo từng từ và tìm theo từng từ đó
+
         if (!keywords.isEmpty()) {
             sql.append(" AND (");
             for (int i = 0; i < keywords.size(); i++) {
-                if (i > 0) sql.append(" OR ");
-                sql.append(" LOWER(p.name) LIKE ? ");
+                if (i > 0) {
+                    sql.append(" OR ");
+                }
+                sql.append("LOWER(p.name) LIKE ? ");
             }
             sql.append(") ");
         }
 
         if (status != null && !status.isEmpty()) {
-            if ("active".equals(status)) sql.append(" AND p.status = 'active' ");
-            else if ("inactive".equals(status)) sql.append(" AND p.status = 'inactive' ");
-            else if ("out-of-stock".equals(status)) sql.append(" AND p.stock_quantity = 0 ");
+            if ("active".equals(status)) {
+                sql.append(" AND p.status = 'active' ");
+            } else if ("inactive".equals(status)) {
+                sql.append(" AND p.status = 'inactive' ");
+            } else if ("out-of-stock".equals(status)) {
+                sql.append(" AND p.stock_quantity = 0 ");
+            }
         }
 
-        if (sort != null) {
-            switch (sort) {
-                case "price-asc":
-                    sql.append(" ORDER BY p.price ASC ");
-                    break;
-                case "price-desc":
-                    sql.append(" ORDER BY p.price DESC ");
-                    break;
-                case "name-asc":
-                    sql.append(" ORDER BY p.name ASC ");
-                    break;
-                case "newest":
-                    sql.append(" ORDER BY p.created_at DESC ");
-                    break;
-                default:
-                    sql.append(" ORDER BY p.created_at DESC ");
+        if (!keywords.isEmpty()) {
+            sql.append(" ORDER BY ");
+            sql.append("CASE WHEN LOWER(p.name) = ? THEN 10000 ELSE 0 END DESC, ");
+            sql.append("CASE WHEN LOWER(p.name) LIKE ? THEN 9000 ELSE 0 END DESC, ");
+            sql.append("CASE WHEN LOWER(p.name) LIKE ? THEN 8000 ELSE 0 END DESC, ");
+
+            sql.append("CASE WHEN ");
+            for (int i = 0; i < keywords.size(); i++) {
+                if (i > 0) {
+                    sql.append(" AND ");
+                }
+                sql.append("LOWER(p.name) LIKE ? ");
+            }
+            sql.append("THEN 7000 ELSE 0 END DESC, ");
+
+            sql.append("(");
+            for (int i = 0; i < keywords.size(); i++) {
+                if (i > 0) {
+                    sql.append(" + ");
+                }
+                sql.append("CASE WHEN LOWER(p.name) LIKE ? THEN 1 ELSE 0 END ");
+            }
+            sql.append(") DESC, ");
+
+            sql.append("CASE WHEN LOWER(p.name) LIKE ? THEN 1 ELSE 0 END DESC, ");
+            sql.append("CHAR_LENGTH(p.name) ASC, ");
+
+            if ("price-asc".equals(sort)) {
+                sql.append("p.price ASC ");
+            } else if ("price-desc".equals(sort)) {
+                sql.append("p.price DESC ");
+            } else if ("name-asc".equals(sort)) {
+                sql.append("p.name ASC ");
+            } else {
+                sql.append("p.created_at DESC ");
             }
         } else {
-            sql.append(" ORDER BY p.created_at DESC ");
+            if (sort != null) {
+                switch (sort) {
+                    case "price-asc":
+                        sql.append(" ORDER BY p.price ASC ");
+                        break;
+                    case "price-desc":
+                        sql.append(" ORDER BY p.price DESC ");
+                        break;
+                    case "name-asc":
+                        sql.append(" ORDER BY p.name ASC ");
+                        break;
+                    case "newest":
+                        sql.append(" ORDER BY p.created_at DESC ");
+                        break;
+                    default:
+                        sql.append(" ORDER BY p.created_at DESC ");
+                }
+            } else {
+                sql.append(" ORDER BY p.created_at DESC ");
+            }
         }
 
         sql.append(" LIMIT ? OFFSET ?");
@@ -106,12 +156,36 @@ public class ProductDAO {
 
             int paramIndex = 1;
 
-            if (categoryId != null) ps.setInt(paramIndex++, categoryId);
-            if (maxPrice != null) ps.setDouble(paramIndex++, maxPrice);
-            if (promotionId != null) ps.setInt(paramIndex++, promotionId);
+            if (categoryId != null) {
+                ps.setInt(paramIndex++, categoryId);
+            }
+
+            if (maxPrice != null) {
+                ps.setDouble(paramIndex++, maxPrice);
+            }
+
+            if (promotionId != null) {
+                ps.setInt(paramIndex++, promotionId);
+            }
 
             for (String keyword : keywords) {
                 ps.setString(paramIndex++, "%" + keyword + "%");
+            }
+
+            if (!keywords.isEmpty()) {
+                ps.setString(paramIndex++, phrase);
+                ps.setString(paramIndex++, phraseStart);
+                ps.setString(paramIndex++, phraseLike);
+
+                for (String keyword : keywords) {
+                    ps.setString(paramIndex++, "%" + keyword + "%");
+                }
+
+                for (String keyword : keywords) {
+                    ps.setString(paramIndex++, "%" + keyword + "%");
+                }
+
+                ps.setString(paramIndex++, "%" + keywords.get(0) + "%");
             }
 
             int offset = (index - 1) * size;
@@ -163,9 +237,9 @@ public class ProductDAO {
     public int countProducts(Integer categoryId, Integer promotionId, Double maxPrice, String status) {
         return countProducts(categoryId, promotionId, maxPrice, null, status);
     }
-
     public int countProducts(Integer categoryId, Integer promotionId, Double maxPrice, String search, String status) {
         List<String> keywords = new ArrayList<>();
+
         if (search != null && !search.isBlank()) {
             for (String keyword : search.trim().toLowerCase().split("\\s+")) {
                 if (!keyword.isBlank()) {
@@ -173,12 +247,12 @@ public class ProductDAO {
                 }
             }
         }
+
         StringBuilder sql = new StringBuilder("SELECT COUNT(*) FROM products p ");
 
         if (promotionId != null) {
             sql.append(" JOIN promotion_items pi ON p.id = pi.product_id ");
         }
-
         sql.append(" WHERE 1=1 ");
 
         if (categoryId != null) {
@@ -188,23 +262,29 @@ public class ProductDAO {
         if (maxPrice != null) {
             sql.append(" AND (CASE WHEN p.sale_price > 0 THEN p.sale_price ELSE p.price END) <= ? ");
         }
-
         if (promotionId != null) {
             sql.append(" AND pi.promotion_id = ? ");
         }
+
         if (!keywords.isEmpty()) {
             sql.append(" AND (");
             for (int i = 0; i < keywords.size(); i++) {
-                if (i > 0) sql.append(" OR ");
+                if (i > 0) {
+                    sql.append(" OR ");
+                }
                 sql.append(" LOWER(p.name) LIKE ? ");
             }
             sql.append(") ");
         }
 
         if (status != null && !status.isEmpty()) {
-            if ("active".equals(status)) sql.append(" AND p.status = 'active' ");
-            else if ("inactive".equals(status)) sql.append(" AND p.status = 'inactive' ");
-            else if ("out-of-stock".equals(status)) sql.append(" AND p.stock_quantity = 0 ");
+            if ("active".equals(status)) {
+                sql.append(" AND p.status = 'active' ");
+            } else if ("inactive".equals(status)) {
+                sql.append(" AND p.status = 'inactive' ");
+            } else if ("out-of-stock".equals(status)) {
+                sql.append(" AND p.stock_quantity = 0 ");
+            }
         }
 
         try (Connection conn = ds.getConnection();
@@ -212,23 +292,32 @@ public class ProductDAO {
 
             int paramIndex = 1;
 
-            if (categoryId != null) ps.setInt(paramIndex++, categoryId);
-            if (maxPrice != null) ps.setDouble(paramIndex++, maxPrice);
-            if (promotionId != null) ps.setInt(paramIndex++, promotionId);
+            if (categoryId != null) {
+                ps.setInt(paramIndex++, categoryId);
+            }
+
+            if (maxPrice != null) {
+                ps.setDouble(paramIndex++, maxPrice);
+            }
+
+            if (promotionId != null) {
+                ps.setInt(paramIndex++, promotionId);
+            }
 
             for (String keyword : keywords) {
                 ps.setString(paramIndex++, "%" + keyword + "%");
             }
 
             ResultSet rs = ps.executeQuery();
-            if (rs.next()) return rs.getInt(1);
+            if (rs.next()) {
+                return rs.getInt(1);
+            }
 
         } catch (Exception e) {
             e.printStackTrace();
         }
         return 0;
     }
-
     public Product getProductById(int id) {
         String sql = "SELECT p.*, " +
                 "pi.promotion_id AS current_promo_id, " +
@@ -579,7 +668,143 @@ public class ProductDAO {
         }
         return false;
     }
+    private List<String> splitSearchKeywords(String search) {
+        List<String> keywords = new ArrayList<>();
 
+        if (search == null || search.trim().isEmpty()) {
+            return keywords;
+        }
+
+        String[] parts = search.trim().toLowerCase().split("\\s+");
+        for (String part : parts) {
+            if (!part.trim().isEmpty()) {
+                keywords.add(part.trim());
+            }
+        }
+
+        return keywords;
+    }
+
+    private int setProductNameSearchParams(PreparedStatement ps, int paramIndex, String search, List<String> keywords) throws SQLException {
+        if (search == null || search.trim().isEmpty()) {
+            return paramIndex;
+        }
+        String phrase = "%" + search.trim().toLowerCase() + "%";
+        ps.setString(paramIndex++, phrase);
+
+        for (String keyword : keywords) {
+            String kw = "%" + keyword + "%";
+            ps.setString(paramIndex++, kw);
+        }
+        return paramIndex;
+    }
+    public List<Product> searchProductSuggestions(String keyword, int limit) {
+        List<Product> list = new ArrayList<>();
+
+        if (keyword == null || keyword.trim().isEmpty()) {
+            return list;
+        }
+
+        List<String> keywords = new ArrayList<>();
+        for (String word : keyword.trim().toLowerCase().split("\\s+")) {
+            if (!word.isBlank()) {
+                keywords.add(word);
+            }
+        }
+
+        String phrase = keyword.trim().toLowerCase();
+        String phraseLike = "%" + phrase + "%";
+        String phraseStart = phrase + "%";
+
+        StringBuilder sql = new StringBuilder(
+                "SELECT p.id, p.name, p.image_url, p.price, p.sale_price " +
+                        "FROM products p " +
+                        "WHERE p.status = 'active' "
+        );
+
+        if (!keywords.isEmpty()) {
+            sql.append(" AND (");
+            for (int i = 0; i < keywords.size(); i++) {
+                if (i > 0) {
+                    sql.append(" OR ");
+                }
+                sql.append("LOWER(p.name) LIKE ? ");
+            }
+            sql.append(") ");
+        }
+
+        sql.append(" ORDER BY ");
+        sql.append("CASE WHEN LOWER(p.name) = ? THEN 10000 ELSE 0 END DESC, ");
+        sql.append("CASE WHEN LOWER(p.name) LIKE ? THEN 9000 ELSE 0 END DESC, ");
+        sql.append("CASE WHEN LOWER(p.name) LIKE ? THEN 8000 ELSE 0 END DESC, ");
+
+        sql.append("CASE WHEN ");
+        for (int i = 0; i < keywords.size(); i++) {
+            if (i > 0) {
+                sql.append(" AND ");
+            }
+            sql.append("LOWER(p.name) LIKE ? ");
+        }
+        sql.append("THEN 7000 ELSE 0 END DESC, ");
+
+        sql.append("(");
+        for (int i = 0; i < keywords.size(); i++) {
+            if (i > 0) {
+                sql.append(" + ");
+            }
+            sql.append("CASE WHEN LOWER(p.name) LIKE ? THEN 1 ELSE 0 END ");
+        }
+        sql.append(") DESC, ");
+
+        sql.append("CASE WHEN LOWER(p.name) LIKE ? THEN 1 ELSE 0 END DESC, ");
+        sql.append("CHAR_LENGTH(p.name) ASC, ");
+        sql.append("p.created_at DESC ");
+        sql.append("LIMIT ?");
+
+        try (Connection conn = ds.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+
+            int paramIndex = 1;
+
+            for (String word : keywords) {
+                ps.setString(paramIndex++, "%" + word + "%");
+            }
+
+            ps.setString(paramIndex++, phrase);
+            ps.setString(paramIndex++, phraseStart);
+            ps.setString(paramIndex++, phraseLike);
+
+            for (String word : keywords) {
+                ps.setString(paramIndex++, "%" + word + "%");
+            }
+
+            for (String word : keywords) {
+                ps.setString(paramIndex++, "%" + word + "%");
+            }
+
+            ps.setString(paramIndex++, "%" + keywords.get(0) + "%");
+            ps.setInt(paramIndex++, limit);
+
+            ResultSet rs = ps.executeQuery();
+
+            while (rs.next()) {
+                Product p = new Product();
+
+                p.setId(rs.getInt("id"));
+                p.setName(rs.getString("name"));
+                p.setImageUrl(rs.getString("image_url"));
+                p.setPrice(rs.getDouble("price"));
+                p.setSalePrice(rs.getDouble("sale_price"));
+
+                list.add(p);
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return list;
+    }
     public Product getProductByName(String name) {
         String sql = "SELECT * FROM products WHERE name = ? LIMIT 1";
         try (Connection conn = ds.getConnection();
@@ -594,4 +819,5 @@ public class ProductDAO {
         }
         return null;
     }
+
 }
