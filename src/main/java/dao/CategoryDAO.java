@@ -246,4 +246,20 @@ public class CategoryDAO {
         }
         return false;
     }
+
+    public Integer getCategoryIdByName(String name) {
+        String sql = "SELECT id FROM categories " + "WHERE name = ? LIMIT 1";
+        try (Connection conn = ds.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, name);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                return rs.getInt("id");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return null;
+    }
 }

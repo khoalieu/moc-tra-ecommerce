@@ -134,6 +134,10 @@ public class DAOFactory {
         return new SystemLogDAO(dataSource);
     }
 
+    public DashboardDAO getDashboardDAO(){
+        return new DashboardDAO(dataSource);
+    }
+
     /**
      * Closes the connection pool. Should be called on application shutdown.
      */

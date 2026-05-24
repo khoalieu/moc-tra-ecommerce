@@ -371,7 +371,8 @@ public class UserDAO {
             sql.append(") ");
         }
 
-        sql.append(" GROUP BY u.id HAVING 1=1 ");
+        sql.append("GROUP BY u.id, u.first_name, u.last_name, u.email, u.created_at, u.is_active, ua.province");
+        sql.append(" HAVING 1=1 ");
 
         if (spendingRange != null && !spendingRange.isEmpty()) {
             if (spendingRange.contains("-")) {
@@ -421,20 +422,11 @@ public class UserDAO {
 
         if (sort != null) {
             switch (sort) {
-                case "spending-desc":
-                    sql.append(" ORDER BY total_spent DESC ");
-                    break;
-                case "spending-asc":
-                    sql.append(" ORDER BY total_spent ASC ");
-                    break;
-                case "orders-desc":
-                    sql.append(" ORDER BY total_orders DESC ");
-                    break;
-                case "oldest":
-                    sql.append(" ORDER BY u.created_at ASC ");
-                    break;
-                default:
-                    sql.append(" ORDER BY u.created_at DESC ");
+                case "spending-desc": sql.append(" ORDER BY total_spent DESC "); break;
+                case "spending-asc": sql.append(" ORDER BY total_spent ASC "); break;
+                case "orders-desc": sql.append(" ORDER BY total_orders DESC "); break;
+                case "oldest": sql.append(" ORDER BY u.created_at ASC "); break;
+                default: sql.append(" ORDER BY u.created_at DESC "); // Default newest
             }
         } else {
             sql.append(" ORDER BY u.created_at DESC ");
@@ -553,7 +545,7 @@ public class UserDAO {
             sql.append(") ");
         }
 
-        sql.append(" GROUP BY u.id HAVING 1=1 ");
+        sql.append(" GROUP BY u.id ");
 
         if (spendingRange != null && !spendingRange.isEmpty()) {
             if (spendingRange.contains("-")) {
@@ -577,18 +569,10 @@ public class UserDAO {
 
         if (status != null && !status.isEmpty()) {
             switch (status) {
-                case "inactive":
-                    sql.append(" AND u.is_active = 0 ");
-                    break;
-                case "active":
-                    sql.append(" AND u.is_active = 1 ");
-                    break;
-                case "vip":
-                    sql.append(" AND total_spent > 5000000 AND u.is_active = 1 ");
-                    break;
-                case "new":
-                    sql.append(" AND DATEDIFF(NOW(), u.created_at) < 30 AND u.is_active = 1 ");
-                    break;
+                case "inactive": sql.append(" AND u.is_active = 0 "); break;
+                case "active": sql.append(" AND u.is_active = 1 "); break;
+                case "vip": sql.append(" AND total_spent > 5000000 AND u.is_active = 1 "); break;
+                case "new": sql.append(" AND DATEDIFF(NOW(), u.created_at) < 30 AND u.is_active = 1 "); break;
             }
         }
 
@@ -925,5 +909,26 @@ public class UserDAO {
         }
         return result;
     }
-
+    public List<User> getAllShippers() {
+        List<User> list = new ArrayList<>();
+        String sql = "SELECT id, username, first_name, last_name, phone " +
+                "FROM users WHERE role = 'shipper' AND is_active = 1 ORDER BY username";
+        try (Connection conn = ds.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                User u = new User();
+                u.setId(rs.getInt("id"));
+                u.setUsername(rs.getString("username"));
+                u.setFirstName(rs.getString("first_name"));
+                u.setLastName(rs.getString("last_name"));
+                u.setPhone(rs.getString("phone"));
+                u.setRole(UserRole.SHIPPER);
+                list.add(u);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
 }
