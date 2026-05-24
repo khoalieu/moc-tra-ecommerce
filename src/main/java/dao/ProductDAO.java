@@ -28,8 +28,19 @@ public class ProductDAO {
                                      String search, int index, int size, String status) {
 
         List<Product> list = new ArrayList<>();
-        List<String> keywords = splitSearchKeywords(search);
-        boolean hasSearch = search != null && !search.trim().isEmpty();
+
+        List<String> keywords = new ArrayList<>();
+        if (search != null && !search.isBlank()) {
+            for (String keyword : search.trim().toLowerCase().split("\\s+")) {
+                if (!keyword.isBlank()) {
+                    keywords.add(keyword);
+                }
+            }
+        }
+
+        String phrase = search != null ? search.trim().toLowerCase() : "";
+        String phraseLike = "%" + phrase + "%";
+        String phraseStart = phrase + "%";
 
         StringBuilder sql = new StringBuilder(
                 "SELECT p.*, " +
@@ -57,13 +68,14 @@ public class ProductDAO {
         if (promotionId != null) {
             sql.append(" AND p.id IN (SELECT product_id FROM promotion_items WHERE promotion_id = ?) ");
         }
-        if (hasSearch) {
+
+        if (!keywords.isEmpty()) {
             sql.append(" AND (");
-
-            sql.append("LOWER(p.name) LIKE ? ");
-
             for (int i = 0; i < keywords.size(); i++) {
-                sql.append("OR LOWER(p.name) LIKE ? ");
+                if (i > 0) {
+                    sql.append(" OR ");
+                }
+                sql.append("LOWER(p.name) LIKE ? ");
             }
             sql.append(") ");
         }
@@ -78,21 +90,32 @@ public class ProductDAO {
             }
         }
 
-        if (hasSearch) {
+        if (!keywords.isEmpty()) {
             sql.append(" ORDER BY ");
-            sql.append("CASE ");
-            sql.append("WHEN LOWER(p.name) LIKE ? THEN 100 ");
+            sql.append("CASE WHEN LOWER(p.name) = ? THEN 10000 ELSE 0 END DESC, ");
+            sql.append("CASE WHEN LOWER(p.name) LIKE ? THEN 9000 ELSE 0 END DESC, ");
+            sql.append("CASE WHEN LOWER(p.name) LIKE ? THEN 8000 ELSE 0 END DESC, ");
 
-            if (!keywords.isEmpty()) {
-                sql.append("WHEN ");
-                for (int i = 0; i < keywords.size(); i++) {
-                    if (i > 0) sql.append(" AND ");
-                    sql.append("LOWER(p.name) LIKE ? ");
+            sql.append("CASE WHEN ");
+            for (int i = 0; i < keywords.size(); i++) {
+                if (i > 0) {
+                    sql.append(" AND ");
                 }
-                sql.append("THEN 80 ");
+                sql.append("LOWER(p.name) LIKE ? ");
             }
+            sql.append("THEN 7000 ELSE 0 END DESC, ");
 
-            sql.append("ELSE 10 END DESC, ");
+            sql.append("(");
+            for (int i = 0; i < keywords.size(); i++) {
+                if (i > 0) {
+                    sql.append(" + ");
+                }
+                sql.append("CASE WHEN LOWER(p.name) LIKE ? THEN 1 ELSE 0 END ");
+            }
+            sql.append(") DESC, ");
+
+            sql.append("CASE WHEN LOWER(p.name) LIKE ? THEN 1 ELSE 0 END DESC, ");
+            sql.append("CHAR_LENGTH(p.name) ASC, ");
 
             if ("price-asc".equals(sort)) {
                 sql.append("p.price ASC ");
@@ -145,16 +168,24 @@ public class ProductDAO {
                 ps.setInt(paramIndex++, promotionId);
             }
 
-            if (hasSearch) {
-                paramIndex = setProductNameSearchParams(ps, paramIndex, search, keywords);
+            for (String keyword : keywords) {
+                ps.setString(paramIndex++, "%" + keyword + "%");
+            }
 
-                String phrase = "%" + search.trim().toLowerCase() + "%";
+            if (!keywords.isEmpty()) {
                 ps.setString(paramIndex++, phrase);
+                ps.setString(paramIndex++, phraseStart);
+                ps.setString(paramIndex++, phraseLike);
 
                 for (String keyword : keywords) {
-                    String kw = "%" + keyword + "%";
-                    ps.setString(paramIndex++, kw);
+                    ps.setString(paramIndex++, "%" + keyword + "%");
                 }
+
+                for (String keyword : keywords) {
+                    ps.setString(paramIndex++, "%" + keyword + "%");
+                }
+
+                ps.setString(paramIndex++, "%" + keywords.get(0) + "%");
             }
 
             int offset = (index - 1) * size;
@@ -206,10 +237,16 @@ public class ProductDAO {
     public int countProducts(Integer categoryId, Integer promotionId, Double maxPrice, String status) {
         return countProducts(categoryId, promotionId, maxPrice, null, status);
     }
-
     public int countProducts(Integer categoryId, Integer promotionId, Double maxPrice, String search, String status) {
-        List<String> keywords = splitSearchKeywords(search);
-        boolean hasSearch = search != null && !search.trim().isEmpty();
+        List<String> keywords = new ArrayList<>();
+
+        if (search != null && !search.isBlank()) {
+            for (String keyword : search.trim().toLowerCase().split("\\s+")) {
+                if (!keyword.isBlank()) {
+                    keywords.add(keyword);
+                }
+            }
+        }
 
         StringBuilder sql = new StringBuilder("SELECT COUNT(*) FROM products p ");
 
@@ -229,12 +266,13 @@ public class ProductDAO {
             sql.append(" AND pi.promotion_id = ? ");
         }
 
-        if (hasSearch) {
+        if (!keywords.isEmpty()) {
             sql.append(" AND (");
-            sql.append("LOWER(p.name) LIKE ? ");
-
             for (int i = 0; i < keywords.size(); i++) {
-                sql.append("OR LOWER(p.name) LIKE ? ");
+                if (i > 0) {
+                    sql.append(" OR ");
+                }
+                sql.append(" LOWER(p.name) LIKE ? ");
             }
             sql.append(") ");
         }
@@ -266,8 +304,8 @@ public class ProductDAO {
                 ps.setInt(paramIndex++, promotionId);
             }
 
-            if (hasSearch) {
-                paramIndex = setProductNameSearchParams(ps, paramIndex, search, keywords);
+            for (String keyword : keywords) {
+                ps.setString(paramIndex++, "%" + keyword + "%");
             }
 
             ResultSet rs = ps.executeQuery();
@@ -651,17 +689,120 @@ public class ProductDAO {
         if (search == null || search.trim().isEmpty()) {
             return paramIndex;
         }
-
-        // Match nguyên cụm: ví dụ "trà đào"
         String phrase = "%" + search.trim().toLowerCase() + "%";
         ps.setString(paramIndex++, phrase);
 
-        // Match từng từ: ví dụ "trà", "đào"
         for (String keyword : keywords) {
             String kw = "%" + keyword + "%";
             ps.setString(paramIndex++, kw);
         }
-
         return paramIndex;
+    }
+    public List<Product> searchProductSuggestions(String keyword, int limit) {
+        List<Product> list = new ArrayList<>();
+
+        if (keyword == null || keyword.trim().isEmpty()) {
+            return list;
+        }
+
+        List<String> keywords = new ArrayList<>();
+        for (String word : keyword.trim().toLowerCase().split("\\s+")) {
+            if (!word.isBlank()) {
+                keywords.add(word);
+            }
+        }
+
+        String phrase = keyword.trim().toLowerCase();
+        String phraseLike = "%" + phrase + "%";
+        String phraseStart = phrase + "%";
+
+        StringBuilder sql = new StringBuilder(
+                "SELECT p.id, p.name, p.image_url, p.price, p.sale_price " +
+                        "FROM products p " +
+                        "WHERE p.status = 'active' "
+        );
+
+        if (!keywords.isEmpty()) {
+            sql.append(" AND (");
+            for (int i = 0; i < keywords.size(); i++) {
+                if (i > 0) {
+                    sql.append(" OR ");
+                }
+                sql.append("LOWER(p.name) LIKE ? ");
+            }
+            sql.append(") ");
+        }
+
+        sql.append(" ORDER BY ");
+        sql.append("CASE WHEN LOWER(p.name) = ? THEN 10000 ELSE 0 END DESC, ");
+        sql.append("CASE WHEN LOWER(p.name) LIKE ? THEN 9000 ELSE 0 END DESC, ");
+        sql.append("CASE WHEN LOWER(p.name) LIKE ? THEN 8000 ELSE 0 END DESC, ");
+
+        sql.append("CASE WHEN ");
+        for (int i = 0; i < keywords.size(); i++) {
+            if (i > 0) {
+                sql.append(" AND ");
+            }
+            sql.append("LOWER(p.name) LIKE ? ");
+        }
+        sql.append("THEN 7000 ELSE 0 END DESC, ");
+
+        sql.append("(");
+        for (int i = 0; i < keywords.size(); i++) {
+            if (i > 0) {
+                sql.append(" + ");
+            }
+            sql.append("CASE WHEN LOWER(p.name) LIKE ? THEN 1 ELSE 0 END ");
+        }
+        sql.append(") DESC, ");
+
+        sql.append("CASE WHEN LOWER(p.name) LIKE ? THEN 1 ELSE 0 END DESC, ");
+        sql.append("CHAR_LENGTH(p.name) ASC, ");
+        sql.append("p.created_at DESC ");
+        sql.append("LIMIT ?");
+
+        try (Connection conn = ds.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+
+            int paramIndex = 1;
+
+            for (String word : keywords) {
+                ps.setString(paramIndex++, "%" + word + "%");
+            }
+
+            ps.setString(paramIndex++, phrase);
+            ps.setString(paramIndex++, phraseStart);
+            ps.setString(paramIndex++, phraseLike);
+
+            for (String word : keywords) {
+                ps.setString(paramIndex++, "%" + word + "%");
+            }
+
+            for (String word : keywords) {
+                ps.setString(paramIndex++, "%" + word + "%");
+            }
+
+            ps.setString(paramIndex++, "%" + keywords.get(0) + "%");
+            ps.setInt(paramIndex++, limit);
+
+            ResultSet rs = ps.executeQuery();
+
+            while (rs.next()) {
+                Product p = new Product();
+
+                p.setId(rs.getInt("id"));
+                p.setName(rs.getString("name"));
+                p.setImageUrl(rs.getString("image_url"));
+                p.setPrice(rs.getDouble("price"));
+                p.setSalePrice(rs.getDouble("sale_price"));
+
+                list.add(p);
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return list;
     }
 }
