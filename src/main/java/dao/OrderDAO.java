@@ -84,8 +84,10 @@ public class OrderDAO {
                 }
 
                 o.setItems(getOrderItems(o.getId()));
+                o.setCancelReason(rs.getString("cancel_reason"));
 
                 list.add(o);
+
             }
         } catch (SQLException e) {
             e.printStackTrace();
