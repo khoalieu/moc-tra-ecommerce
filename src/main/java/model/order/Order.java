@@ -22,6 +22,13 @@ public class Order {
     private String notes;
     private Timestamp createdAt;
     private List<OrderItem> items = new ArrayList<>();
+    private Integer shipperId;
+    private String customerName;
+    private String customerPhone;
+    private String shippingAddress;
+    private String shippingProvider;
+    private String trackingCode;
+
     public Order() {}
 
     public int getId() { return id; }
@@ -56,12 +63,14 @@ public class Order {
 
     public Timestamp getCreatedAt() { return createdAt; }
     public void setCreatedAt(Timestamp createdAt) { this.createdAt = createdAt; }
+
     public List<OrderItem> getItems() {
         return items;
     }
     public void setItems(List<OrderItem> items) {
         this.items = items;
     }
+
     public String getCancelReason() {
         return cancelReason;
     }
@@ -69,4 +78,41 @@ public class Order {
     public void setCancelReason(String cancelReason) {
         this.cancelReason = cancelReason;
     }
+
+    public Integer getShipperId() {
+        return shipperId;
+    }
+
+    public void setShipperId(Integer shipperId) {
+        this.shipperId = shipperId;
+    }
+
+    public String getCustomerName() {
+        return customerName;
+    }
+
+    public void setCustomerName(String customerName) {
+        this.customerName = customerName;
+    }
+
+    public String getCustomerPhone() {
+        return customerPhone;
+    }
+
+    public void setCustomerPhone(String customerPhone) {
+        this.customerPhone = customerPhone;
+    }
+
+    public String getShippingAddress() {
+        return shippingAddress;
+    }
+
+    public void setShippingAddress(String shippingAddress) {
+        this.shippingAddress = shippingAddress;
+    }
+    public String getShippingProvider() { return shippingProvider; }
+    public void setShippingProvider(String shippingProvider) { this.shippingProvider = shippingProvider; }
+
+    public String getTrackingCode() { return trackingCode; }
+    public void setTrackingCode(String trackingCode) { this.trackingCode = trackingCode; }
 }
