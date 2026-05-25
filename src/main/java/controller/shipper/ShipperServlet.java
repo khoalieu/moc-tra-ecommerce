@@ -28,7 +28,7 @@ public class ShipperServlet extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        User shipper = checkAuthorization(request, response);
+        User shipper = (User) request.getSession().getAttribute("user");
         if (shipper == null) return;
 
         String path = request.getServletPath();
@@ -44,7 +44,7 @@ public class ShipperServlet extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         request.setCharacterEncoding("UTF-8");
-        User shipper = checkAuthorization(request, response);
+        User shipper = (User) request.getSession().getAttribute("user");
         if (shipper == null) return;
 
         String path = request.getServletPath();
@@ -98,19 +98,5 @@ public class ShipperServlet extends HttpServlet {
             }
             response.sendRedirect(request.getContextPath() + "/shipper/dashboard");
         }
-    }
-
-    private User checkAuthorization(HttpServletRequest request, HttpServletResponse response) throws IOException {
-        HttpSession session = request.getSession(false);
-        if (session == null || session.getAttribute("user") == null) {
-            response.sendRedirect(request.getContextPath() + "/login");
-            return null;
-        }
-        User user = (User) session.getAttribute("user");
-        if (user.getRole() == null || !user.getRole().name().equalsIgnoreCase("SHIPPER")) {
-            response.sendRedirect(request.getContextPath() + "/errors/403.jsp");
-            return null;
-        }
-        return user;
     }
 }
