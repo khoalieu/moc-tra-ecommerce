@@ -227,6 +227,12 @@
                                 <c:if test="${sessionScope.user.role == 'ADMIN'}">
                                     <a href="${pageContext.request.contextPath}/admin/admin-dashboard.jsp">Trang quản trị</a>
                                 </c:if>
+                                <c:if test="${sessionScope.user.role == 'EDITOR'}">
+                                    <a href="${pageContext.request.contextPath}/editor/dashboard">
+                                        <i class="fa-solid fa-pen-nib" style="margin-right: 8px;"></i>
+                                        Trang quản trị
+                                    </a>
+                                </c:if>
                                 <a href="${pageContext.request.contextPath}/tai-khoan-cua-toi">
                                     <i class="fa-regular fa-user" style="margin-right: 8px;"></i>
                                     Tài khoản của tôi
