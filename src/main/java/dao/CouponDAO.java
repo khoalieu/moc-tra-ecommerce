@@ -210,4 +210,217 @@ public class CouponDAO {
 
         return c;
     }
+    public List<Coupon> getUsableCouponsForUser(int userId, double subtotal) {
+        List<Coupon> list = new ArrayList<>();
+
+        String sql = "SELECT c.* FROM coupons c " +
+                "JOIN user_coupons uc ON c.id = uc.coupon_id " +
+                "WHERE uc.user_id = ? " +
+                "AND uc.used_at IS NULL " +
+                "AND c.is_active = 1 " +
+                "AND c.start_date <= NOW() " +
+                "AND c.end_date >= NOW() " +
+                "AND c.min_order_amount <= ? " +
+                "AND (c.max_uses IS NULL OR c.current_uses < c.max_uses) " +
+                "ORDER BY c.created_at DESC";
+
+        try (Connection conn = ds.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, userId);
+            ps.setDouble(2, subtotal);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    list.add(mapCoupon(rs));
+                }
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return list;
+    }
+
+    public Coupon getValidClaimedCouponForCheckout(int userId, int couponId, double subtotal) {
+        String sql = "SELECT c.* FROM coupons c " +
+                "JOIN user_coupons uc ON c.id = uc.coupon_id " +
+                "WHERE uc.user_id = ? " +
+                "AND uc.coupon_id = ? " +
+                "AND uc.used_at IS NULL " +
+                "AND c.is_active = 1 " +
+                "AND c.start_date <= NOW() " +
+                "AND c.end_date >= NOW() " +
+                "AND c.min_order_amount <= ? " +
+                "AND (c.max_uses IS NULL OR c.current_uses < c.max_uses) " +
+                "LIMIT 1";
+
+        try (Connection conn = ds.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, userId);
+            ps.setInt(2, couponId);
+            ps.setDouble(3, subtotal);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return mapCoupon(rs);
+                }
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return null;
+    }
+
+    public Coupon getValidCouponByCodeForCheckout(int userId, String code, double subtotal) {
+        String sql = "SELECT c.* FROM coupons c " +
+                "LEFT JOIN user_coupons uc ON c.id = uc.coupon_id AND uc.user_id = ? " +
+                "WHERE c.code = ? " +
+                "AND c.is_active = 1 " +
+                "AND c.start_date <= NOW() " +
+                "AND c.end_date >= NOW() " +
+                "AND c.min_order_amount <= ? " +
+                "AND (c.max_uses IS NULL OR c.current_uses < c.max_uses) " +
+                "AND (uc.used_at IS NULL) " +
+                "LIMIT 1";
+
+        try (Connection conn = ds.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, userId);
+            ps.setString(2, code.trim());
+            ps.setDouble(3, subtotal);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return mapCoupon(rs);
+                }
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return null;
+    }
+
+    public boolean markCouponUsed(int userId, int couponId) {
+        Connection conn = null;
+
+        try {
+            conn = ds.getConnection();
+            conn.setAutoCommit(false);
+
+            String checkCouponSql = "SELECT id FROM coupons " +
+                    "WHERE id = ? " +
+                    "AND is_active = 1 " +
+                    "AND start_date <= NOW() " +
+                    "AND end_date >= NOW() " +
+                    "AND (max_uses IS NULL OR current_uses < max_uses) " +
+                    "FOR UPDATE";
+
+            boolean valid = false;
+
+            try (PreparedStatement ps = conn.prepareStatement(checkCouponSql)) {
+                ps.setInt(1, couponId);
+                try (ResultSet rs = ps.executeQuery()) {
+                    valid = rs.next();
+                }
+            }
+
+            if (!valid) {
+                conn.rollback();
+                return false;
+            }
+
+            String checkUserCouponSql = "SELECT id, used_at FROM user_coupons WHERE user_id = ? AND coupon_id = ? LIMIT 1";
+            Integer userCouponId = null;
+            Timestamp usedAt = null;
+
+            try (PreparedStatement ps = conn.prepareStatement(checkUserCouponSql)) {
+                ps.setInt(1, userId);
+                ps.setInt(2, couponId);
+
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) {
+                        userCouponId = rs.getInt("id");
+                        usedAt = rs.getTimestamp("used_at");
+                    }
+                }
+            }
+
+            if (usedAt != null) {
+                conn.rollback();
+                return false;
+            }
+
+            if (userCouponId == null) {
+                String insertSql = "INSERT INTO user_coupons (user_id, coupon_id, claimed_at, used_at) VALUES (?, ?, NOW(), NOW())";
+                try (PreparedStatement ps = conn.prepareStatement(insertSql)) {
+                    ps.setInt(1, userId);
+                    ps.setInt(2, couponId);
+                    ps.executeUpdate();
+                }
+            } else {
+                String updateUserCouponSql = "UPDATE user_coupons SET used_at = NOW() WHERE id = ? AND used_at IS NULL";
+                try (PreparedStatement ps = conn.prepareStatement(updateUserCouponSql)) {
+                    ps.setInt(1, userCouponId);
+                    if (ps.executeUpdate() == 0) {
+                        conn.rollback();
+                        return false;
+                    }
+                }
+            }
+
+            String updateCouponSql = "UPDATE coupons SET current_uses = current_uses + 1 WHERE id = ?";
+            try (PreparedStatement ps = conn.prepareStatement(updateCouponSql)) {
+                ps.setInt(1, couponId);
+                ps.executeUpdate();
+            }
+
+            conn.commit();
+            return true;
+
+        } catch (Exception e) {
+            e.printStackTrace();
+
+            try {
+                if (conn != null) conn.rollback();
+            } catch (Exception ignored) {
+            }
+
+            return false;
+
+        } finally {
+            try {
+                if (conn != null) {
+                    conn.setAutoCommit(true);
+                    conn.close();
+                }
+            } catch (Exception ignored) {
+            }
+        }
+    }
+
+    public double calculateDiscount(Coupon coupon, double subtotal) {
+        if (coupon == null) return 0;
+
+        double discount;
+
+        if ("PERCENT".equalsIgnoreCase(coupon.getDiscountType())) {
+            discount = subtotal * coupon.getDiscountValue() / 100.0;
+
+            if (coupon.getMaxDiscountAmount() != null) {
+                discount = Math.min(discount, coupon.getMaxDiscountAmount());
+            }
+        } else {
+            discount = coupon.getDiscountValue();
+        }
+
+        return Math.min(discount, subtotal);
+    }
 }

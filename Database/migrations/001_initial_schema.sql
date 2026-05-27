@@ -382,4 +382,14 @@ CREATE TABLE user_coupons (
                                   FOREIGN KEY (coupon_id) REFERENCES coupons(id)
                                       ON DELETE CASCADE
 );
+ALTER TABLE orders
+    ADD COLUMN subtotal_amount DECIMAL(15,2) DEFAULT 0 AFTER status,
+    ADD COLUMN coupon_id INT NULL AFTER shipping_fee,
+    ADD COLUMN coupon_code VARCHAR(50) NULL AFTER coupon_id,
+    ADD COLUMN coupon_discount_amount DECIMAL(15,2) DEFAULT 0 AFTER coupon_code;
+
+ALTER TABLE orders
+    ADD CONSTRAINT fk_orders_coupon
+        FOREIGN KEY (coupon_id) REFERENCES coupons(id)
+            ON DELETE SET NULL;
 

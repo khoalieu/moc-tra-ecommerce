@@ -129,6 +129,10 @@
                                     0 ₫
                                 </span>
                                 </div>
+                                <div style="margin-top: 12px; padding: 12px; background: #f8f9fa; border-radius: 8px; font-size: 0.92rem; color: #555;">
+                                    <i class="fa-solid fa-ticket"></i>
+                                    Mã giảm giá sẽ được chọn hoặc nhập ở bước thanh toán.
+                                </div>
                             </div>
                             <div class="checkout-submit">
                                 <button type="submit" id="btn-checkout" class="btn btn-primary checkout-submit__btn" style="width:100%; border:none; padding:10px; cursor:pointer;" disabled>
