@@ -40,6 +40,18 @@ public class OrderDAO {
                 o.setOrderNumber(rs.getString("order_number"));
                 o.setTotalAmount(rs.getDouble("total_amount"));
                 o.setShippingFee(rs.getDouble("shipping_fee"));
+
+                o.setSubtotalAmount(rs.getDouble("subtotal_amount"));
+
+                int couponId = rs.getInt("coupon_id");
+                if (!rs.wasNull()) {
+                    o.setCouponId(couponId);
+                }
+
+                o.setCouponCode(rs.getString("coupon_code"));
+                o.setCouponDiscountAmount(rs.getDouble("coupon_discount_amount"));
+                o.setVipDiscountAmount(rs.getDouble("vip_discount_amount"));
+
                 o.setPaymentMethod(rs.getString("payment_method"));
 
                 Timestamp ts = rs.getTimestamp("created_at");
@@ -96,7 +108,11 @@ public class OrderDAO {
     }
 
     public int createOrder(Order order) {
-        String sql = "INSERT INTO orders (user_id, shipping_address_id, order_number, status, total_amount, shipping_fee, payment_method, payment_status, notes, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())";
+        String sql = "INSERT INTO orders " +
+                "(user_id, shipping_address_id, order_number, status, subtotal_amount, total_amount, shipping_fee, " +
+                "coupon_id, coupon_code, coupon_discount_amount, vip_discount_amount, " +
+                "payment_method, payment_status, notes, created_at) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())";
 
         try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
@@ -110,16 +126,24 @@ public class OrderDAO {
             }
 
             ps.setString(3, order.getOrderNumber());
-
             ps.setString(4, OrderStatus.PENDING.name().toLowerCase());
+            ps.setDouble(5, order.getSubtotalAmount());
+            ps.setDouble(6, order.getTotalAmount());
+            ps.setDouble(7, order.getShippingFee());
 
-            ps.setDouble(5, order.getTotalAmount());
-            ps.setDouble(6, order.getShippingFee());
-            ps.setString(7, order.getPaymentMethod());
+            if (order.getCouponId() != null) {
+                ps.setInt(8, order.getCouponId());
+            } else {
+                ps.setNull(8, Types.INTEGER);
+            }
 
-            ps.setString(8, PaymentStatus.PENDING.name().toLowerCase());
+            ps.setString(9, order.getCouponCode());
+            ps.setDouble(10, order.getCouponDiscountAmount());
+            ps.setDouble(11, order.getVipDiscountAmount());
 
-            ps.setString(9, order.getNotes());
+            ps.setString(12, order.getPaymentMethod());
+            ps.setString(13, PaymentStatus.PENDING.name().toLowerCase());
+            ps.setString(14, order.getNotes());
 
             int affectedRows = ps.executeUpdate();
             if (affectedRows > 0) {
@@ -134,7 +158,6 @@ public class OrderDAO {
         }
         return 0;
     }
-
     public void addOrderItems(int orderId, List<CartItem> items) {
         String sql = "INSERT INTO order_items " +
                 "(order_id, product_id, variant_id, quantity, price, original_price, discount_amount) " +
@@ -244,6 +267,18 @@ public class OrderDAO {
                 o.setOrderNumber(rs.getString("order_number"));
                 o.setTotalAmount(rs.getDouble("total_amount"));
                 o.setShippingFee(rs.getDouble("shipping_fee"));
+
+                o.setSubtotalAmount(rs.getDouble("subtotal_amount"));
+
+                int couponId = rs.getInt("coupon_id");
+                if (!rs.wasNull()) {
+                    o.setCouponId(couponId);
+                }
+
+                o.setCouponCode(rs.getString("coupon_code"));
+                o.setCouponDiscountAmount(rs.getDouble("coupon_discount_amount"));
+                o.setVipDiscountAmount(rs.getDouble("vip_discount_amount"));
+
                 o.setPaymentMethod(rs.getString("payment_method"));
                 o.setCreatedAt(rs.getTimestamp("created_at"));
                 try {
