@@ -110,6 +110,9 @@ public class DAOFactory {
     }
 
     public VipVoucherDAO getVipVoucherDAO() {return new VipVoucherDAO(dataSource);}
+    public CouponDAO getCouponDAO() {
+        return new CouponDAO(dataSource);
+    }
 
     public ReviewDAO getReviewDAO() {
         return new ReviewDAO(dataSource);
