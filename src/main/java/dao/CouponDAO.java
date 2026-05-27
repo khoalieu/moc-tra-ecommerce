@@ -423,4 +423,34 @@ public class CouponDAO {
 
         return Math.min(discount, subtotal);
     }
+    public List<Coupon> getAvailableCouponsForUser(int userId) {
+        List<Coupon> list = new ArrayList<>();
+
+        String sql = "SELECT c.* FROM coupons c " +
+                "JOIN user_coupons uc ON c.id = uc.coupon_id " +
+                "WHERE uc.user_id = ? " +
+                "AND uc.used_at IS NULL " +
+                "AND c.is_active = 1 " +
+                "AND c.start_date <= NOW() " +
+                "AND c.end_date >= NOW() " +
+                "AND (c.max_uses IS NULL OR c.current_uses < c.max_uses) " +
+                "ORDER BY c.end_date ASC";
+
+        try (Connection conn = ds.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, userId);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    list.add(mapCoupon(rs));
+                }
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return list;
+    }
 }

@@ -76,6 +76,11 @@
                     <i class="fa-solid fa-heart"></i> Sản phẩm yêu thích
                 </a>
             </li>
+            <li class="${param.activePage == 'voucher' ? 'active' : ''}">
+                <a href="${pageContext.request.contextPath}/ma-uu-dai-cua-toi">
+                    <i class="fa-solid fa-ticket"></i> Mã ưu đãi của tôi
+                </a>
+            </li>
 
             <%-- Mục 5: Đăng xuất --%>
             <li>
