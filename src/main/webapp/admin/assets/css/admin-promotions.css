@@ -569,3 +569,46 @@ textarea.form-control {
         height: 50px;
     }
 }
+.stat-icon-coupon {
+    background: #e3f2fd;
+    color: #0d47a1;
+}
+
+.btn-create-coupon,
+.btn-save-coupon {
+    background: #107e84;
+    color: #fff;
+    padding: 10px 16px;
+    border-radius: 10px;
+}
+
+.btn-create-coupon:hover,
+.btn-save-coupon:hover {
+    background: #0d6a6f;
+}
+.coupon-modal-content {
+    max-width: 920px;
+    max-height: calc(100vh - 70px);
+    display: flex;
+    flex-direction: column;
+}
+
+.coupon-modal-body {
+    overflow-y: auto;
+    max-height: calc(100vh - 160px);
+    padding-bottom: 24px;
+}
+
+#couponModal .modal-header {
+    flex-shrink: 0;
+}
+
+#couponModal .form-actions {
+    position: sticky;
+    bottom: 0;
+    background: #fff;
+    padding-top: 14px;
+    padding-bottom: 4px;
+    border-top: 1px solid #eee;
+    z-index: 3;
+}
