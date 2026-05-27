@@ -453,4 +453,154 @@ public class CouponDAO {
 
         return list;
     }
+    public List<Coupon> getAllCoupons() {
+        List<Coupon> list = new ArrayList<>();
+
+        String sql = "SELECT * FROM coupons ORDER BY created_at DESC";
+
+        try (Connection conn = ds.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+
+            while (rs.next()) {
+                list.add(mapCoupon(rs));
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return list;
+    }
+
+    public boolean insertCoupon(Coupon coupon) {
+        String sql = "INSERT INTO coupons " +
+                "(code, title, description, discount_type, discount_value, max_discount_amount, min_order_amount, " +
+                "claim_limit, current_claims, max_uses, current_uses, start_date, end_date, is_active, created_at) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, ?, 0, ?, ?, 1, NOW())";
+
+        try (Connection conn = ds.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, coupon.getCode());
+            ps.setString(2, coupon.getTitle());
+            ps.setString(3, coupon.getDescription());
+            ps.setString(4, coupon.getDiscountType());
+            ps.setDouble(5, coupon.getDiscountValue());
+
+            if (coupon.getMaxDiscountAmount() == null) {
+                ps.setNull(6, Types.DECIMAL);
+            } else {
+                ps.setDouble(6, coupon.getMaxDiscountAmount());
+            }
+
+            ps.setDouble(7, coupon.getMinOrderAmount());
+
+            if (coupon.getClaimLimit() == null) {
+                ps.setNull(8, Types.INTEGER);
+            } else {
+                ps.setInt(8, coupon.getClaimLimit());
+            }
+
+            if (coupon.getMaxUses() == null) {
+                ps.setNull(9, Types.INTEGER);
+            } else {
+                ps.setInt(9, coupon.getMaxUses());
+            }
+
+            ps.setTimestamp(10, Timestamp.valueOf(coupon.getStartDate()));
+            ps.setTimestamp(11, Timestamp.valueOf(coupon.getEndDate()));
+
+            return ps.executeUpdate() > 0;
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return false;
+    }
+
+    public boolean updateCoupon(Coupon coupon) {
+        String sql = "UPDATE coupons SET " +
+                "code = ?, title = ?, description = ?, discount_type = ?, discount_value = ?, " +
+                "max_discount_amount = ?, min_order_amount = ?, claim_limit = ?, max_uses = ?, " +
+                "start_date = ?, end_date = ?, is_active = ? " +
+                "WHERE id = ?";
+
+        try (Connection conn = ds.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, coupon.getCode());
+            ps.setString(2, coupon.getTitle());
+            ps.setString(3, coupon.getDescription());
+            ps.setString(4, coupon.getDiscountType());
+            ps.setDouble(5, coupon.getDiscountValue());
+
+            if (coupon.getMaxDiscountAmount() == null) {
+                ps.setNull(6, Types.DECIMAL);
+            } else {
+                ps.setDouble(6, coupon.getMaxDiscountAmount());
+            }
+
+            ps.setDouble(7, coupon.getMinOrderAmount());
+
+            if (coupon.getClaimLimit() == null) {
+                ps.setNull(8, Types.INTEGER);
+            } else {
+                ps.setInt(8, coupon.getClaimLimit());
+            }
+
+            if (coupon.getMaxUses() == null) {
+                ps.setNull(9, Types.INTEGER);
+            } else {
+                ps.setInt(9, coupon.getMaxUses());
+            }
+
+            ps.setTimestamp(10, Timestamp.valueOf(coupon.getStartDate()));
+            ps.setTimestamp(11, Timestamp.valueOf(coupon.getEndDate()));
+            ps.setBoolean(12, coupon.isActive());
+            ps.setInt(13, coupon.getId());
+
+            return ps.executeUpdate() > 0;
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return false;
+    }
+
+    public boolean toggleCouponStatus(int couponId, boolean active) {
+        String sql = "UPDATE coupons SET is_active = ? WHERE id = ?";
+
+        try (Connection conn = ds.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setBoolean(1, active);
+            ps.setInt(2, couponId);
+
+            return ps.executeUpdate() > 0;
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return false;
+    }
+
+    public boolean deleteCoupon(int couponId) {
+        String sql = "DELETE FROM coupons WHERE id = ?";
+
+        try (Connection conn = ds.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, couponId);
+            return ps.executeUpdate() > 0;
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return false;
+    }
 }

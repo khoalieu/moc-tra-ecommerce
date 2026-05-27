@@ -46,8 +46,8 @@
 
             <div class="page-header">
                 <div class="page-title">
-                    <h2>Chương trình khuyến mãi & Voucher VIP</h2>
-                    <p>Quản lý khuyến mãi sản phẩm và voucher dành cho khách hàng VIP</p>
+                    <h2>Chương trình khuyến mãi, Voucher VIP & Mã giảm giá</h2>
+                    <p>Quản lý khuyến mãi sản phẩm, voucher VIP và mã giảm giá chung cho khách hàng</p>
                 </div>
             </div>
 
@@ -71,6 +71,15 @@
                         <p>Voucher VIP</p>
                     </div>
                 </div>
+                <div class="stat-card">
+                    <div class="stat-icon stat-icon-coupon">
+                        <i class="fas fa-ticket"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3>${couponList.size()}</h3>
+                        <p>Mã giảm giá chung</p>
+                    </div>
+                </div>
             </div>
 
             <div class="tabs-container">
@@ -80,6 +89,9 @@
                     </button>
                     <button class="tab-btn" data-tab="voucherTab">
                         <i class="fas fa-ticket-alt"></i> Voucher VIP
+                    </button>
+                    <button class="tab-btn" data-tab="couponTab">
+                        <i class="fas fa-ticket"></i> Mã giảm giá chung
                     </button>
                 </div>
 
@@ -306,6 +318,172 @@
                         </table>
                     </div>
                 </div>
+                <div id="couponTab" class="tab-content tab-hidden">
+                    <div class="table-header">
+                        <div class="table-header__info">
+                            <strong>Tổng cộng: ${couponList.size()} mã giảm giá</strong>
+                        </div>
+                        <button type="button" class="btn btn-create-coupon" onclick="openCreateCouponModal()">
+                            <i class="fas fa-plus"></i> Thêm mã giảm giá
+                        </button>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="orders-table promotions-table">
+                            <thead>
+                            <tr>
+                                <th>Mã</th>
+                                <th>Tên mã</th>
+                                <th>Loại</th>
+                                <th>Giá trị</th>
+                                <th>Điều kiện</th>
+                                <th>Lượt nhận</th>
+                                <th>Lượt dùng</th>
+                                <th>Thời gian</th>
+                                <th>Trạng thái</th>
+                                <th class="actions-col">Hành động</th>
+                            </tr>
+                            </thead>
+
+                            <tbody>
+                            <c:forEach var="coupon" items="${couponList}">
+                                <tr>
+                                    <td><strong>${coupon.code}</strong></td>
+
+                                    <td>
+                                        <div class="cell-title">${coupon.title}</div>
+                                        <div class="cell-subtitle">${coupon.description}</div>
+                                    </td>
+
+                                    <td>
+                                        <c:choose>
+                                            <c:when test="${coupon.discountType == 'PERCENT'}">
+                                                <span class="badge badge-blue">Phần trăm</span>
+                                            </c:when>
+                                            <c:otherwise>
+                                                <span class="badge badge-orange">Tiền mặt</span>
+                                            </c:otherwise>
+                                        </c:choose>
+                                    </td>
+
+                                    <td>
+                                        <c:choose>
+                                            <c:when test="${coupon.discountType == 'PERCENT'}">
+                                                <strong>${coupon.discountValue}%</strong>
+                                                <c:if test="${coupon.maxDiscountAmount != null}">
+                                                    <div class="cell-subtitle">
+                                                        Tối đa:
+                                                        <fmt:formatNumber value="${coupon.maxDiscountAmount}" pattern="#,###"/>₫
+                                                    </div>
+                                                </c:if>
+                                            </c:when>
+                                            <c:otherwise>
+                                                <strong><fmt:formatNumber value="${coupon.discountValue}" pattern="#,###"/>₫</strong>
+                                            </c:otherwise>
+                                        </c:choose>
+                                    </td>
+
+                                    <td>
+                                        <c:choose>
+                                            <c:when test="${coupon.minOrderAmount > 0}">
+                                                Đơn từ
+                                                <strong><fmt:formatNumber value="${coupon.minOrderAmount}" pattern="#,###"/>₫</strong>
+                                            </c:when>
+                                            <c:otherwise>
+                                                Không yêu cầu
+                                            </c:otherwise>
+                                        </c:choose>
+                                    </td>
+
+                                    <td>
+                                            ${coupon.currentClaims}
+                                        /
+                                        <c:choose>
+                                            <c:when test="${coupon.claimLimit != null}">
+                                                ${coupon.claimLimit}
+                                            </c:when>
+                                            <c:otherwise>
+                                                Không giới hạn
+                                            </c:otherwise>
+                                        </c:choose>
+                                    </td>
+
+                                    <td>
+                                            ${coupon.currentUses}
+                                        /
+                                        <c:choose>
+                                            <c:when test="${coupon.maxUses != null}">
+                                                ${coupon.maxUses}
+                                            </c:when>
+                                            <c:otherwise>
+                                                Không giới hạn
+                                            </c:otherwise>
+                                        </c:choose>
+                                    </td>
+
+                                    <td class="time-cell">
+                                        <div>Bắt đầu: <span class="time-start">${fn:replace(coupon.startDate, 'T', ' ')}</span></div>
+                                        <div>Kết thúc: <span class="time-end">${fn:replace(coupon.endDate, 'T', ' ')}</span></div>
+                                    </td>
+
+                                    <td>
+                        <span class="status-badge ${coupon.active ? 'status-active' : 'status-inactive'}">
+                                ${coupon.active ? 'Hoạt động' : 'Tắt'}
+                        </span>
+                                    </td>
+
+                                    <td class="actions-col">
+                                        <button type="button" class="btn-action" title="Chỉnh sửa"
+                                                onclick="openEditCouponModal(this)"
+                                                data-id="${coupon.id}"
+                                                data-code="${coupon.code}"
+                                                data-title="${coupon.title}"
+                                                data-description="${coupon.description}"
+                                                data-type="${coupon.discountType}"
+                                                data-value="${coupon.discountValue}"
+                                                data-maxdiscount="${coupon.maxDiscountAmount}"
+                                                data-minorder="${coupon.minOrderAmount}"
+                                                data-claimlimit="${coupon.claimLimit}"
+                                                data-maxuses="${coupon.maxUses}"
+                                                data-start="${coupon.startDate}"
+                                                data-end="${coupon.endDate}"
+                                                data-active="${coupon.active}">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+
+                                        <form action="${pageContext.request.contextPath}/admin/promotions" method="post" class="inline-form">
+                                            <input type="hidden" name="action" value="toggleCoupon">
+                                            <input type="hidden" name="id" value="${coupon.id}">
+                                            <input type="hidden" name="active" value="${!coupon.active}">
+                                            <button type="submit" class="btn-action" title="${coupon.active ? 'Tắt mã' : 'Bật mã'}">
+                                                <i class="fas ${coupon.active ? 'fa-toggle-on' : 'fa-toggle-off'}"></i>
+                                            </button>
+                                        </form>
+
+                                        <form action="${pageContext.request.contextPath}/admin/promotions" method="post"
+                                              class="inline-form"
+                                              onsubmit="return confirm('Bạn có chắc muốn xóa mã giảm giá này?');">
+                                            <input type="hidden" name="action" value="deleteCoupon">
+                                            <input type="hidden" name="id" value="${coupon.id}">
+                                            <button type="submit" class="btn-action btn-action-danger" title="Xóa">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            </c:forEach>
+
+                            <c:if test="${empty couponList}">
+                                <tr>
+                                    <td colspan="10" class="empty-cell">
+                                        Chưa có mã giảm giá chung nào.
+                                    </td>
+                                </tr>
+                            </c:if>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
 
             <!-- tạo sửa khuyến mã -->
@@ -447,6 +625,99 @@
                     </div>
                 </div>
             </div>
+            <div id="couponModal" class="modal modal-hidden">
+                <div class="modal-overlay" onclick="closeCouponModal()"></div>
+
+                <div class="modal-content coupon-modal-content">
+                    <div class="modal-header">
+                        <h3 id="couponModalTitle">Thêm mã giảm giá</h3>
+                        <button type="button" class="modal-close" onclick="closeCouponModal()">&times;</button>
+                    </div>
+
+                    <div class="modal-body coupon-modal-body">
+                        <form id="couponForm" action="${pageContext.request.contextPath}/admin/promotions" method="post">
+                            <input type="hidden" name="action" id="couponAction" value="createCoupon">
+                            <input type="hidden" name="id" id="couponId">
+
+                            <div class="form-grid-layout">
+                                <div class="form-group">
+                                    <label>Mã giảm giá</label>
+                                    <input type="text" class="form-control" name="code" id="couponCode" required>
+                                </div>
+
+                                <div class="form-group">
+                                    <label>Tên mã</label>
+                                    <input type="text" class="form-control" name="title" id="couponTitle" required>
+                                </div>
+
+                                <div class="form-group">
+                                    <label>Loại giảm giá</label>
+                                    <select class="form-control" name="discountType" id="couponDiscountType" required>
+                                        <option value="PERCENT">Phần trăm (%)</option>
+                                        <option value="FIXED_AMOUNT">Tiền mặt (₫)</option>
+                                    </select>
+                                </div>
+
+                                <div class="form-group">
+                                    <label>Giá trị giảm</label>
+                                    <input type="number" step="0.01" class="form-control" name="discountValue" id="couponDiscountValue" required>
+                                </div>
+
+                                <div class="form-group">
+                                    <label>Giảm tối đa</label>
+                                    <input type="number" step="0.01" class="form-control" name="maxDiscountAmount" id="couponMaxDiscountAmount"
+                                           placeholder="Chỉ cần cho mã %">
+                                </div>
+
+                                <div class="form-group">
+                                    <label>Đơn tối thiểu</label>
+                                    <input type="number" step="0.01" class="form-control" name="minOrderAmount" id="couponMinOrderAmount"
+                                           placeholder="Để trống nếu không yêu cầu">
+                                </div>
+
+                                <div class="form-group">
+                                    <label>Số lượt nhận tối đa</label>
+                                    <input type="number" class="form-control" name="claimLimit" id="couponClaimLimit"
+                                           placeholder="Ví dụ: 10">
+                                </div>
+
+                                <div class="form-group">
+                                    <label>Số lượt dùng tối đa</label>
+                                    <input type="number" class="form-control" name="maxUses" id="couponMaxUses"
+                                           placeholder="Để trống nếu không giới hạn">
+                                </div>
+
+                                <div class="form-group">
+                                    <label>Ngày bắt đầu</label>
+                                    <input type="datetime-local" class="form-control" name="startDate" id="couponStartDate" required>
+                                </div>
+
+                                <div class="form-group">
+                                    <label>Ngày kết thúc</label>
+                                    <input type="datetime-local" class="form-control" name="endDate" id="couponEndDate" required>
+                                </div>
+
+                                <div class="form-group full-width">
+                                    <label>Mô tả</label>
+                                    <textarea class="form-control" name="description" id="couponDescription" rows="4"></textarea>
+                                </div>
+
+                                <div class="form-group full-width active-checkbox-wrap hidden" id="couponActiveWrap">
+                                    <label class="checkbox-inline">
+                                        <input type="checkbox" name="active" id="couponActive">
+                                        <span>Mã giảm giá đang hoạt động</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div class="form-actions">
+                                <button type="button" class="btn btn-cancel" onclick="closeCouponModal()">Hủy</button>
+                                <button type="submit" class="btn btn-save-coupon">Lưu mã giảm giá</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
 
         </div>
     </main>
@@ -484,12 +755,15 @@
         if (tabFromUrl === 'voucher') {
             activateTab('voucherTab');
             localStorage.setItem('adminPromotionActiveTab', 'voucherTab');
+        } else if (tabFromUrl === 'coupon') {
+            activateTab('couponTab');
+            localStorage.setItem('adminPromotionActiveTab', 'couponTab');
         } else if (tabFromUrl === 'promotion') {
             activateTab('promotionTab');
             localStorage.setItem('adminPromotionActiveTab', 'promotionTab');
         } else {
             const savedTab = localStorage.getItem('adminPromotionActiveTab');
-            if (savedTab === 'voucherTab' || savedTab === 'promotionTab') {
+            if (savedTab === 'voucherTab' || savedTab === 'promotionTab' || savedTab === 'couponTab') {
                 activateTab(savedTab);
             }
         }
@@ -556,6 +830,50 @@
 
     function closeVoucherModal() {
         document.getElementById('voucherModal').classList.add('modal-hidden');
+    }
+    function openCreateCouponModal() {
+        document.getElementById('couponModalTitle').innerText = 'Thêm mã giảm giá';
+        document.getElementById('couponAction').value = 'createCoupon';
+        document.getElementById('couponForm').reset();
+        document.getElementById('couponId').value = '';
+        document.getElementById('couponActiveWrap').classList.add('hidden');
+        document.getElementById('couponModal').classList.remove('modal-hidden');
+    }
+
+    function openEditCouponModal(btn) {
+        document.getElementById('couponModalTitle').innerText = 'Cập nhật mã giảm giá';
+        document.getElementById('couponAction').value = 'updateCoupon';
+
+        document.getElementById('couponId').value = btn.dataset.id || '';
+        document.getElementById('couponCode').value = btn.dataset.code || '';
+        document.getElementById('couponTitle').value = btn.dataset.title || '';
+        document.getElementById('couponDescription').value = btn.dataset.description || '';
+        document.getElementById('couponDiscountType').value = btn.dataset.type || 'PERCENT';
+        document.getElementById('couponDiscountValue').value = btn.dataset.value || '';
+
+        document.getElementById('couponMaxDiscountAmount').value =
+            (btn.dataset.maxdiscount === 'null' || btn.dataset.maxdiscount === 'undefined') ? '' : (btn.dataset.maxdiscount || '');
+
+        document.getElementById('couponMinOrderAmount').value =
+            (btn.dataset.minorder === 'null' || btn.dataset.minorder === 'undefined') ? '' : (btn.dataset.minorder || '');
+
+        document.getElementById('couponClaimLimit').value =
+            (btn.dataset.claimlimit === 'null' || btn.dataset.claimlimit === 'undefined') ? '' : (btn.dataset.claimlimit || '');
+
+        document.getElementById('couponMaxUses').value =
+            (btn.dataset.maxuses === 'null' || btn.dataset.maxuses === 'undefined') ? '' : (btn.dataset.maxuses || '');
+
+        document.getElementById('couponStartDate').value = convertToDateTimeLocal(btn.dataset.start);
+        document.getElementById('couponEndDate').value = convertToDateTimeLocal(btn.dataset.end);
+
+        document.getElementById('couponActiveWrap').classList.remove('hidden');
+        document.getElementById('couponActive').checked = (btn.dataset.active === 'true');
+
+        document.getElementById('couponModal').classList.remove('modal-hidden');
+    }
+
+    function closeCouponModal() {
+        document.getElementById('couponModal').classList.add('modal-hidden');
     }
 
     function convertToDateTimeLocal(value) {
