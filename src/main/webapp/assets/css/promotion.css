@@ -273,3 +273,235 @@ transform: translateX(5px);
     margin-bottom: 0;
     color: white;
 }
+.coupon-section {
+    padding: 45px 0;
+    background: #fff;
+}
+
+.coupon-header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    margin-bottom: 24px;
+}
+
+.coupon-header h2 {
+    margin: 0 0 6px;
+    color: #107e84;
+    font-size: 28px;
+}
+
+.coupon-header p {
+    margin: 0;
+    color: #666;
+}
+
+.coupon-alert {
+    padding: 12px 15px;
+    border-radius: 8px;
+    margin-bottom: 18px;
+    font-weight: 500;
+}
+
+.coupon-alert-success {
+    background: #d4edda;
+    color: #155724;
+}
+
+.coupon-alert-error {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.coupon-alert-warning {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.coupon-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+    gap: 18px;
+}
+
+.coupon-card {
+    display: grid;
+    grid-template-columns: 110px 1fr auto;
+    gap: 14px;
+    align-items: stretch;
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 16px;
+    box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
+    overflow: hidden;
+    transition: all 0.25s ease;
+}
+
+.coupon-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 26px rgba(15, 23, 42, 0.1);
+    border-color: #107e84;
+}
+
+.coupon-card-claimed {
+    border-color: #4caf50;
+    background: #fbfffb;
+}
+
+.coupon-card-left {
+    background: linear-gradient(135deg, #107e84, #4caf50);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 14px;
+}
+
+.coupon-discount {
+    text-align: center;
+}
+
+.coupon-discount span {
+    display: block;
+    font-size: 24px;
+    font-weight: 800;
+    line-height: 1.1;
+}
+
+.coupon-discount small {
+    display: block;
+    margin-top: 5px;
+    font-size: 12px;
+    letter-spacing: 1px;
+    font-weight: 700;
+}
+
+.coupon-card-body {
+    padding: 16px 0;
+}
+
+.coupon-title {
+    font-weight: 700;
+    font-size: 16px;
+    color: #222;
+    margin-bottom: 6px;
+}
+
+.coupon-code {
+    display: inline-block;
+    background: #f1f5f9;
+    border: 1px dashed #107e84;
+    color: #107e84;
+    padding: 5px 10px;
+    border-radius: 8px;
+    margin-bottom: 8px;
+    font-size: 14px;
+}
+
+.coupon-desc {
+    color: #555;
+    font-size: 14px;
+    line-height: 1.5;
+    margin-bottom: 8px;
+}
+
+.coupon-condition {
+    color: #374151;
+    font-size: 13px;
+    margin-bottom: 8px;
+}
+
+.coupon-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    color: #777;
+    font-size: 12.5px;
+}
+
+.coupon-card-action {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px 16px 16px 0;
+}
+
+.coupon-card-action form {
+    margin: 0;
+}
+
+.btn-claim-coupon {
+    min-width: 110px;
+    border: none;
+    border-radius: 10px;
+    padding: 10px 14px;
+    background: #107e84;
+    color: #fff;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    text-align: center;
+    display: inline-block;
+}
+
+.btn-claim-coupon:hover {
+    background: #0d6a6f;
+    transform: translateY(-1px);
+}
+
+.btn-login-coupon {
+    background: #ff9800;
+}
+
+.btn-login-coupon:hover {
+    background: #fb8c00;
+}
+
+.btn-claimed {
+    background: #4caf50;
+    cursor: default;
+}
+
+.btn-out-stock {
+    background: #9ca3af;
+    cursor: not-allowed;
+}
+
+.btn-claimed:hover,
+.btn-out-stock:hover {
+    transform: none;
+}
+
+.coupon-empty {
+    padding: 30px;
+    text-align: center;
+    background: #f8f9fa;
+    border-radius: 12px;
+    color: #666;
+}
+
+@media (max-width: 768px) {
+    .coupon-card {
+        grid-template-columns: 1fr;
+    }
+
+    .coupon-card-left {
+        min-height: 90px;
+    }
+
+    .coupon-card-body {
+        padding: 16px;
+    }
+
+    .coupon-card-action {
+        padding: 0 16px 16px;
+        justify-content: stretch;
+    }
+
+    .btn-claim-coupon {
+        width: 100%;
+    }
+}
+.coupon-alert-hidden {
+    display: none;
+}
