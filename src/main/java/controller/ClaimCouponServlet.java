@@ -32,7 +32,7 @@ public class ClaimCouponServlet extends HttpServlet {
         if (user == null) {
             data.put("success", false);
             data.put("status", "LOGIN_REQUIRED");
-            data.put("message", "Vui lòng đăng nhập để lấy mã giảm giá.");
+            data.put("message", "Vui lòng đăng nhập để nhận mã giảm giá.");
             response.getWriter().write(gson.toJson(data));
             return;
         }
@@ -49,6 +49,7 @@ public class ClaimCouponServlet extends HttpServlet {
 
         try {
             int couponId = Integer.parseInt(couponIdStr);
+            data.put("couponId", couponId);
 
             CouponDAO couponDAO = DAOFactory.getInstance().getCouponDAO();
             String result = couponDAO.claimCoupon(user.getId(), couponId);
@@ -56,7 +57,7 @@ public class ClaimCouponServlet extends HttpServlet {
             if ("SUCCESS".equals(result)) {
                 data.put("success", true);
                 data.put("status", "SUCCESS");
-                data.put("message", "Lấy mã giảm giá thành công.");
+                data.put("message", "Nhận mã giảm giá thành công.");
             } else if ("ALREADY_CLAIMED".equals(result)) {
                 data.put("success", false);
                 data.put("status", "ALREADY_CLAIMED");
@@ -72,14 +73,18 @@ public class ClaimCouponServlet extends HttpServlet {
             } else {
                 data.put("success", false);
                 data.put("status", "ERROR");
-                data.put("message", "Có lỗi xảy ra khi lấy mã. Vui lòng thử lại.");
+                data.put("message", "Có lỗi xảy ra khi nhận mã. Vui lòng thử lại.");
             }
 
+        } catch (NumberFormatException e) {
+            data.put("success", false);
+            data.put("status", "INVALID");
+            data.put("message", "Mã giảm giá không hợp lệ.");
         } catch (Exception e) {
             e.printStackTrace();
             data.put("success", false);
             data.put("status", "ERROR");
-            data.put("message", "Có lỗi xảy ra khi lấy mã. Vui lòng thử lại.");
+            data.put("message", "Có lỗi xảy ra khi nhận mã. Vui lòng thử lại.");
         }
 
         response.getWriter().write(gson.toJson(data));
