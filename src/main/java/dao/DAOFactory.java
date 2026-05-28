@@ -129,8 +129,8 @@ public class DAOFactory {
     public PaymentTransactionDAO getPaymentTransactionDAO() {
         return new PaymentTransactionDAO(dataSource);
     }
-    public ShippingDAO getShippingDAO(){
-        return new ShippingDAO(dataSource);
+    public GHNShippingDAO getGHNShippingDAO() {
+        return new GHNShippingDAO();
     }
 
     public SystemLogDAO getSystemLogDAO(){

@@ -56,7 +56,7 @@
                                                 <strong class="address-label">${addr.label}</strong>
                                                 <div class="address-detail">
                                                     <span>${addr.fullName} - ${addr.phoneNumber}</span><br>
-                                                    <span>${addr.streetAddress}, ${addr.ward}, ${addr.province}</span>
+                                                    <span>${addr.streetAddress}<c:if test="${not empty addr.ward}">, ${addr.ward}</c:if><c:if test="${not empty addr.district}">, ${addr.district}</c:if>, ${addr.province}</span>
                                                 </div>
                                                 <c:if test="${addr.isDefault}">
                                                     <span class="badge-default">Mặc định</span>
@@ -105,20 +105,32 @@
                                     </div>
                                 </div>
 
-                                <div class="form-row form-row--2">
+                                <div class="form-row">
                                     <div class="form-field">
                                         <label for="province">Tỉnh / Thành phố <span class="required">*</span></label>
                                         <select id="province" name="province" required>
-                                            <option value="">-- Chọn tỉnh / thành --</option>
+                                            <option value="">-- Chọn Tỉnh / Thành phố --</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="form-row form-row--2">
+                                    <div class="form-field">
+                                        <label for="district">Quận / Huyện <span class="required">*</span></label>
+                                        <select id="district" name="district" disabled required>
+                                            <option value="">-- Chọn Quận / Huyện --</option>
                                         </select>
                                     </div>
                                     <div class="form-field">
                                         <label for="ward">Phường / Xã <span class="required">*</span></label>
                                         <select id="ward" name="ward" disabled required>
-                                            <option value="">-- Chọn phường / xã --</option>
+                                            <option value="">-- Chọn Phường / Xã --</option>
                                         </select>
                                     </div>
                                 </div>
+
+                                <input type="hidden" id="districtId" name="districtId">
+                                <input type="hidden" id="wardCode" name="wardCode">
 
                                 <div class="form-row">
                                     <div class="form-field">
@@ -455,39 +467,33 @@
 <button id="backToTop" class="back-to-top" title="Lên đầu trang">
     <i class="fa-solid fa-chevron-up"></i>
 </button>
-
+</body>
+<script src="${pageContext.request.contextPath}/assets/js/ghn-address-selector.js"></script>
 <script>
     document.addEventListener("DOMContentLoaded", function () {
-        const addressRadios = document.querySelectorAll('input[name="selectedAddress"]');
+        const addressRadios    = document.querySelectorAll('input[name="selectedAddress"]');
         const manualAddressForm = document.querySelector(".manual-address");
-        const manualInputs = manualAddressForm.querySelectorAll("input, textarea, select");
-        const provinceSelect = document.getElementById("province");
-        const wardSelect = document.getElementById("ward");
+        const manualInputs     = manualAddressForm ? manualAddressForm.querySelectorAll("input:not([type=hidden]), textarea, select") : [];
+        const provinceSelect   = document.getElementById("province");
+        const districtSelect   = document.getElementById("district");
+        const wardSelect       = document.getElementById("ward");
+        const districtIdInput  = document.getElementById("districtId");
+        const wardCodeInput    = document.getElementById("wardCode");
 
-        const shippingRadios = document.querySelectorAll('input[name="shippingMethod"]');
-        const subtotal = parseFloat(document.getElementById('hiddenSubtotal').value) || 0;
-        const shippingFeeDisplay = document.getElementById('shippingFeeDisplay');
-        const totalAmountDisplay = document.getElementById('totalAmountDisplay');
-        const btnTotalDisplay = document.getElementById('btnTotalDisplay');
-
-        const applyVipCheckbox = document.getElementById('applyVipVoucher');
-        const vipVoucherOptions = document.getElementById('vipVoucherOptions');
+        const shippingRadios       = document.querySelectorAll('input[name="shippingMethod"]');
+        const subtotal             = parseFloat(document.getElementById('hiddenSubtotal').value) || 0;
+        const shippingFeeDisplay   = document.getElementById('shippingFeeDisplay');
+        const totalAmountDisplay   = document.getElementById('totalAmountDisplay');
+        const btnTotalDisplay      = document.getElementById('btnTotalDisplay');
+        const applyVipCheckbox     = document.getElementById('applyVipVoucher');
+        const vipVoucherOptions    = document.getElementById('vipVoucherOptions');
         const selectedVoucherSelect = document.getElementById('selectedVoucher');
+        const vipDiscountRow       = document.getElementById('vipDiscountRow');
+        const vipDiscountAmount    = document.getElementById('vipDiscountAmount');
+        const checkoutForm         = document.getElementById("checkoutForm");
+        const SHIPPING_API_URL     = "${pageContext.request.contextPath}/api/get-shipping-fee";
 
-        const vipDiscountRow = document.getElementById('vipDiscountRow');
-        const vipDiscountAmount = document.getElementById('vipDiscountAmount');
-
-        const selectedCouponSelect = document.getElementById('selectedCoupon');
-        const couponCodeInput = document.getElementById('couponCodeInput');
-        const btnApplyCoupon = document.getElementById('btnApplyCoupon');
-        const couponCheckoutMessage = document.getElementById('couponCheckoutMessage');
-
-        const selectedCouponIdInput = document.getElementById('selectedCouponId');
-        const manualCouponCodeInput = document.getElementById('manualCouponCode');
-        const hiddenCouponDiscount = document.getElementById('hiddenCouponDiscount');
-
-        const couponDiscountRow = document.getElementById('couponDiscountRow');
-        const couponDiscountAmount = document.getElementById('couponDiscountAmount');
+        let provinceFee = 0, serviceFee = 0;
 
         const checkoutForm = document.getElementById("checkoutForm");
 
@@ -499,10 +505,7 @@
         let serviceFee = 0;
 
         function formatCurrency(amount) {
-            return new Intl.NumberFormat('vi-VN', {
-                style: 'currency',
-                currency: 'VND'
-            }).format(amount);
+            return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
         }
 
         function showCouponCheckoutMessage(message, type) {
@@ -612,64 +615,35 @@
         }
 
         async function fetchProvinceFee(provinceName) {
-            if (!provinceName) {
-                provinceFee = 0;
-                updateTotal();
-                return;
-            }
+            if (!provinceName) { provinceFee = 0; updateTotal(); return; }
             try {
-                const response = await fetch(SHIPPING_API_URL + "?province=" + encodeURIComponent(provinceName));
-                const data = await response.json();
+                const res = await fetch(SHIPPING_API_URL + "?province=" + encodeURIComponent(provinceName));
+                const data = await res.json();
                 provinceFee = parseFloat(data.provinceFee) || 0;
-                updateTotal();
-            } catch (error) {
-                console.error("Lỗi khi lấy phí ship vùng:", error);
+            } catch (e) {
                 provinceFee = 30000;
-                updateTotal();
             }
+            updateTotal();
         }
 
         function updateServiceFee() {
-            const selectedShip = document.querySelector('input[name="shippingMethod"]:checked');
-
-            if (selectedShip) {
-                serviceFee = parseFloat(selectedShip.getAttribute('data-price')) || 0;
-            } else {
-                serviceFee = 0;
-            }
-
+            const s = document.querySelector('input[name="shippingMethod"]:checked');
+            serviceFee = s ? (parseFloat(s.getAttribute('data-price')) || 0) : 0;
             updateTotal();
         }
 
         function getVipDiscountAmount() {
-            if (
-                !applyVipCheckbox ||
-                !applyVipCheckbox.checked ||
-                !selectedVoucherSelect ||
-                !selectedVoucherSelect.value
-            ) {
-                return 0;
-            }
-            const option = selectedVoucherSelect.options[selectedVoucherSelect.selectedIndex];
-            const discountType = option.getAttribute('data-type');
-            const discountValue = parseFloat(option.getAttribute('data-discount')) || 0;
-
-            let discount = 0;
-
-            if (discountType === 'PERCENT') {
-                discount = subtotal * discountValue / 100;
-            } else {
-                discount = discountValue;
-            }
-
-            return Math.min(discount, subtotal);
+            if (!applyVipCheckbox || !applyVipCheckbox.checked || !selectedVoucherSelect || !selectedVoucherSelect.value) return 0;
+            const opt = selectedVoucherSelect.options[selectedVoucherSelect.selectedIndex];
+            const type = opt.getAttribute('data-type');
+            const val  = parseFloat(opt.getAttribute('data-discount')) || 0;
+            return Math.min(type === 'PERCENT' ? subtotal * val / 100 : val, subtotal);
         }
 
         function updateTotal() {
             const vipDiscount = getVipDiscountAmount();
-            const couponDiscount = getCouponDiscountAmount();
             const totalShipping = provinceFee + serviceFee;
-            const newTotal = Math.max(0, subtotal - couponDiscount - vipDiscount + totalShipping);
+            const newTotal = Math.max(0, subtotal - vipDiscount + totalShipping);
 
             shippingFeeDisplay.innerText = formatCurrency(totalShipping);
             totalAmountDisplay.innerText = formatCurrency(newTotal);
@@ -678,21 +652,17 @@
             if (vipDiscount > 0) {
                 vipDiscountRow.style.display = 'flex';
                 vipDiscountAmount.innerText = '-' + formatCurrency(vipDiscount);
-            } else if (vipDiscountRow && vipDiscountAmount) {
+            } else {
                 vipDiscountRow.style.display = 'none';
-                vipDiscountAmount.innerText = '-0đ';
             }
         }
+
         function updateFormState() {
             const selected = document.querySelector('input[name="selectedAddress"]:checked');
-
-            if (!selected) {
-                return;
-            }
+            if (!selected) return;
 
             if (selected.value === "new") {
                 manualAddressForm.classList.remove("disabled");
-
                 manualInputs.forEach(input => {
                     if (input.id !== "ward") {
                         input.disabled = false;
@@ -706,73 +676,35 @@
                 fetchProvinceFee(provinceSelect.value);
             } else {
                 manualAddressForm.classList.add("disabled");
-
-                manualInputs.forEach(input => {
-                    input.disabled = true;
-                });
-
+                manualInputs.forEach(input => { input.disabled = true; });
                 const province = selected.getAttribute('data-province');
                 fetchProvinceFee(province);
             }
         }
 
-        async function loadData() {
-            try {
-                const response = await fetch(DATA_URL);
-                provincesData = await response.json();
-                provincesData.forEach(p => {
-                    const option = document.createElement("option");
-                    option.value = p.name;
-                    option.dataset.code = p.code;
-                    option.textContent = p.name;
-                    provinceSelect.appendChild(option);
-                });
-            } catch (error) {
-                console.error("Lỗi khi tải dữ liệu địa giới:", error);
+        // Khởi tạo GHN address selector
+        GHNAddressSelector.init({
+            provinceEl:   provinceSelect,
+            districtEl:   districtSelect,
+            wardEl:       wardSelect,
+            districtIdEl: districtIdInput,
+            wardCodeEl:   wardCodeInput,
+            contextPath:  "${pageContext.request.contextPath}",
+            onProvinceChange: function(provinceName) {
+                fetchProvinceFee(provinceName);
             }
-        }
-        addressRadios.forEach(radio => {
-            radio.addEventListener("change", updateFormState);
         });
-        shippingRadios.forEach(radio => {
-            radio.addEventListener("change", updateServiceFee);
-        });
-        provinceSelect.addEventListener("change", function () {
-            wardSelect.innerHTML = '<option value="">-- Chọn phường / xã --</option>';
-            wardSelect.disabled = true;
 
-            const selectedOption = this.options[this.selectedIndex];
-            if (!selectedOption.dataset.code) {
-                fetchProvinceFee("");
-                return;
-            }
+        addressRadios.forEach(r => r.addEventListener("change", updateFormState));
+        shippingRadios.forEach(r => r.addEventListener("change", updateServiceFee));
 
-            const provinceCode = parseInt(selectedOption.dataset.code);
-            const selectedProvince = provincesData.find(p => p.code === provinceCode);
-
-            if (selectedProvince && selectedProvince.wards) {
-                selectedProvince.wards.forEach(w => {
-                    const option = document.createElement("option");
-                    option.value = w.name;
-                    option.textContent = w.name;
-                    wardSelect.appendChild(option);
-                });
-                wardSelect.disabled = false;
-            }
-            fetchProvinceFee(this.value);
-        });
         if (applyVipCheckbox) {
             applyVipCheckbox.addEventListener('change', function () {
                 vipVoucherOptions.style.display = this.checked ? 'block' : 'none';
-
-                if (!this.checked && selectedVoucherSelect) {
-                    selectedVoucherSelect.value = '';
-                }
-
+                if (!this.checked && selectedVoucherSelect) selectedVoucherSelect.value = '';
                 updateTotal();
             });
         }
-
         if (selectedVoucherSelect) {
             selectedVoucherSelect.addEventListener('change', updateTotal);
         }
@@ -817,8 +749,16 @@
 
         if (checkoutForm) {
             checkoutForm.addEventListener("submit", function (e) {
-                const selectedPayment = document.querySelector('input[name="paymentMethod"]:checked');
+                const selected = document.querySelector('input[name="selectedAddress"]:checked');
+                if (selected && selected.value === "new") {
+                    if (!districtIdInput.value || !wardCodeInput.value) {
+                        e.preventDefault();
+                        alert("Vui lòng chọn đầy đủ Quận/Huyện và Phường/Xã để hệ thống tính phí giao hàng chính xác!");
+                        return;
+                    }
+                }
 
+                const selectedPayment = document.querySelector('input[name="paymentMethod"]:checked');
                 if (!selectedPayment) {
                     e.preventDefault();
                     alert("Vui lòng chọn phương thức thanh toán!");
@@ -826,30 +766,18 @@
                 }
 
                 let paymentText = "Thanh toán khi nhận hàng (COD)";
-
-                if (selectedPayment.value === "momo") {
-                    paymentText = "Ví MoMo";
-                } else if (selectedPayment.value === "bank") {
-                    paymentText = "Chuyển khoản ngân hàng";
-                }
+                if (selectedPayment.value === "momo") paymentText = "Ví MoMo";
+                else if (selectedPayment.value === "bank") paymentText = "Chuyển khoản ngân hàng";
 
                 const totalText = btnTotalDisplay.innerText.trim();
-
-                const confirmMessage =
-                    "Xác nhận thanh toán đơn hàng?\n\n" +
-                    "Số tiền cần thanh toán: " + totalText + "\n" +
-                    "Phương thức thanh toán: " + paymentText;
-
-                if (!confirm(confirmMessage)) {
+                if (!confirm("Xác nhận thanh toán đơn hàng?\n\nSố tiền: " + totalText + "\nPhương thức: " + paymentText)) {
                     e.preventDefault();
                 }
             });
         }
 
-        loadData().then(() => {
-            updateServiceFee();
-            updateFormState();
-        });
+        updateServiceFee();
+        updateFormState();
     });
 </script>
 </body>

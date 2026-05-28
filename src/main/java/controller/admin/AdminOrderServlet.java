@@ -4,8 +4,6 @@ import dao.DAOFactory;
 import dao.OrderDAO;
 import model.order.Order;
 import model.enums.OrderStatus;
-import dao.UserDAO;
-import model.user.User;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -13,6 +11,7 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import service.SystemLogService;
+import model.user.User;
 
 import java.io.IOException;
 import java.util.List;
@@ -21,7 +20,6 @@ import java.util.List;
 public class AdminOrderServlet extends HttpServlet {
 
     private final OrderDAO orderDAO = DAOFactory.getInstance().getOrderDAO();
-    private final UserDAO userDAO = DAOFactory.getInstance().getUserDAO();
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
@@ -31,9 +29,7 @@ public class AdminOrderServlet extends HttpServlet {
             String idStr = request.getParameter("id");
             if (idStr != null) {
                 Order order = orderDAO.getOrderById(Integer.parseInt(idStr));
-                List<User> shippers = userDAO.getAllShippers();
                 request.setAttribute("order", order);
-                request.setAttribute("shippers", shippers);
                 request.getRequestDispatcher("/admin/admin-order-detail.jsp").forward(request, response);
             } else {
                 response.sendRedirect(request.getContextPath() + "/admin/orders");
@@ -78,15 +74,6 @@ public class AdminOrderServlet extends HttpServlet {
         SystemLogService log = new SystemLogService();
         User admin = (User) request.getSession().getAttribute("user");
         try {
-            if ("assign_shipper".equals(action)) {
-                int orderId = Integer.parseInt(request.getParameter("orderId"));
-                int shipperId = Integer.parseInt(request.getParameter("shipperId"));
-                boolean success = orderDAO.assignShipper(orderId, shipperId);
-                log.log(admin.getId(), "Gán shipper #" + shipperId + " cho đơn hàng", "Order", orderId);
-                response.setStatus(success ? 200 : 400);
-                return;
-            }
-
             if ("cancel_with_reason".equals(action)) {
                 int orderId = Integer.parseInt(request.getParameter("orderId"));
                 String cancelReason = request.getParameter("cancelReason");
