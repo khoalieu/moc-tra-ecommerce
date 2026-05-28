@@ -96,10 +96,9 @@ public class CheckoutServlet extends HttpServlet {
                 ? provinceFromForm
                 : (defaultAddr != null ? defaultAddr.getProvince() : "");
 
-        ShippingDAO shippingDAO = DAOFactory.getInstance().getShippingDAO();
-        double baseProvinceFee = (provinceToCalculate != null && !provinceToCalculate.isEmpty())
-                ? shippingDAO.getFeeByProvince(provinceToCalculate)
-                : 30000;
+        GHNShippingDAO ghnDAO = DAOFactory.getInstance().getGHNShippingDAO();
+        long baseProvinceFee = (provinceToCalculate != null && !provinceToCalculate.isEmpty())
+                ? ghnDAO.calculateFeeByProvinceName(provinceToCalculate) : 30000;
 
         double extraFee = 0;
 
@@ -171,10 +170,17 @@ public class CheckoutServlet extends HttpServlet {
             newAddr.setFullName(request.getParameter("fullName"));
             newAddr.setPhoneNumber(request.getParameter("phoneNumber"));
             newAddr.setProvince(request.getParameter("province"));
+            newAddr.setDistrict(request.getParameter("district"));
             newAddr.setWard(request.getParameter("ward"));
             newAddr.setStreetAddress(request.getParameter("addressLine"));
             newAddr.setLabel("Địa chỉ mới");
             newAddr.setIsDefault(false);
+            String districtIdStr = request.getParameter("districtId");
+            String wardCode = request.getParameter("wardCode");
+            if (districtIdStr != null && !districtIdStr.isEmpty()) {
+                try { newAddr.setDistrictId(Integer.parseInt(districtIdStr)); } catch (NumberFormatException ignored) {}
+            }
+            if (wardCode != null && !wardCode.isEmpty()) newAddr.setWardCode(wardCode);
             shippingAddressId = addressDAO.addAddressAndGetId(newAddr);
         } else {
             try {
@@ -204,14 +210,8 @@ public class CheckoutServlet extends HttpServlet {
             }
         }
 
-        if (selectedCartItems.isEmpty()) {
-            response.sendRedirect(request.getContextPath() + "/gio-hang");
-            return;
-        }
-
         ShippingDAO shippingDAO = DAOFactory.getInstance().getShippingDAO();
         String province = null;
-
         if ("new".equals(request.getParameter("selectedAddress"))) {
             province = request.getParameter("province");
         } else {
@@ -369,10 +369,10 @@ public class CheckoutServlet extends HttpServlet {
     }
 
     private double calculateFinalShippingFee(String province, String shippingMethod) {
-        ShippingDAO shippingDAO = DAOFactory.getInstance().getShippingDAO();
-        double provinceFee = 30000;
+        GHNShippingDAO ghnDAO = DAOFactory.getInstance().getGHNShippingDAO();
+        long provinceFee = 30000;
         if (province != null && !province.isEmpty()) {
-            provinceFee = shippingDAO.getFeeByProvince(province);
+            provinceFee = ghnDAO.calculateFeeByProvinceName(province);
         }
         double serviceFee = 0;
 
