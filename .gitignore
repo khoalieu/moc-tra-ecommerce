@@ -32,3 +32,5 @@ src/main/resources/captcha.properties
 src/main/resources/database.properties
 
 src/main/resources/payment.properties
+
+Database/migrations/

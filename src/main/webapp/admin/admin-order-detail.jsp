@@ -158,68 +158,17 @@
                     </div>
 
                     <div class="detail-card">
-                        <h3 class="card-title"><i class="fa-solid fa-truck-fast" style="margin-right: 6px;"></i>Giao hàng</h3>
-                        <c:if test="${not empty order.shipperId && order.shipperId > 0}">
-                            <div class="info-row">
-                                <span class="info-label">Shipper phụ trách</span>
-                                <div class="info-value">
-                                    <c:set var="foundShipper" value="false"/>
-                                    <c:forEach var="s" items="${shippers}">
-                                        <c:if test="${s.id == order.shipperId}">
-                                            <div style="display: flex; align-items: center; gap: 8px;">
-                                                <div style="width: 32px; height: 32px; border-radius: 50%; background: #107e84; color: white; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 600;">
-                                                    <i class="fa-solid fa-user"></i>
-                                                </div>
-                                                <div>
-                                                    <strong>${s.lastName} ${s.firstName}</strong>
-                                                    <c:if test="${not empty s.phone}">
-                                                        <br><small style="color: #666;"><i class="fa-solid fa-phone" style="font-size: 11px;"></i> ${s.phone}</small>
-                                                    </c:if>
-                                                </div>
-                                            </div>
-                                            <c:set var="foundShipper" value="true"/>
-                                        </c:if>
-                                    </c:forEach>
-                                    <c:if test="${!foundShipper}">
-                                        <span style="color: #999;">Shipper ID: ${order.shipperId}</span>
-                                    </c:if>
-                                </div>
-                            </div>
-                        </c:if>
+                        <h3 class="card-title"><i class="fa-solid fa-truck-fast" style="margin-right: 6px;"></i>Giao hàng (GHN)</h3>
 
                         <c:if test="${order.status == 'PENDING'}">
-                            <div class="info-row" style="margin-top: 12px;">
-                                <span class="info-label">
-                                    <c:choose>
-                                        <c:when test="${not empty order.shipperId && order.shipperId > 0}">Đổi shipper</c:when>
-                                        <c:otherwise>Gán shipper</c:otherwise>
-                                    </c:choose>
-                                </span>
-                                <div class="info-value" style="margin-top: 5px;">
-                                    <c:choose>
-                                        <c:when test="${not empty shippers && shippers.size() > 0}">
-                                            <select id="shipperSelect" style="width: 100%; padding: 9px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; background: #fff; cursor: pointer; transition: border-color 0.2s;" onfocus="this.style.borderColor='#107e84'" onblur="this.style.borderColor='#ddd'">
-                                                <option value="">-- Chọn shipper --</option>
-                                                <c:forEach var="s" items="${shippers}">
-                                                    <option value="${s.id}" ${s.id == order.shipperId ? 'selected' : ''}>
-                                                        ${s.lastName} ${s.firstName}<c:if test="${not empty s.phone}"> - ${s.phone}</c:if>
-                                                    </option>
-                                                </c:forEach>
-                                            </select>
-                                            <button id="btnAssignShipper" class="btn-sm btn-success" onclick="assignShipper()"
-                                                    style="cursor: pointer; padding: 9px 16px; margin-top: 10px; width: 100%; font-size: 14px; border: none; border-radius: 6px;">
-                                                <i class="fa-solid fa-user-plus"></i> Xác nhận gán
-                                            </button>
-                                        </c:when>
-                                        <c:otherwise>
-                                            <p style="color: #e74c3c; font-size: 13px; margin: 0;">
-                                                <i class="fa-solid fa-triangle-exclamation"></i>
-                                                Chưa có shipper nào trong hệ thống. Vui lòng tạo tài khoản shipper trước.
-                                            </p>
-                                        </c:otherwise>
-                                    </c:choose>
-                                </div>
+                            <div style="margin-bottom: 14px; padding: 12px 14px; background: #fff8e1; border-radius: 8px; font-size: 13px; color: #856404; border: 1px solid #ffeeba;">
+                                <i class="fa-solid fa-circle-info" style="margin-right: 4px;"></i>
+                                Đơn hàng đang chờ xử lý. Tạo vận đơn GHN để bắt đầu giao hàng.
                             </div>
+                            <button onclick="openGHNModal()"
+                                    style="width:100%; padding:11px 16px; background:#107e84; color:#fff; border:none; border-radius:8px; cursor:pointer; font-size:14px; font-weight:600; display:flex; align-items:center; justify-content:center; gap:8px;">
+                                <i class="fa-solid fa-truck-fast"></i> Tạo vận đơn GHN
+                            </button>
                         </c:if>
 
                         <c:if test="${order.status == 'SHIPPING'}">
@@ -234,14 +183,25 @@
                             <c:if test="${not empty order.shippingProvider}">
                                 <div class="info-row">
                                     <span class="info-label">Đơn vị vận chuyển</span>
-                                    <div class="info-value"><strong>${order.shippingProvider}</strong></div>
+                                    <div class="info-value">
+                                        <strong style="color:#107e84;">${order.shippingProvider}</strong>
+                                    </div>
                                 </div>
                             </c:if>
                             <c:if test="${not empty order.trackingCode}">
                                 <div class="info-row">
                                     <span class="info-label">Mã vận đơn</span>
                                     <div class="info-value">
-                                        <code style="background: #f5f5f5; padding: 4px 10px; border-radius: 4px; font-weight: 600; letter-spacing: 0.5px;">${order.trackingCode}</code>
+                                        <code style="background: #e8f5e9; padding: 5px 12px; border-radius: 6px; font-weight: 700; letter-spacing: 1px; color:#107e84; font-size:15px;">${order.trackingCode}</code>
+                                    </div>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">Theo dõi đơn</span>
+                                    <div class="info-value">
+                                        <a href="https://donhang.ghn.vn/?order_code=${order.trackingCode}" target="_blank"
+                                           style="display:inline-flex; align-items:center; gap:6px; color:#107e84; font-weight:600; font-size:13px; text-decoration:none; padding:6px 12px; background:#f0fafa; border:1px solid #b2dfdb; border-radius:6px;">
+                                            <i class="fa-solid fa-external-link-alt"></i> Tra cứu trên GHN
+                                        </a>
                                     </div>
                                 </div>
                             </c:if>
@@ -256,6 +216,14 @@
                                     </span>
                                 </div>
                             </div>
+                            <c:if test="${not empty order.trackingCode}">
+                                <div class="info-row">
+                                    <span class="info-label">Mã vận đơn GHN</span>
+                                    <div class="info-value">
+                                        <code style="background: #f5f5f5; padding: 4px 10px; border-radius: 4px; font-weight: 600;">${order.trackingCode}</code>
+                                    </div>
+                                </div>
+                            </c:if>
                             <c:if test="${not empty order.cancelReason}">
                                 <div class="info-row">
                                     <span class="info-label">Lý do</span>
@@ -265,7 +233,6 @@
                                 </div>
                             </c:if>
                         </c:if>
-
 
                         <c:if test="${order.status == 'CANCELLED'}">
                             <div class="info-row">
@@ -294,11 +261,23 @@
                             </c:if>
                         </c:if>
 
-                        <c:if test="${order.status == 'PENDING' && (empty order.shipperId || order.shipperId == 0)}">
-                            <div style="margin-top: 10px; padding: 10px 14px; background: #fff8e1; border-radius: 6px; font-size: 13px; color: #856404; border: 1px solid #ffeeba;">
-                                <i class="fa-solid fa-circle-info" style="margin-right: 4px;"></i>
-                                Đơn hàng này chưa được gán cho shipper. Vui lòng chọn shipper bên trên để bắt đầu xử lý giao hàng.
+                        <c:if test="${order.status == 'COMPLETED'}">
+                            <div class="info-row">
+                                <span class="info-label">Trạng thái giao</span>
+                                <div class="info-value">
+                                    <span class="status-badge status-active">
+                                        <i class="fa-solid fa-check-circle" style="margin-right: 4px;"></i> Giao thành công
+                                    </span>
+                                </div>
                             </div>
+                            <c:if test="${not empty order.trackingCode}">
+                                <div class="info-row">
+                                    <span class="info-label">Mã vận đơn GHN</span>
+                                    <div class="info-value">
+                                        <code style="background: #e8f5e9; padding: 5px 12px; border-radius: 6px; font-weight: 700; color:#107e84;">${order.trackingCode}</code>
+                                    </div>
+                                </div>
+                            </c:if>
                         </c:if>
                     </div>
                 </div>
@@ -338,15 +317,54 @@
     </div>
 </div>
 
+<div id="ghnModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:9999; justify-content:center; align-items:center;">
+    <div style="background:#fff; border-radius:12px; padding:28px 32px; width:520px; max-width:92%; box-shadow: 0 20px 60px rgba(0,0,0,0.3);">
+        <h3 style="margin:0 0 6px 0; font-size:18px; color:#107e84;">
+            <i class="fa-solid fa-truck-fast" style="margin-right:8px;"></i>Tạo vận đơn GHN
+        </h3>
+        <p style="margin:0 0 14px 0; color:#666; font-size:14px;">Đơn hàng <strong>#${order.orderNumber}</strong></p>
+
+        <div style="background:#e8f5e9; border:1px solid #c8e6c9; border-radius:8px; padding:12px 14px; margin-bottom:16px; font-size:13px; color:#2e7d32; line-height:1.6;">
+            <i class="fa-solid fa-circle-info"></i>
+            Nhập mã Quận/Huyện và Phường/Xã theo hệ thống GHN.
+            <a href="https://5sao.ghn.dev/" target="_blank" style="color:#107e84; font-weight:600;">Tra cứu mã GHN tại đây →</a>
+        </div>
+
+        <label style="font-weight:600; font-size:14px; color:#333; display:block; margin-bottom:4px;">
+            Mã Quận/Huyện GHN <span style="color:red;">*</span>
+        </label>
+        <input id="ghnDistrictId" type="number" placeholder="Ví dụ: 1482 (Quận 1 - HCM)"
+               style="width:100%; padding:10px 12px; border:1px solid #ddd; border-radius:6px; font-size:14px; margin-bottom:12px; box-sizing:border-box;"
+               onfocus="this.style.borderColor='#107e84'" onblur="this.style.borderColor='#ddd'">
+
+        <label style="font-weight:600; font-size:14px; color:#333; display:block; margin-bottom:4px;">
+            Mã Phường/Xã GHN <span style="color:red;">*</span>
+        </label>
+        <input id="ghnWardCode" type="text" placeholder="Ví dụ: 20308 (Phường Bến Nghé)"
+               style="width:100%; padding:10px 12px; border:1px solid #ddd; border-radius:6px; font-size:14px; margin-bottom:16px; box-sizing:border-box;"
+               onfocus="this.style.borderColor='#107e84'" onblur="this.style.borderColor='#ddd'">
+
+        <div id="ghnResultBox" style="display:none; padding:14px; border-radius:8px; margin-bottom:16px; font-size:14px; line-height:1.7;"></div>
+
+        <div style="display:flex; gap:10px; justify-content:flex-end;">
+            <button onclick="closeGHNModal()" style="padding:10px 20px; border:1px solid #ddd; background:#fff; border-radius:6px; cursor:pointer; font-size:14px; color:#666;">
+                Đóng
+            </button>
+            <button id="btnCreateGHN" onclick="createGHNOrder()"
+                    style="padding:10px 22px; border:none; background:#107e84; color:#fff; border-radius:6px; cursor:pointer; font-size:14px; font-weight:600;">
+                <i class="fa-solid fa-truck-fast"></i> Tạo vận đơn GHN
+            </button>
+        </div>
+    </div>
+</div>
+
 <script>
     function updateSingleStatus(orderId, status) {
         if (!confirm("Xác nhận thay đổi trạng thái?")) return;
-
         const params = new URLSearchParams();
         params.append('action', 'single');
         params.append('orderId', orderId);
         params.append('status', status);
-
         fetch('admin/order/update', {
             method: 'POST',
             headers: {'Content-Type': 'application/x-www-form-urlencoded'},
@@ -361,14 +379,12 @@
     function openCancelModal() {
         document.getElementById('cancelModal').style.display = 'flex';
     }
-
     function closeCancelModal() {
         document.getElementById('cancelModal').style.display = 'none';
         document.getElementById('cancelReasonSelect').value = '';
         document.getElementById('cancelReasonOther').style.display = 'none';
         document.getElementById('cancelReasonOther').value = '';
     }
-
     function toggleAdminOtherReason() {
         const select = document.getElementById('cancelReasonSelect');
         const textarea = document.getElementById('cancelReasonOther');
@@ -379,42 +395,28 @@
             textarea.value = '';
         }
     }
-
     function confirmCancelOrder() {
         const select = document.getElementById('cancelReasonSelect');
         let reason = select.value;
-
-        if (!reason) {
-            alert('Vui lòng chọn lý do hủy!');
-            return;
-        }
-
+        if (!reason) { alert('Vui lòng chọn lý do hủy!'); return; }
         if (reason === 'other') {
             reason = document.getElementById('cancelReasonOther').value.trim();
-            if (!reason) {
-                alert('Vui lòng nhập lý do hủy!');
-                return;
-            }
+            if (!reason) { alert('Vui lòng nhập lý do hủy!'); return; }
         }
-
         const btn = document.getElementById('btnConfirmCancel');
         btn.disabled = true;
         btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang xử lý...';
-
         const params = new URLSearchParams();
         params.append('action', 'cancel_with_reason');
         params.append('orderId', '${order.id}');
         params.append('cancelReason', reason);
-
         fetch('admin/order/update', {
             method: 'POST',
             headers: {'Content-Type': 'application/x-www-form-urlencoded'},
             body: params
         }).then(res => {
-            if (res.ok) {
-                alert('Đã hủy đơn hàng thành công!');
-                location.reload();
-            } else {
+            if (res.ok) { alert('Đã hủy đơn hàng thành công!'); location.reload(); }
+            else {
                 alert('Lỗi: Không thể hủy đơn hàng!');
                 btn.disabled = false;
                 btn.innerHTML = '<i class="fa-solid fa-ban"></i> Xác nhận hủy';
@@ -426,43 +428,70 @@
         });
     }
 
-    /* === Gán shipper === */
-    function assignShipper() {
-        const select = document.getElementById('shipperSelect');
-        const shipperId = select.value;
-        if (!shipperId) {
-            alert('Vui lòng chọn shipper!');
+    function openGHNModal() {
+        document.getElementById('ghnModal').style.display = 'flex';
+        document.getElementById('ghnResultBox').style.display = 'none';
+        document.getElementById('ghnDistrictId').value = '';
+        document.getElementById('ghnWardCode').value = '';
+    }
+
+    function closeGHNModal() {
+        document.getElementById('ghnModal').style.display = 'none';
+    }
+
+    function createGHNOrder() {
+        const districtId = document.getElementById('ghnDistrictId').value.trim();
+        const wardCode   = document.getElementById('ghnWardCode').value.trim();
+
+        if (!districtId || !wardCode) {
+            alert('Vui lòng nhập đầy đủ Mã Quận/Huyện và Mã Phường/Xã GHN!');
             return;
         }
 
-        if (!confirm('Xác nhận gán shipper cho đơn hàng #${order.orderNumber}?')) return;
-
-        const btn = document.getElementById('btnAssignShipper');
+        const btn = document.getElementById('btnCreateGHN');
         btn.disabled = true;
-        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang xử lý...';
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang tạo...';
 
         const params = new URLSearchParams();
-        params.append('action', 'assign_shipper');
         params.append('orderId', '${order.id}');
-        params.append('shipperId', shipperId);
+        params.append('toDistrictId', districtId);
+        params.append('toWardCode', wardCode);
 
-        fetch('admin/order/update', {
+        fetch('admin/order/ghn-create', {
             method: 'POST',
             headers: {'Content-Type': 'application/x-www-form-urlencoded'},
             body: params
-        }).then(res => {
-            if (res.ok) {
-                alert('Gán shipper thành công!');
-                location.reload();
+        })
+        .then(res => res.json())
+        .then(data => {
+            const box = document.getElementById('ghnResultBox');
+            box.style.display = 'block';
+            if (data.success) {
+                box.style.background = '#e8f5e9';
+                box.style.border = '1px solid #c8e6c9';
+                box.style.color = '#2e7d32';
+                box.innerHTML = 
+                    '<strong><i class="fa-solid fa-check-circle"></i> ' + data.message + '</strong><br>' +
+                    '🚚 Mã vận đơn GHN: <strong>' + data.orderCode + '</strong><br>' +
+                    '📅 Dự kiến giao: ' + (data.expectedDelivery || 'Đang cập nhật') + '<br>' +
+                    '💰 Phí GHN: ' + Number(data.totalFee).toLocaleString('vi-VN') + '₫<br>' +
+                    '<a href="' + data.trackingUrl + '" target="_blank" style="color:#107e84; font-weight:600; margin-top:6px; display:inline-block;">' +
+                        '<i class="fa-solid fa-external-link-alt"></i> Tra cứu trên GHN' +
+                    '</a>';
+                setTimeout(() => { closeGHNModal(); location.reload(); }, 3000);
             } else {
-                alert('Lỗi: Chỉ gán được cho đơn ở trạng thái "Chờ xử lý"!');
+                box.style.background = '#ffebee';
+                box.style.border = '1px solid #ffcdd2';
+                box.style.color = '#c62828';
+                box.innerHTML = '<i class="fa-solid fa-circle-xmark"></i> ' + data.message;
                 btn.disabled = false;
-                btn.innerHTML = '<i class="fa-solid fa-user-plus"></i> Xác nhận gán';
+                btn.innerHTML = '<i class="fa-solid fa-truck-fast"></i> Tạo vận đơn GHN';
             }
-        }).catch(() => {
+        })
+        .catch(() => {
             alert('Lỗi kết nối server!');
             btn.disabled = false;
-            btn.innerHTML = '<i class="fa-solid fa-user-plus"></i> Xác nhận gán';
+            btn.innerHTML = '<i class="fa-solid fa-truck-fast"></i> Tạo vận đơn GHN';
         });
     }
 </script>

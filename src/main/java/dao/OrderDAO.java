@@ -308,8 +308,6 @@ public class OrderDAO {
                     o.setNotes("Địa chỉ không xác định");
                 }
 
-                int sId = rs.getInt("shipper_id");
-                if (!rs.wasNull()) o.setShipperId(sId);
                 o.setShippingProvider(rs.getString("shipping_provider"));
                 o.setTrackingCode(rs.getString("tracking_code"));
                 o.setCancelReason(rs.getString("cancel_reason"));
@@ -499,8 +497,6 @@ public class OrderDAO {
         }
 
         try {
-            int sId = rs.getInt("shipper_id");
-            if (!rs.wasNull()) o.setShipperId(sId);
             o.setShippingProvider(rs.getString("shipping_provider"));
             o.setTrackingCode(rs.getString("tracking_code"));
             o.setCancelReason(rs.getString("cancel_reason"));
@@ -618,153 +614,15 @@ public class OrderDAO {
         return null;
     }
 
-    // --- Các hàm mới thêm phục vụ Shipper ---
-
-    public List<Order> getOrdersForShipper(Integer shipperId) {
-        List<Order> list = new ArrayList<>();
-        String sql = "SELECT o.*, a.full_name, a.phone_number, a.street_address, a.ward, a.province " +
-                "FROM orders o " +
-                "LEFT JOIN user_addresses a ON o.shipping_address_id = a.id " +
-                "WHERE o.shipper_id = ? " +
-                "ORDER BY o.created_at DESC";
-
+    /**
+     * Cập nhật thông tin vận đơn GHN sau khi tạo thành công trên GHN.
+     * Chuyển trạng thái đơn sang SHIPPING và lưu mã vận đơn GHN.
+     */
+    public boolean updateGHNShippingInfo(int orderId, String ghnOrderCode) {
+        String sql = "UPDATE orders SET status = 'shipping', shipping_provider = 'GHN', tracking_code = ? WHERE id = ? AND status = 'pending'";
         try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
-
-            ps.setInt(1, shipperId);
-            ResultSet rs = ps.executeQuery();
-
-            while (rs.next()) {
-                Order o = mapRowToOrder(rs);
-
-                try {
-                    o.setCustomerName(rs.getString("full_name"));
-                    o.setCustomerPhone(rs.getString("phone_number"));
-                    String address = rs.getString("street_address") + ", " +
-                            rs.getString("ward") + ", " +
-                            rs.getString("province");
-                    o.setShippingAddress(address);
-
-                    o.setNotes(rs.getString("notes"));
-                } catch (Exception ignored) {}
-
-                o.setItems(getOrderItems(o.getId()));
-                list.add(o);
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return list;
-    }
-
-    public boolean updateOrderCancelReason(int orderId, OrderStatus status, String cancelReason) {
-        String sql = "UPDATE orders SET status = ?, cancel_reason = ? WHERE id = ?";
-        try (Connection conn = ds.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-
-            ps.setString(1, status.name().toLowerCase());
-            ps.setString(2, cancelReason);
-            ps.setInt(3, orderId);
-
-            return ps.executeUpdate() > 0;
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return false;
-    }
-    public boolean shipperCompleteOrder(int orderId, int shipperId) {
-        String sql = "UPDATE orders " +
-                "SET status = 'completed', " +
-                "    payment_status = CASE WHEN payment_status = 'pending' THEN 'paid' ELSE payment_status END " +
-                "WHERE id = ? AND shipper_id = ? AND status = 'shipping'";
-
-        try (Connection conn = ds.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-
-            ps.setInt(1, orderId);
-            ps.setInt(2, shipperId);
-
-            return ps.executeUpdate() > 0;
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return false;
-    }
-
-    public boolean shipperFailOrder(int orderId, int shipperId, String reason) {
-        Connection conn = null;
-        try {
-            conn = ds.getConnection();
-            conn.setAutoCommit(false);
-            String sql = "UPDATE orders SET status = 'delivery_failed', cancel_reason = ? WHERE id = ? AND shipper_id = ? AND status = 'shipping'";
-            try (PreparedStatement ps = conn.prepareStatement(sql)) {
-                ps.setString(1, reason);
-                ps.setInt(2, orderId);
-                ps.setInt(3, shipperId);
-                if (ps.executeUpdate() == 0) {
-                    conn.rollback();
-                    return false;
-                }
-            }
-            Order order = getOrderById(orderId);
-            if (order != null && order.getItems() != null) {
-                for (OrderItem item : order.getItems()) {
-                    Integer variantId = item.getVariantId();
-                    if (variantId != null && variantId > 0) {
-                        String sqlUpdateVariant = "UPDATE product_variants SET stock_quantity = stock_quantity + ? WHERE id = ?";
-                        try (PreparedStatement psStock = conn.prepareStatement(sqlUpdateVariant)) {
-                            psStock.setInt(1, item.getQuantity());
-                            psStock.setInt(2, variantId);
-                            psStock.executeUpdate();
-                        }
-                    } else {
-                        String sqlUpdateStock = "UPDATE products SET stock_quantity = stock_quantity + ? WHERE id = ?";
-                        try (PreparedStatement psStock = conn.prepareStatement(sqlUpdateStock)) {
-                            psStock.setInt(1, item.getQuantity());
-                            psStock.setInt(2, item.getProductId());
-                            psStock.executeUpdate();
-                        }
-                    }
-                }
-            }
-            conn.commit();
-            return true;
-
-        } catch (SQLException e) {
-            if (conn != null) {
-                try { conn.rollback(); } catch (SQLException ex) { ex.printStackTrace(); }
-            }
-            e.printStackTrace();
-        } finally {
-            if (conn != null) {
-                try { conn.setAutoCommit(true); conn.close(); } catch (SQLException e) { e.printStackTrace(); }
-            }
-        }
-        return false;
-    }
-    public boolean updateShippingInfo(int orderId, int shipperId, String status, String provider, String trackingCode) {
-        String sql = "UPDATE orders SET status = ?, shipping_provider = ?, tracking_code = ? WHERE id = ? AND shipper_id = ? AND status = 'pending'";
-        try (Connection conn = ds.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-
-            ps.setString(1, status);
-            ps.setString(2, provider);
-            ps.setString(3, trackingCode);
-            ps.setInt(4, orderId);
-            ps.setInt(5, shipperId);
-
-            int rowsAffected = ps.executeUpdate();
-            return rowsAffected > 0;
-        } catch (SQLException e) {
-            e.printStackTrace();
-            return false;
-        }
-    }
-    public boolean assignShipper(int orderId, int shipperId) {
-        String sql = "UPDATE orders SET shipper_id = ? WHERE id = ? AND status = 'pending'";
-        try (Connection conn = ds.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setInt(1, shipperId);
+            ps.setString(1, ghnOrderCode);
             ps.setInt(2, orderId);
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {
