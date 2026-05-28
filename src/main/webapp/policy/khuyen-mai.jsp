@@ -12,7 +12,7 @@
 
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/base.css">
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/main.css">
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/promotion.css">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/promotion.css?v=3">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -65,7 +65,7 @@
             <div class="coupon-header">
                 <div>
                     <h2>🎟️ Mã giảm giá hôm nay</h2>
-                    <p>Lưu mã trước, dùng sau khi thanh toán. Số lượng có hạn.</p>
+                    <p>Lưu mã trước, dùng khi thanh toán.</p>
                 </div>
             </div>
 
@@ -75,105 +75,160 @@
                 <c:when test="${not empty couponList}">
                     <div class="coupon-grid">
                         <c:forEach var="coupon" items="${couponList}">
-                            <c:set var="claimed" value="${claimedCouponIds.contains(coupon.id)}"/>
+                            <c:set var="claimed" value="${sessionScope.user != null && claimedCouponIds.contains(coupon.id)}"/>
                             <c:set var="outOfStock" value="${coupon.claimLimit != null && coupon.currentClaims >= coupon.claimLimit}"/>
 
-                            <div class="coupon-card ${claimed ? 'coupon-card-claimed' : ''}" data-coupon-card="${coupon.id}">
-                                <div class="coupon-card-left">
-                                    <div class="coupon-discount">
+                            <div class="coupon-card ${claimed ? 'coupon-card-claimed' : ''}"
+                                 data-coupon-card="${coupon.id}">
+
+                                <div class="coupon-icon-box">
+                                    <i class="fa-solid fa-gift"></i>
+                                </div>
+
+                                <div class="coupon-content">
+                                    <div class="coupon-code-title">
+                                        NHẬP MÃ: <span>${coupon.code}</span>
+                                    </div>
+
+                                    <div class="coupon-short-desc">
                                         <c:choose>
                                             <c:when test="${coupon.discountType == 'PERCENT'}">
-                                                <span>
-                                                    <fmt:formatNumber value="${coupon.discountValue}" maxFractionDigits="0"/>%
-                                                </span>
-                                                <small>GIẢM</small>
+                                                Giảm <fmt:formatNumber value="${coupon.discountValue}" maxFractionDigits="0"/>%
+                                                <c:if test="${coupon.maxDiscountAmount != null}">
+                                                    tối đa <fmt:formatNumber value="${coupon.maxDiscountAmount}" pattern="#,###"/>đ
+                                                </c:if>
                                             </c:when>
                                             <c:otherwise>
-                                                <span>
-                                                    <fmt:formatNumber value="${coupon.discountValue}" pattern="#,###"/>đ
-                                                </span>
-                                                <small>GIẢM</small>
+                                                Giảm <fmt:formatNumber value="${coupon.discountValue}" pattern="#,###"/>đ giá trị đơn hàng
                                             </c:otherwise>
                                         </c:choose>
                                     </div>
-                                </div>
 
-                                <div class="coupon-card-body">
-                                    <div class="coupon-title">${coupon.title}</div>
+                                    <div class="coupon-actions">
+                                        <c:choose>
+                                            <c:when test="${sessionScope.user == null}">
+                                                <a href="${pageContext.request.contextPath}/auth/login.jsp"
+                                                   class="coupon-main-btn coupon-login-btn">
+                                                    Đăng nhập để nhận
+                                                </a>
+                                            </c:when>
 
-                                    <div class="coupon-code">
-                                        Mã: <strong>${coupon.code}</strong>
+                                            <c:when test="${claimed}">
+                                                <button type="button"
+                                                        class="coupon-main-btn coupon-claimed-btn"
+                                                        disabled>
+                                                    Đã nhận
+                                                </button>
+                                            </c:when>
+
+                                            <c:when test="${outOfStock}">
+                                                <button type="button"
+                                                        class="coupon-main-btn coupon-out-btn"
+                                                        disabled>
+                                                    Hết mã
+                                                </button>
+                                            </c:when>
+
+                                            <c:otherwise>
+                                                <button type="button"
+                                                        class="coupon-main-btn coupon-claim-btn btn-claim-ajax"
+                                                        data-coupon-id="${coupon.id}">
+                                                    Nhận mã
+                                                </button>
+                                            </c:otherwise>
+                                        </c:choose>
+
+                                        <button type="button"
+                                                class="coupon-detail-btn btn-open-coupon-detail">
+                                            Chi tiết
+                                        </button>
                                     </div>
 
-                                    <div class="coupon-desc">
-                                            ${coupon.description}
-                                    </div>
+                                    <div class="coupon-detail-template">
+                                        <h3>Chi tiết mã giảm giá</h3>
 
-                                    <div class="coupon-condition">
+                                        <div class="coupon-detail-code">
+                                            Mã: <strong>${coupon.code}</strong>
+                                        </div>
+
+                                        <div class="coupon-detail-row">
+                                            <strong>Tên mã:</strong>
+                                            <span>${coupon.title}</span>
+                                        </div>
+
+                                        <div class="coupon-detail-row">
+                                            <strong>Mô tả:</strong>
+                                            <span>${coupon.description}</span>
+                                        </div>
+
+                                        <div class="coupon-detail-row">
+                                            <strong>Mức giảm:</strong>
+                                            <span>
+                                                <c:choose>
+                                                    <c:when test="${coupon.discountType == 'PERCENT'}">
+                                                        Giảm <fmt:formatNumber value="${coupon.discountValue}" maxFractionDigits="0"/>%
+                                                    </c:when>
+                                                    <c:otherwise>
+                                                        Giảm <fmt:formatNumber value="${coupon.discountValue}" pattern="#,###"/>đ
+                                                    </c:otherwise>
+                                                </c:choose>
+                                            </span>
+                                        </div>
+
                                         <c:if test="${coupon.minOrderAmount > 0}">
-                                            Đơn tối thiểu:
-                                            <strong><fmt:formatNumber value="${coupon.minOrderAmount}" pattern="#,###"/>đ</strong>
+                                            <div class="coupon-detail-row">
+                                                <strong>Đơn tối thiểu:</strong>
+                                                <span><fmt:formatNumber value="${coupon.minOrderAmount}" pattern="#,###"/>đ</span>
+                                            </div>
                                         </c:if>
 
                                         <c:if test="${coupon.maxDiscountAmount != null}">
-                                            <span> | </span>
-                                            Giảm tối đa:
-                                            <strong><fmt:formatNumber value="${coupon.maxDiscountAmount}" pattern="#,###"/>đ</strong>
+                                            <div class="coupon-detail-row">
+                                                <strong>Giảm tối đa:</strong>
+                                                <span><fmt:formatNumber value="${coupon.maxDiscountAmount}" pattern="#,###"/>đ</span>
+                                            </div>
                                         </c:if>
-                                    </div>
 
-                                    <div class="coupon-meta">
-                                        <span>
-                                            Đã nhận:
-                                            <span class="coupon-claim-count" data-current-claims="${coupon.currentClaims}">
-                                                    ${coupon.currentClaims}
-                                            </span>
-                                            /
+                                        <div class="coupon-detail-row">
+                                            <strong>Hạn sử dụng:</strong>
+                                            <span>${fn:replace(coupon.endDate, 'T', ' ')}</span>
+                                        </div>
+
+                                        <div class="coupon-modal-actions">
                                             <c:choose>
-                                                <c:when test="${coupon.claimLimit != null}">
-                                                    ${coupon.claimLimit}
+                                                <c:when test="${sessionScope.user == null}">
+                                                    <a href="${pageContext.request.contextPath}/auth/login.jsp"
+                                                       class="coupon-main-btn coupon-login-btn">
+                                                        Đăng nhập để nhận
+                                                    </a>
                                                 </c:when>
+
+                                                <c:when test="${claimed}">
+                                                    <span class="coupon-modal-status coupon-status-claimed">
+                                                        Bạn đã nhận mã này
+                                                    </span>
+                                                </c:when>
+
+                                                <c:when test="${outOfStock}">
+                                                    <span class="coupon-modal-status coupon-status-out">
+                                                        Mã này đã hết lượt nhận
+                                                    </span>
+                                                </c:when>
+
                                                 <c:otherwise>
-                                                    Không giới hạn
+                                                    <button type="button"
+                                                            class="coupon-main-btn coupon-claim-btn btn-claim-ajax"
+                                                            data-coupon-id="${coupon.id}">
+                                                        Nhận mã
+                                                    </button>
                                                 </c:otherwise>
                                             </c:choose>
-                                        </span>
 
-                                        <span>
-                                            HSD: ${fn:replace(coupon.endDate, 'T', ' ')}
-                                        </span>
+                                            <button type="button" class="coupon-close-btn btn-close-coupon-modal">
+                                                Đóng
+                                            </button>
+                                        </div>
                                     </div>
-                                </div>
-
-                                <div class="coupon-card-action">
-                                    <c:choose>
-                                        <c:when test="${sessionScope.user == null}">
-                                            <a href="${pageContext.request.contextPath}/auth/login.jsp"
-                                               class="btn-claim-coupon btn-login-coupon">
-                                                Đăng nhập để lấy
-                                            </a>
-                                        </c:when>
-
-                                        <c:when test="${claimed}">
-                                            <button type="button" class="btn-claim-coupon btn-claimed" disabled>
-                                                Đã nhận
-                                            </button>
-                                        </c:when>
-
-                                        <c:when test="${outOfStock}">
-                                            <button type="button" class="btn-claim-coupon btn-out-stock" disabled>
-                                                Hết mã
-                                            </button>
-                                        </c:when>
-
-                                        <c:otherwise>
-                                            <button type="button"
-                                                    class="btn-claim-coupon btn-claim-ajax"
-                                                    data-coupon-id="${coupon.id}">
-                                                Lấy mã
-                                            </button>
-                                        </c:otherwise>
-                                    </c:choose>
                                 </div>
                             </div>
                         </c:forEach>
@@ -188,6 +243,16 @@
             </c:choose>
         </div>
     </section>
+
+    <div id="couponDetailModal" class="coupon-modal">
+        <div class="coupon-modal-overlay"></div>
+        <div class="coupon-modal-box">
+            <button type="button" class="coupon-modal-x btn-close-coupon-modal">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            <div id="couponModalContent"></div>
+        </div>
+    </div>
 
     <div class="container">
         <c:forEach var="entry" items="${promoMap}">
@@ -375,6 +440,7 @@
     document.addEventListener("DOMContentLoaded", function () {
         initSlider();
         initBackToTop();
+        initCouponDetailModal();
         initClaimCouponAjax();
     });
 
@@ -476,8 +542,38 @@
         });
     }
 
+    function initCouponDetailModal() {
+        const modal = document.getElementById("couponDetailModal");
+        const modalContent = document.getElementById("couponModalContent");
+
+        if (!modal || !modalContent) {
+            return;
+        }
+
+        document.addEventListener("click", function (e) {
+            const detailBtn = e.target.closest(".btn-open-coupon-detail");
+            const closeBtn = e.target.closest(".btn-close-coupon-modal");
+            const overlay = e.target.closest(".coupon-modal-overlay");
+
+            if (detailBtn) {
+                const card = detailBtn.closest(".coupon-card");
+                const template = card ? card.querySelector(".coupon-detail-template") : null;
+
+                if (template) {
+                    modalContent.innerHTML = template.innerHTML;
+                    modal.classList.add("show");
+                    document.body.classList.add("coupon-modal-open");
+                }
+            }
+
+            if (closeBtn || overlay) {
+                modal.classList.remove("show");
+                document.body.classList.remove("coupon-modal-open");
+            }
+        });
+    }
+
     function initClaimCouponAjax() {
-        const claimButtons = document.querySelectorAll(".btn-claim-ajax");
         const messageBox = document.getElementById("couponAjaxMessage");
 
         function showCouponMessage(message, type) {
@@ -504,98 +600,142 @@
             }, 3000);
         }
 
-        claimButtons.forEach(function (btn) {
-            btn.addEventListener("click", function () {
-                const couponId = btn.getAttribute("data-coupon-id");
+        function setCouponClaimed(couponId) {
+            const card = document.querySelector('[data-coupon-card="' + couponId + '"]');
 
-                if (!couponId) {
-                    showCouponMessage("Mã giảm giá không hợp lệ.", "error");
-                    return;
+            if (card) {
+                card.classList.add("coupon-card-claimed");
+
+                const buttons = card.querySelectorAll('.btn-claim-ajax[data-coupon-id="' + couponId + '"]');
+                buttons.forEach(function (button) {
+                    button.textContent = "Đã nhận";
+                    button.classList.remove("btn-claim-ajax", "coupon-claim-btn");
+                    button.classList.add("coupon-claimed-btn");
+                    button.disabled = true;
+                });
+
+                const template = card.querySelector(".coupon-detail-template");
+                if (template) {
+                    const modalActions = template.querySelector(".coupon-modal-actions");
+                    if (modalActions) {
+                        modalActions.innerHTML =
+                            '<span class="coupon-modal-status coupon-status-claimed">Bạn đã nhận mã này</span>' +
+                            '<button type="button" class="coupon-close-btn btn-close-coupon-modal">Đóng</button>';
+                    }
                 }
+            }
 
-                btn.disabled = true;
-                btn.textContent = "Đang lấy...";
+            const modalBtn = document.querySelector('#couponModalContent .btn-claim-ajax[data-coupon-id="' + couponId + '"]');
+            if (modalBtn) {
+                const modalActions = modalBtn.closest(".coupon-modal-actions");
+                if (modalActions) {
+                    modalActions.innerHTML =
+                        '<span class="coupon-modal-status coupon-status-claimed">Bạn đã nhận mã này</span>' +
+                        '<button type="button" class="coupon-close-btn btn-close-coupon-modal">Đóng</button>';
+                }
+            }
+        }
 
-                fetch("${pageContext.request.contextPath}/nhan-ma-giam-gia", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
-                        "X-Requested-With": "XMLHttpRequest"
-                    },
-                    body: "couponId=" + encodeURIComponent(couponId)
+        function setCouponOutOfStock(couponId) {
+            const card = document.querySelector('[data-coupon-card="' + couponId + '"]');
+
+            if (card) {
+                const buttons = card.querySelectorAll('.btn-claim-ajax[data-coupon-id="' + couponId + '"]');
+                buttons.forEach(function (button) {
+                    button.textContent = "Hết mã";
+                    button.classList.remove("btn-claim-ajax", "coupon-claim-btn");
+                    button.classList.add("coupon-out-btn");
+                    button.disabled = true;
+                });
+
+                const template = card.querySelector(".coupon-detail-template");
+                if (template) {
+                    const modalActions = template.querySelector(".coupon-modal-actions");
+                    if (modalActions) {
+                        modalActions.innerHTML =
+                            '<span class="coupon-modal-status coupon-status-out">Mã này đã hết lượt nhận</span>' +
+                            '<button type="button" class="coupon-close-btn btn-close-coupon-modal">Đóng</button>';
+                    }
+                }
+            }
+
+            const modalBtn = document.querySelector('#couponModalContent .btn-claim-ajax[data-coupon-id="' + couponId + '"]');
+            if (modalBtn) {
+                const modalActions = modalBtn.closest(".coupon-modal-actions");
+                if (modalActions) {
+                    modalActions.innerHTML =
+                        '<span class="coupon-modal-status coupon-status-out">Mã này đã hết lượt nhận</span>' +
+                        '<button type="button" class="coupon-close-btn btn-close-coupon-modal">Đóng</button>';
+                }
+            }
+        }
+
+        document.addEventListener("click", function (e) {
+            const btn = e.target.closest(".btn-claim-ajax");
+
+            if (!btn) {
+                return;
+            }
+
+            const couponId = btn.getAttribute("data-coupon-id");
+
+            if (!couponId) {
+                showCouponMessage("Mã giảm giá không hợp lệ.", "error");
+                return;
+            }
+
+            btn.disabled = true;
+            btn.textContent = "Đang nhận...";
+
+            fetch("${pageContext.request.contextPath}/nhan-ma-giam-gia", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
+                    "X-Requested-With": "XMLHttpRequest"
+                },
+                body: "couponId=" + encodeURIComponent(couponId)
+            })
+                .then(function (response) {
+                    if (!response.ok) {
+                        throw new Error("HTTP error");
+                    }
+                    return response.json();
                 })
-                    .then(function (response) {
-                        if (!response.ok) {
-                            throw new Error("HTTP error");
-                        }
-                        return response.json();
-                    })
-                    .then(function (data) {
-                        if (data.success) {
-                            showCouponMessage(data.message || "Lấy mã giảm giá thành công.", "success");
+                .then(function (data) {
+                    if (data.success) {
+                        showCouponMessage(data.message || "Nhận mã giảm giá thành công.", "success");
+                        setCouponClaimed(couponId);
+                        return;
+                    }
 
-                            btn.textContent = "Đã nhận";
-                            btn.classList.remove("btn-claim-ajax");
-                            btn.classList.add("btn-claimed");
-                            btn.disabled = true;
+                    if (data.status === "ALREADY_CLAIMED") {
+                        showCouponMessage(data.message || "Bạn đã nhận mã này rồi.", "warning");
+                        setCouponClaimed(couponId);
+                        return;
+                    }
 
-                            const card = btn.closest(".coupon-card");
-                            if (card) {
-                                card.classList.add("coupon-card-claimed");
+                    if (data.status === "OUT_OF_STOCK") {
+                        showCouponMessage(data.message || "Mã giảm giá này đã hết lượt nhận.", "error");
+                        setCouponOutOfStock(couponId);
+                        return;
+                    }
 
-                                const claimCount = card.querySelector(".coupon-claim-count");
-                                if (claimCount) {
-                                    const currentClaims = parseInt(claimCount.getAttribute("data-current-claims")) || 0;
-                                    const newClaims = currentClaims + 1;
-
-                                    claimCount.textContent = newClaims;
-                                    claimCount.setAttribute("data-current-claims", newClaims);
-                                }
-                            }
-
-                            return;
-                        }
-
-                        if (data.status === "LOGIN_REQUIRED") {
-                            showCouponMessage(data.message || "Vui lòng đăng nhập để lấy mã giảm giá.", "error");
-                            btn.disabled = false;
-                            btn.textContent = "Lấy mã";
-                            return;
-                        }
-
-                        if (data.status === "ALREADY_CLAIMED") {
-                            showCouponMessage(data.message || "Bạn đã nhận mã này rồi.", "warning");
-                            btn.textContent = "Đã nhận";
-                            btn.classList.remove("btn-claim-ajax");
-                            btn.classList.add("btn-claimed");
-                            btn.disabled = true;
-
-                            const card = btn.closest(".coupon-card");
-                            if (card) {
-                                card.classList.add("coupon-card-claimed");
-                            }
-                            return;
-                        }
-
-                        if (data.status === "OUT_OF_STOCK") {
-                            showCouponMessage(data.message || "Mã giảm giá này đã hết lượt nhận.", "error");
-                            btn.textContent = "Hết mã";
-                            btn.classList.remove("btn-claim-ajax");
-                            btn.classList.add("btn-out-stock");
-                            btn.disabled = true;
-                            return;
-                        }
-
-                        showCouponMessage(data.message || "Có lỗi xảy ra khi lấy mã. Vui lòng thử lại.", "error");
+                    if (data.status === "LOGIN_REQUIRED") {
+                        showCouponMessage(data.message || "Vui lòng đăng nhập để nhận mã giảm giá.", "error");
                         btn.disabled = false;
-                        btn.textContent = "Lấy mã";
-                    })
-                    .catch(function () {
-                        showCouponMessage("Không thể lấy mã. Vui lòng kiểm tra lại servlet trả JSON.", "error");
-                        btn.disabled = false;
-                        btn.textContent = "Lấy mã";
-                    });
-            });
+                        btn.textContent = "Nhận mã";
+                        return;
+                    }
+
+                    showCouponMessage(data.message || "Có lỗi xảy ra khi nhận mã.", "error");
+                    btn.disabled = false;
+                    btn.textContent = "Nhận mã";
+                })
+                .catch(function () {
+                    showCouponMessage("Không thể nhận mã. Vui lòng thử lại.", "error");
+                    btn.disabled = false;
+                    btn.textContent = "Nhận mã";
+                });
         });
     }
 </script>
