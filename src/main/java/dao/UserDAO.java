@@ -350,7 +350,7 @@ public class UserDAO {
 
         StringBuilder sql = new StringBuilder(
                 "SELECT u.id, CONCAT(u.last_name, ' ', u.first_name) AS full_name, " +
-                        "u.email, u.phone, u.created_at, u.is_active, " +
+                        "u.email, u.phone, u.created_at, u.is_active, u.is_vip, " +
                         "ua.province, " +
                         "COUNT(o.id) AS total_orders, " +
                         "COALESCE(SUM(CASE WHEN o.status = 'completed' THEN o.total_amount ELSE 0 END), 0) AS total_spent, " +
@@ -371,7 +371,7 @@ public class UserDAO {
             sql.append(") ");
         }
 
-        sql.append("GROUP BY u.id, u.first_name, u.last_name, u.email, u.created_at, u.is_active, ua.province");
+        sql.append("GROUP BY u.id, u.first_name, u.last_name, u.email, u.created_at, u.is_active, u.is_vip, ua.province");
         sql.append(" HAVING 1=1 ");
 
         if (spendingRange != null && !spendingRange.isEmpty()) {
@@ -409,7 +409,7 @@ public class UserDAO {
                     sql.append(" AND u.is_active = 0 ");
                     break;
                 case "vip":
-                    sql.append(" AND total_spent > 5000000 AND u.is_active = 1 ");
+                    sql.append(" AND u.is_vip = 1 AND u.is_active = 1 ");
                     break;
                 case "new":
                     sql.append(" AND DATEDIFF(NOW(), u.created_at) < 30 AND u.is_active = 1 ");
@@ -461,6 +461,7 @@ public class UserDAO {
                 c.setPhone(rs.getString("phone"));
                 c.setJoinDate(rs.getTimestamp("created_at"));
                 c.setActive(rs.getBoolean("is_active"));
+                c.setVip(rs.getBoolean("is_vip"));
                 c.setProvince(rs.getString("province"));
                 c.setTotalOrders(rs.getInt("total_orders"));
                 c.setTotalSpent(rs.getDouble("total_spent"));
@@ -527,7 +528,7 @@ public class UserDAO {
     public List<Integer> getAllCustomerIds(String search, String status, String spendingRange, String orderRange) {
         List<Integer> list = new ArrayList<>();
         StringBuilder sql = new StringBuilder(
-                "SELECT u.id, " +
+                "SELECT u.id, u.is_vip, " +
                         "COUNT(o.id) AS total_orders, " +
                         "COALESCE(SUM(CASE WHEN o.status = 'completed' THEN o.total_amount ELSE 0 END), 0) AS total_spent " +
                         "FROM users u " +
@@ -571,7 +572,7 @@ public class UserDAO {
             switch (status) {
                 case "inactive": sql.append(" AND u.is_active = 0 "); break;
                 case "active": sql.append(" AND u.is_active = 1 "); break;
-                case "vip": sql.append(" AND total_spent > 5000000 AND u.is_active = 1 "); break;
+                case "vip": sql.append(" AND u.is_vip = 1 AND u.is_active = 1 "); break;
                 case "new": sql.append(" AND DATEDIFF(NOW(), u.created_at) < 30 AND u.is_active = 1 "); break;
             }
         }

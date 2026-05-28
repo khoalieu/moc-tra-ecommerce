@@ -228,6 +228,15 @@
                             <h3 class="card-title">
                                 <i class="fas fa-ticket-alt"></i> Quản lý voucher VIP
                             </h3>
+                            <form action="${pageContext.request.contextPath}/admin/customer/detail" method="post"
+                                  onsubmit="return confirm('Bạn có chắc muốn hạ khách hàng này xuống khách thường?');"
+                                  style="margin-bottom: 18px;">
+                                <input type="hidden" name="action" value="downgradeVip">
+                                <input type="hidden" name="customerId" value="${customer.id}">
+                                <button type="submit" class="btn btn-danger">
+                                    <i class="fas fa-user"></i> Hạ xuống khách thường
+                                </button>
+                            </form>
 
                             <div class="voucher-cart-list">
                                 <c:forEach var="voucher" items="${voucherList}">
@@ -330,10 +339,15 @@
                                         Khách hàng này hiện chưa là VIP. Sau khi nâng cấp, bạn có thể cấp voucher VIP và áp dụng các ưu đãi riêng.
                                     </p>
 
-                                    <button type="button" class="btn-save btn-upgrade-vip-disabled"
-                                            onclick="alert('Chức năng nâng cấp VIP sẽ làm sau.')">
-                                        <i class="fas fa-crown"></i> Nâng cấp VIP
-                                    </button>
+                                    <form action="${pageContext.request.contextPath}/admin/customer/detail" method="post"
+                                          onsubmit="return confirm('Bạn có chắc muốn nâng cấp khách hàng này lên VIP?');">
+                                        <input type="hidden" name="action" value="upgradeVip">
+                                        <input type="hidden" name="customerId" value="${customer.id}">
+
+                                        <button type="submit" class="btn-save">
+                                            <i class="fas fa-crown"></i> Nâng cấp VIP
+                                        </button>
+                                    </form>
                                 </div>
                             </div>
                         </div>

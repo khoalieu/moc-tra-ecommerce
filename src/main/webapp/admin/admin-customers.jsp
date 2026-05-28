@@ -153,6 +153,15 @@
                         <i class="fas fa-user-times"></i>
                         Vô hiệu hóa
                     </button>
+                    <button class="btn-bulk btn-bulk-activate" onclick="bulkUpgradeVip()">
+                        <i class="fas fa-crown"></i>
+                        Nâng VIP
+                    </button>
+
+                    <button class="btn-bulk btn-bulk-deactivate" onclick="bulkDowngradeVip()">
+                        <i class="fas fa-user"></i>
+                        Hạ thường
+                    </button>
                     <button class="btn-bulk btn-bulk-delete" onclick="bulkDelete()">
                         <i class="fas fa-trash"></i>
                         Xóa
@@ -499,6 +508,13 @@
         if (confirm("LƯU Ý: Khách hàng sẽ được chuyển sang trạng thái 'Vô hiệu hóa' (Xóa mềm).")) {
             sendBulkRequest('deactivate', 'vô hiệu hóa');
         }
+    }
+    function bulkUpgradeVip() {
+        sendBulkRequest('upgradeVip', 'nâng cấp VIP');
+    }
+
+    function bulkDowngradeVip() {
+        sendBulkRequest('downgradeVip', 'hạ xuống khách thường');
     }
 </script>
 </body>
