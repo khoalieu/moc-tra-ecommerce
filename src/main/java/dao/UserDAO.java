@@ -7,6 +7,7 @@ import model.enums.UserGender;
 import model.enums.UserRole;
 import org.mindrot.jbcrypt.BCrypt;
 import model.GooglePojo;
+import model.user.VipUpdateResult;
 
 import javax.sql.DataSource;
 import java.util.UUID;
@@ -909,5 +910,85 @@ public class UserDAO {
             e.printStackTrace();
         }
         return result;
+    }
+    public VipUpdateResult autoUpdateVipBySpending(double threshold, Timestamp startDate, Timestamp endDate) {
+        String selectSql =
+                "SELECT u.id, u.is_vip, COALESCE(SUM(o.total_amount), 0) AS total_spent " +
+                        "FROM users u " +
+                        "LEFT JOIN orders o ON u.id = o.user_id " +
+                        "AND o.status = 'COMPLETED' " +
+                        "AND o.created_at >= ? " +
+                        "AND o.created_at < ? " +
+                        "WHERE u.role = 'customer' " +
+                        "GROUP BY u.id, u.is_vip";
+
+        String updateSql = "UPDATE users SET is_vip = ? WHERE id = ? AND role = 'customer'";
+
+        int upgradedCount = 0;
+        int downgradedCount = 0;
+
+        Connection conn = null;
+        PreparedStatement selectPs = null;
+        PreparedStatement updatePs = null;
+        ResultSet rs = null;
+
+        try {
+            conn = ds.getConnection();
+            conn.setAutoCommit(false);
+
+            selectPs = conn.prepareStatement(selectSql);
+            selectPs.setTimestamp(1, startDate);
+            selectPs.setTimestamp(2, endDate);
+
+            updatePs = conn.prepareStatement(updateSql);
+
+            rs = selectPs.executeQuery();
+
+            while (rs.next()) {
+                int userId = rs.getInt("id");
+                boolean currentVip = rs.getBoolean("is_vip");
+                double totalSpent = rs.getDouble("total_spent");
+
+                boolean shouldBeVip = totalSpent >= threshold;
+
+                if (shouldBeVip != currentVip) {
+                    updatePs.setBoolean(1, shouldBeVip);
+                    updatePs.setInt(2, userId);
+                    updatePs.addBatch();
+
+                    if (shouldBeVip) {
+                        upgradedCount++;
+                    } else {
+                        downgradedCount++;
+                    }
+                }
+            }
+
+            updatePs.executeBatch();
+            conn.commit();
+
+            return new VipUpdateResult(upgradedCount, downgradedCount);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+
+            try {
+                if (conn != null) {
+                    conn.rollback();
+                }
+            } catch (Exception ignored) {
+            }
+
+        } finally {
+            try {
+                if (rs != null) rs.close();
+                if (selectPs != null) selectPs.close();
+                if (updatePs != null) updatePs.close();
+                if (conn != null) conn.close();
+            } catch (Exception ignored) {
+            }
+        }
+
+        return new VipUpdateResult(0, 0);
     }
 }
