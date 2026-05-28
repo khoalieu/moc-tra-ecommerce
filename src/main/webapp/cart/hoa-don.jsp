@@ -12,6 +12,7 @@
     <title>Hóa đơn #${order.orderNumber} - Mộc Trà</title>
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/main.css">
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/invoice-detail.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
 <jsp:include page="/common/header.jsp"></jsp:include>
@@ -65,13 +66,76 @@
                         </div>
                     </div>
 
-                    <div class="checkout-card invoice-card">
-                        <h2 class="checkout-card__title">Hình thức thanh toán</h2>
-                        <div class="invoice-info">
-                            <p><strong>Phương thức:</strong> ${not empty order.paymentMethod ? order.paymentMethod.toUpperCase() : 'COD'}</p>
-                            <p><strong>Trạng thái:</strong> ${order.paymentStatus}</p>
+                        <div class="checkout-card invoice-card">
+                            <h2 class="checkout-card__title">Hình thức thanh toán</h2>
+                            <div class="invoice-info">
+                                <p>
+                                    <strong>Phương thức:</strong>
+                                    <span class="invoice-pill invoice-pill-method">
+                                        <c:choose>
+                                            <c:when test="${order.paymentMethod == 'cod'}">
+                                                Thanh toán khi nhận hàng
+                                            </c:when>
+                                            <c:when test="${order.paymentMethod == 'bank'}">
+                                                Chuyển khoản ngân hàng
+                                            </c:when>
+                                            <c:when test="${order.paymentMethod == 'momo'}">
+                                                Ví MoMo
+                                            </c:when>
+                                            <c:otherwise>
+                                                ${order.paymentMethod}
+                                            </c:otherwise>
+                                        </c:choose>
+                                    </span>
+                                </p>
+
+                                <p>
+                                    <strong>Trạng thái:</strong>
+                                    <c:choose>
+                                        <c:when test="${order.paymentStatus == 'PAID'}">
+                                            <span class="invoice-pill invoice-pill-paid">
+                                                <i class="fa-solid fa-circle-check"></i>
+                                                Đã thanh toán
+                                            </span>
+                                        </c:when>
+
+                                        <c:when test="${order.paymentStatus == 'PENDING'}">
+                                            <span class="invoice-pill invoice-pill-pending">
+                                                <i class="fa-regular fa-clock"></i>
+                                                Chưa thanh toán
+                                            </span>
+                                        </c:when>
+
+                                        <c:when test="${order.paymentStatus == 'FAILED'}">
+                                            <span class="invoice-pill invoice-pill-failed">
+                                                <i class="fa-solid fa-triangle-exclamation"></i>
+                                                Thanh toán thất bại
+                                            </span>
+                                        </c:when>
+
+                                        <c:when test="${order.paymentStatus == 'EXPIRED'}">
+                                            <span class="invoice-pill invoice-pill-failed">
+                                                <i class="fa-solid fa-clock-rotate-left"></i>
+                                                Thanh toán hết hạn
+                                            </span>
+                                        </c:when>
+
+                                        <c:when test="${order.paymentStatus == 'REFUNDED'}">
+                                            <span class="invoice-pill invoice-pill-refunded">
+                                                <i class="fa-solid fa-rotate-left"></i>
+                                                Đã hoàn tiền
+                                            </span>
+                                        </c:when>
+
+                                        <c:otherwise>
+                                            <span class="invoice-pill invoice-pill-pending">
+                                                    ${order.paymentStatus}
+                                            </span>
+                                        </c:otherwise>
+                                    </c:choose>
+                                </p>
+                            </div>
                         </div>
-                    </div>
 
                     <div class="checkout-card invoice-card">
                         <h2 class="checkout-card__title">Danh sách sản phẩm</h2>
@@ -100,7 +164,26 @@
                                         </td>
                                         <td class="text-center">${item.quantity}</td>
                                         <td class="text-right">
-                                            <fmt:formatNumber value="${item.price}" type="currency" currencySymbol="đ" maxFractionDigits="0"/>
+                                            <c:choose>
+                                                <c:when test="${item.originalPrice > item.price}">
+                                                    <div style="color: #999; text-decoration: line-through; font-size: 0.85rem;">
+                                                        <fmt:formatNumber value="${item.originalPrice}" type="currency" currencySymbol="đ" maxFractionDigits="0"/>
+                                                    </div>
+
+                                                    <div style="color: #d9534f; font-weight: 600;">
+                                                        <fmt:formatNumber value="${item.price}" type="currency" currencySymbol="đ" maxFractionDigits="0"/>
+                                                    </div>
+
+                                                    <div style="color: #2e7d32; font-size: 0.82rem;">
+                                                        Giảm
+                                                        <fmt:formatNumber value="${item.discountAmount}" type="currency" currencySymbol="đ" maxFractionDigits="0"/>
+                                                    </div>
+                                                </c:when>
+
+                                                <c:otherwise>
+                                                    <fmt:formatNumber value="${item.price}" type="currency" currencySymbol="đ" maxFractionDigits="0"/>
+                                                </c:otherwise>
+                                            </c:choose>
                                         </td>
                                         <td class="text-right price-highlight">
                                             <fmt:formatNumber value="${item.price * item.quantity}" type="currency" currencySymbol="đ" maxFractionDigits="0"/>
@@ -114,18 +197,41 @@
                         <div class="order-summary invoice-summary">
                             <div class="order-summary__row">
                                 <span>Tạm tính</span>
-                                <span><fmt:formatNumber value="${order.totalAmount - order.shippingFee}" type="currency" currencySymbol="đ" maxFractionDigits="0"/></span>
+                                <span>
+                                    <fmt:formatNumber value="${order.subtotalAmount}" type="currency" currencySymbol="đ" maxFractionDigits="0"/>
+                                </span>
                             </div>
+
                             <div class="order-summary__row">
                                 <span>Phí vận chuyển</span>
-                                <span><fmt:formatNumber value="${order.shippingFee - extraFee}" type="currency" currencySymbol="đ" maxFractionDigits="0"/></span>
+                                <span>
+                                    <fmt:formatNumber value="${order.shippingFee}" type="currency" currencySymbol="đ" maxFractionDigits="0"/>
+                                </span>
                             </div>
-                            <c:if test="${extraFee > 0}">
+
+                            <c:if test="${order.couponDiscountAmount > 0}">
                                 <div class="order-summary__row">
-                                    <span>Dịch vụ cộng thêm</span>
-                                    <span class="text-success">+ <fmt:formatNumber value="${extraFee}" type="currency" currencySymbol="đ" maxFractionDigits="0"/></span>
+                                    <span>
+                                        Giảm mã ưu đãi
+                                        <c:if test="${not empty order.couponCode}">
+                                            (${order.couponCode})
+                                        </c:if>
+                                    </span>
+                                    <span style="color: #d32f2f;">
+                                        -<fmt:formatNumber value="${order.couponDiscountAmount}" type="currency" currencySymbol="đ" maxFractionDigits="0"/>
+                                    </span>
                                 </div>
                             </c:if>
+
+                            <c:if test="${order.vipDiscountAmount > 0}">
+                                <div class="order-summary__row">
+                                    <span>Giảm voucher VIP</span>
+                                    <span style="color: #d32f2f;">
+                                    -<fmt:formatNumber value="${order.vipDiscountAmount}" type="currency" currencySymbol="đ" maxFractionDigits="0"/>
+                                </span>
+                                </div>
+                            </c:if>
+
                             <div class="order-summary__row order-summary__row--total">
                                 <span>Tổng cộng</span>
                                 <span class="price-highlight font-large">
