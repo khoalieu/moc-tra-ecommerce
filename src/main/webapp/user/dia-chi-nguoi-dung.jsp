@@ -116,72 +116,58 @@
 
                     <div class="form-row">
                         <div class="input-group">
-                            <input type="text"
-                                   id="fullName"
-                                   name="fullName"
-                                   placeholder=" "
-                                   required>
+                            <input type="text" id="fullName" name="fullName" placeholder=" " required>
                             <label for="fullName">Họ và tên*</label>
                         </div>
                     </div>
 
                     <div class="form-row">
                         <div class="input-group phone-group">
-                            <div class="phone-prefix">
-                                <span>+84</span>
-                                <i class="fa-solid fa-chevron-down"></i>
-                            </div>
-                            <input type="tel"
-                                   id="phoneNumber"
-                                   name="phoneNumber"
-                                   placeholder=" "
-                                   pattern="[0-9]{9,11}"
-                                   title="Số điện thoại phải từ 9-11 số"
-                                   required>
+                            <div class="phone-prefix"><span>+84</span><i class="fa-solid fa-chevron-down"></i></div>
+                            <input type="tel" id="phoneNumber" name="phoneNumber" placeholder=" "
+                                   pattern="[0-9]{9,11}" title="Số điện thoại phải từ 9-11 số" required>
                             <label for="phoneNumber">Số điện thoại*</label>
-                        </div>
-                    </div>
-
-                    <div class="form-row form-row-2">
-                        <div class="input-group">
-                            <input type="text"
-                                   id="province"
-                                   name="province"
-                                   placeholder=" "
-                                   required>
-                            <label for="province">Tỉnh / Thành phố</label>
-                        </div>
-
-                        <div class="input-group">
-                            <input type="text"
-                                   id="ward"
-                                   name="ward"
-                                   placeholder=" "
-                                   required>
-                            <label for="ward">Phường / Xã</label>
                         </div>
                     </div>
 
                     <div class="form-row">
                         <div class="input-group">
-                            <input type="text"
-                                   id="addressLine"
-                                   name="addressLine"
-                                   placeholder=" "
-                                   required>
+                            <select id="addr_province" name="province" required>
+                                <option value="">-- Chọn Tỉnh / Thành phố --</option>
+                            </select>
+                            <label for="addr_province" style="position:static; transform:none; font-size:0.85rem; color:#666; margin-bottom:4px;">Tỉnh / Thành phố*</label>
+                        </div>
+                    </div>
+
+                    <div class="form-row form-row-2">
+                        <div class="input-group">
+                            <select id="addr_district" name="district" disabled required>
+                                <option value="">-- Chọn Quận / Huyện --</option>
+                            </select>
+                            <label for="addr_district" style="position:static; transform:none; font-size:0.85rem; color:#666; margin-bottom:4px;">Quận / Huyện*</label>
+                        </div>
+                        <div class="input-group">
+                            <select id="addr_ward" name="ward" disabled required>
+                                <option value="">-- Chọn Phường / Xã --</option>
+                            </select>
+                            <label for="addr_ward" style="position:static; transform:none; font-size:0.85rem; color:#666; margin-bottom:4px;">Phường / Xã*</label>
+                        </div>
+                    </div>
+
+                    <input type="hidden" id="addr_districtId" name="districtId">
+                    <input type="hidden" id="addr_wardCode" name="wardCode">
+
+                    <div class="form-row">
+                        <div class="input-group">
+                            <input type="text" id="addressLine" name="addressLine" placeholder=" " required>
                             <label for="addressLine">Địa chỉ cụ thể (Số nhà, đường...)*</label>
                         </div>
                     </div>
 
                     <div class="form-row">
                         <div class="input-group">
-                            <input type="text"
-                                   id="addressLabel"
-                                   name="addressLabel"
-                                   list="label-suggestions"
-                                   placeholder=" ">
+                            <input type="text" id="addressLabel" name="addressLabel" list="label-suggestions" placeholder=" ">
                             <label for="addressLabel">Gắn nhãn (Nhà riêng, Văn phòng...)</label>
-
                             <datalist id="label-suggestions">
                                 <option value="Nhà riêng">
                                 <option value="Văn phòng">
@@ -206,18 +192,25 @@
     <i class="fa-solid fa-chevron-up"></i>
 </button>
 
+<script src="${pageContext.request.contextPath}/assets/js/ghn-address-selector.js"></script>
 <script>
-    // Script nút Back to Top đơn giản
     const backToTopBtn = document.getElementById("backToTop");
     window.onscroll = function() {
-        if (document.body.scrollTop > 200 || document.documentElement.scrollTop > 200) {
-            backToTopBtn.style.display = "block";
-        } else {
-            backToTopBtn.style.display = "none";
-        }
+        backToTopBtn.style.display = (document.documentElement.scrollTop > 200) ? "block" : "none";
     };
     backToTopBtn.addEventListener("click", function() {
         window.scrollTo({top: 0, behavior: 'smooth'});
+    });
+
+    document.addEventListener('DOMContentLoaded', function() {
+        GHNAddressSelector.init({
+            provinceEl:   document.getElementById('addr_province'),
+            districtEl:   document.getElementById('addr_district'),
+            wardEl:       document.getElementById('addr_ward'),
+            districtIdEl: document.getElementById('addr_districtId'),
+            wardCodeEl:   document.getElementById('addr_wardCode'),
+            contextPath:  '${pageContext.request.contextPath}'
+        });
     });
 </script>
 </body>

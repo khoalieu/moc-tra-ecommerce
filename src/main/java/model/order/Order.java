@@ -22,7 +22,6 @@ public class Order {
     private String notes;
     private Timestamp createdAt;
     private List<OrderItem> items = new ArrayList<>();
-    private Integer shipperId;
     private String customerName;
     private String customerPhone;
     private String shippingAddress;
@@ -83,14 +82,6 @@ public class Order {
 
     public void setCancelReason(String cancelReason) {
         this.cancelReason = cancelReason;
-    }
-
-    public Integer getShipperId() {
-        return shipperId;
-    }
-
-    public void setShipperId(Integer shipperId) {
-        this.shipperId = shipperId;
     }
 
     public String getCustomerName() {
