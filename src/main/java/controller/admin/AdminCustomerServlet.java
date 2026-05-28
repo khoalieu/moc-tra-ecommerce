@@ -91,6 +91,15 @@ public class AdminCustomerServlet extends HttpServlet {
                 } else if ("deactivate".equals(action)) {
                     success = userDAO.updateStatusBulk(idsToUpdate, false);
                     message = "Vô hiệu hóa thành công " + idsToUpdate.size() + " khách hàng.";
+
+                } else if ("upgradeVip".equals(action)) {
+                    success = userDAO.updateVipStatusBulk(idsToUpdate, true);
+                    message = "Nâng cấp VIP thành công " + idsToUpdate.size() + " khách hàng.";
+
+                } else if ("downgradeVip".equals(action)) {
+                    success = userDAO.updateVipStatusBulk(idsToUpdate, false);
+                    message = "Hạ xuống khách thường thành công " + idsToUpdate.size() + " khách hàng.";
+
                 } else {
                     message = "Hành động không hợp lệ.";
                 }
