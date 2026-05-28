@@ -106,7 +106,27 @@
                                             </div>
                                         </div>
                                     </td>
-                                    <td><fmt:formatNumber value="${item.price}" pattern="#,###"/>₫</td>
+                                    <td>
+                                        <c:choose>
+                                            <c:when test="${item.originalPrice > item.price}">
+                                                <div style="color: #999; text-decoration: line-through; font-size: 12px;">
+                                                    <fmt:formatNumber value="${item.originalPrice}" pattern="#,###"/>₫
+                                                </div>
+
+                                                <div style="color: #d9534f; font-weight: 600;">
+                                                    <fmt:formatNumber value="${item.price}" pattern="#,###"/>₫
+                                                </div>
+
+                                                <div style="color: #2e7d32; font-size: 12px;">
+                                                    Giảm <fmt:formatNumber value="${item.discountAmount}" pattern="#,###"/>₫
+                                                </div>
+                                            </c:when>
+
+                                            <c:otherwise>
+                                                <fmt:formatNumber value="${item.price}" pattern="#,###"/>₫
+                                            </c:otherwise>
+                                        </c:choose>
+                                    </td>
                                     <td>${item.quantity}</td>
                                     <td style="text-align: right; font-weight: 600;">
                                         <fmt:formatNumber value="${item.price * item.quantity}" pattern="#,###"/>₫
@@ -117,13 +137,49 @@
                         </table>
 
                         <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #eee;">
-                            <div class="order-summary-row"><span>Tạm tính</span><span><fmt:formatNumber
-                                    value="${order.totalAmount - order.shippingFee}" pattern="#,###"/>₫</span></div>
-                            <div class="order-summary-row"><span>Phí vận chuyển</span><span><fmt:formatNumber
-                                    value="${order.shippingFee}" pattern="#,###"/>₫</span></div>
+                            <div class="order-summary-row">
+                                <span>Tạm tính</span>
+                                <span>
+                                    <fmt:formatNumber value="${order.subtotalAmount}" pattern="#,###"/>₫
+                                </span>
+                            </div>
+
+                            <div class="order-summary-row">
+                                <span>Phí vận chuyển</span>
+                                <span>
+                                    <fmt:formatNumber value="${order.shippingFee}" pattern="#,###"/>₫
+                                </span>
+                            </div>
+
+                            <c:if test="${order.couponDiscountAmount > 0}">
+                                <div class="order-summary-row">
+                                    <span>
+                                        Giảm mã ưu đãi
+                                        <c:if test="${not empty order.couponCode}">
+                                            (${order.couponCode})
+                                        </c:if>
+                                    </span>
+                                    <span style="color: #d32f2f;">
+                                        -<fmt:formatNumber value="${order.couponDiscountAmount}" pattern="#,###"/>₫
+                                    </span>
+                                </div>
+                            </c:if>
+
+                            <c:if test="${order.vipDiscountAmount > 0}">
+                                <div class="order-summary-row">
+                                    <span>Giảm voucher VIP</span>
+                                    <span style="color: #d32f2f;">
+                                        -<fmt:formatNumber value="${order.vipDiscountAmount}" pattern="#,###"/>₫
+                                    </span>
+                                </div>
+                            </c:if>
+
                             <div class="order-summary-row total" style="color: #107e84;">
-                                <span>Tổng cộng</span><span><fmt:formatNumber value="${order.totalAmount}"
-                                                                              pattern="#,###"/>₫</span></div>
+                                <span>Tổng cộng</span>
+                                <span>
+                                    <fmt:formatNumber value="${order.totalAmount}" pattern="#,###"/>₫
+                                </span>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -141,8 +197,24 @@
                         <h3 class="card-title">Thanh toán</h3>
                         <div class="info-row">
                             <span class="info-label">Phương thức</span>
-                            <div class="info-value"><strong>${order.paymentMethod}</strong></div>
-                        </div>
+                            <div class="info-value">
+                                <strong>
+                                    <c:choose>
+                                        <c:when test="${order.paymentMethod == 'cod'}">
+                                            Thanh toán khi nhận hàng
+                                        </c:when>
+                                        <c:when test="${order.paymentMethod == 'bank'}">
+                                            Chuyển khoản ngân hàng
+                                        </c:when>
+                                        <c:when test="${order.paymentMethod == 'momo'}">
+                                            Ví MoMo
+                                        </c:when>
+                                        <c:otherwise>
+                                            ${order.paymentMethod}
+                                        </c:otherwise>
+                                    </c:choose>
+                                </strong>
+                            </div>                        </div>
                         <div class="info-row">
                             <span class="info-label">Trạng thái</span>
                             <div class="info-value" style="margin-top: 5px;">
