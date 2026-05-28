@@ -89,9 +89,7 @@ public class LoginServlet extends HttpServlet {
 
             if (user.getRole() != null && user.getRole().name().equalsIgnoreCase("ADMIN")) {
                 response.sendRedirect(request.getContextPath() + "/admin/dashboard");
-            }else if (user.getRole() != null && user.getRole().name().equalsIgnoreCase("SHIPPER")) {
-                response.sendRedirect(request.getContextPath() + "/shipper/dashboard");
-            }else if (user.getRole() != null && user.getRole().name().equalsIgnoreCase("EDITOR")){
+            } else if (user.getRole() != null && user.getRole().name().equalsIgnoreCase("EDITOR")) {
                 response.sendRedirect(request.getContextPath() + "/editor/dashboard");
             }
             else if (redirect != null) {
