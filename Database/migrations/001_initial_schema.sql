@@ -342,3 +342,54 @@ CREATE TABLE payment_transactions (
                                       FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE
 );
 
+CREATE TABLE coupons (
+                         id INT AUTO_INCREMENT PRIMARY KEY,
+                         code VARCHAR(50) NOT NULL UNIQUE,
+                         title VARCHAR(255) NOT NULL,
+                         description TEXT NULL,
+
+                         discount_type VARCHAR(20) NOT NULL,
+                         discount_value DECIMAL(15,2) NOT NULL,
+                         max_discount_amount DECIMAL(15,2) DEFAULT NULL,
+                         min_order_amount DECIMAL(15,2) DEFAULT 0,
+
+                         claim_limit INT DEFAULT NULL,
+                         current_claims INT DEFAULT 0,
+
+                         max_uses INT DEFAULT NULL,
+                         current_uses INT DEFAULT 0,
+
+                         start_date DATETIME NOT NULL,
+                         end_date DATETIME NOT NULL,
+                         is_active TINYINT(1) DEFAULT 1,
+                         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE user_coupons (
+                              id INT AUTO_INCREMENT PRIMARY KEY,
+                              user_id INT NOT NULL,
+                              coupon_id INT NOT NULL,
+                              claimed_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                              used_at DATETIME NULL,
+
+                              UNIQUE KEY uk_user_coupon (user_id, coupon_id),
+
+                              CONSTRAINT fk_user_coupon_user
+                                  FOREIGN KEY (user_id) REFERENCES users(id)
+                                      ON DELETE CASCADE,
+
+                              CONSTRAINT fk_user_coupon_coupon
+                                  FOREIGN KEY (coupon_id) REFERENCES coupons(id)
+                                      ON DELETE CASCADE
+);
+ALTER TABLE orders
+    ADD COLUMN subtotal_amount DECIMAL(15,2) DEFAULT 0 AFTER status,
+    ADD COLUMN coupon_id INT NULL AFTER shipping_fee,
+    ADD COLUMN coupon_code VARCHAR(50) NULL AFTER coupon_id,
+    ADD COLUMN coupon_discount_amount DECIMAL(15,2) DEFAULT 0 AFTER coupon_code;
+
+ALTER TABLE orders
+    ADD CONSTRAINT fk_orders_coupon
+        FOREIGN KEY (coupon_id) REFERENCES coupons(id)
+            ON DELETE SET NULL;
+

@@ -242,6 +242,10 @@
                                     <i class="fa-solid fa-bag-shopping" style="margin-right: 8px;"></i>
                                     Đơn mua
                                 </a>
+                                <a href="${pageContext.request.contextPath}/ma-uu-dai-cua-toi">
+                                    <i class="fa-solid fa-ticket" style="margin-right: 8px;"></i>
+                                    Mã ưu đãi của tôi
+                                </a>
 
                                 <a href="${pageContext.request.contextPath}/san-pham-yeu-thich">
                                     <i class="fa-solid fa-heart" style="margin-right: 8px;"></i>

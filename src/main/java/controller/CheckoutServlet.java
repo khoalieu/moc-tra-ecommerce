@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 import controller.utils.PaymentUtils;
 import controller.utils.PaymentResult;
+import model.promotion.Coupon;
 
 @WebServlet(name = "CheckoutServlet", value = "/thanh-toan")
 public class CheckoutServlet extends HttpServlet {
@@ -46,7 +47,7 @@ public class CheckoutServlet extends HttpServlet {
             selectedItems = (String[]) session.getAttribute("selectedItemIds");
         }
 
-        if (selectedItems == null) {
+        if (selectedItems == null || selectedItems.length == 0) {
             response.sendRedirect(request.getContextPath() + "/gio-hang");
             return;
         }
@@ -55,12 +56,19 @@ public class CheckoutServlet extends HttpServlet {
         List<CartItem> checkoutItems = new ArrayList<>();
         for (CartItem item : cart.getItems()) {
             for (String selectedId : selectedItems) {
-                if (item.getVariantId() == Integer.parseInt(selectedId)) {
-                    checkoutItems.add(item);
-                    subtotal += item.getTotalPrice();
-                    break;
+                try {
+                    if (item.getVariantId() == Integer.parseInt(selectedId)) {
+                        checkoutItems.add(item);
+                        subtotal += item.getTotalPrice();
+                        break;
+                    }
+                } catch (NumberFormatException ignored) {
                 }
             }
+        }
+        if (checkoutItems.isEmpty()) {
+            response.sendRedirect(request.getContextPath() + "/gio-hang");
+            return;
         }
 
         UserAddressDAO addressDAO = DAOFactory.getInstance().getUserAddressDAO();
@@ -74,7 +82,10 @@ public class CheckoutServlet extends HttpServlet {
                     break;
                 }
             }
-            if (defaultAddr == null) defaultAddr = addresses.get(0);
+
+            if (defaultAddr == null) {
+                defaultAddr = addresses.get(0);
+            }
         }
 
         String selectedAddressId = request.getParameter("selectedAddress");
@@ -82,23 +93,32 @@ public class CheckoutServlet extends HttpServlet {
         String shippingMethod = request.getParameter("shippingMethod");
 
         String provinceToCalculate = (provinceFromForm != null && !provinceFromForm.isEmpty())
-                ? provinceFromForm : (defaultAddr != null ? defaultAddr.getProvince() : "");
+                ? provinceFromForm
+                : (defaultAddr != null ? defaultAddr.getProvince() : "");
 
         ShippingDAO shippingDAO = DAOFactory.getInstance().getShippingDAO();
         double baseProvinceFee = (provinceToCalculate != null && !provinceToCalculate.isEmpty())
-                ? shippingDAO.getFeeByProvince(provinceToCalculate) : 30000;
+                ? shippingDAO.getFeeByProvince(provinceToCalculate)
+                : 30000;
 
         double extraFee = 0;
-        if ("express".equals(shippingMethod)) extraFee = 15000;
-        else if ("instant".equals(shippingMethod)) extraFee = 30000;
+
+        if ("express".equals(shippingMethod)) {
+            extraFee = 15000;
+        } else if ("instant".equals(shippingMethod)) {
+            extraFee = 30000;
+        }
+
+        double shippingFee = baseProvinceFee + extraFee;
 
         request.setAttribute("addresses", addresses);
         request.setAttribute("checkoutItems", checkoutItems);
         request.setAttribute("subtotal", subtotal);
 
-        request.setAttribute("baseProvinceFee", 0);
-        request.setAttribute("extraShippingFee", 0);
-        request.setAttribute("totalAmount", subtotal + baseProvinceFee + extraFee);
+        request.setAttribute("baseProvinceFee", baseProvinceFee);
+        request.setAttribute("extraShippingFee", extraFee);
+        request.setAttribute("shippingFee", shippingFee);
+        request.setAttribute("totalAmount", subtotal + shippingFee);
 
         request.setAttribute("selectedAddressId", selectedAddressId);
         request.setAttribute("selectedProvince", provinceFromForm);
@@ -109,6 +129,10 @@ public class CheckoutServlet extends HttpServlet {
             List<VipVoucher> userVipVouchers = voucherDAO.getActiveVouchersForUser(user.getId());
             request.setAttribute("userVipVouchers", userVipVouchers);
         }
+
+        CouponDAO couponDAO = DAOFactory.getInstance().getCouponDAO();
+        List<Coupon> userCoupons = couponDAO.getUsableCouponsForUser(user.getId(), subtotal);
+        request.setAttribute("userCoupons", userCoupons);
 
         request.getRequestDispatcher("/cart/thanh-toan.jsp").forward(request, response);
     }
@@ -155,7 +179,9 @@ public class CheckoutServlet extends HttpServlet {
         } else {
             try {
                 shippingAddressId = Integer.parseInt(selectedAddressVal);
-            } catch (NumberFormatException e) { shippingAddressId = 0; }
+            } catch (NumberFormatException e) {
+                shippingAddressId = 0;
+            }
         }
 
         if (shippingAddressId <= 0) {
@@ -167,12 +193,20 @@ public class CheckoutServlet extends HttpServlet {
         double subtotal = 0;
         for (CartItem item : cart.getItems()) {
             for (String idStr : selectedItemIds) {
-                if (item.getVariantId() == Integer.parseInt(idStr)) {
-                    selectedCartItems.add(item);
-                    subtotal += item.getTotalPrice();
-                    break;
+                try {
+                    if (item.getVariantId() == Integer.parseInt(idStr)) {
+                        selectedCartItems.add(item);
+                        subtotal += item.getTotalPrice();
+                        break;
+                    }
+                } catch (NumberFormatException ignored) {
                 }
             }
+        }
+
+        if (selectedCartItems.isEmpty()) {
+            response.sendRedirect(request.getContextPath() + "/gio-hang");
+            return;
         }
 
         ShippingDAO shippingDAO = DAOFactory.getInstance().getShippingDAO();
@@ -195,23 +229,70 @@ public class CheckoutServlet extends HttpServlet {
         if ("true".equals(request.getParameter("applyVipVoucher")) && Boolean.TRUE.equals(user.getIsVip())) {
             try {
                 int vId = Integer.parseInt(request.getParameter("selectedVoucher"));
-                VipVoucher voucher = DAOFactory.getInstance().getVipVoucherDAO().getActiveVoucherForUser(user.getId(), vId);
+                VipVoucher voucher = DAOFactory.getInstance()
+                        .getVipVoucherDAO()
+                        .getActiveVoucherForUser(user.getId(), vId);
+
                 if (voucher != null) {
-                    vipDiscount = "PERCENT".equals(voucher.getDiscountType()) ? (subtotal * voucher.getDiscountValue() / 100.0) : voucher.getDiscountValue();
-                    if (vipDiscount > subtotal) vipDiscount = subtotal;
+                    if ("PERCENT".equals(voucher.getDiscountType())) {
+                        vipDiscount = subtotal * voucher.getDiscountValue() / 100.0;
+                    } else {
+                        vipDiscount = voucher.getDiscountValue();
+                    }
+
+                    if (vipDiscount > subtotal) {
+                        vipDiscount = subtotal;
+                    }
+
                     appliedVoucherId = vId;
                 }
-            } catch (Exception e) { e.printStackTrace(); }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
 
-        double totalAmount = Math.max(0, subtotal - vipDiscount + finalShippingFee);
+        double couponDiscount = 0;
+        Integer appliedCouponId = null;
+        String appliedCouponCode = null;
+
+        try {
+            CouponDAO couponDAO = DAOFactory.getInstance().getCouponDAO();
+
+            String selectedCouponIdStr = request.getParameter("selectedCouponId");
+            String manualCouponCode = request.getParameter("manualCouponCode");
+
+            Coupon coupon = null;
+
+            if (selectedCouponIdStr != null && !selectedCouponIdStr.trim().isEmpty()) {
+                int selectedCouponId = Integer.parseInt(selectedCouponIdStr);
+                coupon = couponDAO.getValidClaimedCouponForCheckout(user.getId(), selectedCouponId, subtotal);
+            } else if (manualCouponCode != null && !manualCouponCode.trim().isEmpty()) {
+                coupon = couponDAO.getValidCouponByCodeForCheckout(user.getId(), manualCouponCode.trim(), subtotal);
+            }
+
+            if (coupon != null) {
+                couponDiscount = couponDAO.calculateDiscount(coupon, subtotal);
+                appliedCouponId = coupon.getId();
+                appliedCouponCode = coupon.getCode();
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        double totalAmount = Math.max(0, subtotal - couponDiscount - vipDiscount + finalShippingFee);
 
         Order order = new Order();
         order.setUserId(user.getId());
         order.setShippingAddressId(shippingAddressId);
         order.setOrderNumber(generateOrderNumber());
+        order.setSubtotalAmount(subtotal);
         order.setTotalAmount(totalAmount);
         order.setShippingFee(finalShippingFee);
+        order.setCouponId(appliedCouponId);
+        order.setCouponCode(appliedCouponCode);
+        order.setCouponDiscountAmount(couponDiscount);
+        order.setVipDiscountAmount(vipDiscount);
         order.setPaymentMethod(request.getParameter("paymentMethod"));
         order.setNotes(request.getParameter("note"));
 
@@ -234,16 +315,32 @@ public class CheckoutServlet extends HttpServlet {
                 vvDAO.markVoucherUsed(user.getId(), appliedVoucherId);
             }
 
+            if (appliedCouponId != null) {
+                CouponDAO couponDAO = DAOFactory.getInstance().getCouponDAO();
+                boolean used = couponDAO.markCouponUsed(user.getId(), appliedCouponId);
+
+                if (!used) {
+                    System.out.println("Không thể cập nhật trạng thái đã dùng cho couponId = " + appliedCouponId);
+                }
+            }
+
             cart.removeItems(selectedItemIds);
             session.setAttribute("cart", cart);
             session.removeAttribute("selectedItemIds");
 
             String paymentMethod = request.getParameter("paymentMethod");
-            if (paymentMethod == null) paymentMethod = "cod";
+
+            if (paymentMethod == null) {
+                paymentMethod = "cod";
+            }
+
             if (!"cod".equals(paymentMethod)) {
                 try {
                     Order createdOrder = orderDAO.getOrderById(orderId);
-                    PaymentResult res = "bank".equals(paymentMethod) ? PaymentUtils.createPayosPayment(createdOrder) : PaymentUtils.createMomoPayment(createdOrder);
+
+                    PaymentResult res = "bank".equals(paymentMethod)
+                            ? PaymentUtils.createPayosPayment(createdOrder)
+                            : PaymentUtils.createMomoPayment(createdOrder);
 
                     if (res != null) {
                         PaymentTransaction tx = new PaymentTransaction();
@@ -260,7 +357,9 @@ public class CheckoutServlet extends HttpServlet {
                         response.sendRedirect("thanh-toan-qr?orderId=" + orderId);
                         return;
                     }
-                } catch (Exception e) { e.printStackTrace(); }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             }
             response.sendRedirect("hoa-don?id=" + orderId);
         } else {
@@ -276,8 +375,12 @@ public class CheckoutServlet extends HttpServlet {
             provinceFee = shippingDAO.getFeeByProvince(province);
         }
         double serviceFee = 0;
-        if ("express".equals(shippingMethod)) serviceFee = 15000;
-        else if ("instant".equals(shippingMethod)) serviceFee = 30000;
+
+        if ("express".equals(shippingMethod)) {
+            serviceFee = 15000;
+        } else if ("instant".equals(shippingMethod)) {
+            serviceFee = 30000;
+        }
 
         return provinceFee + serviceFee;
     }
