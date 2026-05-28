@@ -48,18 +48,26 @@ public class UserAddressServlet extends HttpServlet {
             String fullName = request.getParameter("fullName");
             String phone = request.getParameter("phoneNumber");
             String province = request.getParameter("province");
+            String district = request.getParameter("district");
             String ward = request.getParameter("ward");
             String street = request.getParameter("addressLine");
             String label = request.getParameter("addressLabel");
+            String districtIdStr = request.getParameter("districtId");
+            String wardCode = request.getParameter("wardCode");
 
             UserAddress addr = new UserAddress();
             addr.setUserId(user.getId());
             addr.setFullName(fullName);
             addr.setPhoneNumber(phone);
             addr.setProvince(province);
+            addr.setDistrict(district);
             addr.setWard(ward);
             addr.setStreetAddress(street);
             addr.setLabel(label);
+            if (districtIdStr != null && !districtIdStr.isEmpty()) {
+                try { addr.setDistrictId(Integer.parseInt(districtIdStr)); } catch (NumberFormatException ignored) {}
+            }
+            if (wardCode != null && !wardCode.isEmpty()) addr.setWardCode(wardCode);
 
             List<UserAddress> existing = dao.getListAddress(user.getId());
             if (existing.isEmpty()) {

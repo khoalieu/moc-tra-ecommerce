@@ -40,9 +40,7 @@ public class AdminOrderGHNServlet extends HttpServlet {
         response.setContentType("application/json;charset=UTF-8");
         User admin = (User) request.getSession().getAttribute("user");
 
-        String orderIdStr      = request.getParameter("orderId");
-        String districtIdStr   = request.getParameter("toDistrictId");
-        String wardCode        = request.getParameter("toWardCode");
+        String orderIdStr = request.getParameter("orderId");
 
         if (orderIdStr == null || orderIdStr.isEmpty()) {
             sendError(response, "Thiếu tham số orderId");
@@ -77,38 +75,34 @@ public class AdminOrderGHNServlet extends HttpServlet {
             return;
         }
 
-        int toDistrictId = 0;
-        String toWardCode = "";
-        try {
-            if (districtIdStr != null && !districtIdStr.isEmpty()) {
-                toDistrictId = Integer.parseInt(districtIdStr.trim());
-            }
-            if (wardCode != null) {
-                toWardCode = wardCode.trim();
-            }
-        } catch (NumberFormatException ignored) {}
+        Integer toDistrictId = address.getDistrictId();
+        String toWardCode = address.getWardCode();
 
-        if (toDistrictId == 0 || toWardCode.isEmpty()) {
-            sendError(response, "Vui lòng nhập mã Quận/Huyện và Phường/Xã theo GHN để tạo vận đơn");
+        if (toDistrictId == null || toDistrictId == 0 || toWardCode == null || toWardCode.isEmpty()) {
+            sendError(response,
+                "Địa chỉ giao hàng của đơn này chưa có mã GHN (đặt trước khi tích hợp). " +
+                "Vui lòng yêu cầu khách cập nhật địa chỉ hoặc đặt lại đơn hàng.");
             return;
         }
 
         GHNShippingDAO.GHNCreateOrderResult result = ghnDAO.createGHNOrder(order, address, toDistrictId, toWardCode);
 
         if (result == null || result.orderCode == null || result.orderCode.isEmpty()) {
-            sendError(response, "Tạo vận đơn GHN thất bại. Kiểm tra lại cấu hình GHN token/shopId và thông tin địa chỉ.");
+            String ghMsg = (result != null && result.errorMessage != null) ? result.errorMessage : "Lỗi kết nối hoặc không xác định";
+            sendError(response, "Tạo vận đơn GHN thất bại: " + ghMsg);
             return;
         }
 
         boolean updated = orderDAO.updateGHNShippingInfo(orderId, result.orderCode);
         if (!updated) {
-            sendError(response, "Tạo vận đơn GHN thành công nhưng không thể cập nhật CSDL. Mã vận đơn: " + result.orderCode);
+            sendError(response, "Tạo vận đơn thành công nhưng không thể cập nhật CSDL. Mã vận đơn: " + result.orderCode);
             return;
         }
 
         if (admin != null) {
             logService.log(admin.getId(), "Tạo vận đơn GHN #" + result.orderCode + " cho đơn hàng", "Order", orderId);
         }
+
         String json = String.format(
             "{\"success\":true,\"orderCode\":\"%s\",\"expectedDelivery\":\"%s\",\"totalFee\":%d," +
             "\"message\":\"Tạo vận đơn GHN thành công!\",\"trackingUrl\":\"https://donhang.ghn.vn/?order_code=%s\"}",
