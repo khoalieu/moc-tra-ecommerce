@@ -25,17 +25,7 @@ public class UserAddressDAO {
             ps.setInt(1, userId);
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
-                    UserAddress a = new UserAddress();
-                    a.setId(rs.getInt("id"));
-                    a.setUserId(rs.getInt("user_id"));
-                    a.setFullName(rs.getString("full_name"));
-                    a.setPhoneNumber(rs.getString("phone_number"));
-                    a.setLabel(rs.getString("label"));
-                    a.setProvince(rs.getString("province"));
-                    a.setWard(rs.getString("ward"));
-                    a.setStreetAddress(rs.getString("street_address"));
-                    a.setIsDefault(rs.getBoolean("is_default"));
-                    list.add(a);
+                    list.add(mapRow(rs));
                 }
             }
         } catch (Exception e) {
@@ -44,8 +34,27 @@ public class UserAddressDAO {
         return list;
     }
 
+    private UserAddress mapRow(ResultSet rs) throws Exception {
+        UserAddress a = new UserAddress();
+        a.setId(rs.getInt("id"));
+        a.setUserId(rs.getInt("user_id"));
+        a.setFullName(rs.getString("full_name"));
+        a.setPhoneNumber(rs.getString("phone_number"));
+        a.setLabel(rs.getString("label"));
+        a.setProvince(rs.getString("province"));
+        a.setDistrict(rs.getString("district"));
+        a.setWard(rs.getString("ward"));
+        a.setStreetAddress(rs.getString("street_address"));
+        a.setIsDefault(rs.getBoolean("is_default"));
+        // GHN codes - có thể null nếu địa chỉ được tạo trước migration
+        int dId = rs.getInt("district_id");
+        if (!rs.wasNull()) a.setDistrictId(dId);
+        a.setWardCode(rs.getString("ward_code"));
+        return a;
+    }
+
     public boolean addAddress(UserAddress addr) {
-        String sql = "INSERT INTO user_addresses (user_id, full_name, phone_number, label, province, ward, street_address, is_default) VALUES (?,?,?,?,?,?,?,?)";
+        String sql = "INSERT INTO user_addresses (user_id, full_name, phone_number, label, province, district, ward, street_address, is_default, district_id, ward_code) VALUES (?,?,?,?,?,?,?,?,?,?,?)";
         try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, addr.getUserId());
@@ -53,9 +62,13 @@ public class UserAddressDAO {
             ps.setString(3, addr.getPhoneNumber());
             ps.setString(4, addr.getLabel());
             ps.setString(5, addr.getProvince());
-            ps.setString(6, addr.getWard());
-            ps.setString(7, addr.getStreetAddress());
-            ps.setBoolean(8, addr.getIsDefault());
+            ps.setString(6, addr.getDistrict());
+            ps.setString(7, addr.getWard());
+            ps.setString(8, addr.getStreetAddress());
+            ps.setBoolean(9, addr.getIsDefault());
+            if (addr.getDistrictId() != null) ps.setInt(10, addr.getDistrictId());
+            else ps.setNull(10, java.sql.Types.INTEGER);
+            ps.setString(11, addr.getWardCode());
             return ps.executeUpdate() > 0;
         } catch (Exception e) {
             e.printStackTrace();
@@ -149,9 +162,8 @@ public class UserAddressDAO {
     }
 
     public int addAddressAndGetId(UserAddress addr) {
-        String sql = "INSERT INTO user_addresses (user_id, full_name, phone_number, label, province, ward, street_address, is_default) VALUES (?,?,?,?,?,?,?,?)";
+        String sql = "INSERT INTO user_addresses (user_id, full_name, phone_number, label, province, district, ward, street_address, is_default, district_id, ward_code) VALUES (?,?,?,?,?,?,?,?,?,?,?)";
 
-        // Thêm tham số Statement.RETURN_GENERATED_KEYS để lấy ID vừa tạo
         try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql, java.sql.Statement.RETURN_GENERATED_KEYS)) {
 
@@ -160,16 +172,18 @@ public class UserAddressDAO {
             ps.setString(3, addr.getPhoneNumber());
             ps.setString(4, addr.getLabel());
             ps.setString(5, addr.getProvince());
-            ps.setString(6, addr.getWard());
-            ps.setString(7, addr.getStreetAddress());
-            ps.setBoolean(8, addr.getIsDefault());
+            ps.setString(6, addr.getDistrict());
+            ps.setString(7, addr.getWard());
+            ps.setString(8, addr.getStreetAddress());
+            ps.setBoolean(9, addr.getIsDefault());
+            if (addr.getDistrictId() != null) ps.setInt(10, addr.getDistrictId());
+            else ps.setNull(10, java.sql.Types.INTEGER);
+            ps.setString(11, addr.getWardCode());
 
             int rows = ps.executeUpdate();
             if (rows > 0) {
                 try (ResultSet rs = ps.getGeneratedKeys()) {
-                    if (rs.next()) {
-                        return rs.getInt(1);
-                    }
+                    if (rs.next()) return rs.getInt(1);
                 }
             }
         } catch (Exception e) {
@@ -184,19 +198,9 @@ public class UserAddressDAO {
 
             ps.setInt(1, addressId);
             try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    UserAddress a = new UserAddress();
-                    a.setId(rs.getInt("id"));
-                    a.setUserId(rs.getInt("user_id"));
-                    a.setFullName(rs.getString("full_name"));
-                    a.setPhoneNumber(rs.getString("phone_number"));
-                    a.setLabel(rs.getString("label"));
-                    a.setProvince(rs.getString("province"));
-                    a.setWard(rs.getString("ward"));
-                    a.setStreetAddress(rs.getString("street_address"));
-                    a.setIsDefault(rs.getBoolean("is_default"));
-                    return a;
-                }
+                if (rs.next()) return mapRow(rs);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
             }
         } catch (SQLException e) {
             e.printStackTrace();

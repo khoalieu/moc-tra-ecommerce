@@ -324,25 +324,17 @@
         </h3>
         <p style="margin:0 0 14px 0; color:#666; font-size:14px;">Đơn hàng <strong>#${order.orderNumber}</strong></p>
 
-        <div style="background:#e8f5e9; border:1px solid #c8e6c9; border-radius:8px; padding:12px 14px; margin-bottom:16px; font-size:13px; color:#2e7d32; line-height:1.6;">
-            <i class="fa-solid fa-circle-info"></i>
-            Nhập mã Quận/Huyện và Phường/Xã theo hệ thống GHN.
-            <a href="https://5sao.ghn.dev/" target="_blank" style="color:#107e84; font-weight:600;">Tra cứu mã GHN tại đây →</a>
+        <div style="background:#e8f5e9; border:1px solid #c8e6c9; border-radius:8px; padding:14px; margin-bottom:16px; font-size:13px; color:#2e7d32; line-height:1.8;">
+            <i class="fa-solid fa-location-dot"></i>
+            <strong>Địa chỉ giao hàng:</strong><br>
+            <span style="color:#333;">${order.notes}</span>
         </div>
 
-        <label style="font-weight:600; font-size:14px; color:#333; display:block; margin-bottom:4px;">
-            Mã Quận/Huyện GHN <span style="color:red;">*</span>
-        </label>
-        <input id="ghnDistrictId" type="number" placeholder="Ví dụ: 1482 (Quận 1 - HCM)"
-               style="width:100%; padding:10px 12px; border:1px solid #ddd; border-radius:6px; font-size:14px; margin-bottom:12px; box-sizing:border-box;"
-               onfocus="this.style.borderColor='#107e84'" onblur="this.style.borderColor='#ddd'">
-
-        <label style="font-weight:600; font-size:14px; color:#333; display:block; margin-bottom:4px;">
-            Mã Phường/Xã GHN <span style="color:red;">*</span>
-        </label>
-        <input id="ghnWardCode" type="text" placeholder="Ví dụ: 20308 (Phường Bến Nghé)"
-               style="width:100%; padding:10px 12px; border:1px solid #ddd; border-radius:6px; font-size:14px; margin-bottom:16px; box-sizing:border-box;"
-               onfocus="this.style.borderColor='#107e84'" onblur="this.style.borderColor='#ddd'">
+        <div style="background:#fff8e1; border:1px solid #ffe082; border-radius:8px; padding:12px 14px; margin-bottom:16px; font-size:13px; color:#e65100; line-height:1.6;">
+            <i class="fa-solid fa-circle-info"></i>
+            Hệ thống sẽ tự động lấy mã địa chỉ GHN từ thông tin khách hàng đã nhập khi đặt hàng.
+            Nhấn <strong>"Tạo vận đơn GHN"</strong> để gửi đơn cho đơn vị vận chuyển.
+        </div>
 
         <div id="ghnResultBox" style="display:none; padding:14px; border-radius:8px; margin-bottom:16px; font-size:14px; line-height:1.7;"></div>
 
@@ -428,11 +420,10 @@
         });
     }
 
+    /* === Modal tạo vận đơn GHN === */
     function openGHNModal() {
         document.getElementById('ghnModal').style.display = 'flex';
         document.getElementById('ghnResultBox').style.display = 'none';
-        document.getElementById('ghnDistrictId').value = '';
-        document.getElementById('ghnWardCode').value = '';
     }
 
     function closeGHNModal() {
@@ -440,22 +431,12 @@
     }
 
     function createGHNOrder() {
-        const districtId = document.getElementById('ghnDistrictId').value.trim();
-        const wardCode   = document.getElementById('ghnWardCode').value.trim();
-
-        if (!districtId || !wardCode) {
-            alert('Vui lòng nhập đầy đủ Mã Quận/Huyện và Mã Phường/Xã GHN!');
-            return;
-        }
-
         const btn = document.getElementById('btnCreateGHN');
         btn.disabled = true;
         btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang tạo...';
 
         const params = new URLSearchParams();
         params.append('orderId', '${order.id}');
-        params.append('toDistrictId', districtId);
-        params.append('toWardCode', wardCode);
 
         fetch('admin/order/ghn-create', {
             method: 'POST',
@@ -470,7 +451,7 @@
                 box.style.background = '#e8f5e9';
                 box.style.border = '1px solid #c8e6c9';
                 box.style.color = '#2e7d32';
-                box.innerHTML = 
+                box.innerHTML =
                     '<strong><i class="fa-solid fa-check-circle"></i> ' + data.message + '</strong><br>' +
                     '🚚 Mã vận đơn GHN: <strong>' + data.orderCode + '</strong><br>' +
                     '📅 Dự kiến giao: ' + (data.expectedDelivery || 'Đang cập nhật') + '<br>' +

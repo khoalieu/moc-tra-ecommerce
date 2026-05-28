@@ -162,16 +162,25 @@ public class GHNShippingDAO {
             body.add("items", itemsArr);
 
             JsonObject response = post("/v2/shipping-order/create", body);
-            if (response != null && response.has("data")) {
-                JsonObject data = response.getAsJsonObject("data");
-                GHNCreateOrderResult result = new GHNCreateOrderResult();
-                result.orderCode = data.has("order_code") ? data.get("order_code").getAsString() : "";
-                result.expectedDeliveryTime = data.has("expected_delivery_time") ? data.get("expected_delivery_time").getAsString() : "";
-                result.totalFee = data.has("total_fee") ? data.get("total_fee").getAsLong() : 0;
-                return result;
+            if (response != null) {
+                if (response.has("data") && response.get("data").isJsonObject()) {
+                    JsonObject data = response.getAsJsonObject("data");
+                    GHNCreateOrderResult result = new GHNCreateOrderResult();
+                    result.orderCode = data.has("order_code") ? data.get("order_code").getAsString() : "";
+                    result.expectedDeliveryTime = data.has("expected_delivery_time") && !data.get("expected_delivery_time").isJsonNull() ? data.get("expected_delivery_time").getAsString() : "";
+                    result.totalFee = data.has("total_fee") && !data.get("total_fee").isJsonNull() ? data.get("total_fee").getAsLong() : 0;
+                    return result;
+                } else {
+                    GHNCreateOrderResult result = new GHNCreateOrderResult();
+                    result.errorMessage = response.has("message") ? response.get("message").getAsString() : "Lỗi không xác định từ GHN";
+                    return result;
+                }
             }
         } catch (Exception e) {
             e.printStackTrace();
+            GHNCreateOrderResult result = new GHNCreateOrderResult();
+            result.errorMessage = "Exception: " + e.getMessage();
+            return result;
         }
         return null;
     }
@@ -261,5 +270,6 @@ public class GHNShippingDAO {
         public String orderCode;
         public String expectedDeliveryTime;
         public long totalFee;
+        public String errorMessage;
     }
 }
