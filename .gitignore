@@ -34,3 +34,5 @@ src/main/resources/database.properties
 src/main/resources/payment.properties
 
 Database/migrations/
+
+src/main/resources/ghn.properties

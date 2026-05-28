@@ -16,12 +16,6 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.Properties;
 
-/**
- * DAO tích hợp với API Giao Hàng Nhanh (GHN).
- * Cung cấp các chức năng: tính phí vận chuyển, tạo vận đơn, lấy danh sách địa chỉ.
- *
- * Tài liệu API GHN: https://api.ghn.dev/home/docs/detail
- */
 public class GHNShippingDAO {
 
     private final String baseUrl;
@@ -47,15 +41,6 @@ public class GHNShippingDAO {
         this.serviceTypeId     = parseInt(props.getProperty("ghn.service_type_id", "2"));
         this.defaultWeightGram = parseInt(props.getProperty("ghn.default_weight_gram", "500"));
     }
-
-    // =========================================================================
-    // TÍNH PHÍ VẬN CHUYỂN
-    // =========================================================================
-
-    /**
-     * Tính phí vận chuyển dựa trên district_id của người nhận.
-     * Trả về phí (VNĐ) hoặc -1 nếu lỗi.
-     */
     public long calculateShippingFee(int toDistrictId, String toWardCode, int weightGram) {
         try {
             JsonObject body = new JsonObject();
@@ -79,9 +64,6 @@ public class GHNShippingDAO {
         return -1;
     }
 
-    /**
-     * Tính phí ước tính theo tên tỉnh/thành (fallback khi không có mã GHN district).
-     */
     public long calculateFeeByProvinceName(String provinceName) {
         if (provinceName == null || provinceName.isEmpty()) return 30000;
         String lowerProvince = provinceName.toLowerCase();
@@ -92,67 +74,42 @@ public class GHNShippingDAO {
         if (lowerProvince.contains("hải phòng") || lowerProvince.contains("hai phong")) return 25000;
         if (lowerProvince.contains("cần thơ") || lowerProvince.contains("can tho")) return 30000;
 
-        // Miền Bắc
         if (lowerProvince.matches(".*(bắc giang|bắc kạn|bắc ninh|cao bằng|điện biên|hà giang|hà nam|hải dương|hưng yên|lai châu|lạng sơn|lào cai|nam định|ninh bình|phú thọ|quảng ninh|sơn la|thái bình|thái nguyên|tuyên quang|vĩnh phúc|yên bái).*"))
             return 25000;
-        // Miền Trung
         if (lowerProvince.matches(".*(bình định|bình thuận|đắk lắk|đắk nông|gia lai|hà tĩnh|khánh hòa|kon tum|ninh thuận|nghệ an|phú yên|quảng bình|quảng nam|quảng ngãi|quảng trị|thanh hóa|thừa thiên huế).*"))
             return 35000;
-        // Miền Nam
         if (lowerProvince.matches(".*(an giang|bà rịa|bạc liêu|bến tre|bình dương|bình phước|cà mau|đồng nai|đồng tháp|hậu giang|kiên giang|long an|sóc trăng|tây ninh|tiền giang|trà vinh|vĩnh long).*"))
             return 30000;
 
-        return 35000; // Mặc định cho các tỉnh còn lại
+        return 35000;
     }
-
-    // =========================================================================
-    // TẠO VẬN ĐƠN GHN
-    // =========================================================================
-
-    /**
-     * Tạo vận đơn GHN cho đơn hàng.
-     *
-     * @param order         Đối tượng Order
-     * @param address       Địa chỉ giao hàng
-     * @param toDistrictId  Mã quận/huyện GHN
-     * @param toWardCode    Mã phường/xã GHN
-     * @return GHNCreateOrderResult hoặc null nếu thất bại
-     */
     public GHNCreateOrderResult createGHNOrder(Order order, UserAddress address,
                                                int toDistrictId, String toWardCode) {
         try {
             JsonObject body = new JsonObject();
 
-            // Người nhận
             body.addProperty("to_name", address.getFullName());
             body.addProperty("to_phone", address.getPhoneNumber());
             body.addProperty("to_address", address.getStreetAddress());
             body.addProperty("to_ward_code", toWardCode);
             body.addProperty("to_district_id", toDistrictId);
 
-            // Loại thanh toán: 1 = shop trả phí, 2 = người nhận trả phí (COD)
             String paymentMethod = order.getPaymentMethod();
             boolean isCOD = (paymentMethod == null || "cod".equalsIgnoreCase(paymentMethod));
             body.addProperty("payment_type_id", isCOD ? 2 : 1);
 
-            // Thông tin dịch vụ
             body.addProperty("service_type_id", serviceTypeId);
             body.addProperty("weight", defaultWeightGram);
             body.addProperty("length", 20);
             body.addProperty("width", 15);
             body.addProperty("height", 10);
 
-            // Ghi chú
             String note = order.getNotes();
             body.addProperty("note", note != null ? note : "");
 
-            // Tiền thu hộ (COD)
+            body.addProperty("required_note", "KHONGCHOXEMHANG");
             body.addProperty("cod_amount", isCOD ? (long) order.getTotalAmount() : 0L);
-
-            // Nội dung đơn hàng
             body.addProperty("content", "Don hang " + order.getOrderNumber());
-
-            // Required: items array (GHN bắt buộc có ít nhất 1 item)
             JsonArray itemsArr = new JsonArray();
             JsonObject item = new JsonObject();
             item.addProperty("name", "San pham Moc Tra");
@@ -172,7 +129,18 @@ public class GHNShippingDAO {
                     return result;
                 } else {
                     GHNCreateOrderResult result = new GHNCreateOrderResult();
-                    result.errorMessage = response.has("message") ? response.get("message").getAsString() : "Lỗi không xác định từ GHN";
+                    String msg = "";
+                    int ghnCode = response.has("code") ? response.get("code").getAsInt() : 0;
+                    if (response.has("code_message_value") && !response.get("code_message_value").isJsonNull()
+                            && !response.get("code_message_value").getAsString().isEmpty()) {
+                        msg = response.get("code_message_value").getAsString();
+                    } else if (response.has("message") && !response.get("message").isJsonNull()) {
+                        msg = response.get("message").getAsString();
+                    } else {
+                        msg = "Lỗi không xác định từ GHN";
+                    }
+                    result.errorMessage = "[GHN " + ghnCode + "] " + msg;
+                    System.err.println("[GHN] createGHNOrder FAILED: " + response);
                     return result;
                 }
             }
