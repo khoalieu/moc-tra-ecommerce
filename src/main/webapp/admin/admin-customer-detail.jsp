@@ -82,17 +82,21 @@
                             </div>
                         </div>
                     </div>
-                    <div class="customer-actions-top">
-                        <a href="${pageContext.request.contextPath}/admin/customers" class="btn btn-secondary">
+                    <div class="customer-actions-top admin-action-group">
+                        <a href="${pageContext.request.contextPath}/admin/customers"
+                           class="admin-action-btn admin-action-back">
                             <i class="fas fa-arrow-left"></i> Quay lại
                         </a>
 
-                        <a href="${pageContext.request.contextPath}/admin/customer/edit?id=${customer.id}" class="btn btn-success">
-                            <i class="fas fa-edit"></i> Chỉnh sửa
+                        <a href="${pageContext.request.contextPath}/admin/customer/edit?id=${customer.id}"
+                           class="admin-action-btn admin-action-edit">
+                            <i class="fas fa-pen-to-square"></i> Chỉnh sửa
                         </a>
 
-                        <button class="btn btn-danger" onclick="deleteCustomer(${customer.id})">
-                            <i class="fas fa-trash"></i> Xóa
+                        <button type="button"
+                                class="admin-action-btn admin-action-delete"
+                                onclick="deleteCustomer(${customer.id})">
+                            <i class="fas fa-trash-can"></i> Xóa
                         </button>
                     </div>
                 </div>
@@ -228,15 +232,26 @@
                             <h3 class="card-title">
                                 <i class="fas fa-ticket-alt"></i> Quản lý voucher VIP
                             </h3>
-                            <form action="${pageContext.request.contextPath}/admin/customer/detail" method="post"
-                                  onsubmit="return confirm('Bạn có chắc muốn hạ khách hàng này xuống khách thường?');"
-                                  style="margin-bottom: 18px;">
-                                <input type="hidden" name="action" value="downgradeVip">
-                                <input type="hidden" name="customerId" value="${customer.id}">
-                                <button type="submit" class="btn btn-danger">
-                                    <i class="fas fa-user"></i> Hạ xuống khách thường
-                                </button>
-                            </form>
+                            <div class="vip-action-area">
+                                <div class="vip-action-info">
+                                    <i class="fas fa-crown"></i>
+                                    <div>
+                                        <div class="vip-action-title">Khách hàng đang là VIP</div>
+                                        <div class="vip-action-desc">
+                                            Có thể sử dụng voucher VIP và các ưu đãi dành riêng.
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <form action="${pageContext.request.contextPath}/admin/customer/detail" method="post"
+                                      onsubmit="return confirm('Bạn có chắc muốn hạ khách hàng này xuống khách thường?');">
+                                    <input type="hidden" name="action" value="downgradeVip">
+                                    <input type="hidden" name="customerId" value="${customer.id}">
+                                    <button type="submit" class="btn-vip-action btn-vip-downgrade">
+                                        <i class="fas fa-user-minus"></i> Hạ xuống thường
+                                    </button>
+                                </form>
+                            </div>
 
                             <div class="voucher-cart-list">
                                 <c:forEach var="voucher" items="${voucherList}">
@@ -344,7 +359,7 @@
                                         <input type="hidden" name="action" value="upgradeVip">
                                         <input type="hidden" name="customerId" value="${customer.id}">
 
-                                        <button type="submit" class="btn-save">
+                                        <button type="submit" class="btn-vip-action btn-vip-upgrade">
                                             <i class="fas fa-crown"></i> Nâng cấp VIP
                                         </button>
                                     </form>
