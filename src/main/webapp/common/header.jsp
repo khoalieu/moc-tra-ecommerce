@@ -217,13 +217,28 @@
                             </span>
                         </c:otherwise>
                     </c:choose>
+                        <c:if test="${not empty sessionScope.user and sessionScope.user.isVip}">
+                            <span class="user-vip-badge user-vip-badge--small" style="margin-left: 6px;">
+                                <i class="fa-solid fa-crown"></i> VIP
+                            </span>
+                        </c:if>
 
                     <div class="user-dropdown">
                         <c:choose>
                             <c:when test="${not empty sessionScope.user}">
                                 <div style="padding: 10px; border-bottom: 1px solid #eee;">
-                                    Xin chào, <strong>${sessionScope.user.lastName} ${sessionScope.user.firstName}</strong>
-                                </div>
+                                    <div class="user-vip-inline">
+                                        <span>
+                                            Xin chào,
+                                            <strong>${sessionScope.user.lastName} ${sessionScope.user.firstName}</strong>
+                                        </span>
+
+                                        <c:if test="${sessionScope.user.isVip}">
+                                            <span class="user-vip-badge user-vip-badge--small">
+                                                <i class="fa-solid fa-crown"></i> VIP
+                                            </span>
+                                        </c:if>
+                                    </div>                                </div>
                                 <c:if test="${sessionScope.user.role == 'ADMIN'}">
                                     <a href="${pageContext.request.contextPath}/admin/admin-dashboard.jsp">Trang quản trị</a>
                                 </c:if>
