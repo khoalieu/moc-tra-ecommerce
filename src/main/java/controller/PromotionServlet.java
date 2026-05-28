@@ -1,8 +1,10 @@
 package controller;
 
+import dao.CouponDAO;
 import dao.DAOFactory;
 import dao.PromotionDAO;
 import model.product.Product;
+import model.promotion.Coupon;
 import model.promotion.Promotion;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -10,11 +12,9 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import model.user.User;
+
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @WebServlet("/khuyen-mai")
 public class PromotionServlet extends HttpServlet {
@@ -24,6 +24,8 @@ public class PromotionServlet extends HttpServlet {
             throws ServletException, IOException {
 
         PromotionDAO dao = DAOFactory.getInstance().getPromotionDAO();
+        CouponDAO couponDAO = DAOFactory.getInstance().getCouponDAO();
+
         User loggedInUser = (User) request.getSession().getAttribute("user");
 
         boolean isVipUser = loggedInUser != null && Boolean.TRUE.equals(loggedInUser.getIsVip());
@@ -52,10 +54,20 @@ public class PromotionServlet extends HttpServlet {
             }
         }
 
+        List<Coupon> couponList = couponDAO.getActiveCouponsForPromotionPage();
+        Set<Integer> claimedCouponIds = new HashSet<>();
+
+        if (loggedInUser != null) {
+            claimedCouponIds = couponDAO.getClaimedCouponIdsByUser(loggedInUser.getId());
+        }
+
         request.setAttribute("activePromotions", allPromotions);
         request.setAttribute("promoMap", allPromoMap);
         request.setAttribute("vipPromoMap", vipPromoMap);
         request.setAttribute("isVipUser", isVipUser);
+
+        request.setAttribute("couponList", couponList);
+        request.setAttribute("claimedCouponIds", claimedCouponIds);
 
         request.getRequestDispatcher("/policy/khuyen-mai.jsp").forward(request, response);
     }

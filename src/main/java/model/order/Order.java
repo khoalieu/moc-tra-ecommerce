@@ -29,6 +29,12 @@ public class Order {
     private String shippingProvider;
     private String trackingCode;
 
+    private double subtotalAmount;
+    private Integer couponId;
+    private String couponCode;
+    private double couponDiscountAmount;
+    private double vipDiscountAmount;
+
     public Order() {}
 
     public int getId() { return id; }
@@ -115,4 +121,44 @@ public class Order {
 
     public String getTrackingCode() { return trackingCode; }
     public void setTrackingCode(String trackingCode) { this.trackingCode = trackingCode; }
+
+    public double getSubtotalAmount() {
+        return subtotalAmount;
+    }
+
+    public void setSubtotalAmount(double subtotalAmount) {
+        this.subtotalAmount = subtotalAmount;
+    }
+
+    public Integer getCouponId() {
+        return couponId;
+    }
+
+    public void setCouponId(Integer couponId) {
+        this.couponId = couponId;
+    }
+
+    public String getCouponCode() {
+        return couponCode;
+    }
+
+    public void setCouponCode(String couponCode) {
+        this.couponCode = couponCode;
+    }
+
+    public double getCouponDiscountAmount() {
+        return couponDiscountAmount;
+    }
+
+    public void setCouponDiscountAmount(double couponDiscountAmount) {
+        this.couponDiscountAmount = couponDiscountAmount;
+    }
+
+    public double getVipDiscountAmount() {
+        return vipDiscountAmount;
+    }
+
+    public void setVipDiscountAmount(double vipDiscountAmount) {
+        this.vipDiscountAmount = vipDiscountAmount;
+    }
 }

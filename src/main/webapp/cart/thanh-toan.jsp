@@ -23,8 +23,17 @@
         <div class="container">
             <h1 class="checkout-title">Thanh toán</h1>
 
+            <c:if test="${not empty errorMessage}">
+                <div style="padding: 12px; background: #f8d7da; color: #721c24; border-radius: 8px; margin-bottom: 18px;">
+                        ${errorMessage}
+                </div>
+            </c:if>
+
             <form class="checkout-form" action="thanh-toan" method="post" id="checkoutForm">
                 <input type="hidden" id="hiddenSubtotal" value="${subtotal}">
+                <input type="hidden" id="selectedCouponId" name="selectedCouponId">
+                <input type="hidden" id="manualCouponCode" name="manualCouponCode">
+                <input type="hidden" id="hiddenCouponDiscount" value="0">
 
                 <div class="checkout-layout">
                     <div class="checkout-left">
@@ -37,7 +46,12 @@
                                 <div class="address-list">
                                     <c:forEach var="addr" items="${addresses}">
                                         <label class="address-option">
-                                            <input type="radio" name="selectedAddress" value="${addr.id}" data-province="${addr.province}" ${addr.isDefault ? 'checked' : ''}>
+                                            <input type="radio"
+                                                   name="selectedAddress"
+                                                   value="${addr.id}"
+                                                   data-province="${addr.province}"
+                                                ${addr.isDefault ? 'checked' : ''}>
+
                                             <div class="address-content">
                                                 <strong class="address-label">${addr.label}</strong>
                                                 <div class="address-detail">
@@ -52,7 +66,11 @@
                                     </c:forEach>
 
                                     <label class="address-option">
-                                        <input type="radio" name="selectedAddress" value="new" ${empty addresses ? 'checked' : ''}>
+                                        <input type="radio"
+                                               name="selectedAddress"
+                                               value="new"
+                                        ${empty addresses ? 'checked' : ''}>
+
                                         <div class="address-content">
                                             <strong class="address-label">Giao đến địa chỉ khác</strong>
                                             <div class="address-detail">
@@ -67,11 +85,23 @@
                                 <div class="form-row form-row--2">
                                     <div class="form-field">
                                         <label for="fullName">Họ và tên <span class="required">*</span></label>
-                                        <input type="text" id="fullName" name="fullName" placeholder="Nguyễn Văn A" required minlength="2" title="Vui lòng nhập họ tên hợp lệ">
+                                        <input type="text"
+                                               id="fullName"
+                                               name="fullName"
+                                               placeholder="Nguyễn Văn A"
+                                               required
+                                               minlength="2"
+                                               title="Vui lòng nhập họ tên hợp lệ">
                                     </div>
                                     <div class="form-field">
                                         <label for="phoneNumber">Số điện thoại <span class="required">*</span></label>
-                                        <input type="tel" id="phoneNumber" name="phoneNumber" placeholder="0888 531 015" required pattern="^(0[3|5|7|8|9])+([0-9]{8})$" title="Số điện thoại phải bắt đầu bằng 0 và gồm 10 chữ số">
+                                        <input type="tel"
+                                               id="phoneNumber"
+                                               name="phoneNumber"
+                                               placeholder="0888 531 015"
+                                               required
+                                               pattern="^(0[3|5|7|8|9])+([0-9]{8})$"
+                                               title="Số điện thoại phải bắt đầu bằng 0 và gồm 10 chữ số">
                                     </div>
                                 </div>
 
@@ -93,7 +123,11 @@
                                 <div class="form-row">
                                     <div class="form-field">
                                         <label for="addressLine">Địa chỉ cụ thể <span class="required">*</span></label>
-                                        <input type="text" id="addressLine" name="addressLine" placeholder="Số nhà, tên đường, tòa nhà..." required>
+                                        <input type="text"
+                                               id="addressLine"
+                                               name="addressLine"
+                                               placeholder="Số nhà, tên đường, tòa nhà..."
+                                               required>
                                     </div>
                                 </div>
                             </div>
@@ -108,12 +142,14 @@
                             <div class="form-row">
                                 <div class="form-field">
                                     <label for="note">Ghi chú khi giao hàng</label>
-                                    <textarea id="note" name="note" rows="3" placeholder="Ví dụ: Gọi trước khi giao, giao giờ hành chính,..."></textarea>
+                                    <textarea id="note"
+                                              name="note"
+                                              rows="3"
+                                              placeholder="Ví dụ: Gọi trước khi giao, giao giờ hành chính,..."></textarea>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- VIP Voucher Section -->
                         <c:if test="${sessionScope.user != null && sessionScope.user.isVip}">
                             <div class="checkout-card vip-voucher-card">
                                 <h2 class="checkout-card__title">💎 Voucher Khách Hàng VIP</h2>
@@ -145,7 +181,8 @@
                                             </select>
                                         </div>
 
-                                        <div id="vipDiscountInfo" style="margin-top: 15px; padding: 12px; background: #fff9c4; border-radius: 6px; border-left: 4px solid #ffd54f; display: none;">
+                                        <div id="vipDiscountInfo"
+                                             style="margin-top: 15px; padding: 12px; background: #fff9c4; border-radius: 6px; border-left: 4px solid #ffd54f; display: none;">
                                             <p style="margin: 0; font-size: 0.95rem; color: #333;">
                                                 <strong>Giảm giá VIP:</strong>
                                                 <span id="vipDiscountDisplay" style="color: #ff6f00; font-weight: bold;">0đ</span>
@@ -156,14 +193,87 @@
                             </div>
                         </c:if>
 
-                        <div class="checkout-card">
+                        <div class="checkout-card coupon-checkout-card">
+                            <h2 class="checkout-card__title">🎟️ Mã giảm giá</h2>
 
+                            <div class="coupon-checkout-section">
+                                <div class="form-field">
+                                    <label for="selectedCoupon">Chọn mã đã nhận:</label>
+
+                                    <c:choose>
+                                        <c:when test="${not empty userCoupons}">
+                                            <select id="selectedCoupon" class="form-control">
+                                                <option value="">-- Không áp dụng mã --</option>
+
+                                                <c:forEach var="coupon" items="${userCoupons}">
+                                                    <option value="${coupon.id}"
+                                                            data-code="${coupon.code}"
+                                                            data-type="${coupon.discountType}"
+                                                            data-discount="${coupon.discountValue}"
+                                                            data-max-discount="${coupon.maxDiscountAmount}"
+                                                            data-min-order="${coupon.minOrderAmount}">
+                                                            ${coupon.code} -
+
+                                                        <c:if test="${coupon.discountType == 'PERCENT'}">
+                                                            Giảm ${coupon.discountValue}%
+                                                            <c:if test="${coupon.maxDiscountAmount != null}">
+                                                                tối đa <fmt:formatNumber value="${coupon.maxDiscountAmount}" pattern="#,###"/>đ
+                                                            </c:if>
+                                                        </c:if>
+
+                                                        <c:if test="${coupon.discountType == 'FIXED_AMOUNT'}">
+                                                            Giảm <fmt:formatNumber value="${coupon.discountValue}" pattern="#,###"/>đ
+                                                        </c:if>
+                                                    </option>
+                                                </c:forEach>
+                                            </select>
+                                        </c:when>
+
+                                        <c:otherwise>
+                                            <div style="padding: 12px; background: #f8f9fa; border-radius: 8px; color: #666;">
+                                                Bạn chưa có mã ưu đãi nào.
+                                            </div>
+                                        </c:otherwise>
+                                    </c:choose>
+                                </div>
+
+                                <div style="margin: 15px 0; text-align: center; color: #777;">
+                                    hoặc
+                                </div>
+
+                                <div class="form-field">
+                                    <label for="couponCodeInput">Nhập mã giảm giá:</label>
+
+                                    <div style="display: flex; gap: 10px;">
+                                        <input type="text"
+                                               id="couponCodeInput"
+                                               class="form-control"
+                                               placeholder="Ví dụ: MOCTRA50"
+                                               style="text-transform: uppercase;">
+
+                                        <button type="button"
+                                                id="btnApplyCoupon"
+                                                class="btn btn-primary"
+                                                style="white-space: nowrap; border: none;">
+                                            Áp dụng
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div id="couponCheckoutMessage"
+                                     style="display: none; margin-top: 12px; padding: 10px 12px; border-radius: 8px; font-size: 0.92rem;">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="checkout-card">
                             <div class="checkout-card">
                                 <h2 class="checkout-card__title">Phương thức giao hàng</h2>
 
                                 <div class="shipping-methods">
                                     <label class="shipping-option">
                                         <input type="radio" name="shippingMethod" value="standard" data-price="0" checked>
+
                                         <div class="shipping-option__content">
                                             <div class="shipping-option__top">
                                                 <span class="shipping-option__name">Tiêu chuẩn</span>
@@ -259,8 +369,13 @@
                                 <div class="order-summary__row">
                                     <span>Phí vận chuyển</span>
                                     <span id="shippingFeeDisplay">
-                                            <fmt:formatNumber value="${shippingFee}" type="currency" currencySymbol="đ" maxFractionDigits="0"/>
-                                        </span>
+                                        <fmt:formatNumber value="${shippingFee}" type="currency" currencySymbol="đ" maxFractionDigits="0"/>
+                                    </span>
+                                </div>
+
+                                <div class="order-summary__row" id="couponDiscountRow" style="display: none;">
+                                    <span>Giảm mã ưu đãi</span>
+                                    <span id="couponDiscountAmount" style="color: #d32f2f;">-0đ</span>
                                 </div>
 
                                 <div class="order-summary__row" id="vipDiscountRow" style="display: none;">
@@ -271,8 +386,8 @@
                                 <div class="order-summary__row order-summary__row--total">
                                     <span>Tổng cộng</span>
                                     <span id="totalAmountDisplay">
-                                            <fmt:formatNumber value="${totalAmount}" type="currency" currencySymbol="đ" maxFractionDigits="0"/>
-                                        </span>
+                                        <fmt:formatNumber value="${totalAmount}" type="currency" currencySymbol="đ" maxFractionDigits="0"/>
+                                    </span>
                                 </div>
                             </div>
                         </div>
@@ -291,10 +406,15 @@
                                         </p>
                                     </div>
                                 </label>
+
                                 <label class="payment-option">
                                     <input type="radio" name="paymentMethod" value="cod">
+
                                     <div class="payment-option__content">
-                                        <span class="payment-option__name"><i class="fa-solid fa-box"></i> Thanh toán khi nhận hàng (COD)</span>
+                                        <span class="payment-option__name">
+                                            <i class="fa-solid fa-box"></i> Thanh toán khi nhận hàng (COD)
+                                        </span>
+
                                         <p class="payment-option__desc">Bạn thanh toán trực tiếp cho shipper khi nhận hàng.</p>
                                     </div>
                                 </label>
@@ -314,7 +434,10 @@
 
                         <div class="checkout-submit">
                             <button type="submit" class="btn btn-primary checkout-submit__btn" id="btnSubmitOrder">
-                                Thanh toán <span id="btnTotalDisplay"><fmt:formatNumber value="${totalAmount}" type="currency" currencySymbol="đ" maxFractionDigits="0"/></span>
+                                Thanh toán
+                                <span id="btnTotalDisplay">
+                                    <fmt:formatNumber value="${totalAmount}" type="currency" currencySymbol="đ" maxFractionDigits="0"/>
+                                </span>
                             </button>
                             <p class="checkout-submit__note">
                                 Bằng cách nhấn "Thanh toán", bạn đồng ý với
@@ -332,7 +455,7 @@
 <button id="backToTop" class="back-to-top" title="Lên đầu trang">
     <i class="fa-solid fa-chevron-up"></i>
 </button>
-</body>
+
 <script>
     document.addEventListener("DOMContentLoaded", function () {
         const addressRadios = document.querySelectorAll('input[name="selectedAddress"]');
@@ -354,6 +477,18 @@
         const vipDiscountRow = document.getElementById('vipDiscountRow');
         const vipDiscountAmount = document.getElementById('vipDiscountAmount');
 
+        const selectedCouponSelect = document.getElementById('selectedCoupon');
+        const couponCodeInput = document.getElementById('couponCodeInput');
+        const btnApplyCoupon = document.getElementById('btnApplyCoupon');
+        const couponCheckoutMessage = document.getElementById('couponCheckoutMessage');
+
+        const selectedCouponIdInput = document.getElementById('selectedCouponId');
+        const manualCouponCodeInput = document.getElementById('manualCouponCode');
+        const hiddenCouponDiscount = document.getElementById('hiddenCouponDiscount');
+
+        const couponDiscountRow = document.getElementById('couponDiscountRow');
+        const couponDiscountAmount = document.getElementById('couponDiscountAmount');
+
         const checkoutForm = document.getElementById("checkoutForm");
 
         const DATA_URL = "${pageContext.request.contextPath}/assets/data/openapi.json";
@@ -368,6 +503,112 @@
                 style: 'currency',
                 currency: 'VND'
             }).format(amount);
+        }
+
+        function showCouponCheckoutMessage(message, type) {
+            if (!couponCheckoutMessage) {
+                return;
+            }
+
+            couponCheckoutMessage.innerText = message;
+            couponCheckoutMessage.style.display = 'block';
+
+            if (type === 'success') {
+                couponCheckoutMessage.style.background = '#d4edda';
+                couponCheckoutMessage.style.color = '#155724';
+            } else {
+                couponCheckoutMessage.style.background = '#f8d7da';
+                couponCheckoutMessage.style.color = '#721c24';
+            }
+        }
+
+        function clearCoupon() {
+            if (selectedCouponIdInput) {
+                selectedCouponIdInput.value = '';
+            }
+
+            if (manualCouponCodeInput) {
+                manualCouponCodeInput.value = '';
+            }
+
+            if (hiddenCouponDiscount) {
+                hiddenCouponDiscount.value = '0';
+            }
+
+            if (couponDiscountRow) {
+                couponDiscountRow.style.display = 'none';
+            }
+
+            if (couponDiscountAmount) {
+                couponDiscountAmount.innerText = '-0đ';
+            }
+
+            updateTotal();
+        }
+
+        function getCouponDiscountAmount() {
+            if (!hiddenCouponDiscount) {
+                return 0;
+            }
+
+            return parseFloat(hiddenCouponDiscount.value) || 0;
+        }
+
+        function applyCouponByAjax(couponId, couponCode) {
+            let body = "";
+
+            if (couponId) {
+                body = "couponId=" + encodeURIComponent(couponId);
+            } else if (couponCode) {
+                body = "couponCode=" + encodeURIComponent(couponCode);
+            }
+
+            fetch("${pageContext.request.contextPath}/ap-dung-ma-giam-gia", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
+                    "X-Requested-With": "XMLHttpRequest"
+                },
+                body: body
+            })
+                .then(function (response) {
+                    return response.json();
+                })
+                .then(function (data) {
+                    if (!data.success) {
+                        clearCoupon();
+                        showCouponCheckoutMessage(data.message || "Mã giảm giá không hợp lệ.", "error");
+                        return;
+                    }
+
+                    if (selectedCouponIdInput) {
+                        selectedCouponIdInput.value = data.couponId || '';
+                    }
+
+                    if (manualCouponCodeInput) {
+                        manualCouponCodeInput.value = couponCode || '';
+                    }
+
+                    if (hiddenCouponDiscount) {
+                        hiddenCouponDiscount.value = data.discountAmount || 0;
+                    }
+
+                    if (couponDiscountRow) {
+                        couponDiscountRow.style.display = 'flex';
+                    }
+
+                    if (couponDiscountAmount) {
+                        couponDiscountAmount.innerText = '-' + formatCurrency(data.discountAmount || 0);
+                    }
+
+                    showCouponCheckoutMessage(data.message || "Áp dụng mã giảm giá thành công.", "success");
+
+                    updateTotal();
+                })
+                .catch(function () {
+                    clearCoupon();
+                    showCouponCheckoutMessage("Không thể áp dụng mã giảm giá. Vui lòng thử lại.", "error");
+                });
         }
 
         async function fetchProvinceFee(provinceName) {
@@ -426,8 +667,9 @@
 
         function updateTotal() {
             const vipDiscount = getVipDiscountAmount();
+            const couponDiscount = getCouponDiscountAmount();
             const totalShipping = provinceFee + serviceFee;
-            const newTotal = Math.max(0, subtotal - vipDiscount + totalShipping);
+            const newTotal = Math.max(0, subtotal - couponDiscount - vipDiscount + totalShipping);
 
             shippingFeeDisplay.innerText = formatCurrency(totalShipping);
             totalAmountDisplay.innerText = formatCurrency(newTotal);
@@ -436,7 +678,7 @@
             if (vipDiscount > 0) {
                 vipDiscountRow.style.display = 'flex';
                 vipDiscountAmount.innerText = '-' + formatCurrency(vipDiscount);
-            } else {
+            } else if (vipDiscountRow && vipDiscountAmount) {
                 vipDiscountRow.style.display = 'none';
                 vipDiscountAmount.innerText = '-0đ';
             }
@@ -450,6 +692,7 @@
 
             if (selected.value === "new") {
                 manualAddressForm.classList.remove("disabled");
+
                 manualInputs.forEach(input => {
                     if (input.id !== "ward") {
                         input.disabled = false;
@@ -534,6 +777,44 @@
             selectedVoucherSelect.addEventListener('change', updateTotal);
         }
 
+        if (selectedCouponSelect) {
+            selectedCouponSelect.addEventListener('change', function () {
+                const couponId = this.value;
+
+                if (!couponId) {
+                    clearCoupon();
+                    return;
+                }
+
+                if (couponCodeInput) {
+                    couponCodeInput.value = '';
+                }
+
+                applyCouponByAjax(couponId, '');
+            });
+        }
+
+        if (btnApplyCoupon) {
+            btnApplyCoupon.addEventListener('click', function () {
+                const code = couponCodeInput ? couponCodeInput.value.trim().toUpperCase() : '';
+
+                if (!code) {
+                    showCouponCheckoutMessage("Vui lòng nhập mã giảm giá.", "error");
+                    return;
+                }
+
+                if (couponCodeInput) {
+                    couponCodeInput.value = code;
+                }
+
+                if (selectedCouponSelect) {
+                    selectedCouponSelect.value = '';
+                }
+
+                applyCouponByAjax('', code);
+            });
+        }
+
         if (checkoutForm) {
             checkoutForm.addEventListener("submit", function (e) {
                 const selectedPayment = document.querySelector('input[name="paymentMethod"]:checked');
@@ -571,4 +852,5 @@
         });
     });
 </script>
+</body>
 </html>

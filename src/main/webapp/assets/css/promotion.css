@@ -273,3 +273,363 @@ transform: translateX(5px);
     margin-bottom: 0;
     color: white;
 }
+.coupon-section {
+    padding: 45px 0;
+    background: #fff;
+}
+
+.coupon-header {
+    margin-bottom: 22px;
+}
+
+.coupon-header h2 {
+    margin: 0 0 6px;
+    color: #107e84;
+    font-size: 30px;
+    font-weight: 700;
+}
+
+.coupon-header p {
+    margin: 0;
+    color: #666;
+    font-size: 15px;
+}
+
+.coupon-alert {
+    padding: 12px 15px;
+    border-radius: 8px;
+    margin-bottom: 18px;
+    font-weight: 500;
+}
+
+.coupon-alert-hidden {
+    display: none;
+}
+
+.coupon-alert-success {
+    background: #d4edda;
+    color: #155724;
+}
+
+.coupon-alert-error {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.coupon-alert-warning {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.coupon-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 18px;
+}
+
+.coupon-card {
+    display: grid;
+    grid-template-columns: 90px 1fr;
+    gap: 14px;
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 12px;
+    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.08);
+    transition: all 0.25s ease;
+}
+
+.coupon-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 22px rgba(15, 23, 42, 0.12);
+    border-color: #107e84;
+}
+
+.coupon-card-claimed {
+    border-color: #4caf50;
+    background: #fbfffb;
+}
+
+.coupon-icon-box {
+    width: 90px;
+    height: 90px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #fff0f5, #ffe3ec);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.coupon-icon-box i {
+    font-size: 42px;
+    color: #ff8aa8;
+}
+
+.coupon-content {
+    min-width: 0;
+}
+
+.coupon-code-title {
+    font-size: 15px;
+    font-weight: 800;
+    color: #222;
+    margin-bottom: 5px;
+    line-height: 1.4;
+}
+
+.coupon-code-title span {
+    color: #111;
+}
+
+.coupon-short-desc {
+    color: #444;
+    font-size: 14px;
+    line-height: 1.4;
+    margin-bottom: 10px;
+}
+
+.coupon-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.coupon-main-btn {
+    border: none;
+    border-radius: 999px;
+    padding: 7px 16px;
+    min-width: 92px;
+    background: #ec6f9e;
+    color: #fff;
+    font-weight: 700;
+    font-size: 13px;
+    cursor: pointer;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    transition: all 0.2s ease;
+}
+
+.coupon-main-btn:hover {
+    filter: brightness(0.95);
+    transform: translateY(-1px);
+    color: #fff;
+    text-decoration: none;
+}
+
+.coupon-login-btn {
+    background: #ff9800;
+}
+
+.coupon-claim-btn {
+    background: #ec6f9e;
+}
+
+.coupon-claimed-btn {
+    background: #4caf50;
+    cursor: default;
+}
+
+.coupon-out-btn {
+    background: #9ca3af;
+    cursor: not-allowed;
+}
+
+.coupon-claimed-btn:hover,
+.coupon-out-btn:hover {
+    transform: none;
+    filter: none;
+}
+
+.coupon-detail-btn {
+    border: none;
+    background: transparent;
+    color: #4f46e5;
+    font-weight: 600;
+    font-size: 13px;
+    cursor: pointer;
+    padding: 0;
+}
+
+.coupon-detail-btn:hover {
+    text-decoration: underline;
+}
+
+.coupon-detail-template {
+    display: none;
+}
+
+.coupon-empty {
+    padding: 30px;
+    text-align: center;
+    background: #f8f9fa;
+    border-radius: 12px;
+    color: #666;
+}
+
+.coupon-modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+}
+
+.coupon-modal.show {
+    display: block;
+}
+
+.coupon-modal-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+}
+
+.coupon-modal-box {
+    position: relative;
+    width: 440px;
+    max-width: calc(100% - 32px);
+    margin: 100px auto 0;
+    background: #fff;
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.22);
+    z-index: 2;
+}
+
+.coupon-modal-x {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    border: none;
+    background: #f3f4f6;
+    color: #333;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    cursor: pointer;
+}
+
+.coupon-modal-x:hover {
+    background: #e5e7eb;
+}
+
+#couponModalContent h3 {
+    margin: 0 0 16px;
+    color: #107e84;
+    font-size: 22px;
+}
+
+.coupon-detail-code {
+    padding: 10px 12px;
+    background: #f1f5f9;
+    border: 1px dashed #107e84;
+    color: #107e84;
+    border-radius: 10px;
+    margin-bottom: 14px;
+    display: inline-block;
+}
+
+.coupon-detail-row {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    margin-bottom: 10px;
+    color: #374151;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.coupon-detail-row strong {
+    min-width: 105px;
+    color: #111827;
+}
+
+.coupon-modal-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 18px;
+    flex-wrap: wrap;
+}
+
+.coupon-close-btn {
+    border: 1px solid #d1d5db;
+    background: #fff;
+    color: #374151;
+    border-radius: 999px;
+    padding: 7px 16px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.coupon-close-btn:hover {
+    background: #f3f4f6;
+}
+
+.coupon-modal-status {
+    font-weight: 700;
+    font-size: 14px;
+    margin-right: auto;
+}
+
+.coupon-status-claimed {
+    color: #2e7d32;
+}
+
+.coupon-status-out {
+    color: #6b7280;
+}
+
+.coupon-modal-open {
+    overflow: hidden;
+}
+
+@media (max-width: 1200px) {
+    .coupon-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .coupon-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .coupon-card {
+        grid-template-columns: 78px 1fr;
+        gap: 12px;
+    }
+
+    .coupon-icon-box {
+        width: 78px;
+        height: 78px;
+    }
+
+    .coupon-icon-box i {
+        font-size: 36px;
+    }
+
+    .coupon-modal-box {
+        margin-top: 70px;
+    }
+
+    .coupon-detail-row {
+        display: block;
+    }
+
+    .coupon-detail-row strong {
+        display: block;
+        margin-bottom: 2px;
+    }
+
+    .coupon-modal-actions {
+        justify-content: stretch;
+    }
+
+    .coupon-modal-actions .coupon-main-btn,
+    .coupon-modal-actions .coupon-close-btn {
+        width: 100%;
+    }
+}
