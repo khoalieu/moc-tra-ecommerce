@@ -73,6 +73,17 @@
                             <i class="fa-solid fa-check"></i> Hoàn tất
                         </button>
                     </c:if>
+                    
+                    <c:if test="${order.status == 'SHIPPING'}">
+                        <button class="btn-sm btn-danger" onclick="updateSingleStatus(${order.id}, 'delivery_failed')"
+                                style="cursor: pointer; padding: 10px 15px;">
+                            <i class="fa-solid fa-triangle-exclamation"></i> Giao thất bại
+                        </button>
+                        <button class="btn-sm btn-success" onclick="updateSingleStatus(${order.id}, 'completed')"
+                                style="cursor: pointer; padding: 10px 15px;">
+                            <i class="fa-solid fa-check-double"></i> Giao thành công
+                        </button>
+                    </c:if>
                 </div>
             </div>
 
