@@ -140,6 +140,9 @@ public class DAOFactory {
     public DashboardDAO getDashboardDAO(){
         return new DashboardDAO(dataSource);
     }
+    public ShippingDAO getShippingDAO() {
+        return new ShippingDAO(dataSource);
+    }
 
     /**
      * Closes the connection pool. Should be called on application shutdown.
@@ -150,5 +153,4 @@ public class DAOFactory {
             System.out.println("✅ HikariCP Connection Pool closed");
         }
     }
-
 }

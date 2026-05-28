@@ -4606,3 +4606,39 @@
         min-height: 95px;
     }
 }
+ .invoice-pill {
+     display: inline-flex;
+     align-items: center;
+     gap: 6px;
+     padding: 5px 12px;
+     border-radius: 999px;
+     font-size: 0.88rem;
+     font-weight: 600;
+     line-height: 1.4;
+ }
+
+.invoice-pill-method {
+    background: #e3f2fd;
+    color: #1565c0;
+}
+
+.invoice-pill-paid {
+    background: #e8f5e9;
+    color: #2e7d32;
+}
+
+.invoice-pill-pending {
+    background: #ffebee;
+    color: #c62828;
+}
+
+.invoice-pill-failed {
+    background: #fff3e0;
+    color: #ef6c00;
+}
+
+.invoice-pill-refunded {
+    background: #f3e5f5;
+    color: #6a1b9a;
+}
+

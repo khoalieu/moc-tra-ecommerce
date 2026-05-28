@@ -409,6 +409,9 @@
                             <tr>
                                 <th>Mã đơn</th>
                                 <th>Ngày đặt</th>
+                                <th>Tạm tính</th>
+                                <th>Giảm giá</th>
+                                <th>Phí ship</th>
                                 <th>Tổng tiền</th>
                                 <th>Trạng thái</th>
                                 <th>Thanh toán</th>
@@ -417,22 +420,99 @@
                             <tbody>
                             <c:if test="${empty orders}">
                                 <tr>
-                                    <td colspan="5" class="center-cell">Chưa có đơn hàng nào</td>
+                                    <td colspan="8" class="center-cell">Chưa có đơn hàng nào</td>
                                 </tr>
                             </c:if>
                             <c:forEach var="o" items="${orders}">
                                 <tr>
-                                    <td><span class="order-number">#${o.orderNumber}</span></td>
-                                    <td>${fn:replace(o.createdAt, 'T', ' ')}</td>
+                                    <td>
+                                        <span class="order-number">#${o.orderNumber}</span>
+                                    </td>
+
+                                    <td>
+                                            ${fn:replace(o.createdAt, 'T', ' ')}
+                                    </td>
+
                                     <td class="money-text">
+                                        <fmt:formatNumber value="${o.subtotalAmount}" type="currency" currencySymbol="₫" maxFractionDigits="0"/>
+                                    </td>
+
+                                    <td class="money-text" style="color: #d32f2f;">
+                                        <c:set var="totalDiscount" value="${o.couponDiscountAmount + o.vipDiscountAmount}" />
+
+                                        <c:choose>
+                                            <c:when test="${totalDiscount > 0}">
+                                                -<fmt:formatNumber value="${totalDiscount}" type="currency" currencySymbol="₫" maxFractionDigits="0"/>
+
+                                                <div style="font-size: 12px; color: #777; margin-top: 3px;">
+                                                    <c:if test="${o.couponDiscountAmount > 0}">
+                                                        Coupon:
+                                                        -<fmt:formatNumber value="${o.couponDiscountAmount}" type="currency" currencySymbol="₫" maxFractionDigits="0"/>
+                                                    </c:if>
+
+                                                    <c:if test="${o.vipDiscountAmount > 0}">
+                                                        <c:if test="${o.couponDiscountAmount > 0}">
+                                                            <br>
+                                                        </c:if>
+                                                        VIP:
+                                                        -<fmt:formatNumber value="${o.vipDiscountAmount}" type="currency" currencySymbol="₫" maxFractionDigits="0"/>
+                                                    </c:if>
+                                                </div>
+                                            </c:when>
+
+                                            <c:otherwise>
+                                                0₫
+                                            </c:otherwise>
+                                        </c:choose>
+                                    </td>
+
+                                    <td class="money-text">
+                                        <fmt:formatNumber value="${o.shippingFee}" type="currency" currencySymbol="₫" maxFractionDigits="0"/>
+                                    </td>
+
+                                    <td class="money-text" style="font-weight: 700; color: #107e84;">
                                         <fmt:formatNumber value="${o.totalAmount}" type="currency" currencySymbol="₫" maxFractionDigits="0"/>
                                     </td>
+
                                     <td>
                                         <c:set var="st" value="${o.status}"/>
-                                        <span class="status-badge ${st == 'COMPLETED' ? 'status-confirmed' : (st == 'CANCELLED' ? 'status-cancelled' : 'status-pending')}">${st}</span>
+
+                                        <c:choose>
+                                            <c:when test="${st == 'COMPLETED'}">
+                                                <span class="status-badge status-confirmed">Hoàn thành</span>
+                                            </c:when>
+                                            <c:when test="${st == 'CANCELLED'}">
+                                                <span class="status-badge status-cancelled">Đã hủy</span>
+                                            </c:when>
+                                            <c:when test="${st == 'SHIPPING'}">
+                                                <span class="status-badge status-pending">Đang giao</span>
+                                            </c:when>
+                                            <c:when test="${st == 'DELIVERY_FAILED'}">
+                                                <span class="status-badge status-cancelled">Giao thất bại</span>
+                                            </c:when>
+                                            <c:otherwise>
+                                                <span class="status-badge status-pending">Chờ xử lý</span>
+                                            </c:otherwise>
+                                        </c:choose>
                                     </td>
+
                                     <td>
-                                        <span class="status-badge published">${o.paymentStatus}</span>
+                                        <c:choose>
+                                            <c:when test="${o.paymentStatus == 'PAID'}">
+                                                <span class="status-badge status-confirmed">Đã thanh toán</span>
+                                            </c:when>
+                                            <c:when test="${o.paymentStatus == 'PENDING'}">
+                                                <span class="status-badge status-cancelled" style="background: #ffebee; color: #c62828;">
+                                                    Chưa thanh toán
+                                                </span>
+                                            </c:when>
+                                            <c:when test="${o.paymentStatus == 'REFUNDED'}">
+                                                <span class="status-badge published">Đã hoàn tiền</span>
+                                            </c:when>
+                                            <c:otherwise>
+                                                <span class="status-badge status-cancelled">${o.paymentStatus}</span>
+                                            </c:otherwise>
+                                        </c:choose>
                                     </td>
                                 </tr>
                             </c:forEach>
