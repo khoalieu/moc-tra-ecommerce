@@ -437,9 +437,32 @@
                                             <div class="item-info-qty">Số lượng: × ${item.quantity}</div>
                                         </div>
                                         <div class="item-price-col">
-                                            <div class="item-unit-price">
-                                                Đơn giá: <fmt:formatNumber value="${item.price}" type="currency" currencySymbol="đ" maxFractionDigits="0"/>
-                                            </div>
+                                            <c:choose>
+                                                <c:when test="${item.originalPrice > item.price}">
+                                                    <div class="item-unit-price" style="color: #999; text-decoration: line-through; font-size: 12px;">
+                                                        Giá gốc:
+                                                        <fmt:formatNumber value="${item.originalPrice}" type="currency" currencySymbol="đ" maxFractionDigits="0"/>
+                                                    </div>
+
+                                                    <div class="item-unit-price" style="color: #d9534f; font-weight: 600;">
+                                                        Đơn giá:
+                                                        <fmt:formatNumber value="${item.price}" type="currency" currencySymbol="đ" maxFractionDigits="0"/>
+                                                    </div>
+
+                                                    <div class="item-unit-price" style="color: #2e7d32; font-size: 12px;">
+                                                        Giảm:
+                                                        <fmt:formatNumber value="${item.discountAmount}" type="currency" currencySymbol="đ" maxFractionDigits="0"/>
+                                                    </div>
+                                                </c:when>
+
+                                                <c:otherwise>
+                                                    <div class="item-unit-price">
+                                                        Đơn giá:
+                                                        <fmt:formatNumber value="${item.price}" type="currency" currencySymbol="đ" maxFractionDigits="0"/>
+                                                    </div>
+                                                </c:otherwise>
+                                            </c:choose>
+
                                             <div class="item-total-price">
                                                 <fmt:formatNumber value="${item.price * item.quantity}" type="currency" currencySymbol="đ" maxFractionDigits="0"/>
                                             </div>
@@ -455,9 +478,33 @@
                         </div>
                         <div class="order-summary-compact">
                             <div class="summary-amount-row">
-                                <span>Tạm tính: <fmt:formatNumber value="${o.totalAmount - o.shippingFee}" type="currency" currencySymbol="đ" maxFractionDigits="0"/></span>
-                                <span>Phí vận chuyển: <fmt:formatNumber value="${o.shippingFee}" type="currency" currencySymbol="đ" maxFractionDigits="0"/></span>
-                                <span class="highlight-total">Tổng: <fmt:formatNumber value="${o.totalAmount}" type="currency" currencySymbol="đ" maxFractionDigits="0"/></span>
+                                    <span>
+                                        Tạm tính:
+                                        <fmt:formatNumber value="${o.subtotalAmount}" type="currency" currencySymbol="đ" maxFractionDigits="0"/>
+                                    </span>
+                                    <span>
+                                        Phí vận chuyển:
+                                        <fmt:formatNumber value="${o.shippingFee}" type="currency" currencySymbol="đ" maxFractionDigits="0"/>
+                                    </span>
+
+                                <c:if test="${o.couponDiscountAmount > 0}">
+                                    <span style="color: #d32f2f;">
+                                        Giảm mã ưu đãi:
+                                        -<fmt:formatNumber value="${o.couponDiscountAmount}" type="currency" currencySymbol="đ" maxFractionDigits="0"/>
+                                    </span>
+                                </c:if>
+
+                                <c:if test="${o.vipDiscountAmount > 0}">
+                                    <span style="color: #d32f2f;">
+                                        Giảm voucher VIP:
+                                        -<fmt:formatNumber value="${o.vipDiscountAmount}" type="currency" currencySymbol="đ" maxFractionDigits="0"/>
+                                    </span>
+                                </c:if>
+
+                                <span class="highlight-total">
+                                    Tổng:
+                                    <fmt:formatNumber value="${o.totalAmount}" type="currency" currencySymbol="đ" maxFractionDigits="0"/>
+                                </span>
                             </div>
 
                             <button class="toggle-detail-btn" id="btn-${o.id}" onclick="toggleDetail(${o.id})">
@@ -470,8 +517,22 @@
                             <div class="order-footer-left">
                                 <i class="fa-solid fa-credit-card"></i>
                                 Thanh toán:
-                                <strong>${o.paymentMethod == 'cod' ? 'COD (khi nhận hàng)' : o.paymentMethod}</strong>
-                            </div>
+                                <strong>
+                                    <c:choose>
+                                        <c:when test="${o.paymentMethod == 'cod'}">
+                                            Thanh toán khi nhận hàng
+                                        </c:when>
+                                        <c:when test="${o.paymentMethod == 'bank'}">
+                                            Chuyển khoản ngân hàng
+                                        </c:when>
+                                        <c:when test="${o.paymentMethod == 'momo'}">
+                                            Ví MoMo
+                                        </c:when>
+                                        <c:otherwise>
+                                            ${o.paymentMethod}
+                                        </c:otherwise>
+                                    </c:choose>
+                                </strong>                            </div>
                             <div class="order-actions">
                                 <a href="${pageContext.request.contextPath}/hoa-don?id=${o.id}" class="btn-action btn-outline">
                                     <i class="fa-solid fa-file-invoice"></i> Xem hóa đơn
