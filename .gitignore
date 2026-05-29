@@ -1,7 +1,13 @@
 # --- Maven ---
 target/
+
+.gradle/
+build/
+!gradle/wrapper/gradle-wrapper.jar
+
 *.war
 *.ear
+*.jar
 *.nar
 *.zip
 *.tar.gz
@@ -24,15 +30,15 @@ out/
 .DS_Store
 Thumbs.db
 desktop.ini
-# --- email configure ---
-email.properties.example
 
-captcha.properties
+.env
+
+src/main/resources/email.properties
 src/main/resources/captcha.properties
 src/main/resources/database.properties
-
 src/main/resources/payment.properties
+src/main/resources/ghn.properties
 
 Database/migrations/
 
-src/main/resources/ghn.properties
+nginx/ssl/
