@@ -194,7 +194,7 @@ public class OrderDAO {
         }
     }
 
-    private List<OrderItem> getOrderItems(int orderId) {
+    public List<OrderItem> getOrderItems(int orderId) {
         List<OrderItem> items = new ArrayList<>();
         String sql = "SELECT oi.*, oi.variant_id AS order_variant_id, p.name, p.image_url, " +
                 "v.variant_name, v.price AS v_price, v.sale_price AS v_sale_price " +
@@ -308,6 +308,8 @@ public class OrderDAO {
                     o.setNotes("Địa chỉ không xác định");
                 }
 
+                int sId = rs.getInt("shipper_id");
+//                if (!rs.wasNull()) o.setShipperId(sId);
                 o.setShippingProvider(rs.getString("shipping_provider"));
                 o.setTrackingCode(rs.getString("tracking_code"));
                 o.setCancelReason(rs.getString("cancel_reason"));
@@ -497,6 +499,8 @@ public class OrderDAO {
         }
 
         try {
+            int sId = rs.getInt("shipper_id");
+//            if (!rs.wasNull()) o.setShipperId(sId);
             o.setShippingProvider(rs.getString("shipping_provider"));
             o.setTrackingCode(rs.getString("tracking_code"));
             o.setCancelReason(rs.getString("cancel_reason"));
@@ -614,6 +618,289 @@ public class OrderDAO {
         return null;
     }
 
+    // --- Các hàm mới thêm phục vụ Shipper ---
+
+    public List<Order> getOrdersForShipper(Integer shipperId) {
+        List<Order> list = new ArrayList<>();
+        String sql = "SELECT o.*, a.full_name, a.phone_number, a.street_address, a.ward, a.province " +
+                "FROM orders o " +
+                "LEFT JOIN user_addresses a ON o.shipping_address_id = a.id " +
+                "WHERE o.shipper_id = ? " +
+                "ORDER BY o.created_at DESC";
+
+        try (Connection conn = ds.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, shipperId);
+            ResultSet rs = ps.executeQuery();
+
+            while (rs.next()) {
+                Order o = mapRowToOrder(rs);
+
+                try {
+                    o.setCustomerName(rs.getString("full_name"));
+                    o.setCustomerPhone(rs.getString("phone_number"));
+                    String address = rs.getString("street_address") + ", " +
+                            rs.getString("ward") + ", " +
+                            rs.getString("province");
+                    o.setShippingAddress(address);
+
+                    o.setNotes(rs.getString("notes"));
+                } catch (Exception ignored) {}
+
+                o.setItems(getOrderItems(o.getId()));
+                list.add(o);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+
+    public boolean updateOrderCancelReason(int orderId, OrderStatus status, String cancelReason) {
+        String sql = "UPDATE orders SET status = ?, cancel_reason = ? WHERE id = ?";
+        try (Connection conn = ds.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, status.name().toLowerCase());
+            ps.setString(2, cancelReason);
+            ps.setInt(3, orderId);
+
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+    public boolean shipperCompleteOrder(int orderId, int shipperId) {
+        String sql = "UPDATE orders " +
+                "SET status = 'completed', " +
+                "    payment_status = CASE WHEN payment_status = 'pending' THEN 'paid' ELSE payment_status END " +
+                "WHERE id = ? AND shipper_id = ? AND status = 'shipping'";
+
+        try (Connection conn = ds.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, orderId);
+            ps.setInt(2, shipperId);
+
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    public boolean shipperFailOrder(int orderId, int shipperId, String reason) {
+        Connection conn = null;
+        try {
+            conn = ds.getConnection();
+            conn.setAutoCommit(false);
+            String sql = "UPDATE orders SET status = 'delivery_failed', cancel_reason = ? WHERE id = ? AND shipper_id = ? AND status = 'shipping'";
+            try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                ps.setString(1, reason);
+                ps.setInt(2, orderId);
+                ps.setInt(3, shipperId);
+                if (ps.executeUpdate() == 0) {
+                    conn.rollback();
+                    return false;
+                }
+            }
+            Order order = getOrderById(orderId);
+            if (order != null && order.getItems() != null) {
+                for (OrderItem item : order.getItems()) {
+                    Integer variantId = item.getVariantId();
+                    if (variantId != null && variantId > 0) {
+                        String sqlUpdateVariant = "UPDATE product_variants SET stock_quantity = stock_quantity + ? WHERE id = ?";
+                        try (PreparedStatement psStock = conn.prepareStatement(sqlUpdateVariant)) {
+                            psStock.setInt(1, item.getQuantity());
+                            psStock.setInt(2, variantId);
+                            psStock.executeUpdate();
+                        }
+                    } else {
+                        String sqlUpdateStock = "UPDATE products SET stock_quantity = stock_quantity + ? WHERE id = ?";
+                        try (PreparedStatement psStock = conn.prepareStatement(sqlUpdateStock)) {
+                            psStock.setInt(1, item.getQuantity());
+                            psStock.setInt(2, item.getProductId());
+                            psStock.executeUpdate();
+                        }
+                    }
+                }
+            }
+            conn.commit();
+            return true;
+
+        } catch (SQLException e) {
+            if (conn != null) {
+                try { conn.rollback(); } catch (SQLException ex) { ex.printStackTrace(); }
+            }
+            e.printStackTrace();
+        } finally {
+            if (conn != null) {
+                try { conn.setAutoCommit(true); conn.close(); } catch (SQLException e) { e.printStackTrace(); }
+            }
+        }
+        return false;
+    }
+    public boolean updateShippingInfo(int orderId, int shipperId, String status, String provider, String trackingCode) {
+        String sql = "UPDATE orders SET status = ?, shipping_provider = ?, tracking_code = ? WHERE id = ? AND shipper_id = ? AND status = 'pending'";
+        try (Connection conn = ds.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, status);
+            ps.setString(2, provider);
+            ps.setString(3, trackingCode);
+            ps.setInt(4, orderId);
+            ps.setInt(5, shipperId);
+            int rowsAffected = ps.executeUpdate();
+            return rowsAffected > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+    public boolean assignShipper(int orderId, int shipperId) {
+        String sql = "UPDATE orders SET shipper_id = ? WHERE id = ? AND status = 'pending'";
+        try (Connection conn = ds.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, shipperId);
+            ps.setInt(2, orderId);
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+    public boolean removeOrderItem(int orderItemId) {
+        String sql = "DELETE FROM order_items WHERE id = ?";
+        try (Connection conn = ds.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, orderItemId);
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    public boolean updateOrderTotal(int orderId) {
+        String sql = "UPDATE orders " + "SET total_amount = (SELECT COALESCE(SUM(quantity * price),0) FROM order_items  WHERE order_id = ?) + shipping_fee WHERE id = ?";
+        try (Connection conn = ds.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, orderId);
+            ps.setInt(2, orderId);
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    public boolean addProductToOrder(int orderId, int productId, int quantity) {
+        ProductDAO productDAO = new ProductDAO(ds);
+        Product product = productDAO.getProductById(productId);
+        if (product == null) return false;
+        String sql = "INSERT INTO order_items (order_id, product_id, quantity, price, original_price, discount_amount) VALUES (?, ?, ?, ?, ?, ?)";
+        try (Connection conn = ds.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            double finalPrice = product.getSalePrice() > 0 ? product.getSalePrice() : product.getPrice();
+            ps.setInt(1, orderId);
+            ps.setInt(2, productId);
+            ps.setInt(3, quantity);
+            ps.setDouble(4, finalPrice);
+            ps.setDouble(5, product.getPrice());
+            ps.setDouble(6, product.getPrice() - finalPrice);
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return false;
+    }
+
+    public boolean canCustomerEditOrder(int orderId, int userId) {
+
+        String sql = "SELECT * FROM orders WHERE id = ? AND user_id = ? AND status = 'pending'";
+        try (Connection conn = ds.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, orderId);
+            ps.setInt(2, userId);
+            ResultSet rs = ps.executeQuery();
+            return rs.next();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return false;
+    }
+
+    public OrderItem getOrderItemById(int orderItemId) {
+
+        String sql = "SELECT oi.*, p.name, p.image_url FROM order_items oi JOIN products p ON oi.product_id = p.id WHERE oi.id = ?";
+        try (Connection conn = ds.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, orderItemId);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                OrderItem item = new OrderItem();
+                item.setId(rs.getInt("id"));
+                item.setOrderId(rs.getInt("order_id"));
+                item.setProductId(rs.getInt("product_id"));
+                item.setQuantity(rs.getInt("quantity"));
+                item.setPrice(rs.getDouble("price"));
+                Product product = new Product();
+                product.setId(rs.getInt("product_id"));
+                product.setName(rs.getString("name"));
+                product.setImageUrl(rs.getString("image_url"));
+                item.setProduct(product);
+                return item;
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return null;
+    }
+    public boolean decreaseOrderItemQuantity(int orderItemId) {
+        String sql = "UPDATE order_items SET quantity = quantity - 1 WHERE id = ? AND quantity > 1";
+
+        try (Connection conn = ds.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, orderItemId);
+            return ps.executeUpdate() > 0;
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return false;
+    }
+    public boolean increaseOrderItemQuantity(int orderItemId) {
+        String sql = "UPDATE order_items SET quantity = quantity + 1 WHERE id = ?";
+        try (Connection conn = ds.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, orderItemId);
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    public boolean canAdminEditOrder(int orderId) {
+        String sql = "SELECT 1 FROM orders WHERE id = ? AND (status = 'PENDING' OR status = 'COMPLETED')";
+        try (Connection conn = ds.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, orderId);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next();
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
     /**
      * Cập nhật thông tin vận đơn GHN sau khi tạo thành công trên GHN.
      * Chuyển trạng thái đơn sang SHIPPING và lưu mã vận đơn GHN.
@@ -630,4 +917,5 @@ public class OrderDAO {
         }
         return false;
     }
+
 }
