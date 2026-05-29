@@ -33,14 +33,22 @@ public class GHNShippingDAO {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        this.baseUrl           = props.getProperty("ghn.base_url", "https://dev-online-gateway.ghn.vn/shiip/public-api");
-        this.token             = props.getProperty("ghn.token", "");
-        this.shopId            = parseInt(props.getProperty("ghn.shop_id", "0"));
-        this.fromDistrictId    = parseInt(props.getProperty("ghn.from_district_id", "0"));
-        this.fromWardCode      = props.getProperty("ghn.from_ward_code", "");
-        this.serviceTypeId     = parseInt(props.getProperty("ghn.service_type_id", "2"));
-        this.defaultWeightGram = parseInt(props.getProperty("ghn.default_weight_gram", "500"));
+        // Biến môi trường Docker có ưu tiên cao hơn ghn.properties
+        this.baseUrl           = getEnvOrProp("GHN_BASE_URL",          props, "ghn.base_url",           "https://dev-online-gateway.ghn.vn/shiip/public-api");
+        this.token             = getEnvOrProp("GHN_TOKEN",             props, "ghn.token",              "");
+        this.shopId            = parseInt(getEnvOrProp("GHN_SHOP_ID",  props, "ghn.shop_id",            "0"));
+        this.fromDistrictId    = parseInt(getEnvOrProp("GHN_FROM_DISTRICT_ID", props, "ghn.from_district_id", "0"));
+        this.fromWardCode      = getEnvOrProp("GHN_FROM_WARD_CODE",    props, "ghn.from_ward_code",     "");
+        this.serviceTypeId     = parseInt(getEnvOrProp("GHN_SERVICE_TYPE_ID", props, "ghn.service_type_id", "2"));
+        this.defaultWeightGram = parseInt(getEnvOrProp("GHN_DEFAULT_WEIGHT",  props, "ghn.default_weight_gram", "500"));
     }
+
+    private static String getEnvOrProp(String envKey, Properties props, String propKey, String defaultVal) {
+        String envVal = System.getenv(envKey);
+        if (envVal != null && !envVal.isBlank()) return envVal.trim();
+        return props.getProperty(propKey, defaultVal);
+    }
+
     public long calculateShippingFee(int toDistrictId, String toWardCode, int weightGram) {
         try {
             JsonObject body = new JsonObject();

@@ -1,0 +1,67 @@
+plugins {
+    id 'java'
+    id 'war'
+}
+
+group = 'vn.edu.hcmuaf'
+version = '1.0-SNAPSHOT'
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    // Jakarta EE 10 - Tomcat sẽ cung cấp runtime, không đóng vào WAR
+    providedCompile 'jakarta.platform:jakarta.jakartaee-api:10.0.0'
+
+    // JSTL
+    implementation 'jakarta.servlet.jsp.jstl:jakarta.servlet.jsp.jstl-api:3.0.0'
+    implementation 'org.glassfish.web:jakarta.servlet.jsp.jstl:3.0.1'
+
+    // Database - HikariCP connection pool + MySQL driver
+    implementation 'com.zaxxer:HikariCP:5.1.0'
+    implementation 'com.mysql:mysql-connector-j:8.3.0'
+
+    // Password hashing
+    implementation 'org.mindrot:jbcrypt:0.4'
+
+    // Email (Jakarta Mail)
+    implementation 'com.sun.mail:jakarta.mail:2.0.1'
+
+    // HTTP Client (GHN API, MoMo, PayOS)
+    implementation 'org.apache.httpcomponents:httpclient:4.5.13'
+    implementation 'org.apache.httpcomponents:fluent-hc:4.5.13'
+
+    // Logging
+    implementation 'org.slf4j:slf4j-simple:2.0.9'
+
+    // JSON - Gson
+    implementation 'com.google.code.gson:gson:2.10.1'
+
+    // QR Code (ZXing - dùng cho MoMo payUrl)
+    implementation 'com.google.zxing:core:3.5.3'
+    implementation 'com.google.zxing:javase:3.5.3'
+
+    // Excel Export (Apache POI)
+    implementation 'org.apache.poi:poi:5.2.5'
+    implementation ('org.apache.poi:poi-ooxml:5.2.5') {
+        // Loại bỏ dependency trùng lặp
+        exclude group: 'org.apache.poi', module: 'poi'
+    }
+}
+
+war {
+    // Deploy tại root context "/" trên Tomcat
+    archiveFileName = 'ROOT.war'
+    webAppDirectory = file('src/main/webapp')
+}
+
+compileJava {
+    options.encoding = 'UTF-8'
+    options.compilerArgs << '-parameters'
+}

@@ -18,15 +18,21 @@ public class DAOFactory {
         Properties props = new Properties();
 
         try (InputStream input = DAOFactory.class.getClassLoader().getResourceAsStream("database.properties")) {
+            if (input != null) props.load(input);
+        } catch (Exception ignored) {}
 
-            props.load(input);
+        // Biến môi trường (Docker/production) có độ ưu tiên cao hơn file .properties
+        String dbUrl  = getEnvOrProp("DB_URL",      props, "db.url");
+        String dbUser = getEnvOrProp("DB_USER",     props, "db.user");
+        String dbPass = getEnvOrProp("DB_PASSWORD", props, "db.password");
 
+        try {
             // Configure HikariCP Connection Pool
             HikariConfig config = new HikariConfig();
             config.setDriverClassName("com.mysql.cj.jdbc.Driver"); // Explicitly set MySQL driver
-            config.setJdbcUrl(props.getProperty("db.url"));
-            config.setUsername(props.getProperty("db.user"));
-            config.setPassword(props.getProperty("db.password"));
+            config.setJdbcUrl(dbUrl);
+            config.setUsername(dbUser);
+            config.setPassword(dbPass);
 
             // Pool configuration for optimal performance
             config.setMaximumPoolSize(10);              // Max 10 connections
@@ -54,7 +60,17 @@ public class DAOFactory {
         return instance;
     }
 
-    // --- Các phương thức lấy DAO ---
+    /**
+     * Đọc giá trị từ biến môi trường trước, nếu không có thì fallback về file .properties.
+     * Giúp dùng được cả trong Docker (env vars) lẫn local dev (file .properties).
+     */
+    private static String getEnvOrProp(String envKey, Properties props, String propKey) {
+        String envVal = System.getenv(envKey);
+        if (envVal != null && !envVal.isBlank()) return envVal.trim();
+        return props.getProperty(propKey, "");
+    }
+
+
 
     // Banner
     public BannerDAO getBannerDAO() {
