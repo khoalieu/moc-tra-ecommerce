@@ -819,5 +819,23 @@ public class ProductDAO {
         }
         return null;
     }
+    public List<Product> getAllProducts() {
+        List<Product> list = new ArrayList<>();
 
+        String sql = "SELECT * FROM products WHERE status = 'active' ORDER BY created_at DESC";
+
+        try (Connection conn = ds.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+
+            while (rs.next()) {
+                list.add(mapRowToProduct(rs));
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return list;
+    }
 }
