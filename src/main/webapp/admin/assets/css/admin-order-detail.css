@@ -80,7 +80,7 @@
 .order-items-table td {
     padding: 15px 0;
     border-top: 1px dashed #eee;
-    vertical-align: top;
+    vertical-align: middle !important;
 }
 
 .item-info-cell {
@@ -142,4 +142,48 @@
     font-size: 14px;
     font-weight: 500;
     color: #333;
+}
+
+.admin-qty-input {
+    width: 60px !important;
+    height: 32px;
+    padding: 0 4px;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    text-align: center;
+    font-weight: 700;
+    color: #107e84;
+    background-color: #f8fafc;
+    outline: none;
+    transition: all 0.2s ease;
+    box-sizing: border-box;
+}
+
+.admin-qty-input:focus {
+    border-color: #107e84;
+    box-shadow: 0 0 0 3px rgba(16, 126, 132, 0.1);
+    background-color: #fff;
+}
+
+.admin-qty-input::-webkit-inner-spin-button,
+.admin-qty-input::-webkit-outer-spin-button {
+    opacity: 1 !important;
+    cursor: pointer;
+    height: 28px;
+}
+
+.order-items-table td {
+    vertical-align: middle;
+}
+
+.item-thumb {
+    width: 55px;
+    height: 55px;
+    border-radius: 8px;
+    object-fit: cover;
+    border: 1px solid #e2e8f0;
+}
+
+.order-items-table tbody tr:hover {
+    background-color: #f9fafb;
 }

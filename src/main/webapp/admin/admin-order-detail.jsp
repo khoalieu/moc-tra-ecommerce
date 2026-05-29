@@ -1,21 +1,19 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %>
+<c:set var="ctx" value="${pageContext.request.contextPath}"/>
 
 <!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
     <title>Chi tiết đơn hàng #${order.orderNumber}</title>
-
     <base href="${pageContext.request.contextPath}/">
-
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
-    <link rel="stylesheet" href="assets/css/base.css">
-    <link rel="stylesheet" href="assets/css/components.css">
-    <link rel="stylesheet" href="admin/assets/css/admin.css">
-    <link rel="stylesheet" href="admin/assets/css/admin-order-detail.css">
+    <link rel="stylesheet" href="${ctx}assets/css/base.css">
+    <link rel="stylesheet" href="${ctx}assets/css/components.css">
+    <link rel="stylesheet" href="${ctx}admin/assets/css/admin.css">
+    <link rel="stylesheet" href="${ctx}admin/assets/css/admin-order-detail.css">
 </head>
 <body>
 
@@ -91,12 +89,15 @@
                 <div class="left-column">
                     <div class="detail-card">
                         <h3 class="card-title">Sản phẩm đã đặt</h3>
+                        <form action="admin-edit-order" method="post" id="adminUpdateQtyForm">
+                            <input type="hidden" name="action" value="update-all-quantities">
+                            <input type="hidden" name="orderId" value="${order.id}">
                         <table class="order-items-table">
                             <thead>
                             <tr>
                                 <th>Sản phẩm</th>
                                 <th>Đơn giá</th>
-                                <th>SL</th>
+                                <th style="width: 80px; text-align: center;">SL</th>
                                 <th style="text-align: right;">Thành tiền</th>
                             </tr>
                             </thead>
@@ -105,7 +106,8 @@
                                 <tr>
                                     <td>
                                         <div class="item-info-cell">
-                                            <img src="${item.product.imageUrl}" class="item-thumb" alt="">
+                                            <img src="${item.product.imageUrl}" class="item-thumb" alt="${item.product.name}"
+                                                 onerror="this.onerror=null;this.src='assets/images/no-image.png';">
                                             <div class="item-text">
                                                 <h4>${item.product.name}</h4>
                                                 <c:if test="${not empty item.variant}">
@@ -117,81 +119,61 @@
                                             </div>
                                         </div>
                                     </td>
-                                    <td>
+                                    <td><fmt:formatNumber value="${item.price}" pattern="#,###"/>₫</td>
+                                    <td style="text-align: center;">
                                         <c:choose>
-                                            <c:when test="${item.originalPrice > item.price}">
-                                                <div style="color: #999; text-decoration: line-through; font-size: 12px;">
-                                                    <fmt:formatNumber value="${item.originalPrice}" pattern="#,###"/>₫
-                                                </div>
+                                            <c:when test="${order.status == 'PENDING' || order.status == 'PROCESSING'}">
+                                                <input type="hidden" name="orderItemIds" value="${item.id}">
 
-                                                <div style="color: #d9534f; font-weight: 600;">
-                                                    <fmt:formatNumber value="${item.price}" pattern="#,###"/>₫
-                                                </div>
-
-                                                <div style="color: #2e7d32; font-size: 12px;">
-                                                    Giảm <fmt:formatNumber value="${item.discountAmount}" pattern="#,###"/>₫
-                                                </div>
+                                                <input type="number"
+                                                       name="qty_${item.id}"
+                                                       value="${item.quantity}"
+                                                       min="0"
+                                                       class="admin-qty-input"
+                                                       onchange="showUpdateBtn()">
                                             </c:when>
 
                                             <c:otherwise>
-                                                <fmt:formatNumber value="${item.price}" pattern="#,###"/>₫
+                                                <strong>${item.quantity}</strong>
                                             </c:otherwise>
                                         </c:choose>
                                     </td>
-                                    <td>${item.quantity}</td>
-                                    <td style="text-align: right; font-weight: 600;">
+                                    <td style="text-align: right; font-weight: 600; color: #107e84;">
                                         <fmt:formatNumber value="${item.price * item.quantity}" pattern="#,###"/>₫
                                     </td>
                                 </tr>
                             </c:forEach>
                             </tbody>
                         </table>
-
+                        </form>
                         <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #eee;">
-                            <div class="order-summary-row">
+                            <div class="order-summary-row" style="display: flex; justify-content: space-between; margin-bottom: 10px; color: #666; font-size: 14px;">
                                 <span>Tạm tính</span>
-                                <span>
-                                    <fmt:formatNumber value="${order.subtotalAmount}" pattern="#,###"/>₫
+                                <span style="font-weight: 600; color: #333;">
+                                    <fmt:formatNumber value="${order.totalAmount - order.shippingFee}" pattern="#,###"/>₫
                                 </span>
                             </div>
-
-                            <div class="order-summary-row">
+                            <div class="order-summary-row" style="display: flex; justify-content: space-between; margin-bottom: 10px; color: #666; font-size: 14px;">
                                 <span>Phí vận chuyển</span>
-                                <span>
+                                <span style="font-weight: 600; color: #333;">
                                     <fmt:formatNumber value="${order.shippingFee}" pattern="#,###"/>₫
                                 </span>
                             </div>
-
-                            <c:if test="${order.couponDiscountAmount > 0}">
-                                <div class="order-summary-row">
-                                    <span>
-                                        Giảm mã ưu đãi
-                                        <c:if test="${not empty order.couponCode}">
-                                            (${order.couponCode})
-                                        </c:if>
-                                    </span>
-                                    <span style="color: #d32f2f;">
-                                        -<fmt:formatNumber value="${order.couponDiscountAmount}" pattern="#,###"/>₫
-                                    </span>
-                                </div>
-                            </c:if>
-
-                            <c:if test="${order.vipDiscountAmount > 0}">
-                                <div class="order-summary-row">
-                                    <span>Giảm voucher VIP</span>
-                                    <span style="color: #d32f2f;">
-                                        -<fmt:formatNumber value="${order.vipDiscountAmount}" pattern="#,###"/>₫
-                                    </span>
-                                </div>
-                            </c:if>
-
-                            <div class="order-summary-row total" style="color: #107e84;">
+                            <div class="order-summary-row total" style="display: flex; justify-content: space-between; margin-top: 15px; padding-top: 15px; border-top: 1px solid #eee; color: #107e84; font-size: 18px; font-weight: 700;">
                                 <span>Tổng cộng</span>
                                 <span>
                                     <fmt:formatNumber value="${order.totalAmount}" pattern="#,###"/>₫
                                 </span>
                             </div>
                         </div>
+                    </div>
+                    <div id="updateBtnContainer" style="display: none; margin-top: 15px; border-top: 1px dashed #ddd; padding-top: 15px;">
+                        <button type="submit"
+                                form="adminUpdateQtyForm"
+                                style="width: 100%; padding: 12px; background: #107e84; color: white; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; transition: 0.3s; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                            <i class="fa-solid fa-save"></i>
+                            Xác nhận thay đổi số lượng
+                        </button>
                     </div>
                 </div>
 
@@ -208,24 +190,8 @@
                         <h3 class="card-title">Thanh toán</h3>
                         <div class="info-row">
                             <span class="info-label">Phương thức</span>
-                            <div class="info-value">
-                                <strong>
-                                    <c:choose>
-                                        <c:when test="${order.paymentMethod == 'cod'}">
-                                            Thanh toán khi nhận hàng
-                                        </c:when>
-                                        <c:when test="${order.paymentMethod == 'bank'}">
-                                            Chuyển khoản ngân hàng
-                                        </c:when>
-                                        <c:when test="${order.paymentMethod == 'momo'}">
-                                            Ví MoMo
-                                        </c:when>
-                                        <c:otherwise>
-                                            ${order.paymentMethod}
-                                        </c:otherwise>
-                                    </c:choose>
-                                </strong>
-                            </div>                        </div>
+                            <div class="info-value"><strong>${order.paymentMethod}</strong></div>
+                        </div>
                         <div class="info-row">
                             <span class="info-label">Trạng thái</span>
                             <div class="info-value" style="margin-top: 5px;">
@@ -557,6 +523,15 @@
             btn.disabled = false;
             btn.innerHTML = '<i class="fa-solid fa-truck-fast"></i> Tạo vận đơn GHN';
         });
+    }
+
+    function showUpdateBtn() {
+        const container = document.getElementById('updateBtnContainer');
+        if (container) {
+            container.style.display = 'block';
+            // Hiệu ứng nhẹ để Admin chú ý
+            container.classList.add('fade-in');
+        }
     }
 </script>
 

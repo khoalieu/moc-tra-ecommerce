@@ -157,7 +157,7 @@
 .blog-card .icon-calendar {
     font-size: 14px;
 }
-/* --- THẺ KHUYẾN MÃI (SALE TAG) --- */
+
 .sale-tag {
     position: absolute;
     top: 0;
@@ -186,7 +186,6 @@
     font-size: 14px;
 }
 
-/* --- PHÂN TRANG (PAGINATION) --- */
 .pagination {
     text-align: center;
     margin-top: 40px;
@@ -210,7 +209,6 @@
     border-color: var(--color-primary, #4CAF50);
 }
 
-/* --- TIỆN ÍCH (UTILITIES) --- */
 .preserve-lines {
     white-space: pre-line;
 }
@@ -223,7 +221,7 @@
 
 .password-field input {
     width: 100%;
-    padding-right: 40px !important; /* Tránh chữ đè lên icon */
+    padding-right: 40px !important;
 }
 
 .toggle-password {
@@ -235,7 +233,7 @@
     color: #6c757d;
     font-size: 1.1rem;
     transition: color 0.2s ease-in-out;
-    z-index: 10; /* Đảm bảo icon luôn nổi lên trên để click được */
+    z-index: 10;
 }
 
 .toggle-password:hover {
