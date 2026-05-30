@@ -163,7 +163,7 @@
                                         <p class="cart-item-quantity">
                                                 ${item.quantity} ×
                                             <span class="cart-item-price">
-                                                <fmt:formatNumber value="${item.unitPrice}" type="currency"/>
+                                                <fmt:formatNumber value="${item.unitPrice}" pattern="#,###"/>đ
                                             </span>
                                         </p>
                                     </div>
@@ -177,7 +177,7 @@
                                 <div class="cart-total">
                                     <span>Tổng tiền:</span>
                                     <span class="total-price">
-                        <fmt:formatNumber value="${sessionScope.cart.totalMoney}" type="currency"/>
+                        <fmt:formatNumber value="${sessionScope.cart.totalMoney}" pattern="#,###"/>đ
                     </span>
                                 </div>
                             </c:if>
@@ -393,7 +393,7 @@
                 value = 0;
             }
 
-            return Number(value).toLocaleString("vi-VN") + "₫";
+            return Number(value).toLocaleString("vi-VN") + "đ";
         }
 
         function escapeHtml(value) {

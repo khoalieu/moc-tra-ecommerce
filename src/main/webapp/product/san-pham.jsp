@@ -91,14 +91,14 @@
                            onchange="applyPriceFilter(this.value)">
 
                     <p>
-                        Giá: 0 VNĐ — <span id="priceValue" style="font-weight: bold; color: #28a745;">
+                        Giá: 0đ — <span id="priceValue" style="font-weight: bold; color: #28a745;">
                             <c:choose>
                                 <c:when test="${currentPrice != null}">
                                     <fmt:formatNumber value="${currentPrice}" pattern="#,###"/>
                                 </c:when>
                                 <c:otherwise>500.000</c:otherwise>
                             </c:choose>
-                        </span> VNĐ
+                        </span>đ
                     </p>
                 </div>
                 <script>
@@ -195,7 +195,7 @@
                                                     -<fmt:formatNumber value="${p.currentPromotionValue}" maxFractionDigits="0"/>%
                                                 </c:when>
                                                 <c:when test="${not empty p.currentPromotionValue}">
-                                                    -<fmt:formatNumber value="${p.currentPromotionValue}" pattern="#,###"/>₫
+                                                    -<fmt:formatNumber value="${p.currentPromotionValue}" pattern="#,###"/>đ
                                                 </c:when>
                                             </c:choose>
                                         </span>
@@ -211,17 +211,17 @@
                                         <%-- Case 1: Product is on sale --%>
                                         <c:when test="${p.salePrice > 0 && p.salePrice < p.price}">
                                             <span class="new-price">
-                                                <fmt:formatNumber value="${p.salePrice}" type="currency" currencySymbol=""/>₫
+                                                <fmt:formatNumber value="${p.salePrice}" type="currency" currencySymbol=""/>đ
                                             </span>
                                             <span class="old-price">
-                                                <fmt:formatNumber value="${p.price}" type="currency" currencySymbol=""/>₫
+                                                <fmt:formatNumber value="${p.price}" type="currency" currencySymbol=""/>đ
                                             </span>
                                         </c:when>
 
                                         <%-- Case 2: No sale, standard price --%>
                                         <c:otherwise>
                                             <span class="normal-price">
-                                                <fmt:formatNumber value="${p.price}" type="currency" currencySymbol=""/>₫
+                                                <fmt:formatNumber value="${p.price}" type="currency" currencySymbol=""/>đ
                                             </span>
                                         </c:otherwise>
                                     </c:choose>

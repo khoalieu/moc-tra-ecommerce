@@ -175,7 +175,7 @@
                                 </td>
                                 <td>
                                     <div class="order-amount">
-                                        <fmt:formatNumber value="${o.totalAmount}" pattern="#,###"/>₫
+                                        <fmt:formatNumber value="${o.totalAmount}" pattern="#,###"/>đ
                                     </div>
                                 </td>
                                 <td>

@@ -23,6 +23,19 @@
             <a href="${pageContext.request.contextPath}/san-pham?category=${product.categoryId}">Sản phẩm</a> /
             <span>${product.name}</span>
         </div>
+        <c:if test="${not empty sessionScope.successMsg}">
+            <div class="alert alert-success" style="padding: 10px; background: #d4edda; color: #155724; border-radius: 4px; margin-bottom: 20px;">
+                <i class="fa-solid fa-circle-check"></i> ${sessionScope.successMsg}
+            </div>
+            <% session.removeAttribute("successMsg"); %>
+        </c:if>
+
+        <c:if test="${not empty sessionScope.errorMsg}">
+            <div class="alert alert-danger" style="padding: 10px; background: #f8d7da; color: #721c24; border-radius: 4px; margin-bottom: 20px;">
+                <i class="fa-solid fa-triangle-exclamation"></i> ${sessionScope.errorMsg}
+            </div>
+            <% session.removeAttribute("errorMsg"); %>
+        </c:if>
 
         <section class="product-detail-layout">
             <div class="product-gallery">
@@ -45,7 +58,7 @@
                                 -<fmt:formatNumber value="${product.currentPromotionValue}" maxFractionDigits="0"/>%
                             </c:when>
                             <c:when test="${not empty product.currentPromotionValue}">
-                                -<fmt:formatNumber value="${product.currentPromotionValue}" pattern="#,###"/>₫
+                                -<fmt:formatNumber value="${product.currentPromotionValue}" pattern="#,###"/>đ
                             </c:when>
                         </c:choose>
                     </span>
@@ -57,12 +70,12 @@
                 <div class="price-block">
                     <span id="display-new-price" class="new-price">
                         <c:choose>
-                            <c:when test="${product.salePrice > 0}"><fmt:formatNumber value="${product.salePrice}" pattern="#,###"/> VNĐ</c:when>
-                            <c:otherwise><fmt:formatNumber value="${product.price}" pattern="#,###"/> VNĐ</c:otherwise>
+                            <c:when test="${product.salePrice > 0}"><fmt:formatNumber value="${product.salePrice}" pattern="#,###"/>đ</c:when>
+                            <c:otherwise><fmt:formatNumber value="${product.price}" pattern="#,###"/>đ</c:otherwise>
                         </c:choose>
                     </span>
                         <span id="display-old-price" class="old-price" style="${product.salePrice > 0 ? '' : 'display:none;'}">
-                        <fmt:formatNumber value="${product.price}" pattern="#,###"/> VNĐ
+                        <fmt:formatNumber value="${product.price}" pattern="#,###"/>đ
                     </span>
                 </div>
 
@@ -318,11 +331,11 @@
                         <p class="price">
                             <c:choose>
                                 <c:when test="${rp.salePrice > 0}">
-                                    <span class="new-price"><fmt:formatNumber value="${rp.salePrice}" pattern="#,###"/> VNĐ</span>
-                                    <span class="old-price"><fmt:formatNumber value="${rp.price}" pattern="#,###"/> VNĐ</span>
+                                    <span class="new-price"><fmt:formatNumber value="${rp.salePrice}" pattern="#,###"/>đ</span>
+                                    <span class="old-price"><fmt:formatNumber value="${rp.price}" pattern="#,###"/>đ</span>
                                 </c:when>
                                 <c:otherwise>
-                                    <span class="new-price"><fmt:formatNumber value="${rp.price}" pattern="#,###"/> VNĐ</span>
+                                    <span class="new-price"><fmt:formatNumber value="${rp.price}" pattern="#,###"/>đ</span>
                                 </c:otherwise>
                             </c:choose>
                         </p>
@@ -401,7 +414,7 @@
         const stockElem = document.getElementById('variant-stock');
         const quantityInput = document.getElementById('quantity');
 
-        const formatCurrency = (amount) => new Intl.NumberFormat('vi-VN').format(amount) + " VNĐ";
+        const formatCurrency = (amount) => new Intl.NumberFormat('vi-VN').format(amount) + "đ";
 
         if (salePrice > 0 && salePrice < price) {
             newPriceElem.innerText = formatCurrency(salePrice);
