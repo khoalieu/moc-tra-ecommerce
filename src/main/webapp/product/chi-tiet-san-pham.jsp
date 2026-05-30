@@ -23,6 +23,19 @@
             <a href="${pageContext.request.contextPath}/san-pham?category=${product.categoryId}">Sản phẩm</a> /
             <span>${product.name}</span>
         </div>
+        <c:if test="${not empty sessionScope.successMsg}">
+            <div class="alert alert-success" style="padding: 10px; background: #d4edda; color: #155724; border-radius: 4px; margin-bottom: 20px;">
+                <i class="fa-solid fa-circle-check"></i> ${sessionScope.successMsg}
+            </div>
+            <% session.removeAttribute("successMsg"); %>
+        </c:if>
+
+        <c:if test="${not empty sessionScope.errorMsg}">
+            <div class="alert alert-danger" style="padding: 10px; background: #f8d7da; color: #721c24; border-radius: 4px; margin-bottom: 20px;">
+                <i class="fa-solid fa-triangle-exclamation"></i> ${sessionScope.errorMsg}
+            </div>
+            <% session.removeAttribute("errorMsg"); %>
+        </c:if>
 
         <section class="product-detail-layout">
             <div class="product-gallery">
