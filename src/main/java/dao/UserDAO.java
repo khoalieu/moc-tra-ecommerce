@@ -659,11 +659,14 @@ public class UserDAO {
                 user.setLastName(rs.getString("last_name"));
                 user.setAvatar(rs.getString("avatar"));
                 user.setIsVip(rs.getBoolean("is_vip"));
-                // Set role và các thông tin khác tương tự hàm checkLogin
                 try {
                     user.setRole(UserRole.valueOf(rs.getString("role").toUpperCase()));
                 } catch (Exception e) {
                     user.setRole(UserRole.CUSTOMER);
+                }
+                java.sql.Timestamp lockTimestamp = rs.getTimestamp("lock_until");
+                if (lockTimestamp != null) {
+                    user.setLockUntil(lockTimestamp.toLocalDateTime());
                 }
                 return user;
             } else {

@@ -14,8 +14,21 @@ import java.util.Properties;
 public class EmailService {
     private static final String SMTP_HOST = "smtp.gmail.com";
     private static final String SMTP_PORT = "587";
-    private static final String EMAIL_USERNAME = "lieuminhkhoa2005@gmail.com";
-    private static final String EMAIL_PASSWORD = "jfjh rjft hvmh gocp";
+    private static String EMAIL_USERNAME;
+    private static String EMAIL_PASSWORD;
+
+    static {
+        try (java.io.InputStream input = EmailService.class.getClassLoader().getResourceAsStream("email.properties")) {
+            java.util.Properties prop = new java.util.Properties();
+            if (input != null) {
+                prop.load(input);
+                EMAIL_USERNAME = prop.getProperty("email.username");
+                EMAIL_PASSWORD = prop.getProperty("email.password");
+            }
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
 
     public static void sendEmail(String toAddress, String subject, String message) throws MessagingException {
         Properties properties = new Properties();
