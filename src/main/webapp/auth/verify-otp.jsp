@@ -75,7 +75,9 @@
                         <c:when test="${sessionScope.OTP_PURPOSE == 'CHANGE_EMAIL'}">
                             <form action="${pageContext.request.contextPath}/change-email" method="post" style="display:inline;">
                                 <input type="hidden" name="action" value="resend_otp">
-                                <button type="submit" class="link-button">Gửi lại mã OTP</button>
+                                <button type="submit" id="resendOtpBtn" class="link-button">
+                                    Gửi lại mã OTP
+                                </button>
                             </form>
                             <a href="${pageContext.request.contextPath}/tai-khoan-cua-toi">Hủy đổi email</a>
                         </c:when>
@@ -185,6 +187,27 @@
         }
         document.getElementById('otpHiddenInput').value = code;
     });
+
+    const resendBtn = document.getElementById('resendOtpBtn');
+
+    if (resendBtn) {
+        let remaining = ${not empty resendCooldown ? resendCooldown : 60};
+
+        resendBtn.disabled = true;
+        resendBtn.textContent = 'Gửi lại sau ' + remaining + 's';
+
+        const timer = setInterval(() => {
+            remaining--;
+
+            if (remaining <= 0) {
+                clearInterval(timer);
+                resendBtn.disabled = false;
+                resendBtn.textContent = 'Gửi lại mã OTP';
+            } else {
+                resendBtn.textContent = 'Gửi lại sau ' + remaining + 's';
+            }
+        }, 1000);
+    }
 </script>
 </body>
 </html>
