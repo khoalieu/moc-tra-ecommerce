@@ -41,12 +41,43 @@ public class LoginGoogleServlet extends HttpServlet {
 
                 CartDAO cartDAO = DAOFactory.getInstance().getCartDAO();
                 Cart sessionCart = (Cart) session.getAttribute("cart");
+                Cart userCartFromDB = cartDAO.getCartByUserId(user.getId());
+
                 if (sessionCart != null && !sessionCart.getItems().isEmpty()) {
-                    for (CartItem item : sessionCart.getItems()) {
-                        cartDAO.addToCart(user.getId(), item.getProduct().getId(), item.getVariantId(), item.getQuantity());
+                    boolean changed = false;
+                    for (CartItem sessionItem : sessionCart.getItems()) {
+                        int variantId = sessionItem.getVariantId();
+                        int sessionQty = sessionItem.getQuantity();
+
+                        int currentDbQty = 0;
+                        for (CartItem dbItem : userCartFromDB.getItems()) {
+                            if (dbItem.getVariantId() == variantId) {
+                                currentDbQty = dbItem.getQuantity();
+                                break;
+                            }
+                        }
+
+                        int maxStock = 0;
+                        if (sessionItem.getVariant() != null) {
+                            maxStock = sessionItem.getVariant().getStockQuantity();
+                        } else if (sessionItem.getProduct() != null) {
+                            maxStock = sessionItem.getProduct().getStockQuantity();
+                        }
+
+                        int quantityToAdd = sessionQty;
+                        if (currentDbQty + sessionQty > maxStock) {
+                            quantityToAdd = maxStock - currentDbQty;
+                        }
+
+                        if (quantityToAdd > 0) {
+                            cartDAO.addToCart(user.getId(), sessionItem.getProduct().getId(), variantId, quantityToAdd);
+                            changed = true;
+                        }
+                    }
+                    if (changed) {
+                        userCartFromDB = cartDAO.getCartByUserId(user.getId());
                     }
                 }
-                Cart userCartFromDB = cartDAO.getCartByUserId(user.getId());
                 session.setAttribute("cart", userCartFromDB);
 
                 if (user.getRole() != null && user.getRole().name().equalsIgnoreCase("ADMIN")) {
