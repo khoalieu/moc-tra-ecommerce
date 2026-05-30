@@ -119,7 +119,7 @@
                                             </div>
                                         </div>
                                     </td>
-                                    <td><fmt:formatNumber value="${item.price}" pattern="#,###"/>₫</td>
+                                    <td><fmt:formatNumber value="${item.price}" pattern="#,###"/>đ</td>
                                     <td style="text-align: center;">
                                         <c:choose>
                                             <c:when test="${order.status == 'PENDING' || order.status == 'PROCESSING'}">
@@ -139,7 +139,7 @@
                                         </c:choose>
                                     </td>
                                     <td style="text-align: right; font-weight: 600; color: #107e84;">
-                                        <fmt:formatNumber value="${item.price * item.quantity}" pattern="#,###"/>₫
+                                        <fmt:formatNumber value="${item.price * item.quantity}" pattern="#,###"/>đ
                                     </td>
                                 </tr>
                             </c:forEach>
@@ -150,19 +150,19 @@
                             <div class="order-summary-row" style="display: flex; justify-content: space-between; margin-bottom: 10px; color: #666; font-size: 14px;">
                                 <span>Tạm tính</span>
                                 <span style="font-weight: 600; color: #333;">
-                                    <fmt:formatNumber value="${order.totalAmount - order.shippingFee}" pattern="#,###"/>₫
+                                    <fmt:formatNumber value="${order.totalAmount - order.shippingFee}" pattern="#,###"/>đ
                                 </span>
                             </div>
                             <div class="order-summary-row" style="display: flex; justify-content: space-between; margin-bottom: 10px; color: #666; font-size: 14px;">
                                 <span>Phí vận chuyển</span>
                                 <span style="font-weight: 600; color: #333;">
-                                    <fmt:formatNumber value="${order.shippingFee}" pattern="#,###"/>₫
+                                    <fmt:formatNumber value="${order.shippingFee}" pattern="#,###"/>đ
                                 </span>
                             </div>
                             <div class="order-summary-row total" style="display: flex; justify-content: space-between; margin-top: 15px; padding-top: 15px; border-top: 1px solid #eee; color: #107e84; font-size: 18px; font-weight: 700;">
                                 <span>Tổng cộng</span>
                                 <span>
-                                    <fmt:formatNumber value="${order.totalAmount}" pattern="#,###"/>₫
+                                    <fmt:formatNumber value="${order.totalAmount}" pattern="#,###"/>đ
                                 </span>
                             </div>
                         </div>
@@ -504,7 +504,7 @@
                     '<strong><i class="fa-solid fa-check-circle"></i> ' + data.message + '</strong><br>' +
                     '🚚 Mã vận đơn GHN: <strong>' + data.orderCode + '</strong><br>' +
                     '📅 Dự kiến giao: ' + (data.expectedDelivery || 'Đang cập nhật') + '<br>' +
-                    '💰 Phí GHN: ' + Number(data.totalFee).toLocaleString('vi-VN') + '₫<br>' +
+                    '💰 Phí GHN: ' + Number(data.totalFee).toLocaleString('vi-VN') + 'đ<br>' +
                     '<a href="' + data.trackingUrl + '" target="_blank" style="color:#107e84; font-weight:600; margin-top:6px; display:inline-block;">' +
                         '<i class="fa-solid fa-external-link-alt"></i> Tra cứu trên GHN' +
                     '</a>';

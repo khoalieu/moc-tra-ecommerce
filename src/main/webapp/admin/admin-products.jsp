@@ -87,10 +87,10 @@
                         <label for="price-filter">Khoảng giá</label>
                         <select name="maxPrice" id="price-filter" class="form-select" onchange="this.form.submit()">
                             <option value="">Tất cả giá</option>
-                            <option value="50000" ${currentMaxPrice == '50000' ? 'selected' : ''}>Dưới 50.000₫</option>
-                            <option value="100000" ${currentMaxPrice == '100000' ? 'selected' : ''}>Dưới 100.000₫
+                            <option value="50000" ${currentMaxPrice == '50000' ? 'selected' : ''}>Dưới 50.000đ</option>
+                            <option value="100000" ${currentMaxPrice == '100000' ? 'selected' : ''}>Dưới 100.000đ
                             </option>
-                            <option value="200000" ${currentMaxPrice == '200000' ? 'selected' : ''}>Dưới 200.000₫
+                            <option value="200000" ${currentMaxPrice == '200000' ? 'selected' : ''}>Dưới 200.000đ
                             </option>
                         </select>
                     </div>
@@ -197,12 +197,12 @@
                                 <td>
                                     <div class="product-price-main" style="color: #107e84; font-weight: 600;">
                                         <fmt:formatNumber value="${p.salePrice > 0 ? p.salePrice : p.price}"
-                                                          pattern="#,###"/>₫
+                                                          pattern="#,###"/>đ
                                     </div>
                                     <c:if test="${p.salePrice > 0 && p.salePrice < p.price}">
                                         <div class="product-price-original"
                                              style="text-decoration: line-through; color: #999; font-size: 12px;">
-                                            <fmt:formatNumber value="${p.price}" pattern="#,###"/>₫
+                                            <fmt:formatNumber value="${p.price}" pattern="#,###"/>đ
                                         </div>
                                     </c:if>
                                 </td>
@@ -353,7 +353,7 @@
                     </label>
                     <label class="radio-label" style="display: flex; gap: 10px; cursor: pointer;">
                         <input type="radio" name="discountType" value="amount">
-                        <span>Giảm số tiền cố định (₫)</span>
+                        <span>Giảm số tiền cố định (đ)</span>
                     </label>
                 </div>
             </div>

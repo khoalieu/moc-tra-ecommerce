@@ -142,7 +142,7 @@
 
                                         <div class="item-details">
                                             <div class="item-amount">
-                                                <fmt:formatNumber value="${o.totalAmount}" pattern="#,###"/>₫
+                                                <fmt:formatNumber value="${o.totalAmount}" pattern="#,###"/>đ
                                             </div>
 
                                             <c:choose>

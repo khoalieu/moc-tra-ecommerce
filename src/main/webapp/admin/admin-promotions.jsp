@@ -156,7 +156,7 @@
                                                 <strong>${promo.discountValue}%</strong>
                                             </c:when>
                                             <c:otherwise>
-                                                <strong><fmt:formatNumber value="${promo.discountValue}" pattern="#,###"/>₫</strong>
+                                                <strong><fmt:formatNumber value="${promo.discountValue}" pattern="#,###"/>đ</strong>
                                             </c:otherwise>
                                         </c:choose>
                                     </td>
@@ -258,7 +258,7 @@
                                             <strong>${voucher.discountValue}%</strong>
                                         </c:if>
                                         <c:if test="${voucher.discountType == 'FIXED_AMOUNT'}">
-                                            <strong><fmt:formatNumber value="${voucher.discountValue}" pattern="#,###"/>₫</strong>
+                                            <strong><fmt:formatNumber value="${voucher.discountValue}" pattern="#,###"/>đ</strong>
                                         </c:if>
                                     </td>
                                     <td>
@@ -373,12 +373,12 @@
                                                 <c:if test="${coupon.maxDiscountAmount != null}">
                                                     <div class="cell-subtitle">
                                                         Tối đa:
-                                                        <fmt:formatNumber value="${coupon.maxDiscountAmount}" pattern="#,###"/>₫
+                                                        <fmt:formatNumber value="${coupon.maxDiscountAmount}" pattern="#,###"/>đ
                                                     </div>
                                                 </c:if>
                                             </c:when>
                                             <c:otherwise>
-                                                <strong><fmt:formatNumber value="${coupon.discountValue}" pattern="#,###"/>₫</strong>
+                                                <strong><fmt:formatNumber value="${coupon.discountValue}" pattern="#,###"/>đ</strong>
                                             </c:otherwise>
                                         </c:choose>
                                     </td>
@@ -387,7 +387,7 @@
                                         <c:choose>
                                             <c:when test="${coupon.minOrderAmount > 0}">
                                                 Đơn từ
-                                                <strong><fmt:formatNumber value="${coupon.minOrderAmount}" pattern="#,###"/>₫</strong>
+                                                <strong><fmt:formatNumber value="${coupon.minOrderAmount}" pattern="#,###"/>đ</strong>
                                             </c:when>
                                             <c:otherwise>
                                                 Không yêu cầu
@@ -514,7 +514,7 @@
                                     <label>Loại giảm giá</label>
                                     <select class="form-control" name="discountType" id="promotionDiscountType" required>
                                         <option value="PERCENT">Phần trăm (%)</option>
-                                        <option value="FIXED_AMOUNT">Tiền mặt (₫)</option>
+                                        <option value="FIXED_AMOUNT">Tiền mặt (đ)</option>
                                     </select>
                                 </div>
 
@@ -584,7 +584,7 @@
                                     <label>Loại giảm giá</label>
                                     <select class="form-control" name="discountType" id="voucherDiscountType" required>
                                         <option value="PERCENT">Phần trăm (%)</option>
-                                        <option value="FIXED_AMOUNT">Tiền mặt (₫)</option>
+                                        <option value="FIXED_AMOUNT">Tiền mặt (đ)</option>
                                     </select>
                                 </div>
 
@@ -654,7 +654,7 @@
                                     <label>Loại giảm giá</label>
                                     <select class="form-control" name="discountType" id="couponDiscountType" required>
                                         <option value="PERCENT">Phần trăm (%)</option>
-                                        <option value="FIXED_AMOUNT">Tiền mặt (₫)</option>
+                                        <option value="FIXED_AMOUNT">Tiền mặt (đ)</option>
                                     </select>
                                 </div>
 
