@@ -20,8 +20,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 @WebServlet(urlPatterns = {"/forgot-password", "/verify-otp", "/reset-password"})
 public class ForgotPasswordServlet extends HttpServlet {
 
-    private static final int DAILY_EMAIL_LIMIT = 100;
-    private static final AtomicInteger emailCounter = new AtomicInteger(0);
+    private static final int DAILY_EMAIL_LIMIT = 5;
+    private static final java.util.concurrent.ConcurrentHashMap<String, AtomicInteger> ipCounter = new java.util.concurrent.ConcurrentHashMap<>();
     private static LocalDate lastResetDay = LocalDate.now();
 
     private static final long OTP_TTL = 5 * 60_000L;
@@ -85,7 +85,7 @@ public class ForgotPasswordServlet extends HttpServlet {
     private synchronized void resetCounter (){
         LocalDate today = LocalDate.now();
         if(!today.equals(lastResetDay)){
-            emailCounter.set(0);
+            ipCounter.clear();
             lastResetDay = today;
         }
     }
@@ -94,7 +94,10 @@ public class ForgotPasswordServlet extends HttpServlet {
             throws ServletException, IOException {
 
         resetCounter();
-        if (emailCounter.get() >= DAILY_EMAIL_LIMIT){
+        String clientIp = req.getRemoteAddr();
+        ipCounter.putIfAbsent(clientIp, new AtomicInteger(0));
+        
+        if (ipCounter.get(clientIp).get() >= DAILY_EMAIL_LIMIT){
             req.setAttribute("message", "Hệ thống đã đạt giới hạn gửi email trong ngày . Vui lòng quay lại sau!");
             req.getRequestDispatcher("/auth/quen-mat-khau.jsp").forward(req, resp);
             return;
@@ -142,7 +145,7 @@ public class ForgotPasswordServlet extends HttpServlet {
             return;
         }
 
-        emailCounter.incrementAndGet();
+        ipCounter.get(clientIp).incrementAndGet();
 
         ss.setAttribute("otp_code", otp);
         ss.setAttribute("OTP_EXP", now + OTP_TTL);
