@@ -33,6 +33,20 @@ public class ChangeEmailServlet extends HttpServlet {
             return;
         }
         String action = request.getParameter("action");
+        long now = System.currentTimeMillis();
+
+        if ("resend_otp".equals(action)) {
+            Long lastSentAt = (Long) session.getAttribute("OTP_LAST_SENT_AT");
+
+            if (lastSentAt != null && now - lastSentAt < 60 * 1000) {
+                long remainingSeconds = (60 * 1000 - (now - lastSentAt)) / 1000;
+
+                request.setAttribute("message", "Vui lòng đợi " + remainingSeconds + " giây trước khi gửi lại mã OTP.");
+                request.setAttribute("resendCooldown", remainingSeconds);
+                request.getRequestDispatcher("/auth/verify-otp.jsp").forward(request, response);
+                return;
+            }
+        }
         String targetEmail = "";
         if ("change_email".equals(action)) {
             targetEmail = request.getParameter("newEmail");
@@ -45,7 +59,7 @@ public class ChangeEmailServlet extends HttpServlet {
             String emailContent = "Xin chào,\n\n"
                     + "Bạn vừa yêu cầu thay đổi địa chỉ email cho tài khoản tại hệ thống Mộc Trà Shop.\n"
                     + "Mã OTP xác thực của bạn là: " + otpCode + "\n\n"
-                    + "Lưu ý: Mã này có hiệu lực trong thời gian ngắn. Vui lòng không chia sẻ mã này cho bất kỳ ai.\n\n"
+                    + "Lưu ý: Mã này có hiệu lực trong 5 phút. Vui lòng không chia sẻ mã này cho bất kỳ ai.\n\n"
                     + "Trân trọng,\n"
                     + "Đội ngũ Mộc Trà Shop.";
 
@@ -54,6 +68,9 @@ public class ChangeEmailServlet extends HttpServlet {
                 session.setAttribute("OTP_CODE", otpCode);
                 session.setAttribute("NEW_EMAIL", targetEmail);
                 session.setAttribute("OTP_PURPOSE", "CHANGE_EMAIL");
+                session.setAttribute("OTP_CREATED_AT", now);
+                session.setAttribute("OTP_LAST_SENT_AT", now);
+                request.setAttribute("resendCooldown", 60);
                 request.getRequestDispatcher("/auth/verify-otp.jsp").forward(request, response);
 
             } catch (Exception e) {
