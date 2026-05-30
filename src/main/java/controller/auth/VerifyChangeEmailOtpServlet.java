@@ -27,6 +27,18 @@ public class VerifyChangeEmailOtpServlet extends HttpServlet {
         String inputOtp = request.getParameter("otp");
         String sessionOtp = (String) session.getAttribute("OTP_CODE");
         String newEmail = (String) session.getAttribute("NEW_EMAIL");
+        Long otpCreatedAt = (Long) session.getAttribute("OTP_CREATED_AT");
+
+        if (otpCreatedAt == null || System.currentTimeMillis() - otpCreatedAt > 5 * 60 * 1000) {
+            session.removeAttribute("OTP_CODE");
+            session.removeAttribute("NEW_EMAIL");
+            session.removeAttribute("OTP_PURPOSE");
+            session.removeAttribute("OTP_CREATED_AT");
+            session.removeAttribute("OTP_LAST_SENT_AT");
+            request.setAttribute("message", "Mã OTP đã hết hạn.");
+            request.getRequestDispatcher("/auth/verify-otp.jsp").forward(request, response);
+            return;
+        }
 
         if (sessionOtp != null && sessionOtp.equals(inputOtp)) {
             UserDAO userDAO = DAOFactory.getInstance().getUserDAO();
@@ -35,19 +47,20 @@ public class VerifyChangeEmailOtpServlet extends HttpServlet {
             if (isUpdated) {
                 currentUser.setEmail(newEmail);
                 session.setAttribute("user", currentUser);
+
                 session.removeAttribute("OTP_CODE");
                 session.removeAttribute("NEW_EMAIL");
                 session.removeAttribute("OTP_PURPOSE");
+                session.removeAttribute("OTP_CREATED_AT");
+                session.removeAttribute("OTP_LAST_SENT_AT");
 
                 session.setAttribute("msg", "Xác thực thành công! Email của bạn đã được cập nhật.");
                 session.setAttribute("msgType", "success");
                 response.sendRedirect(request.getContextPath() + "/tai-khoan-cua-toi");
-
             } else {
                 request.setAttribute("message", "Có lỗi xảy ra khi cập nhật hệ thống. Vui lòng thử lại!");
                 request.getRequestDispatcher("/auth/verify-otp.jsp").forward(request, response);
             }
-
         } else {
             request.setAttribute("message", "Mã OTP không chính xác. Vui lòng kiểm tra lại!");
             request.getRequestDispatcher("/auth/verify-otp.jsp").forward(request, response);
