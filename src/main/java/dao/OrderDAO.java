@@ -308,7 +308,7 @@ public class OrderDAO {
                     o.setNotes("Địa chỉ không xác định");
                 }
 
-                int sId = rs.getInt("shipper_id");
+//                int sId = rs.getInt("shipper_id");
 //                if (!rs.wasNull()) o.setShipperId(sId);
                 o.setShippingProvider(rs.getString("shipping_provider"));
                 o.setTrackingCode(rs.getString("tracking_code"));

@@ -15,28 +15,27 @@ public class CustomerDTO {
     private Timestamp joinDate;
     private Timestamp lastOrderDate;
     private boolean isActive;
+    private boolean isVip;
 
     public CustomerDTO() {}
 
-    // Logic tính toán trạng thái hiển thị
     public String getStatusLabel() {
         if (!isActive) {
-            return "Không hoạt động"; // Inactive
+            return "Không hoạt động";
         }
 
-        // Tổng chi tiêu lớn hơn 5000
-        if (totalSpent > 5000000) {
+        if (isVip) {
             return "VIP";
         }
 
-        // Logic: Tham gia trong vòng 30 ngày
-        long diffInMillies = System.currentTimeMillis() - joinDate.getTime();
-        long diffInDays = diffInMillies / (1000 * 60 * 60 * 24);
-        if (diffInDays < 30) {
-            return "Mới";
+        if (joinDate != null) {
+            long diffInMillies = System.currentTimeMillis() - joinDate.getTime();
+            long diffInDays = diffInMillies / (1000 * 60 * 60 * 24);
+            if (diffInDays < 30) {
+                return "Mới";
+            }
         }
-
-        return "Hoạt động"; // Active thường
+        return "Hoạt động";
     }
     //format tiền tệ
     public String getTotalSpentFormatted() {
@@ -64,4 +63,11 @@ public class CustomerDTO {
     public void setLastOrderDate(Timestamp lastOrderDate) { this.lastOrderDate = lastOrderDate; }
     public boolean isActive() { return isActive; }
     public void setActive(boolean active) { isActive = active; }
+    public boolean isVip() {
+        return isVip;
+    }
+
+    public void setVip(boolean vip) {
+        isVip = vip;
+    }
 }

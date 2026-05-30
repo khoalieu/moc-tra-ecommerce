@@ -189,9 +189,16 @@ public class AdminCustomerDetailServlet extends HttpServlet {
         int customerId = Integer.parseInt(customerIdStr);
 
         try {
+            UserDAO userDAO = DAOFactory.getInstance().getUserDAO();
             VipVoucherDAO vipVoucherDAO = DAOFactory.getInstance().getVipVoucherDAO();
 
-            if ("assignVoucher".equals(action)) {
+            if ("upgradeVip".equals(action)) {
+                userDAO.updateVipStatus(customerId, true);
+
+            } else if ("downgradeVip".equals(action)) {
+                userDAO.updateVipStatus(customerId, false);
+
+            } else if ("assignVoucher".equals(action)) {
                 String voucherIdStr = request.getParameter("voucherId");
                 if (voucherIdStr != null && !voucherIdStr.trim().isEmpty()) {
                     int voucherId = Integer.parseInt(voucherIdStr);

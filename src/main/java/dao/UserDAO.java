@@ -7,6 +7,7 @@ import model.enums.UserGender;
 import model.enums.UserRole;
 import org.mindrot.jbcrypt.BCrypt;
 import model.GooglePojo;
+import model.user.VipUpdateResult;
 
 import javax.sql.DataSource;
 import java.util.UUID;
@@ -350,7 +351,7 @@ public class UserDAO {
 
         StringBuilder sql = new StringBuilder(
                 "SELECT u.id, CONCAT(u.last_name, ' ', u.first_name) AS full_name, " +
-                        "u.email, u.phone, u.created_at, u.is_active, " +
+                        "u.email, u.phone, u.created_at, u.is_active, u.is_vip, " +
                         "ua.province, " +
                         "COUNT(o.id) AS total_orders, " +
                         "COALESCE(SUM(CASE WHEN o.status = 'completed' THEN o.total_amount ELSE 0 END), 0) AS total_spent, " +
@@ -371,7 +372,7 @@ public class UserDAO {
             sql.append(") ");
         }
 
-        sql.append("GROUP BY u.id, u.first_name, u.last_name, u.email, u.created_at, u.is_active, ua.province");
+        sql.append("GROUP BY u.id, u.first_name, u.last_name, u.email, u.created_at, u.is_active, u.is_vip, ua.province");
         sql.append(" HAVING 1=1 ");
 
         if (spendingRange != null && !spendingRange.isEmpty()) {
@@ -409,7 +410,7 @@ public class UserDAO {
                     sql.append(" AND u.is_active = 0 ");
                     break;
                 case "vip":
-                    sql.append(" AND total_spent > 5000000 AND u.is_active = 1 ");
+                    sql.append(" AND u.is_vip = 1 AND u.is_active = 1 ");
                     break;
                 case "new":
                     sql.append(" AND DATEDIFF(NOW(), u.created_at) < 30 AND u.is_active = 1 ");
@@ -461,6 +462,7 @@ public class UserDAO {
                 c.setPhone(rs.getString("phone"));
                 c.setJoinDate(rs.getTimestamp("created_at"));
                 c.setActive(rs.getBoolean("is_active"));
+                c.setVip(rs.getBoolean("is_vip"));
                 c.setProvince(rs.getString("province"));
                 c.setTotalOrders(rs.getInt("total_orders"));
                 c.setTotalSpent(rs.getDouble("total_spent"));
@@ -527,7 +529,7 @@ public class UserDAO {
     public List<Integer> getAllCustomerIds(String search, String status, String spendingRange, String orderRange) {
         List<Integer> list = new ArrayList<>();
         StringBuilder sql = new StringBuilder(
-                "SELECT u.id, " +
+                "SELECT u.id, u.is_vip, " +
                         "COUNT(o.id) AS total_orders, " +
                         "COALESCE(SUM(CASE WHEN o.status = 'completed' THEN o.total_amount ELSE 0 END), 0) AS total_spent " +
                         "FROM users u " +
@@ -571,7 +573,7 @@ public class UserDAO {
             switch (status) {
                 case "inactive": sql.append(" AND u.is_active = 0 "); break;
                 case "active": sql.append(" AND u.is_active = 1 "); break;
-                case "vip": sql.append(" AND total_spent > 5000000 AND u.is_active = 1 "); break;
+                case "vip": sql.append(" AND u.is_vip = 1 AND u.is_active = 1 "); break;
                 case "new": sql.append(" AND DATEDIFF(NOW(), u.created_at) < 30 AND u.is_active = 1 "); break;
             }
         }
@@ -908,5 +910,85 @@ public class UserDAO {
             e.printStackTrace();
         }
         return result;
+    }
+    public VipUpdateResult autoUpdateVipBySpending(double threshold, Timestamp startDate, Timestamp endDate) {
+        String selectSql =
+                "SELECT u.id, u.is_vip, COALESCE(SUM(o.total_amount), 0) AS total_spent " +
+                        "FROM users u " +
+                        "LEFT JOIN orders o ON u.id = o.user_id " +
+                        "AND o.status = 'COMPLETED' " +
+                        "AND o.created_at >= ? " +
+                        "AND o.created_at < ? " +
+                        "WHERE u.role = 'customer' " +
+                        "GROUP BY u.id, u.is_vip";
+
+        String updateSql = "UPDATE users SET is_vip = ? WHERE id = ? AND role = 'customer'";
+
+        int upgradedCount = 0;
+        int downgradedCount = 0;
+
+        Connection conn = null;
+        PreparedStatement selectPs = null;
+        PreparedStatement updatePs = null;
+        ResultSet rs = null;
+
+        try {
+            conn = ds.getConnection();
+            conn.setAutoCommit(false);
+
+            selectPs = conn.prepareStatement(selectSql);
+            selectPs.setTimestamp(1, startDate);
+            selectPs.setTimestamp(2, endDate);
+
+            updatePs = conn.prepareStatement(updateSql);
+
+            rs = selectPs.executeQuery();
+
+            while (rs.next()) {
+                int userId = rs.getInt("id");
+                boolean currentVip = rs.getBoolean("is_vip");
+                double totalSpent = rs.getDouble("total_spent");
+
+                boolean shouldBeVip = totalSpent >= threshold;
+
+                if (shouldBeVip != currentVip) {
+                    updatePs.setBoolean(1, shouldBeVip);
+                    updatePs.setInt(2, userId);
+                    updatePs.addBatch();
+
+                    if (shouldBeVip) {
+                        upgradedCount++;
+                    } else {
+                        downgradedCount++;
+                    }
+                }
+            }
+
+            updatePs.executeBatch();
+            conn.commit();
+
+            return new VipUpdateResult(upgradedCount, downgradedCount);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+
+            try {
+                if (conn != null) {
+                    conn.rollback();
+                }
+            } catch (Exception ignored) {
+            }
+
+        } finally {
+            try {
+                if (rs != null) rs.close();
+                if (selectPs != null) selectPs.close();
+                if (updatePs != null) updatePs.close();
+                if (conn != null) conn.close();
+            } catch (Exception ignored) {
+            }
+        }
+
+        return new VipUpdateResult(0, 0);
     }
 }
