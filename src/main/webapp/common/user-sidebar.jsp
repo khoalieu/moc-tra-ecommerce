@@ -23,6 +23,14 @@
 
             <div class="email" style="font-size: 0.85em; color: #666; margin-bottom: 15px; word-break: break-all;">
                 ${sessionScope.user.email}
+
+                <c:if test="${sessionScope.user.isVip}">
+                    <div style="margin-top: 8px;">
+                        <span class="user-vip-badge">
+                            <i class="fa-solid fa-crown"></i> Khách hàng VIP
+                        </span>
+                    </div>
+                </c:if>
             </div>
 
             <div class="avatar-controls" style="display: flex; gap: 8px; justify-content: center; align-items: center;">

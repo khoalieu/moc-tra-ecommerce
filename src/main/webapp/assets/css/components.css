@@ -157,7 +157,7 @@
 .blog-card .icon-calendar {
     font-size: 14px;
 }
-
+/* --- THẺ KHUYẾN MÃI (SALE TAG) --- */
 .sale-tag {
     position: absolute;
     top: 0;
@@ -186,6 +186,7 @@
     font-size: 14px;
 }
 
+/* --- PHÂN TRANG (PAGINATION) --- */
 .pagination {
     text-align: center;
     margin-top: 40px;
@@ -221,7 +222,7 @@
 
 .password-field input {
     width: 100%;
-    padding-right: 40px !important;
+    padding-right: 40px !important; /* Tránh chữ đè lên icon */
 }
 
 .toggle-password {
@@ -233,9 +234,40 @@
     color: #6c757d;
     font-size: 1.1rem;
     transition: color 0.2s ease-in-out;
-    z-index: 10;
+    z-index: 10; /* Đảm bảo icon luôn nổi lên trên để click được */
 }
 
 .toggle-password:hover {
     color: #333;
+}
+.user-vip-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 9px;
+    border-radius: 999px;
+    background: linear-gradient(135deg, #fff3cd, #ffe08a);
+    color: #8a5a00;
+    border: 1px solid #f3c04d;
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 1;
+    white-space: nowrap;
+}
+
+.user-vip-badge i {
+    color: #f59f00;
+    font-size: 12px;
+}
+
+.user-vip-badge--small {
+    padding: 3px 7px;
+    font-size: 10px;
+}
+
+.user-vip-inline {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
 }

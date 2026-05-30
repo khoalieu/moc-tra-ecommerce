@@ -138,6 +138,56 @@
                     </div>
                 </div>
             </form>
+            <div class="filters-section" style="margin-bottom: 20px;">
+                <div class="page-title" style="margin-bottom: 16px;">
+                    <h2 style="font-size: 20px; margin-bottom: 4px;">
+                        <i class="fas fa-crown" style="color: #f59f00;"></i>
+                        Tự động cập nhật VIP
+                    </h2>
+                    <p>
+                        Hệ thống chỉ tính các đơn hàng đã hoàn thành trong khoảng thời gian được chọn.
+                    </p>
+                </div>
+
+                <div class="filters-grid">
+                    <div class="filter-group">
+                        <label for="vipThreshold">Ngưỡng chi tiêu VIP</label>
+                        <input type="number"
+                               id="vipThreshold"
+                               class="form-input"
+                               min="1"
+                               step="1000"
+                               value="1000000"
+                               placeholder="Ví dụ: 1000000">
+                    </div>
+
+                    <div class="filter-group">
+                        <label for="vipPeriodType">Chu kỳ xét VIP</label>
+                        <select id="vipPeriodType" class="form-select" onchange="toggleVipCustomDate()">
+                            <option value="month">Tháng trước</option>
+                            <option value="week">Tuần trước</option>
+                            <option value="custom">Tùy chọn ngày</option>
+                        </select>
+                    </div>
+
+                    <div class="filter-group vip-custom-date" style="display: none;">
+                        <label for="vipStartDate">Từ ngày</label>
+                        <input type="date" id="vipStartDate" class="form-input">
+                    </div>
+
+                    <div class="filter-group vip-custom-date" style="display: none;">
+                        <label for="vipEndDate">Đến ngày</label>
+                        <input type="date" id="vipEndDate" class="form-input">
+                    </div>
+                </div>
+
+                <div style="margin-top: 16px; display: flex; justify-content: flex-end;">
+                    <button type="button" class="btn-bulk btn-bulk-promo" onclick="autoUpdateVip()">
+                        <i class="fas fa-rotate"></i>
+                        Cập nhật VIP tự động
+                    </button>
+                </div>
+            </div>
 
             <div class="bulk-actions-bar" id="bulkActionsBar">
                 <input type="checkbox" class="product-checkbox" id="selectAllCustomers">
@@ -152,6 +202,15 @@
                     <button class="btn-bulk btn-bulk-deactivate" onclick="bulkDeactivate()">
                         <i class="fas fa-user-times"></i>
                         Vô hiệu hóa
+                    </button>
+                    <button class="btn-bulk btn-bulk-activate" onclick="bulkUpgradeVip()">
+                        <i class="fas fa-crown"></i>
+                        Nâng VIP
+                    </button>
+
+                    <button class="btn-bulk btn-bulk-deactivate" onclick="bulkDowngradeVip()">
+                        <i class="fas fa-user"></i>
+                        Hạ thường
                     </button>
                     <button class="btn-bulk btn-bulk-delete" onclick="bulkDelete()">
                         <i class="fas fa-trash"></i>
@@ -499,6 +558,81 @@
         if (confirm("LƯU Ý: Khách hàng sẽ được chuyển sang trạng thái 'Vô hiệu hóa' (Xóa mềm).")) {
             sendBulkRequest('deactivate', 'vô hiệu hóa');
         }
+    }
+    function bulkUpgradeVip() {
+        sendBulkRequest('upgradeVip', 'nâng cấp VIP');
+    }
+
+    function bulkDowngradeVip() {
+        sendBulkRequest('downgradeVip', 'hạ xuống khách thường');
+    }
+    function toggleVipCustomDate() {
+        const periodType = document.getElementById("vipPeriodType").value;
+        const customDateFields = document.querySelectorAll(".vip-custom-date");
+
+        customDateFields.forEach(function (field) {
+            field.style.display = periodType === "custom" ? "flex" : "none";
+        });
+    }
+
+    function autoUpdateVip() {
+        const threshold = document.getElementById("vipThreshold").value;
+        const periodType = document.getElementById("vipPeriodType").value;
+        const startDate = document.getElementById("vipStartDate").value;
+        const endDate = document.getElementById("vipEndDate").value;
+
+        if (!threshold || Number(threshold) <= 0) {
+            alert("Vui lòng nhập ngưỡng chi tiêu hợp lệ.");
+            return;
+        }
+
+        if (periodType === "custom" && (!startDate || !endDate)) {
+            alert("Vui lòng chọn đầy đủ ngày bắt đầu và ngày kết thúc.");
+            return;
+        }
+
+        let periodLabel = "tháng trước";
+        if (periodType === "week") {
+            periodLabel = "tuần trước";
+        } else if (periodType === "custom") {
+            periodLabel = "khoảng ngày đã chọn";
+        }
+
+        if (!confirm("Hệ thống sẽ cập nhật VIP theo " + periodLabel + ". Khách đủ ngưỡng sẽ được nâng VIP, khách không đủ ngưỡng sẽ bị hạ xuống thường. Bạn có chắc muốn tiếp tục?")) {
+            return;
+        }
+
+        const params = new URLSearchParams();
+        params.append("action", "autoUpdateVip");
+        params.append("threshold", threshold);
+        params.append("periodType", periodType);
+
+        if (periodType === "custom") {
+            params.append("startDate", startDate);
+            params.append("endDate", endDate);
+        }
+
+        fetch("customers", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8"
+            },
+            body: params
+        })
+            .then(function (response) {
+                return response.json();
+            })
+            .then(function (data) {
+                alert(data.message || "Cập nhật VIP tự động thành công.");
+
+                if (data.success) {
+                    location.reload();
+                }
+            })
+            .catch(function (error) {
+                console.error(error);
+                alert("Có lỗi xảy ra khi cập nhật VIP tự động.");
+            });
     }
 </script>
 </body>

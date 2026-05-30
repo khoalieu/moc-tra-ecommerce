@@ -575,15 +575,6 @@
     line-height: 1.6;
 }
 
-.btn-upgrade-vip-disabled {
-    background-color: #107e84;
-    color: #fff;
-}
-
-.btn-upgrade-vip-disabled:hover {
-    background-color: #0d6a6f;
-}
-
 @media (max-width: 768px) {
     .voucher-cart-item,
     .vip-upgrade-box {
@@ -628,4 +619,104 @@
     padding: 15px;
     color: #666;
     font-style: italic;
+}
+.vip-action-area {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+    padding: 16px 18px;
+    margin-bottom: 18px;
+    background: #f8fbfb;
+    border: 1px solid #e8eeee;
+    border-radius: 14px;
+}
+
+.vip-action-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: #475467;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.vip-action-info i {
+    width: 38px;
+    height: 38px;
+    border-radius: 12px;
+    background: #e8f7f7;
+    color: #107e84;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    flex-shrink: 0;
+}
+
+.vip-action-title {
+    font-weight: 700;
+    color: #222;
+    margin-bottom: 2px;
+}
+
+.vip-action-desc {
+    color: #667085;
+    font-size: 13px;
+}
+
+.btn-vip-action {
+    min-width: 160px;
+    height: 42px;
+    padding: 0 18px;
+    border-radius: 999px;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.25s ease;
+    white-space: nowrap;
+}
+
+.btn-vip-upgrade {
+    background: linear-gradient(135deg, #107e84, #4CAF50);
+    color: #fff;
+    box-shadow: 0 8px 18px rgba(16, 126, 132, 0.18);
+}
+
+.btn-vip-upgrade:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 12px 24px rgba(16, 126, 132, 0.24);
+}
+
+.btn-vip-downgrade {
+    background: #fff;
+    color: #c62828;
+    border: 1.5px solid #ffcdd2;
+}
+
+.btn-vip-downgrade:hover {
+    background: #ffebee;
+    border-color: #ef9a9a;
+    transform: translateY(-1px);
+}
+
+.btn-vip-action:active {
+    transform: translateY(0);
+}
+
+@media (max-width: 768px) {
+    .vip-action-area {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .vip-action-area form,
+    .btn-vip-action {
+        width: 100%;
+    }
 }

@@ -9,6 +9,14 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
+import model.user.VipUpdateResult;
+
+import java.sql.Timestamp;
+import java.time.DayOfWeek;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.temporal.TemporalAdjusters;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -66,6 +74,94 @@ public class AdminCustomerServlet extends HttpServlet {
         List<Integer> idsToUpdate = new ArrayList<>();
         boolean success = false;
         String message = "";
+        if ("autoUpdateVip".equals(action)) {
+            try {
+                String thresholdStr = request.getParameter("threshold");
+                String periodType = request.getParameter("periodType");
+
+                if (thresholdStr == null || thresholdStr.trim().isEmpty()) {
+                    response.getWriter().write("{\"success\": false, \"message\": \"Vui lòng nhập ngưỡng chi tiêu VIP.\"}");
+                    return;
+                }
+                double threshold = Double.parseDouble(thresholdStr);
+
+                if (threshold <= 0) {
+                    response.getWriter().write("{\"success\": false, \"message\": \"Ngưỡng chi tiêu phải lớn hơn 0.\"}");
+                    return;
+                }
+                LocalDateTime startDateTime;
+                LocalDateTime endDateTime;
+
+                LocalDate today = LocalDate.now();
+
+                if ("week".equals(periodType)) {
+                    LocalDate startOfThisWeek = today.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
+                    LocalDate startOfLastWeek = startOfThisWeek.minusWeeks(1);
+
+                    startDateTime = startOfLastWeek.atStartOfDay();
+                    endDateTime = startOfThisWeek.atStartOfDay();
+
+                } else if ("month".equals(periodType)) {
+                    LocalDate firstDayOfThisMonth = today.withDayOfMonth(1);
+                    LocalDate firstDayOfLastMonth = firstDayOfThisMonth.minusMonths(1);
+
+                    startDateTime = firstDayOfLastMonth.atStartOfDay();
+                    endDateTime = firstDayOfThisMonth.atStartOfDay();
+
+                } else if ("custom".equals(periodType)) {
+                    String startDateStr = request.getParameter("startDate");
+                    String endDateStr = request.getParameter("endDate");
+
+                    if (startDateStr == null || startDateStr.trim().isEmpty()
+                            || endDateStr == null || endDateStr.trim().isEmpty()) {
+                        response.getWriter().write("{\"success\": false, \"message\": \"Vui lòng chọn đầy đủ ngày bắt đầu và ngày kết thúc.\"}");
+                        return;
+                    }
+
+                    LocalDate startDate = LocalDate.parse(startDateStr);
+                    LocalDate endDate = LocalDate.parse(endDateStr);
+
+                    if (endDate.isBefore(startDate)) {
+                        response.getWriter().write("{\"success\": false, \"message\": \"Ngày kết thúc không được nhỏ hơn ngày bắt đầu.\"}");
+                        return;
+                    }
+
+                    startDateTime = startDate.atStartOfDay();
+                    endDateTime = endDate.plusDays(1).atStartOfDay();
+
+                } else {
+                    response.getWriter().write("{\"success\": false, \"message\": \"Chu kỳ xét VIP không hợp lệ.\"}");
+                    return;
+                }
+
+                VipUpdateResult result = userDAO.autoUpdateVipBySpending(
+                        threshold,
+                        Timestamp.valueOf(startDateTime),
+                        Timestamp.valueOf(endDateTime)
+                );
+
+                message = "Cập nhật VIP tự động thành công. "
+                        + "Nâng VIP: " + result.getUpgradedCount()
+                        + " khách hàng, hạ thường: " + result.getDowngradedCount()
+                        + " khách hàng.";
+
+                response.getWriter().write("{" +
+                        "\"success\": true," +
+                        "\"upgradedCount\": " + result.getUpgradedCount() + "," +
+                        "\"downgradedCount\": " + result.getDowngradedCount() + "," +
+                        "\"message\": \"" + message + "\"" +
+                        "}");
+                return;
+
+            } catch (NumberFormatException e) {
+                response.getWriter().write("{\"success\": false, \"message\": \"Ngưỡng chi tiêu không hợp lệ.\"}");
+                return;
+            } catch (Exception e) {
+                e.printStackTrace();
+                response.getWriter().write("{\"success\": false, \"message\": \"Có lỗi xảy ra khi cập nhật VIP tự động.\"}");
+                return;
+            }
+        }
 
         try {
             if ("true".equals(isSelectAll)) {
@@ -91,6 +187,15 @@ public class AdminCustomerServlet extends HttpServlet {
                 } else if ("deactivate".equals(action)) {
                     success = userDAO.updateStatusBulk(idsToUpdate, false);
                     message = "Vô hiệu hóa thành công " + idsToUpdate.size() + " khách hàng.";
+
+                } else if ("upgradeVip".equals(action)) {
+                    success = userDAO.updateVipStatusBulk(idsToUpdate, true);
+                    message = "Nâng cấp VIP thành công " + idsToUpdate.size() + " khách hàng.";
+
+                } else if ("downgradeVip".equals(action)) {
+                    success = userDAO.updateVipStatusBulk(idsToUpdate, false);
+                    message = "Hạ xuống khách thường thành công " + idsToUpdate.size() + " khách hàng.";
+
                 } else {
                     message = "Hành động không hợp lệ.";
                 }
