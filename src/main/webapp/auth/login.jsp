@@ -48,7 +48,7 @@
                             class="input-username"
                             type="text"
                             name="username"
-                            placeholder="Tên đăng nhập"
+                            placeholder="Tên đăng nhập, số điện thoại hoặc email"
                             value="${username}"
                             required>
                 </div>
