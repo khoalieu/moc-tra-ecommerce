@@ -505,7 +505,7 @@
         let serviceFee = 0;
 
         function formatCurrency(amount) {
-            return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
+            return new Intl.NumberFormat('vi-VN').format(amount) + 'đ';
         }
 
         function showCouponCheckoutMessage(message, type) {

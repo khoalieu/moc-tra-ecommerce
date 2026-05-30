@@ -44,10 +44,10 @@
                     <label for="price-filter">Khoảng giá</label>
                     <select name="maxPrice" id="price-filter" class="form-select" onchange="this.form.submit()">
                         <option value="">Tất cả giá</option>
-                        <option value="50000" ${currentMaxPrice == '50000' ? 'selected' : ''}>Dưới 50.000₫</option>
-                        <option value="100000" ${currentMaxPrice == '100000' ? 'selected' : ''}>Dưới 100.000₫</option>
-                        <option value="200000" ${currentMaxPrice == '200000' ? 'selected' : ''}>Dưới 200.000₫</option>
-                        <option value="500000" ${currentMaxPrice == '500000' ? 'selected' : ''}>Dưới 500.000₫</option>
+                        <option value="50000" ${currentMaxPrice == '50000' ? 'selected' : ''}>Dưới 50.000đ</option>
+                        <option value="100000" ${currentMaxPrice == '100000' ? 'selected' : ''}>Dưới 100.000đ</option>
+                        <option value="200000" ${currentMaxPrice == '200000' ? 'selected' : ''}>Dưới 200.000đ</option>
+                        <option value="500000" ${currentMaxPrice == '500000' ? 'selected' : ''}>Dưới 500.000đ</option>
                     </select>
                 </div>
 
@@ -110,11 +110,11 @@
                                     </td>
                                     <td>
                                         <div class="favorite-price-main">
-                                            <fmt:formatNumber value="${p.salePrice > 0 && p.salePrice < p.price ? p.salePrice : p.price}" pattern="#,###"/>₫
+                                            <fmt:formatNumber value="${p.salePrice > 0 && p.salePrice < p.price ? p.salePrice : p.price}" pattern="#,###"/>đ
                                         </div>
                                         <c:if test="${p.salePrice > 0 && p.salePrice < p.price}">
                                             <div class="favorite-price-old">
-                                                <fmt:formatNumber value="${p.price}" pattern="#,###"/>₫
+                                                <fmt:formatNumber value="${p.price}" pattern="#,###"/>đ
                                             </div>
                                         </c:if>
                                     </td>
@@ -122,7 +122,7 @@
                                         <c:choose>
                                             <c:when test="${p.salePrice > 0 && p.salePrice < p.price}">
                                                 <span class="favorite-discount">
-                                                    Giảm <fmt:formatNumber value="${p.price - p.salePrice}" pattern="#,###"/>₫
+                                                    Giảm <fmt:formatNumber value="${p.price - p.salePrice}" pattern="#,###"/>đ
                                                     (<fmt:formatNumber value="${(p.price - p.salePrice) / p.price * 100}" maxFractionDigits="0"/>%)
                                                 </span>
                                             </c:when>

@@ -103,11 +103,11 @@
                     <p class="price">
                         <c:choose>
                             <c:when test="${p.salePrice > 0 && p.salePrice < p.price}">
-                                <span class="new-price"><fmt:formatNumber value="${p.salePrice}" pattern="#,###"/>₫</span>
-                                <span class="old-price"><fmt:formatNumber value="${p.price}" pattern="#,###"/>₫</span>
+                                <span class="new-price"><fmt:formatNumber value="${p.salePrice}" pattern="#,###"/>đ</span>
+                                <span class="old-price"><fmt:formatNumber value="${p.price}" pattern="#,###"/>đ</span>
                             </c:when>
                             <c:otherwise>
-                                <span class="new-price"><fmt:formatNumber value="${p.price}" pattern="#,###"/>₫</span>
+                                <span class="new-price"><fmt:formatNumber value="${p.price}" pattern="#,###"/>đ</span>
                             </c:otherwise>
                         </c:choose>
                     </p>
@@ -142,11 +142,11 @@
                     <p class="price">
                         <c:choose>
                             <c:when test="${p.salePrice > 0 && p.salePrice < p.price}">
-                                <span class="new-price"><fmt:formatNumber value="${p.salePrice}" pattern="#,###"/>₫</span>
-                                <span class="old-price"><fmt:formatNumber value="${p.price}" pattern="#,###"/>₫</span>
+                                <span class="new-price"><fmt:formatNumber value="${p.salePrice}" pattern="#,###"/>đ</span>
+                                <span class="old-price"><fmt:formatNumber value="${p.price}" pattern="#,###"/>đ</span>
                             </c:when>
                             <c:otherwise>
-                                <span class="new-price"><fmt:formatNumber value="${p.price}" pattern="#,###"/>₫</span>
+                                <span class="new-price"><fmt:formatNumber value="${p.price}" pattern="#,###"/>đ</span>
                             </c:otherwise>
                         </c:choose>
                     </p>

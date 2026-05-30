@@ -115,14 +115,14 @@
 
                     <div class="stat-box">
                         <div class="stat-number">
-                            <fmt:formatNumber value="${totalSpent}" type="currency" currencySymbol="₫" maxFractionDigits="0"/>
+                            <fmt:formatNumber value="${totalSpent}" type="currency" currencySymbol="đ" maxFractionDigits="0"/>
                         </div>
                         <div class="stat-label">Tổng chi tiêu</div>
                     </div>
 
                     <div class="stat-box">
                         <div class="stat-number">
-                            <fmt:formatNumber value="${avgOrderValue}" type="currency" currencySymbol="₫" maxFractionDigits="0"/>
+                            <fmt:formatNumber value="${avgOrderValue}" type="currency" currencySymbol="đ" maxFractionDigits="0"/>
                         </div>
                         <div class="stat-label">Giá trị TB/đơn</div>
                     </div>
@@ -269,7 +269,7 @@
                                                         Giảm ${voucher.discountValue}%
                                                     </c:when>
                                                     <c:otherwise>
-                                                        Giảm <fmt:formatNumber value="${voucher.discountValue}" pattern="#,###"/>₫
+                                                        Giảm <fmt:formatNumber value="${voucher.discountValue}" pattern="#,###"/>đ
                                                     </c:otherwise>
                                                 </c:choose>
                                             </div>
@@ -409,13 +409,13 @@
                                         <div class="cart-item-info">
                                             <div class="cart-item-name">${item.productName}</div>
                                             <div class="cart-item-price">
-                                                <fmt:formatNumber value="${item.price}" type="currency" currencySymbol="₫" maxFractionDigits="0"/>
+                                                <fmt:formatNumber value="${item.price}" type="currency" currencySymbol="đ" maxFractionDigits="0"/>
                                             </div>
                                             <div class="cart-item-quantity">Số lượng: ${item.quantity}</div>
                                         </div>
 
                                         <div class="cart-item-total">
-                                            <fmt:formatNumber value="${item.price * item.quantity}" type="currency" currencySymbol="₫" maxFractionDigits="0"/>
+                                            <fmt:formatNumber value="${item.price * item.quantity}" type="currency" currencySymbol="đ" maxFractionDigits="0"/>
                                         </div>
                                     </div>
                                 </c:forEach>
@@ -463,7 +463,7 @@
                                     </td>
 
                                     <td class="money-text">
-                                        <fmt:formatNumber value="${o.subtotalAmount}" type="currency" currencySymbol="₫" maxFractionDigits="0"/>
+                                        <fmt:formatNumber value="${o.subtotalAmount}" type="currency" currencySymbol="đ" maxFractionDigits="0"/>
                                     </td>
 
                                     <td class="money-text" style="color: #d32f2f;">
@@ -471,12 +471,12 @@
 
                                         <c:choose>
                                             <c:when test="${totalDiscount > 0}">
-                                                -<fmt:formatNumber value="${totalDiscount}" type="currency" currencySymbol="₫" maxFractionDigits="0"/>
+                                                -<fmt:formatNumber value="${totalDiscount}" type="currency" currencySymbol="đ" maxFractionDigits="0"/>
 
                                                 <div style="font-size: 12px; color: #777; margin-top: 3px;">
                                                     <c:if test="${o.couponDiscountAmount > 0}">
                                                         Coupon:
-                                                        -<fmt:formatNumber value="${o.couponDiscountAmount}" type="currency" currencySymbol="₫" maxFractionDigits="0"/>
+                                                        -<fmt:formatNumber value="${o.couponDiscountAmount}" type="currency" currencySymbol="đ" maxFractionDigits="0"/>
                                                     </c:if>
 
                                                     <c:if test="${o.vipDiscountAmount > 0}">
@@ -484,23 +484,23 @@
                                                             <br>
                                                         </c:if>
                                                         VIP:
-                                                        -<fmt:formatNumber value="${o.vipDiscountAmount}" type="currency" currencySymbol="₫" maxFractionDigits="0"/>
+                                                        -<fmt:formatNumber value="${o.vipDiscountAmount}" type="currency" currencySymbol="đ" maxFractionDigits="0"/>
                                                     </c:if>
                                                 </div>
                                             </c:when>
 
                                             <c:otherwise>
-                                                0₫
+                                                0đ
                                             </c:otherwise>
                                         </c:choose>
                                     </td>
 
                                     <td class="money-text">
-                                        <fmt:formatNumber value="${o.shippingFee}" type="currency" currencySymbol="₫" maxFractionDigits="0"/>
+                                        <fmt:formatNumber value="${o.shippingFee}" type="currency" currencySymbol="đ" maxFractionDigits="0"/>
                                     </td>
 
                                     <td class="money-text" style="font-weight: 700; color: #107e84;">
-                                        <fmt:formatNumber value="${o.totalAmount}" type="currency" currencySymbol="₫" maxFractionDigits="0"/>
+                                        <fmt:formatNumber value="${o.totalAmount}" type="currency" currencySymbol="đ" maxFractionDigits="0"/>
                                     </td>
 
                                     <td>
