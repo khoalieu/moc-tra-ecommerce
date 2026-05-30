@@ -343,10 +343,10 @@
                                         <div class="order-item__price" style="text-align: right; min-width: 160px;">
                                             <div style="font-size: 0.85rem; color: #666;">
                                                 Giá gốc:
-                                                <fmt:formatNumber value="${item.originalUnitPrice}" type="currency" currencySymbol="đ" maxFractionDigits="0"/>
+                                                <fmt:formatNumber value="${item.originalUnitPrice}" pattern="#,###"/>đ
                                                 x ${item.quantity}
                                                 =
-                                                <fmt:formatNumber value="${item.totalOriginalPrice}" type="currency" currencySymbol="đ" maxFractionDigits="0"/>
+                                                <fmt:formatNumber value="${item.totalOriginalPrice}" pattern="#,###"/>đ
                                             </div>
 
                                             <div style="font-size: 0.85rem; color: #2e7d32; font-weight: 600;">
@@ -354,7 +354,7 @@
                                                 <c:choose>
                                                     <c:when test="${item.totalDiscount > 0}">
                                                         -
-                                                        <fmt:formatNumber value="${item.totalDiscount}" type="currency" currencySymbol="đ" maxFractionDigits="0"/>
+                                                        <fmt:formatNumber value="${item.totalDiscount}" pattern="#,###"/>đ
                                                     </c:when>
                                                     <c:otherwise>
                                                         0đ
@@ -363,7 +363,7 @@
                                             </div>
 
                                             <div style="font-size: 1rem; color: #d9534f; font-weight: bold; margin-top: 4px;">
-                                                <fmt:formatNumber value="${item.totalPrice}" type="currency" currencySymbol="đ" maxFractionDigits="0"/>
+                                                <fmt:formatNumber value="${item.totalPrice}" pattern="#,###"/>đ
                                             </div>
                                         </div>
                                     </div>
@@ -374,14 +374,14 @@
                                 <div class="order-summary__row">
                                     <span>Tạm tính</span>
                                     <span>
-                                        <fmt:formatNumber value="${subtotal}" type="currency" currencySymbol="đ" maxFractionDigits="0"/>
+                                        <fmt:formatNumber value="${subtotal}" pattern="#,###"/>đ
                                     </span>
                                 </div>
 
                                 <div class="order-summary__row">
                                     <span>Phí vận chuyển</span>
                                     <span id="shippingFeeDisplay">
-                                        <fmt:formatNumber value="${shippingFee}" type="currency" currencySymbol="đ" maxFractionDigits="0"/>
+                                        <fmt:formatNumber value="${shippingFee}" pattern="#,###"/>đ
                                     </span>
                                 </div>
 
@@ -398,7 +398,7 @@
                                 <div class="order-summary__row order-summary__row--total">
                                     <span>Tổng cộng</span>
                                     <span id="totalAmountDisplay">
-                                        <fmt:formatNumber value="${totalAmount}" type="currency" currencySymbol="đ" maxFractionDigits="0"/>
+                                        <fmt:formatNumber value="${totalAmount}" pattern="#,###"/>đ
                                     </span>
                                 </div>
                             </div>
@@ -448,7 +448,7 @@
                             <button type="submit" class="btn btn-primary checkout-submit__btn" id="btnSubmitOrder">
                                 Thanh toán
                                 <span id="btnTotalDisplay">
-                                    <fmt:formatNumber value="${totalAmount}" type="currency" currencySymbol="đ" maxFractionDigits="0"/>
+                                    <fmt:formatNumber value="${totalAmount}" pattern="#,###"/>đ
                                 </span>
                             </button>
                             <p class="checkout-submit__note">
@@ -505,7 +505,7 @@
         let serviceFee = 0;
 
         function formatCurrency(amount) {
-            return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
+            return new Intl.NumberFormat('vi-VN').format(amount) + 'đ';
         }
 
         function showCouponCheckoutMessage(message, type) {

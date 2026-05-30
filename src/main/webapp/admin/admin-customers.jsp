@@ -112,12 +112,12 @@
                         <label for="spending-filter">Tổng chi tiêu</label>
                         <select id="spending-filter" name="spending" class="form-select" onchange="this.form.submit()">
                             <option value="">Tất cả</option>
-                            <option value="0-500000" ${paramSpending == '0-500000' ? 'selected' : ''}>Dưới 500.000₫
+                            <option value="0-500000" ${paramSpending == '0-500000' ? 'selected' : ''}>Dưới 500.000đ
                             </option>
                             <option value="500000-1000000" ${paramSpending == '500000-1000000' ? 'selected' : ''}>
-                                500.000₫ - 1.000.000₫
+                                500.000đ - 1.000.000đ
                             </option>
-                            <option value="1000000+" ${paramSpending == '1000000+' ? 'selected' : ''}>Trên 1.000.000₫
+                            <option value="1000000+" ${paramSpending == '1000000+' ? 'selected' : ''}>Trên 1.000.000đ
                             </option>
                         </select>
                     </div>

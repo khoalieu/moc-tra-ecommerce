@@ -83,8 +83,8 @@
                 <p class="total-amount">
                     <i class="fas fa-money-bill-wave"></i> Cần thu:
                     <c:choose>
-                        <c:when test="${order.paymentStatus.name() == 'PAID'}">0 VNĐ</c:when>
-                        <c:otherwise><fmt:formatNumber value="${order.totalAmount}" pattern="#,###"/> VNĐ</c:otherwise>
+                        <c:when test="${order.paymentStatus.name() == 'PAID'}">0đ</c:when>
+                        <c:otherwise><fmt:formatNumber value="${order.totalAmount}" pattern="#,###"/>đ</c:otherwise>
                     </c:choose>
                 </p>
                 <p class="order-status-inline">

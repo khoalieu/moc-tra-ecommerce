@@ -126,7 +126,7 @@
                                 <div class="order-summary__row order-summary__row--total">
                                     <span>Tổng cộng (Đã chọn)</span>
                                     <span id="total-selected-price" style="color: #d9534f; font-size: 1.2em; font-weight: bold;">
-                                    0 ₫
+                                    0 đ
                                 </span>
                                 </div>
                                 <div style="margin-top: 12px; padding: 12px; background: #f8f9fa; border-radius: 8px; font-size: 0.92rem; color: #555;">
@@ -160,7 +160,7 @@
         const totalDisplay = document.getElementById('total-selected-price');
         const checkoutBtn = document.getElementById('btn-checkout');
         const formatCurrency = (amount) => {
-            return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
+            return new Intl.NumberFormat('vi-VN').format(amount) + 'đ';
         };
         const calculateTotal = () => {
             let total = 0;

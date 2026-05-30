@@ -287,7 +287,7 @@
                                             -<fmt:formatNumber value="${p.currentPromotionValue}" maxFractionDigits="0"/>%
                                         </c:when>
                                         <c:otherwise>
-                                            -<fmt:formatNumber value="${p.currentPromotionValue}" pattern="#,###"/>₫
+                                            -<fmt:formatNumber value="${p.currentPromotionValue}" pattern="#,###"/>đ
                                         </c:otherwise>
                                     </c:choose>
                                 </span>
@@ -310,15 +310,15 @@
                                     <c:choose>
                                         <c:when test="${p.salePrice > 0 && p.salePrice < p.price}">
                                             <span class="new-price" style="color: #d32f2f; font-weight: bold; font-size: 1.1rem; margin-right: 10px;">
-                                                <fmt:formatNumber value="${p.salePrice}" pattern="#,###"/>₫
+                                                <fmt:formatNumber value="${p.salePrice}" pattern="#,###"/>đ
                                             </span>
                                             <span class="old-price" style="color: #999; text-decoration: line-through; font-size: 0.9rem;">
-                                                <fmt:formatNumber value="${p.price}" pattern="#,###"/>₫
+                                                <fmt:formatNumber value="${p.price}" pattern="#,###"/>đ
                                             </span>
                                         </c:when>
                                         <c:otherwise>
                                             <span class="new-price" style="font-weight: bold; font-size: 1.1rem;">
-                                                <fmt:formatNumber value="${p.price}" pattern="#,###"/>₫
+                                                <fmt:formatNumber value="${p.price}" pattern="#,###"/>đ
                                             </span>
                                         </c:otherwise>
                                     </c:choose>
@@ -372,7 +372,7 @@
                                                     -<fmt:formatNumber value="${p.currentPromotionValue}" maxFractionDigits="0"/>%
                                                 </c:when>
                                                 <c:otherwise>
-                                                    -<fmt:formatNumber value="${p.currentPromotionValue}" pattern="#,###"/>₫
+                                                    -<fmt:formatNumber value="${p.currentPromotionValue}" pattern="#,###"/>đ
                                                 </c:otherwise>
                                             </c:choose>
                                         </span>
@@ -395,15 +395,15 @@
                                         <div class="price-box">
                                             <c:if test="${p.salePrice > 0 && p.salePrice < p.price}">
                                                 <span class="new-price" style="color: #d32f2f; font-weight: bold; font-size: 1.1rem; margin-right: 10px;">
-                                                    <fmt:formatNumber value="${p.salePrice}" pattern="#,###"/>₫
+                                                    <fmt:formatNumber value="${p.salePrice}" pattern="#,###"/>đ
                                                 </span>
                                                 <span class="old-price" style="color: #999; text-decoration: line-through; font-size: 0.9rem;">
-                                                    <fmt:formatNumber value="${p.price}" pattern="#,###"/>₫
+                                                    <fmt:formatNumber value="${p.price}" pattern="#,###"/>đ
                                                 </span>
                                             </c:if>
                                             <c:if test="${p.salePrice <= 0 || p.salePrice >= p.price}">
                                                 <span class="new-price" style="font-weight: bold; font-size: 1.1rem;">
-                                                    <fmt:formatNumber value="${p.price}" pattern="#,###"/>₫
+                                                    <fmt:formatNumber value="${p.price}" pattern="#,###"/>đ
                                                 </span>
                                             </c:if>
                                         </div>
