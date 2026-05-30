@@ -495,14 +495,6 @@
 
         let provinceFee = 0, serviceFee = 0;
 
-        const checkoutForm = document.getElementById("checkoutForm");
-
-        const DATA_URL = "${pageContext.request.contextPath}/assets/data/openapi.json";
-        const SHIPPING_API_URL = "${pageContext.request.contextPath}/api/get-shipping-fee";
-
-        let provincesData = [];
-        let provinceFee = 0;
-        let serviceFee = 0;
 
         function formatCurrency(amount) {
             return new Intl.NumberFormat('vi-VN').format(amount) + 'đ';
