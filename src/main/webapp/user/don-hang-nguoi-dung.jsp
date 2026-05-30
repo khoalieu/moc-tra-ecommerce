@@ -1,7 +1,7 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %>
-<%@ taglib prefix="fn" uri="jakarta.tags.functions" %> <%-- Thêm thư viện Function --%>
+<%@ taglib prefix="fn" uri="jakarta.tags.functions" %>
 
 <!DOCTYPE html>
 <html lang="vi">
@@ -12,7 +12,6 @@
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/main.css">
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/my-orders.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css" />
 </head>
 <body class="user-dashboard-page">
 <jsp:include page="/common/header.jsp"></jsp:include>
@@ -28,18 +27,19 @@
             </div>
             <% session.removeAttribute("msg"); session.removeAttribute("msgType"); %>
         </c:if>
+
         <div class="orders-header">
             <h2 class="page-title" style="margin-bottom: 0;">Đơn Hàng Gần Đây</h2>
             <div class="orders-filter">
                 <button class="filter-btn active" data-status="all">Tất cả</button>
                 <button class="filter-btn" data-status="pending">Chờ xử lý</button>
+                <button class="filter-btn" data-status="shipping">Đang giao</button>
                 <button class="filter-btn" data-status="completed">Hoàn thành</button>
                 <button class="filter-btn" data-status="cancelled">Đã hủy</button>
             </div>
         </div>
 
         <div class="orders-list">
-            <%-- KIỂM TRA DỮ LIỆU --%>
             <c:if test="${not empty orders}">
                 <c:forEach var="o" items="${orders}">
                     <c:set var="statusStr" value="${o.status.toString()}" />
@@ -55,11 +55,62 @@
                             <c:set var="statusClass" value="status-cancelled" />
                             <c:set var="statusText" value="Đã hủy" />
                         </c:when>
+                        <c:when test="${statusStr == 'SHIPPING'}">
+                            <c:set var="statusClass" value="status-shipping" />
+                            <c:set var="statusText" value="Đang giao hàng" />
+                        </c:when>
+                        <c:when test="${statusStr == 'DELIVERY_FAILED'}">
+                            <c:set var="statusClass" value="status-delivery-failed" />
+                            <c:set var="statusText" value="Giao thất bại" />
+                        </c:when>
                     </c:choose>
+
+                    <c:choose>
+                        <c:when test="${statusStr == 'PENDING'}">
+                            <c:set var="tl1" value="done" />
+                            <c:set var="tl2" value="active" />
+                            <c:set var="tl3" value="" />
+                            <c:set var="tl4" value="" />
+                        </c:when>
+                        <c:when test="${statusStr == 'SHIPPING'}">
+                            <c:set var="tl1" value="done" />
+                            <c:set var="tl2" value="done" />
+                            <c:set var="tl3" value="active" />
+                            <c:set var="tl4" value="" />
+                        </c:when>
+                        <c:when test="${statusStr == 'COMPLETED'}">
+                            <c:set var="tl1" value="done" />
+                            <c:set var="tl2" value="done" />
+                            <c:set var="tl3" value="done" />
+                            <c:set var="tl4" value="done" />
+                        </c:when>
+                        <c:when test="${statusStr == 'CANCELLED'}">
+                            <c:set var="tl1" value="done" />
+                            <c:set var="tl2" value="" />
+                            <c:set var="tl3" value="" />
+                            <c:set var="tl4" value="cancelled" />
+                        </c:when>
+                        <c:when test="${statusStr == 'DELIVERY_FAILED'}">
+                            <c:set var="tl1" value="done" />
+                            <c:set var="tl2" value="done" />
+                            <c:set var="tl3" value="done" />
+                            <c:set var="tl4" value="failed" />
+                        </c:when>
+                        <c:otherwise>
+                            <c:set var="tl1" value="done" />
+                            <c:set var="tl2" value="active" />
+                            <c:set var="tl3" value="" />
+                            <c:set var="tl4" value="" />
+                        </c:otherwise>
+                    </c:choose>
+
                     <div class="order-card" data-status="${fn:toLowerCase(statusStr)}">
                         <div class="order-card-header">
-                            <div>
-                                <div class="order-number">Đơn hàng #${o.orderNumber}</div>
+                            <div class="order-card-meta">
+                                <div class="order-number">
+                                    <i class="fa-solid fa-receipt" style="font-size:13px; margin-right:4px;"></i>
+                                    Đơn hàng #${o.orderNumber}
+                                </div>
                                 <div class="order-date">
                                     <i class="fa-regular fa-calendar"></i>
                                     <fmt:formatDate value="${o.createdAt}" pattern="dd/MM/yyyy, HH:mm"/>
@@ -69,93 +120,165 @@
                                 <span class="status-badge ${statusClass}">${statusText}</span>
                                 <c:choose>
                                     <c:when test="${o.paymentStatus.toString() == 'PAID'}">
-                                        <span class="status-badge payment-paid">Đã thanh toán</span>
+                                        <span class="status-badge payment-paid">
+                                            <i class="fa-solid fa-check-circle" style="font-size:10px;"></i> Đã thanh toán
+                                        </span>
                                     </c:when>
                                     <c:otherwise>
-                                        <span class="status-badge payment-pending">Chưa thanh toán</span>
+                                        <span class="status-badge payment-pending">
+                                            <i class="fa-regular fa-clock" style="font-size:10px;"></i> Chưa thanh toán
+                                        </span>
                                     </c:otherwise>
                                 </c:choose>
                             </div>
                         </div>
 
-                        <div class="order-card-body">
-                            <div class="order-items">
+                        <div class="order-timeline">
+                            <div class="timeline-step ${tl1}">
+                                <div class="timeline-icon"><i class="fa-solid fa-clipboard-list"></i></div>
+                                <div class="timeline-label">Chờ xác nhận</div>
+                            </div>
+                            <div class="timeline-step ${tl2}">
+                                <div class="timeline-icon"><i class="fa-solid fa-box-open"></i></div>
+                                <div class="timeline-label">Đang chuẩn bị</div>
+                            </div>
+                            <div class="timeline-step ${tl3}">
+                                <div class="timeline-icon"><i class="fa-solid fa-truck-fast"></i></div>
+                                <div class="timeline-label">Đang giao hàng</div>
+                            </div>
+                            <c:choose>
+                                <c:when test="${statusStr == 'CANCELLED'}">
+                                    <div class="timeline-step cancelled">
+                                        <div class="timeline-icon"><i class="fa-solid fa-ban"></i></div>
+                                        <div class="timeline-label">Đã hủy</div>
+                                    </div>
+                                </c:when>
+                                <c:when test="${statusStr == 'DELIVERY_FAILED'}">
+                                    <div class="timeline-step failed">
+                                        <div class="timeline-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                                        <div class="timeline-label">Giao thất bại</div>
+                                    </div>
+                                </c:when>
+                                <c:otherwise>
+                                    <div class="timeline-step ${tl4}">
+                                        <div class="timeline-icon"><i class="fa-solid fa-circle-check"></i></div>
+                                        <div class="timeline-label">Hoàn thành</div>
+                                    </div>
+                                </c:otherwise>
+                            </c:choose>
+                        </div>
+
+                        <c:if test="${(statusStr == 'CANCELLED' || statusStr == 'DELIVERY_FAILED') && not empty o.cancelReason}">
+                            <div class="cancel-reason-banner">
+                                <i class="fa-solid fa-circle-info"></i>
+                                <div>
+                                    <span class="cancel-reason-title">Lý do hủy đơn</span>
+                                    <span class="cancel-reason-text">"${o.cancelReason}"</span>
+                                </div>
+                            </div>
+                        </c:if>
+
+                        <div class="items-preview">
+                            <c:forEach var="item" items="${o.items}" varStatus="s">
+                                <c:if test="${s.index < 4}">
+                                    <div class="preview-thumb-wrap">
+                                        <img src="${item.product.imageUrl}"
+                                             alt="${item.product.name}"
+                                             class="preview-thumb"
+                                             title="${item.product.name}"
+                                             onerror="this.src='${pageContext.request.contextPath}/assets/images/no-image.png'">
+                                    </div>
+                                </c:if>
+                            </c:forEach>
+                            <c:if test="${fn:length(o.items) > 4}">
+                                <div class="preview-more">+${fn:length(o.items) - 4}</div>
+                            </c:if>
+                            <div class="items-preview-info">
+                                <span class="items-preview-count">${fn:length(o.items)} sản phẩm</span>
+                                &nbsp;—&nbsp; Bấm <strong>Xem chi tiết</strong> để xem đầy đủ
+                            </div>
+                        </div>
+
+                        <div class="order-detail-panel" id="detail-${o.id}">
+                            <div class="order-items-panel">
+                                <div class="items-panel-header">
+                                    <i class="fa-solid fa-list-ul"></i>
+                                    Chi tiết sản phẩm
+                                </div>
                                 <c:forEach var="item" items="${o.items}">
-                                    <div class="order-item">
-                                        <img src="${item.product.imageUrl}" alt="${item.product.name}"
-                                             class="item-image" onerror="this.src='${pageContext.request.contextPath}/assets/images/no-image.png'">
-                                        <div class="item-details">
-                                            <div class="item-name">${item.product.name}</div>
-                                            <div class="item-quantity">Số lượng: ${item.quantity}</div>
-                                            <div class="item-price">
-                                                <fmt:formatNumber value="${item.price}" type="currency" currencySymbol="đ" maxFractionDigits="0"/>
+                                    <div class="order-item-row">
+                                        <img src="${item.product.imageUrl}"
+                                             alt="${item.product.name}"
+                                             class="item-thumb"
+                                             onerror="this.src='${pageContext.request.contextPath}/assets/images/no-image.png'">
+                                        <div class="item-info-col">
+                                            <div class="item-info-name" title="${item.product.name}">${item.product.name}</div>
+                                            <c:if test="${not empty item.variant}">
+                                                <div class="item-info-qty" style="color: #9ca3af;">
+                                                    Phân loại: ${item.variant.variantName}
+                                                </div>
+                                            </c:if>
+                                            <div class="item-info-qty">Số lượng: × ${item.quantity}</div>
+                                        </div>
+                                        <div class="item-price-col">
+                                            <div class="item-unit-price">
+                                                Đơn giá: <fmt:formatNumber value="${item.price}" type="currency" currencySymbol="đ" maxFractionDigits="0"/>
+                                            </div>
+                                            <div class="item-total-price">
+                                                <fmt:formatNumber value="${item.price * item.quantity}" type="currency" currencySymbol="đ" maxFractionDigits="0"/>
                                             </div>
                                         </div>
                                     </div>
                                 </c:forEach>
                             </div>
-
-                            <div class="order-summary">
-                                <div class="summary-row">
-                                    <span>Tạm tính:</span>
-                                    <span><fmt:formatNumber value="${o.totalAmount - o.shippingFee}" type="currency" currencySymbol="đ" maxFractionDigits="0"/></span>
-                                </div>
-                                <div class="summary-row">
-                                    <span>Phí vận chuyển:</span>
-                                    <span><fmt:formatNumber value="${o.shippingFee}" type="currency" currencySymbol="đ" maxFractionDigits="0"/></span>
-                                </div>
-                                <div class="summary-row">
-                                    <span>Tổng cộng:</span>
-                                    <span style="font-weight: bold; color: #d32f2f;">
-                                        <fmt:formatNumber value="${o.totalAmount}" type="currency" currencySymbol="đ" maxFractionDigits="0"/>
-                                    </span>
-                                </div>
+                            <div class="shipping-addr-inline">
+                                <i class="fa-solid fa-location-dot"></i>
+                                <span><strong>Địa chỉ giao hàng:</strong> ${o.notes}</span>
                             </div>
+                        </div>
 
-                            <div class="shipping-address">
-                                <strong><i class="fa-solid fa-location-dot"></i> Địa chỉ giao hàng:</strong><br>
-                                    ${o.notes}
+                        <div class="order-summary-compact">
+                            <div class="summary-amount-row">
+                                <span>Tạm tính: <fmt:formatNumber value="${o.totalAmount - o.shippingFee}" type="currency" currencySymbol="đ" maxFractionDigits="0"/></span>
+                                <span>Phí vận chuyển: <fmt:formatNumber value="${o.shippingFee}" type="currency" currencySymbol="đ" maxFractionDigits="0"/></span>
+                                <span class="highlight-total">Tổng: <fmt:formatNumber value="${o.totalAmount}" type="currency" currencySymbol="đ" maxFractionDigits="0"/></span>
                             </div>
+                            <button class="toggle-detail-btn" id="btn-${o.id}" onclick="toggleDetail(${o.id})">
+                                <i class="fa-solid fa-eye" style="font-size:12px;"></i>
+                                Xem chi tiết
+                                <i class="fa-solid fa-chevron-down chevron-icon"></i>
+                            </button>
+                        </div>
 
-                            <div class="order-footer">
-                                <div style="font-size: 13px; color: #666;">
-                                    <i class="fa-solid fa-credit-card"></i> Thanh toán:
-                                    <strong>${o.paymentMethod == 'cod' ? 'Thanh toán khi nhận hàng (COD)' : o.paymentMethod}</strong>
-                                </div>
-                                <div class="order-actions">
-                                    <a href="${pageContext.request.contextPath}/hoa-don?id=${o.id}" class="btn-action btn-outline">
-                                        <i class="fa-solid fa-eye"></i> Chi tiết
+                        <div class="order-footer-row">
+                            <div class="order-footer-left">
+                                <i class="fa-solid fa-credit-card"></i>
+                                Thanh toán:
+                                <strong>${o.paymentMethod == 'cod' ? 'COD (khi nhận hàng)' : o.paymentMethod}</strong>
+                            </div>
+                            <div class="order-actions">
+                                <a href="${pageContext.request.contextPath}/hoa-don?id=${o.id}" class="btn-action btn-outline">
+                                    <i class="fa-solid fa-file-invoice"></i> Xem hóa đơn
+                                </a>
+
+                                <c:if test="${statusStr == 'PENDING'}">
+                                    <button type="button" class="btn-action btn-secondary" onclick="openCancelModal(${o.id})">
+                                        <i class="fa-solid fa-times"></i> Hủy đơn
+                                    </button>
+                                </c:if>
+
+                                <c:if test="${statusStr == 'COMPLETED' || statusStr == 'CANCELLED'}">
+                                    <a href="${pageContext.request.contextPath}/san-pham" class="btn-action btn-primary">
+                                        <i class="fa-solid fa-rotate"></i> Mua lại
                                     </a>
-
-                                    <c:if test="${o.status == 'PENDING'}">
-                                        <a href="${pageContext.request.contextPath}/edit-user-order?id=${o.id}"
-                                           class="btn-edit-order">
-                                            <i class="fas fa-edit"></i>
-                                            Chỉnh sửa
-                                        </a>
-                                    </c:if>
-
-                                    <c:if test="${statusStr == 'PENDING'}">
-                                        <form action="${pageContext.request.contextPath}/cancel-order" method="post" style="display:inline;" onsubmit="return confirm('Bạn có chắc muốn hủy đơn này?');">
-                                            <input type="hidden" name="orderId" value="${o.id}">
-                                            <button type="button" class="btn-action btn-secondary" onclick="openCancelModal(${o.id})">
-                                                <i class="fa-solid fa-times"></i> Hủy đơn
-                                            </button>
-                                        </form>
-                                    </c:if>
-
-                                    <c:if test="${statusStr == 'COMPLETED' || statusStr == 'CANCELLED'}">
-                                        <a href="${pageContext.request.contextPath}/san-pham" class="btn-action btn-primary">
-                                            <i class="fa-solid fa-rotate"></i> Mua lại
-                                        </a>
-                                    </c:if>
-                                </div>
+                                </c:if>
                             </div>
                         </div>
                     </div>
                 </c:forEach>
             </c:if>
         </div>
+
         <div class="empty-state" style="display: ${empty orders ? 'flex' : 'none'}; flex-direction: column; align-items: center; padding: 40px; text-align: center;">
             <i class="fa-solid fa-cart-shopping" style="font-size: 48px; color: #ccc; margin-bottom: 20px;"></i>
             <h3>Chưa có đơn hàng nào</h3>
@@ -164,6 +287,7 @@
                 <i class="fa-solid fa-shopping-bag"></i> Mua sắm ngay
             </a>
         </div>
+
         <div id="cancelModal" class="modal-overlay">
             <div class="modal-content">
                 <div class="modal-header">
@@ -172,33 +296,39 @@
                 </div>
                 <form action="${pageContext.request.contextPath}/cancel-order" method="post">
                     <input type="hidden" name="orderId" id="modalOrderId">
-                    <div class="radio-group">
-                        <label class="radio-label">
-                            <input type="radio" name="reasonOpt" value="Đổi ý, không muốn mua nữa" checked onchange="toggleReasonInput(false)">
-                            <span>Đổi ý, không muốn mua nữa</span>
-                        </label>
-                        <label class="radio-label">
-                            <input type="radio" name="reasonOpt" value="Tìm thấy giá rẻ hơn ở nơi khác" onchange="toggleReasonInput(false)">
-                            <span>Tìm thấy giá rẻ hơn ở nơi khác</span>
-                        </label>
-                        <label class="radio-label">
-                            <input type="radio" name="reasonOpt" value="Thời gian giao hàng quá lâu" onchange="toggleReasonInput(false)">
-                            <span>Thời gian giao hàng quá lâu</span>
-                        </label>
-                        <label class="radio-label">
-                            <input type="radio" name="reasonOpt" value="other" onchange="toggleReasonInput(true)">
-                            <span>Lựa chọn khác</span>
-                        </label>
+                    <div class="modal-body">
+                        <div class="radio-group">
+                            <label class="radio-label">
+                                <input type="radio" name="reasonOpt" value="Đổi ý, không muốn mua nữa" checked onchange="toggleReasonInput(false)">
+                                <span>Đổi ý, không muốn mua nữa</span>
+                            </label>
+                            <label class="radio-label">
+                                <input type="radio" name="reasonOpt" value="Tìm thấy giá rẻ hơn ở nơi khác" onchange="toggleReasonInput(false)">
+                                <span>Tìm thấy giá rẻ hơn ở nơi khác</span>
+                            </label>
+                            <label class="radio-label">
+                                <input type="radio" name="reasonOpt" value="Thời gian giao hàng quá lâu" onchange="toggleReasonInput(false)">
+                                <span>Thời gian giao hàng quá lâu</span>
+                            </label>
+                            <label class="radio-label">
+                                <input type="radio" name="reasonOpt" value="Đặt nhầm sản phẩm" onchange="toggleReasonInput(false)">
+                                <span>Đặt nhầm sản phẩm</span>
+                            </label>
+                            <label class="radio-label">
+                                <input type="radio" name="reasonOpt" value="other" onchange="toggleReasonInput(true)">
+                                <span>Lý do khác...</span>
+                            </label>
+                        </div>
+                        <div id="otherReasonWrapper" style="display: none; margin-top: 14px;">
+                            <textarea name="otherReason" id="otherReasonInput" placeholder="Nhập lý do cụ thể..." rows="3"></textarea>
+                        </div>
+                        <input type="hidden" name="cancelReason" id="finalReason">
                     </div>
-
-                    <div id="otherReasonWrapper" style="display: none; margin-top: 15px;">
-                        <textarea name="otherReason" id="otherReasonInput" class="form-input full-width" placeholder="Nhập lý do cụ thể..."></textarea>
-                    </div>
-                    <input type="hidden" name="cancelReason" id="finalReason">
-
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" onclick="closeCancelModal()">Đóng</button>
-                        <button type="submit" class="btn btn-danger" onclick="prepareSubmit(event)">Xác nhận hủy</button>
+                        <button type="button" class="btn btn-secondary-modal" onclick="closeCancelModal()">Đóng</button>
+                        <button type="submit" class="btn btn-danger" onclick="prepareSubmit(event)">
+                            <i class="fa-solid fa-ban"></i> Xác nhận hủy
+                        </button>
                     </div>
                 </form>
             </div>
@@ -231,9 +361,28 @@
             });
         });
     });
+
+    function toggleDetail(orderId) {
+        const panel = document.getElementById('detail-' + orderId);
+        const btn   = document.getElementById('btn-' + orderId);
+        if (!panel || !btn) return;
+        const isOpen = panel.classList.contains('open');
+        if (isOpen) {
+            panel.classList.remove('open');
+            btn.classList.remove('open');
+            btn.innerHTML = '<i class="fa-solid fa-eye" style="font-size:12px;"></i> Xem chi tiết <i class="fa-solid fa-chevron-down chevron-icon"></i>';
+        } else {
+            panel.classList.add('open');
+            btn.classList.add('open');
+            btn.innerHTML = '<i class="fa-solid fa-eye-slash" style="font-size:12px;"></i> Ẩn chi tiết <i class="fa-solid fa-chevron-down chevron-icon open"></i>';
+        }
+    }
+
     function openCancelModal(orderId) {
         document.getElementById('modalOrderId').value = orderId;
         document.getElementById('cancelModal').classList.add('active');
+        document.querySelector('input[name="reasonOpt"][value="Đổi ý, không muốn mua nữa"]').checked = true;
+        toggleReasonInput(false);
     }
 
     function closeCancelModal() {
@@ -247,7 +396,6 @@
     function prepareSubmit(e) {
         const selectedOpt = document.querySelector('input[name="reasonOpt"]:checked').value;
         let finalReason = selectedOpt;
-
         if (selectedOpt === 'other') {
             finalReason = document.getElementById('otherReasonInput').value.trim();
             if (finalReason === "") {
@@ -258,6 +406,10 @@
         }
         document.getElementById('finalReason').value = finalReason;
     }
+
+    document.getElementById('cancelModal').addEventListener('click', function(e) {
+        if (e.target === this) closeCancelModal();
+    });
 </script>
 </body>
 </html>
