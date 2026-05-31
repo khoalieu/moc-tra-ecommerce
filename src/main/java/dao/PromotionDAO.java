@@ -542,18 +542,26 @@ public class PromotionDAO {
                         "AND pr.start_date <= NOW() " +
                         "AND pr.end_date >= NOW()";
 
+        String disableExpiredPromotionSql =
+                "UPDATE promotions " +
+                        "SET is_active = 0 " +
+                        "WHERE is_active = 1 " +
+                        "AND end_date < NOW()";
+
         try (Connection conn = ds.getConnection()) {
             conn.setAutoCommit(false);
 
             try (PreparedStatement ps1 = conn.prepareStatement(resetProductSql);
                  PreparedStatement ps2 = conn.prepareStatement(resetVariantSql);
                  PreparedStatement ps3 = conn.prepareStatement(applyProductSql);
-                 PreparedStatement ps4 = conn.prepareStatement(applyVariantSql)) {
+                 PreparedStatement ps4 = conn.prepareStatement(applyVariantSql);
+                 PreparedStatement ps5 = conn.prepareStatement(disableExpiredPromotionSql)) {
 
                 ps1.executeUpdate();
                 ps2.executeUpdate();
                 ps3.executeUpdate();
                 ps4.executeUpdate();
+                ps5.executeUpdate();
 
                 conn.commit();
             } catch (Exception e) {
@@ -595,5 +603,40 @@ public class PromotionDAO {
             e.printStackTrace();
         }
         return list;
+    }
+    public boolean hasPromotionConflict(int newPromoId, String[] productIds) {
+        String sql = "SELECT 1 " + "FROM promotion_items pi " +
+                        "JOIN promotions old_pr ON old_pr.id = pi.promotion_id " +
+                        "JOIN promotions new_pr ON new_pr.id = ? " +
+                        "WHERE pi.product_id = ? " + "AND old_pr.id <> ? " + "AND old_pr.is_active = 1 " + "AND new_pr.is_active = 1 " +
+                        "AND old_pr.start_date <= new_pr.end_date " +
+                        "AND old_pr.end_date >= new_pr.start_date " +
+                        "LIMIT 1";
+
+        try (Connection conn = ds.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            for (String idStr : productIds) {
+                if (idStr == null || idStr.trim().isEmpty()) {
+                    continue;
+                }
+
+                int productId = Integer.parseInt(idStr.trim());
+
+                ps.setInt(1, newPromoId);
+                ps.setInt(2, productId);
+                ps.setInt(3, newPromoId);
+
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) {
+                        return true;
+                    }
+                }
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
     }
 }
