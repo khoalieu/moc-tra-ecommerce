@@ -98,124 +98,104 @@ public class PromotionDAO {
     }
 
     public void addProductsToPromotion(int promoId, String[] productIds) {
-        Connection conn = null;
-        PreparedStatement psGetPromo = null;
-        PreparedStatement psInsert = null;
-        PreparedStatement psUpdatePrice = null;
-        PreparedStatement psUpdateVariantPrice = null;
-        PreparedStatement psCleanOld = null;
-        PreparedStatement psResetOldVariantPrice = null;
+        String getPromoSql =
+                "SELECT discount_type, discount_value, is_active, start_date, end_date " +
+                        "FROM promotions WHERE id = ?";
 
-        try {
-            conn = ds.getConnection();
+        String deleteOldSql = "DELETE FROM promotion_items WHERE product_id = ?";
+        String resetProductSql = "UPDATE products SET sale_price = 0 WHERE id = ?";
+        String resetVariantSql = "UPDATE product_variants SET sale_price = 0 WHERE product_id = ?";
+        String insertSql = "INSERT INTO promotion_items (promotion_id, product_id) VALUES (?, ?)";
+
+        try (Connection conn = ds.getConnection()) {
             conn.setAutoCommit(false);
 
-            String sqlGetPromo = "SELECT discount_type, discount_value FROM promotions WHERE id = ?";
-            psGetPromo = conn.prepareStatement(sqlGetPromo);
-            psGetPromo.setInt(1, promoId);
-            ResultSet rs = psGetPromo.executeQuery();
+            try {
+                String type;
+                double value;
+                boolean running = false;
 
-            String type = "";
-            double value = 0;
+                try (PreparedStatement ps = conn.prepareStatement(getPromoSql)) {
+                    ps.setInt(1, promoId);
 
-            if (rs.next()) {
-                type = rs.getString("discount_type");
-                value = rs.getDouble("discount_value");
-            } else {
-                throw new Exception("Không tìm thấy chương trình khuyến mãi ID: " + promoId);
-            }
+                    try (ResultSet rs = ps.executeQuery()) {
+                        if (!rs.next()) {
+                            throw new SQLException("Không tìm thấy khuyến mãi ID: " + promoId);
+                        }
 
-            String sqlClean = "DELETE FROM promotion_items WHERE product_id = ?";
-            psCleanOld = conn.prepareStatement(sqlClean);
+                        type = rs.getString("discount_type");
+                        value = rs.getDouble("discount_value");
 
-            String sqlResetOldVariantPrice = "UPDATE product_variants SET sale_price = 0 WHERE product_id = ?";
-            psResetOldVariantPrice = conn.prepareStatement(sqlResetOldVariantPrice);
+                        boolean active = rs.getBoolean("is_active");
+                        Timestamp startDate = rs.getTimestamp("start_date");
+                        Timestamp endDate = rs.getTimestamp("end_date");
+                        Timestamp now = new Timestamp(System.currentTimeMillis());
 
-            String sqlInsert = "INSERT INTO promotion_items (promotion_id, product_id) VALUES (?, ?)";
-            psInsert = conn.prepareStatement(sqlInsert);
-
-            String sqlUpdatePrice = "";
-            String sqlUpdateVariantPrice = "";
-
-            if ("PERCENT".equals(type)) {
-                sqlUpdatePrice = "UPDATE products SET sale_price = price * (100 - ?) / 100 WHERE id = ?";
-                sqlUpdateVariantPrice = "UPDATE product_variants SET sale_price = price * (100 - ?) / 100 WHERE product_id = ?";
-            } else {
-                sqlUpdatePrice = "UPDATE products SET sale_price = GREATEST(0, price - ?) WHERE id = ?";
-                sqlUpdateVariantPrice = "UPDATE product_variants SET sale_price = GREATEST(0, price - ?) WHERE product_id = ?";
-            }
-
-            psUpdatePrice = conn.prepareStatement(sqlUpdatePrice);
-            psUpdateVariantPrice = conn.prepareStatement(sqlUpdateVariantPrice);
-
-            for (String idStr : productIds) {
-                try {
-                    int pid = Integer.parseInt(idStr);
-
-                    psCleanOld.setInt(1, pid);
-                    psCleanOld.executeUpdate();
-
-                    psResetOldVariantPrice.setInt(1, pid);
-                    psResetOldVariantPrice.executeUpdate();
-
-                    psInsert.setInt(1, promoId);
-                    psInsert.setInt(2, pid);
-                    psInsert.executeUpdate();
-
-                    psUpdatePrice.setDouble(1, value);
-                    psUpdatePrice.setInt(2, pid);
-                    psUpdatePrice.executeUpdate();
-
-                    psUpdateVariantPrice.setDouble(1, value);
-                    psUpdateVariantPrice.setInt(2, pid);
-                    psUpdateVariantPrice.executeUpdate();
-
-                } catch (NumberFormatException e) {
-                    System.err.println("Lỗi ID sản phẩm: " + idStr);
+                        running = active
+                                && startDate != null
+                                && endDate != null
+                                && !startDate.after(now)
+                                && !endDate.before(now);
+                    }
                 }
-            }
 
-            conn.commit();
-            System.out.println("Đã thêm vào KM và cập nhật giá sản phẩm + phân loại (Loại: " + type + ")");
+                String updateProductSql;
+                String updateVariantSql;
+
+                if ("PERCENT".equalsIgnoreCase(type)) {
+                    updateProductSql = "UPDATE products SET sale_price = price * (100 - ?) / 100 WHERE id = ?";
+                    updateVariantSql = "UPDATE product_variants SET sale_price = price * (100 - ?) / 100 WHERE product_id = ?";
+                } else {
+                    updateProductSql = "UPDATE products SET sale_price = GREATEST(0, price - ?) WHERE id = ?";
+                    updateVariantSql = "UPDATE product_variants SET sale_price = GREATEST(0, price - ?) WHERE product_id = ?";
+                }
+
+                try (PreparedStatement psDelete = conn.prepareStatement(deleteOldSql);
+                     PreparedStatement psResetProduct = conn.prepareStatement(resetProductSql);
+                     PreparedStatement psResetVariant = conn.prepareStatement(resetVariantSql);
+                     PreparedStatement psInsert = conn.prepareStatement(insertSql);
+                     PreparedStatement psUpdateProduct = conn.prepareStatement(updateProductSql);
+                     PreparedStatement psUpdateVariant = conn.prepareStatement(updateVariantSql)) {
+
+                    for (String idStr : productIds) {
+                        int productId = Integer.parseInt(idStr.trim());
+
+                        psDelete.setInt(1, productId);
+                        psDelete.executeUpdate();
+
+                        psResetProduct.setInt(1, productId);
+                        psResetProduct.executeUpdate();
+
+                        psResetVariant.setInt(1, productId);
+                        psResetVariant.executeUpdate();
+
+                        psInsert.setInt(1, promoId);
+                        psInsert.setInt(2, productId);
+                        psInsert.executeUpdate();
+
+                        if (running) {
+                            psUpdateProduct.setDouble(1, value);
+                            psUpdateProduct.setInt(2, productId);
+                            psUpdateProduct.executeUpdate();
+
+                            psUpdateVariant.setDouble(1, value);
+                            psUpdateVariant.setInt(2, productId);
+                            psUpdateVariant.executeUpdate();
+                        }
+                    }
+                }
+
+                conn.commit();
+
+            } catch (Exception e) {
+                conn.rollback();
+                e.printStackTrace();
+            }
 
         } catch (Exception e) {
             e.printStackTrace();
-            try {
-                if (conn != null) conn.rollback();
-            } catch (SQLException ex) {
-            }
-        } finally {
-            try {
-                if (psCleanOld != null) psCleanOld.close();
-            } catch (Exception e) {
-            }
-            try {
-                if (psResetOldVariantPrice != null) psResetOldVariantPrice.close();
-            } catch (Exception e) {
-            }
-            try {
-                if (psGetPromo != null) psGetPromo.close();
-            } catch (Exception e) {
-            }
-            try {
-                if (psInsert != null) psInsert.close();
-            } catch (Exception e) {
-            }
-            try {
-                if (psUpdatePrice != null) psUpdatePrice.close();
-            } catch (Exception e) {
-            }
-            try {
-                if (psUpdateVariantPrice != null) psUpdateVariantPrice.close();
-            } catch (Exception e) {
-            }
-            try {
-                if (conn != null) conn.close();
-            } catch (Exception e) {
-            }
         }
     }
-
     public void removeProductsFromPromotion(String[] productIds) {
         Connection conn = null;
         PreparedStatement psDelete = null;
@@ -522,5 +502,98 @@ public class PromotionDAO {
         }
 
         return false;
+    }
+    public void syncPromotionPrices() {
+        String resetProductSql =
+                "UPDATE products p " +
+                        "JOIN promotion_items pi ON p.id = pi.product_id " +
+                        "JOIN promotions pr ON pr.id = pi.promotion_id " +
+                        "SET p.sale_price = 0 " +
+                        "WHERE pr.is_active = 0 OR pr.start_date > NOW() OR pr.end_date < NOW()";
+
+        String resetVariantSql =
+                "UPDATE product_variants v " +
+                        "JOIN promotion_items pi ON v.product_id = pi.product_id " +
+                        "JOIN promotions pr ON pr.id = pi.promotion_id " +
+                        "SET v.sale_price = 0 " +
+                        "WHERE pr.is_active = 0 OR pr.start_date > NOW() OR pr.end_date < NOW()";
+
+        String applyProductSql =
+                "UPDATE products p " +
+                        "JOIN promotion_items pi ON p.id = pi.product_id " +
+                        "JOIN promotions pr ON pr.id = pi.promotion_id " +
+                        "SET p.sale_price = CASE " +
+                        "   WHEN pr.discount_type = 'PERCENT' THEN p.price * (100 - pr.discount_value) / 100 " +
+                        "   ELSE GREATEST(0, p.price - pr.discount_value) " +
+                        "END " +
+                        "WHERE pr.is_active = 1 " +
+                        "AND pr.start_date <= NOW() " +
+                        "AND pr.end_date >= NOW()";
+
+        String applyVariantSql =
+                "UPDATE product_variants v " +
+                        "JOIN promotion_items pi ON v.product_id = pi.product_id " +
+                        "JOIN promotions pr ON pr.id = pi.promotion_id " +
+                        "SET v.sale_price = CASE " +
+                        "   WHEN pr.discount_type = 'PERCENT' THEN v.price * (100 - pr.discount_value) / 100 " +
+                        "   ELSE GREATEST(0, v.price - pr.discount_value) " +
+                        "END " +
+                        "WHERE pr.is_active = 1 " +
+                        "AND pr.start_date <= NOW() " +
+                        "AND pr.end_date >= NOW()";
+
+        try (Connection conn = ds.getConnection()) {
+            conn.setAutoCommit(false);
+
+            try (PreparedStatement ps1 = conn.prepareStatement(resetProductSql);
+                 PreparedStatement ps2 = conn.prepareStatement(resetVariantSql);
+                 PreparedStatement ps3 = conn.prepareStatement(applyProductSql);
+                 PreparedStatement ps4 = conn.prepareStatement(applyVariantSql)) {
+
+                ps1.executeUpdate();
+                ps2.executeUpdate();
+                ps3.executeUpdate();
+                ps4.executeUpdate();
+
+                conn.commit();
+            } catch (Exception e) {
+                conn.rollback();
+                e.printStackTrace();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+    public List<Promotion> getAvailablePromotionsForAdmin() {
+        List<Promotion> list = new ArrayList<>();
+
+        String sql = "SELECT * FROM promotions " +
+                "WHERE is_active = 1 " +
+                "AND end_date >= NOW() " +
+                "ORDER BY start_date ASC";
+
+        try (Connection conn = ds.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+
+            while (rs.next()) {
+                Promotion p = new Promotion();
+                p.setId(rs.getInt("id"));
+                p.setName(rs.getString("name"));
+                p.setDescription(rs.getString("description"));
+                p.setImageUrl(rs.getString("image_url"));
+                p.setDiscountType(DiscountType.valueOf(rs.getString("discount_type")));
+                p.setDiscountValue(rs.getDouble("discount_value"));
+                p.setStartDate(rs.getTimestamp("start_date").toLocalDateTime());
+                p.setEndDate(rs.getTimestamp("end_date").toLocalDateTime());
+                p.setActive(rs.getBoolean("is_active"));
+                p.setPromotionType(rs.getString("promotion_type"));
+
+                list.add(p);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return list;
     }
 }
