@@ -618,7 +618,7 @@ public class UserDAO {
             int rows = ps.executeUpdate();
             if (rows > 0) {
                 try (ResultSet rs = ps.getGeneratedKeys()) {
-                    if (rs.next()) return rs.getInt(1); // Trả về ID mới tạo
+                    if (rs.next()) return rs.getInt(1);
                 }
             }
         } catch (Exception e) { e.printStackTrace(); }
@@ -800,7 +800,7 @@ public class UserDAO {
 
         try {
             conn = ds.getConnection();
-            if (newAttempts >= 5) { // Ngưỡng 5 lần
+            if (newAttempts >= 5) {
                 query = "UPDATE users SET failed_attempts = ?, lock_until = DATE_ADD(NOW(), INTERVAL 30 MINUTE) WHERE id = ?";
                 justLocked = true;
             } else {
@@ -819,8 +819,8 @@ public class UserDAO {
     }
 
     public boolean isValidCarrier(String phone) {
-        if (phone == null || phone.length() < 3) return false;
-        String prefix = phone.substring(0, 3);
+        if (phone == null || phone.trim().length() != 10) return false;
+        String prefix = phone.trim().substring(0, 3);
         String[] validPrefixes = {
                 "032", "033", "034", "035", "036", "037", "038", "039", // Viettel
                 "070", "079", "077", "076", "078", "089", "090", "093", // Mobi
@@ -993,5 +993,22 @@ public class UserDAO {
         }
 
         return new VipUpdateResult(0, 0);
+    }
+
+    public boolean isEmailExists(String targetEmail) {
+        String sql = "SELECT 1 FROM users WHERE email = ? LIMIT 1";
+        try (Connection conn = ds.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, targetEmail.trim());
+
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next();
+            }
+        } catch (SQLException e) {
+            // Log lỗi để dễ dàng debug
+            System.err.println("Lỗi khi kiểm tra email tồn tại: " + e.getMessage());
+            e.printStackTrace();
+        }
+        return false;
     }
 }
