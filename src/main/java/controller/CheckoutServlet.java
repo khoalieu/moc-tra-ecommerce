@@ -16,6 +16,8 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
 import java.io.IOException;
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import controller.utils.PaymentUtils;
@@ -195,6 +197,7 @@ public class CheckoutServlet extends HttpServlet {
             doGet(request, response);
             return;
         }
+
         List<CartItem> selectedCartItems = new ArrayList<>();
         double subtotal = 0;
         for (CartItem item : cart.getItems()) {
@@ -297,75 +300,93 @@ public class CheckoutServlet extends HttpServlet {
         order.setNotes(request.getParameter("note"));
 
         OrderDAO orderDAO = DAOFactory.getInstance().getOrderDAO();
-        int orderId = orderDAO.createOrder(order);
+        ProductVariantDAO vDAO = DAOFactory.getInstance().getProductVariantDAO();
+        CartDAO cDAO = DAOFactory.getInstance().getCartDAO();
+        VipVoucherDAO vvDAO = DAOFactory.getInstance().getVipVoucherDAO();
+        CouponDAO couponDAO2 = DAOFactory.getInstance().getCouponDAO();
 
-        if (orderId > 0) {
-            orderDAO.addOrderItems(orderId, selectedCartItems);
+        Connection txConn = null;
+        int orderId = 0;
 
-            ProductVariantDAO vDAO = DAOFactory.getInstance().getProductVariantDAO();
-            CartDAO cDAO = DAOFactory.getInstance().getCartDAO();
+        try {
+            txConn = DAOFactory.getDataSource().getConnection();
+            txConn.setAutoCommit(false);
+
+            orderId = orderDAO.createOrder(txConn, order);
+            if (orderId <= 0) {
+                throw new SQLException("Không thể tạo đơn hàng.");
+            }
+
+            orderDAO.addOrderItems(txConn, orderId, selectedCartItems);
+
             for (CartItem item : selectedCartItems) {
-                vDAO.decreaseStock(item.getVariantId(), item.getQuantity());
-                cDAO.removeProduct(user.getId(), item.getVariantId());
+                vDAO.decreaseStock(txConn, item.getVariantId(), item.getQuantity());
+                cDAO.removeProduct(txConn, user.getId(), item.getVariantId());
             }
 
             if (appliedVoucherId != null) {
-                VipVoucherDAO vvDAO = DAOFactory.getInstance().getVipVoucherDAO();
-                vvDAO.incrementVoucherUsage(appliedVoucherId);
-                vvDAO.markVoucherUsed(user.getId(), appliedVoucherId);
+                vvDAO.incrementVoucherUsage(txConn, appliedVoucherId);
+                vvDAO.markVoucherUsed(txConn, user.getId(), appliedVoucherId);
             }
 
             if (appliedCouponId != null) {
-                CouponDAO couponDAO = DAOFactory.getInstance().getCouponDAO();
-                boolean used = couponDAO.markCouponUsed(user.getId(), appliedCouponId);
-
-                if (!used) {
-                    System.out.println("Không thể cập nhật trạng thái đã dùng cho couponId = " + appliedCouponId);
-                }
+                couponDAO2.markCouponUsed(txConn, user.getId(), appliedCouponId);
             }
 
-            cart.removeItems(selectedItemIds);
-            session.setAttribute("cart", cart);
-            session.removeAttribute("selectedItemIds");
+            txConn.commit();
 
-            String paymentMethod = request.getParameter("paymentMethod");
-
-            if (paymentMethod == null) {
-                paymentMethod = "cod";
+        } catch (Exception e) {
+            if (txConn != null) {
+                try { txConn.rollback(); } catch (SQLException ex) { ex.printStackTrace(); }
             }
-
-            if (!"cod".equals(paymentMethod)) {
-                try {
-                    Order createdOrder = orderDAO.getOrderById(orderId);
-
-                    PaymentResult res = "bank".equals(paymentMethod)
-                            ? PaymentUtils.createPayosPayment(createdOrder)
-                            : PaymentUtils.createMomoPayment(createdOrder);
-
-                    if (res != null) {
-                        PaymentTransaction tx = new PaymentTransaction();
-                        tx.setOrderId(orderId);
-                        tx.setPaymentMethod(paymentMethod);
-                        tx.setProvider(res.getProvider());
-                        tx.setRequestId(res.getRequestId());
-                        tx.setAmount(totalAmount);
-                        tx.setQrCodeUrl(res.getQrCodeUrl());
-                        tx.setPayUrl(res.getPayUrl());
-                        tx.setTransactionStatus("pending");
-
-                        DAOFactory.getInstance().getPaymentTransactionDAO().create(tx);
-                        response.sendRedirect("thanh-toan-qr?orderId=" + orderId);
-                        return;
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-            response.sendRedirect("hoa-don?id=" + orderId);
-        } else {
+            e.printStackTrace();
             request.setAttribute("errorMessage", "Lỗi khi tạo đơn hàng. Vui lòng thử lại!");
             doGet(request, response);
+            return;
+        } finally {
+            if (txConn != null) {
+                try { txConn.setAutoCommit(true); txConn.close(); } catch (SQLException ex) { ex.printStackTrace(); }
+            }
         }
+
+        cart.removeItems(selectedItemIds);
+        session.setAttribute("cart", cart);
+        session.removeAttribute("selectedItemIds");
+
+        String paymentMethod = request.getParameter("paymentMethod");
+        if (paymentMethod == null) {
+            paymentMethod = "cod";
+        }
+
+        if (!"cod".equals(paymentMethod)) {
+            try {
+                Order createdOrder = orderDAO.getOrderById(orderId);
+
+                PaymentResult res = "bank".equals(paymentMethod)
+                        ? PaymentUtils.createPayosPayment(createdOrder)
+                        : PaymentUtils.createMomoPayment(createdOrder);
+
+                if (res != null) {
+                    PaymentTransaction tx = new PaymentTransaction();
+                    tx.setOrderId(orderId);
+                    tx.setPaymentMethod(paymentMethod);
+                    tx.setProvider(res.getProvider());
+                    tx.setRequestId(res.getRequestId());
+                    tx.setAmount(totalAmount);
+                    tx.setQrCodeUrl(res.getQrCodeUrl());
+                    tx.setPayUrl(res.getPayUrl());
+                    tx.setTransactionStatus("pending");
+
+                    DAOFactory.getInstance().getPaymentTransactionDAO().create(tx);
+                    response.sendRedirect("thanh-toan-qr?orderId=" + orderId);
+                    return;
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
+        response.sendRedirect("hoa-don?id=" + orderId);
     }
 
     private double calculateFinalShippingFee(String province, String shippingMethod) {

@@ -158,6 +158,80 @@ public class OrderDAO {
         }
         return 0;
     }
+
+    public int createOrder(Connection conn, Order order) throws SQLException {
+        String sql = "INSERT INTO orders " +
+                "(user_id, shipping_address_id, order_number, status, subtotal_amount, total_amount, shipping_fee, " +
+                "coupon_id, coupon_code, coupon_discount_amount, vip_discount_amount, " +
+                "payment_method, payment_status, notes, created_at) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())";
+
+        try (PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+            ps.setInt(1, order.getUserId());
+
+            if (order.getShippingAddressId() != null) {
+                ps.setInt(2, order.getShippingAddressId());
+            } else {
+                ps.setNull(2, Types.INTEGER);
+            }
+
+            ps.setString(3, order.getOrderNumber());
+            ps.setString(4, OrderStatus.PENDING.name().toLowerCase());
+            ps.setDouble(5, order.getSubtotalAmount());
+            ps.setDouble(6, order.getTotalAmount());
+            ps.setDouble(7, order.getShippingFee());
+
+            if (order.getCouponId() != null) {
+                ps.setInt(8, order.getCouponId());
+            } else {
+                ps.setNull(8, Types.INTEGER);
+            }
+
+            ps.setString(9, order.getCouponCode());
+            ps.setDouble(10, order.getCouponDiscountAmount());
+            ps.setDouble(11, order.getVipDiscountAmount());
+            ps.setString(12, order.getPaymentMethod());
+            ps.setString(13, PaymentStatus.PENDING.name().toLowerCase());
+            ps.setString(14, order.getNotes());
+
+            int affectedRows = ps.executeUpdate();
+            if (affectedRows > 0) {
+                try (ResultSet rs = ps.getGeneratedKeys()) {
+                    if (rs.next()) {
+                        return rs.getInt(1);
+                    }
+                }
+            }
+        }
+        return 0;
+    }
+
+    public void addOrderItems(Connection conn, int orderId, List<CartItem> items) throws SQLException {
+        String sql = "INSERT INTO order_items " +
+                "(order_id, product_id, variant_id, quantity, price, original_price, discount_amount) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?)";
+
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            for (CartItem item : items) {
+                ps.setInt(1, orderId);
+                ps.setInt(2, item.getProduct().getId());
+                Integer variantId = item.getVariant() != null ? item.getVariant().getId() :
+                        (item.getVariantId() > 0 ? item.getVariantId() : null);
+                if (variantId != null && variantId > 0) {
+                    ps.setInt(3, variantId);
+                } else {
+                    ps.setNull(3, Types.INTEGER);
+                }
+                ps.setInt(4, item.getQuantity());
+                ps.setDouble(5, item.getUnitPrice());
+                ps.setDouble(6, item.getOriginalUnitPrice());
+                ps.setDouble(7, item.getDiscountPerItem());
+                ps.addBatch();
+            }
+            ps.executeBatch();
+        }
+    }
+
     public void addOrderItems(int orderId, List<CartItem> items) {
         String sql = "INSERT INTO order_items " +
                 "(order_id, product_id, variant_id, quantity, price, original_price, discount_amount) " +
