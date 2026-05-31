@@ -32,7 +32,14 @@
                     Nhập mã OTP đã được gửi tới email của bạn.
                 </p>
                 <div style="margin-top: 10px; font-weight: 600; color: #333; background: #f0f2f5; padding: 5px 15px; border-radius: 20px; display: inline-block;">
-                    <c:out value="${sessionScope.RESET_EMAIL.replaceAll('(?<=.{3}).(?=.*@)', '*')}" />
+                    <c:set var="targetMail" value="${not empty sessionScope.NEW_EMAIL ? sessionScope.NEW_EMAIL : sessionScope.RESET_EMAIL}" />
+
+                    <c:choose>
+                        <c:when test="${not empty targetMail}">
+                            <c:out value="${targetMail.replaceAll('(?<=.{3}).(?=.*@)', '*')}" />
+                        </c:when>
+                        <c:otherwise>Email của bạn</c:otherwise>
+                    </c:choose>
                 </div>
             </div>
 
