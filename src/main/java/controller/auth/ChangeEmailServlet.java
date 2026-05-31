@@ -1,6 +1,8 @@
 package controller.auth;
 
 import controller.utils.EmailService;
+import dao.DAOFactory;
+import dao.UserDAO;
 import model.user.User;
 
 import jakarta.servlet.ServletException;
@@ -15,7 +17,8 @@ import java.util.Random;
 
 @WebServlet("/change-email")
 public class ChangeEmailServlet extends HttpServlet {
-
+    private static final String EMAIL_REGEX = "^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$";
+    private final UserDAO userDAO = DAOFactory.getInstance().getUserDAO();
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
@@ -23,9 +26,7 @@ public class ChangeEmailServlet extends HttpServlet {
     }
 
     @Override
-    protected void doPost(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
-
+    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         HttpSession session = request.getSession();
         User user = (User) session.getAttribute("user");
         if (user == null) {
@@ -47,11 +48,31 @@ public class ChangeEmailServlet extends HttpServlet {
                 return;
             }
         }
-        String targetEmail = "";
+        String targetEmail = null;
         if ("change_email".equals(action)) {
             targetEmail = request.getParameter("newEmail");
         } else if ("resend_otp".equals(action)) {
             targetEmail = (String) session.getAttribute("NEW_EMAIL");
+        }
+        if (targetEmail == null || targetEmail.trim().isEmpty() || !targetEmail.matches(EMAIL_REGEX)) {
+            session.setAttribute("msg", "Lỗi: Email không hợp lệ hoặc đã hết phiên làm việc!");
+            session.setAttribute("msgType", "danger");
+            response.sendRedirect(request.getContextPath() + "/tai-khoan-cua-toi");
+            return;
+        }
+
+        if (targetEmail.equalsIgnoreCase(user.getEmail())) {
+            session.setAttribute("msg", "Email mới không được trùng với email hiện tại!");
+            session.setAttribute("msgType", "warning");
+            response.sendRedirect(request.getContextPath() + "/tai-khoan-cua-toi");
+            return;
+        }
+
+        if (userDAO.isEmailExists(targetEmail)) {
+            session.setAttribute("msg", "Lỗi: Email này đã được sử dụng bởi tài khoản khác!");
+            session.setAttribute("msgType", "danger");
+            response.sendRedirect(request.getContextPath() + "/tai-khoan-cua-toi");
+            return;
         }
         if (targetEmail != null && !targetEmail.trim().isEmpty()) {
             String otpCode = generateOTP();
@@ -72,10 +93,10 @@ public class ChangeEmailServlet extends HttpServlet {
                 session.setAttribute("OTP_LAST_SENT_AT", now);
                 request.setAttribute("resendCooldown", 60);
                 request.getRequestDispatcher("/auth/verify-otp.jsp").forward(request, response);
-
             } catch (Exception e) {
+                System.err.println("Gửi mail thất bại cho: " + targetEmail);
                 e.printStackTrace();
-                session.setAttribute("msg", "Lỗi: Không thể gửi email. Vui lòng kiểm tra lại địa chỉ email hoặc thử lại sau!");
+                session.setAttribute("msg", "Hệ thống gửi mail gặp sự cố. Vui lòng thử lại sau!");
                 session.setAttribute("msgType", "danger");
                 response.sendRedirect(request.getContextPath() + "/tai-khoan-cua-toi");
             }

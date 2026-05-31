@@ -24,6 +24,11 @@ public class EmailService {
                 prop.load(input);
                 EMAIL_USERNAME = prop.getProperty("email.username");
                 EMAIL_PASSWORD = prop.getProperty("email.password");
+                if (EMAIL_PASSWORD != null) {
+                    EMAIL_PASSWORD = EMAIL_PASSWORD.replace(" ", "").trim();
+                }
+            } else {
+                System.err.println("====== [LỖI KHÔNG TÌM THẤY FILE EMAIL.PROPERTIES] ======");
             }
         } catch (Exception ex) {
             ex.printStackTrace();
@@ -31,6 +36,9 @@ public class EmailService {
     }
 
     public static void sendEmail(String toAddress, String subject, String message) throws MessagingException {
+        if (toAddress == null || toAddress.trim().isEmpty()) {
+            throw new MessagingException("Địa chỉ email người nhận (toAddress) không được để trống!");
+        }
         Properties properties = new Properties();
         properties.put("mail.smtp.host", SMTP_HOST);
         properties.put("mail.smtp.port", SMTP_PORT);
