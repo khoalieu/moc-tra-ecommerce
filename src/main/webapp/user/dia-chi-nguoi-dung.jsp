@@ -82,15 +82,17 @@
                                 <p>${addr.streetAddress}, ${addr.ward}, ${addr.province}</p>
 
                                 <div class="address-actions">
+                                    <a href="${pageContext.request.contextPath}/dia-chi-nguoi-dung?action=view_edit&id=${addr.id}"
+                                       class="btn-small btn-link-style"
+                                       style="color: #107e84; margin-right: 15px; text-decoration: none;">
+                                        <i class="fa-solid fa-pen-to-square"></i> Chỉnh sửa
+                                    </a>
+
                                     <form action="${pageContext.request.contextPath}/dia-chi-nguoi-dung" method="post" style="display:inline;">
                                         <input type="hidden" name="action" value="delete">
                                         <input type="hidden" name="id" value="${addr.id}">
-
-                                        <button type="submit"
-                                                class="btn-small btn-link-style btn-delete"
-                                                title="Xóa địa chỉ này"
-                                                onclick="return confirm('Bạn có chắc muốn xóa địa chỉ này?');">
-                                            <i class="fa-solid fa-trash-can" aria-hidden="true"></i>
+                                        <button type="submit" class="btn-small btn-link-style btn-delete" onclick="return confirm('Xóa địa chỉ này?');">
+                                            <i class="fa-solid fa-trash-can"></i>
                                         </button>
                                     </form>
                                 </div>

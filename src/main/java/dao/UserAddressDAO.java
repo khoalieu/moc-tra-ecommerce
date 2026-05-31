@@ -10,8 +10,6 @@ import java.util.List;
 public class UserAddressDAO {
 
     private final DataSource ds;
-
-    // Constructor nhận DataSource từ DAOFactory
     public UserAddressDAO(DataSource ds) {
         this.ds = ds;
     }
@@ -46,7 +44,6 @@ public class UserAddressDAO {
         a.setWard(rs.getString("ward"));
         a.setStreetAddress(rs.getString("street_address"));
         a.setIsDefault(rs.getBoolean("is_default"));
-        // GHN codes - có thể null nếu địa chỉ được tạo trước migration
         int dId = rs.getInt("district_id");
         if (!rs.wasNull()) a.setDistrictId(dId);
         a.setWardCode(rs.getString("ward_code"));
@@ -78,6 +75,7 @@ public class UserAddressDAO {
 
     public boolean deleteAddress(int addressId, int userId) {
         Connection conn = null;
+        boolean isDeleted = false;
         try {
             conn = ds.getConnection();
             conn.setAutoCommit(false);
@@ -107,13 +105,18 @@ public class UserAddressDAO {
             psDelete.setInt(1, addressId);
             psDelete.setInt(2, userId);
             int rowAffected = psDelete.executeUpdate();
-            return rowAffected > 0;
+            if (rowAffected > 0) {
+                conn.commit();
+                isDeleted = true;
+            } else {
+                conn.rollback();
+            }
         } catch (Exception e) {
             if (conn != null) {
                 try { conn.rollback(); } catch (SQLException ex) { ex.printStackTrace(); }
             }
             e.printStackTrace();
-            return false;
+            isDeleted =  false;
         } finally {
             try {
                 if (conn != null) {
@@ -122,6 +125,7 @@ public class UserAddressDAO {
                 }
             } catch (SQLException e) { e.printStackTrace(); }
         }
+        return isDeleted;
     }
 
     public boolean setDefaultAddress(int addressId, int userId) {
@@ -206,5 +210,36 @@ public class UserAddressDAO {
             e.printStackTrace();
         }
         return null;
+    }
+    public boolean updateAddress(UserAddress addr) {
+        String sql = "UPDATE user_addresses SET full_name = ?, phone_number = ?, province = ?, " +
+                "district = ?, ward = ?, street_address = ?, label = ?, " +
+                "district_id = ?, ward_code = ? " +
+                "WHERE id = ? AND user_id = ?";
+        try (Connection conn = ds.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, addr.getFullName());
+            ps.setString(2, addr.getPhoneNumber());
+            ps.setString(3, addr.getProvince());
+            ps.setString(4, addr.getDistrict());
+            ps.setString(5, addr.getWard());
+            ps.setString(6, addr.getStreetAddress());
+            ps.setString(7, addr.getLabel());
+            if (addr.getDistrictId() > 0) {
+                ps.setInt(8, addr.getDistrictId());
+            } else {
+                ps.setNull(8, java.sql.Types.INTEGER);
+            }
+
+            ps.setString(9, addr.getWardCode());
+            ps.setInt(10, addr.getId());
+            ps.setInt(11, addr.getUserId());
+
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
     }
 }
