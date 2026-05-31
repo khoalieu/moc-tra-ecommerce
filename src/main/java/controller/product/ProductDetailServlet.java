@@ -25,6 +25,9 @@ public class ProductDetailServlet extends HttpServlet {
 
         try {
             int productId = Integer.parseInt(idParam);
+
+            DAOFactory.getInstance().getPromotionDAO().syncPromotionPrices();
+
             ProductDAO productDAO = DAOFactory.getInstance().getProductDAO();
             ProductImageDAO imageDAO = DAOFactory.getInstance().getProductImageDAO();
             ReviewDAO reviewDAO = DAOFactory.getInstance().getReviewDAO();

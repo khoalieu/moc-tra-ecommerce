@@ -24,6 +24,8 @@ public class PromotionServlet extends HttpServlet {
             throws ServletException, IOException {
 
         PromotionDAO dao = DAOFactory.getInstance().getPromotionDAO();
+        dao.syncPromotionPrices();
+
         CouponDAO couponDAO = DAOFactory.getInstance().getCouponDAO();
 
         User loggedInUser = (User) request.getSession().getAttribute("user");
