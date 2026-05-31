@@ -157,4 +157,19 @@ public class ProductVariantDAO {
             e.printStackTrace();
         }
     }
+    public boolean updateStockByProductId(int productId, int newStock) {
+        String sql = "UPDATE product_variants SET stock_quantity = ? WHERE product_id = ? LIMIT 1";
+        try (Connection conn = ds.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, newStock);
+            ps.setInt(2, productId);
+
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            System.err.println("Lỗi khi cập nhật stock variant: " + e.getMessage());
+            e.printStackTrace();
+        }
+        return false;
+    }
 }
