@@ -406,6 +406,48 @@ public class CouponDAO {
         }
     }
 
+    public void markCouponUsed(Connection conn, int userId, int couponId) throws SQLException {
+        String checkUserCouponSql = "SELECT id, used_at FROM user_coupons WHERE user_id = ? AND coupon_id = ? LIMIT 1";
+        Integer userCouponId = null;
+        Timestamp usedAt = null;
+
+        try (PreparedStatement ps = conn.prepareStatement(checkUserCouponSql)) {
+            ps.setInt(1, userId);
+            ps.setInt(2, couponId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    userCouponId = rs.getInt("id");
+                    usedAt = rs.getTimestamp("used_at");
+                }
+            }
+        }
+
+        if (usedAt != null) {
+            return;
+        }
+
+        if (userCouponId == null) {
+            String insertSql = "INSERT INTO user_coupons (user_id, coupon_id, claimed_at, used_at) VALUES (?, ?, NOW(), NOW())";
+            try (PreparedStatement ps = conn.prepareStatement(insertSql)) {
+                ps.setInt(1, userId);
+                ps.setInt(2, couponId);
+                ps.executeUpdate();
+            }
+        } else {
+            String updateUserCouponSql = "UPDATE user_coupons SET used_at = NOW() WHERE id = ? AND used_at IS NULL";
+            try (PreparedStatement ps = conn.prepareStatement(updateUserCouponSql)) {
+                ps.setInt(1, userCouponId);
+                ps.executeUpdate();
+            }
+        }
+
+        String updateCouponSql = "UPDATE coupons SET current_uses = current_uses + 1 WHERE id = ?";
+        try (PreparedStatement ps = conn.prepareStatement(updateCouponSql)) {
+            ps.setInt(1, couponId);
+            ps.executeUpdate();
+        }
+    }
+
     public double calculateDiscount(Coupon coupon, double subtotal) {
         if (coupon == null) return 0;
 

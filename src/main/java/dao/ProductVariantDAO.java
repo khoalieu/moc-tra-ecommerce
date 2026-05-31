@@ -84,6 +84,16 @@ public class ProductVariantDAO {
         }
     }
 
+    public void decreaseStock(Connection conn, int variantId, int quantity) throws SQLException {
+        String sql = "UPDATE product_variants SET stock_quantity = stock_quantity - ? WHERE id = ? AND stock_quantity >= ?";
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, quantity);
+            ps.setInt(2, variantId);
+            ps.setInt(3, quantity);
+            ps.executeUpdate();
+        }
+    }
+
     public void increaseStock(int variantId, int quantity) {
         String sql = "UPDATE product_variants SET stock_quantity = stock_quantity + ? WHERE id = ?";
         try (Connection conn = ds.getConnection();

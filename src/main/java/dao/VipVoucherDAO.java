@@ -77,6 +77,14 @@ public class VipVoucherDAO {
         }
     }
 
+    public void incrementVoucherUsage(Connection conn, int voucherId) throws SQLException {
+        String sql = "UPDATE vip_vouchers SET current_uses = current_uses + 1 WHERE id = ?";
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, voucherId);
+            ps.executeUpdate();
+        }
+    }
+
     public void markVoucherUsed(int userId, int voucherId) {
         String sql = "UPDATE user_vip_vouchers " +
                 "SET used_at = NOW() " +
@@ -90,6 +98,18 @@ public class VipVoucherDAO {
             ps.executeUpdate();
         } catch (Exception e) {
             e.printStackTrace();
+        }
+    }
+
+    public void markVoucherUsed(Connection conn, int userId, int voucherId) throws SQLException {
+        String sql = "UPDATE user_vip_vouchers " +
+                "SET used_at = NOW() " +
+                "WHERE user_id = ? AND voucher_id = ? AND used_at IS NULL " +
+                "LIMIT 1";
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, userId);
+            ps.setInt(2, voucherId);
+            ps.executeUpdate();
         }
     }
 

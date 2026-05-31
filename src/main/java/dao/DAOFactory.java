@@ -54,6 +54,10 @@ public class DAOFactory {
         return instance;
     }
 
+    public static javax.sql.DataSource getDataSource() {
+        return instance.dataSource;
+    }
+
     // --- Các phương thức lấy DAO ---
 
     // Banner

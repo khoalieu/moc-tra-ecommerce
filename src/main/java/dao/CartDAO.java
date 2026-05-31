@@ -120,6 +120,15 @@ public class CartDAO {
         }
     }
 
+    public void removeProduct(Connection conn, int userId, int variantId) throws SQLException {
+        String sql = "DELETE FROM cart WHERE user_id = ? AND variant_id = ?";
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, userId);
+            ps.setInt(2, variantId);
+            ps.executeUpdate();
+        }
+    }
+
     public void clearCart(int userId) {
         String sql = "DELETE FROM cart WHERE user_id = ?";
         try (Connection conn = ds.getConnection();
