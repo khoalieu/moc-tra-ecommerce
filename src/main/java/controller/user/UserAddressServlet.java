@@ -2,6 +2,7 @@ package controller.user;
 
 import dao.DAOFactory;
 import dao.UserAddressDAO;
+import dao.UserDAO;
 import model.user.User;
 import model.user.UserAddress;
 import jakarta.servlet.ServletException;
@@ -27,6 +28,15 @@ public class UserAddressServlet extends HttpServlet {
         UserAddressDAO dao = DAOFactory.getInstance().getUserAddressDAO();
         List<UserAddress> list = dao.getListAddress(user.getId());
 
+        String action = request.getParameter("action");
+        if ("view_edit".equals(action)) {
+            int id = Integer.parseInt(request.getParameter("id"));
+            UserAddress address = dao.getAddressById(id);
+            request.setAttribute("addressToEdit", address);
+            request.getRequestDispatcher("/user/edit-user-address.jsp").forward(request, response);
+            return;
+        }
+
         request.setAttribute("addressList", list);
         request.getRequestDispatcher("/user/dia-chi-nguoi-dung.jsp").forward(request, response);
     }
@@ -36,6 +46,7 @@ public class UserAddressServlet extends HttpServlet {
         request.setCharacterEncoding("UTF-8");
         HttpSession session = request.getSession();
         User user = (User) session.getAttribute("user");
+        UserDAO userDAO = DAOFactory.getInstance().getUserDAO();
 
         if (user == null) {
             response.sendRedirect(request.getContextPath() + "/auth/login.jsp");
@@ -54,6 +65,19 @@ public class UserAddressServlet extends HttpServlet {
             String label = request.getParameter("addressLabel");
             String districtIdStr = request.getParameter("districtId");
             String wardCode = request.getParameter("wardCode");
+
+            if (fullName == null || fullName.trim().isEmpty() ||
+                    province == null || province.trim().isEmpty() ||
+                    district == null || district.trim().isEmpty() ||
+                    ward == null || ward.trim().isEmpty() ||
+                    street == null || street.trim().isEmpty() ||
+                    phone == null || !userDAO.isValidCarrier(phone.trim())) {
+
+                session.setAttribute("msg", "Lỗi: Thông tin không được để trống và Số điện thoại phải đúng định dạng VN!");
+                session.setAttribute("msgType", "danger");
+                response.sendRedirect(request.getContextPath() + "/dia-chi-nguoi-dung");
+                return;
+            }
 
             UserAddress addr = new UserAddress();
             addr.setUserId(user.getId());
@@ -76,15 +100,79 @@ public class UserAddressServlet extends HttpServlet {
                 addr.setIsDefault(false);
             }
             dao.addAddress(addr);
+            session.setAttribute("msg", "Thêm địa chỉ mới thành công!");
+            session.setAttribute("msgType", "success");
+        }else if ("edit".equals(action)) {
+            try {
+                int addressId = Integer.parseInt(request.getParameter("addressId"));
+                String fullName = request.getParameter("fullName");
+                String phone = request.getParameter("phoneNumber");
+                String province = request.getParameter("province");
+                String district = request.getParameter("district");
+                String ward = request.getParameter("ward");
+                String street = request.getParameter("addressLine");
+                String label = request.getParameter("addressLabel");
+                String districtIdStr = request.getParameter("districtId");
+                String wardCode = request.getParameter("wardCode");
+
+                if (fullName == null || fullName.trim().isEmpty() ||
+                        province == null || province.trim().isEmpty() ||
+                        district == null || district.trim().isEmpty() ||
+                        ward == null || ward.trim().isEmpty() ||
+                        street == null || street.trim().isEmpty() ||
+                        phone == null || !userDAO.isValidCarrier(phone.trim())) {
+
+                    session.setAttribute("msg", "Cập nhật thất bại: Thông tin không được để trống hoặc SĐT sai!");
+                    session.setAttribute("msgType", "danger");
+                    response.sendRedirect(request.getContextPath() + "/dia-chi-nguoi-dung");
+                    return;
+                }
+                UserAddress addr = new UserAddress();
+                addr.setId(addressId);
+                addr.setUserId(user.getId());
+                addr.setFullName(fullName);
+                addr.setPhoneNumber(phone);
+                addr.setProvince(province);
+                addr.setDistrict(district);
+                addr.setWard(ward);
+                addr.setStreetAddress(street);
+                addr.setLabel(label);
+
+                if (districtIdStr != null && !districtIdStr.isEmpty()) {
+                    addr.setDistrictId(Integer.parseInt(districtIdStr));
+                }
+                addr.setWardCode(wardCode);
+                boolean ok = dao.updateAddress(addr);
+                if (ok) {
+                    session.setAttribute("msg", "Cập nhật địa chỉ thành công!");
+                    session.setAttribute("msgType", "success");
+                } else {
+                    session.setAttribute("msg", "Cập nhật thất bại!");
+                    session.setAttribute("msgType", "danger");
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         } else if ("delete".equals(action)) {
             int id = Integer.parseInt(request.getParameter("id"));
-            dao.deleteAddress(id, user.getId());
+            boolean ok = dao.deleteAddress(id, user.getId());
+            if (ok) {
+                session.setAttribute("msg", "Xóa địa chỉ thành công!");
+                session.setAttribute("msgType", "success");
+            } else {
+                session.setAttribute("msg", "Không thể xóa địa chỉ này!");
+                session.setAttribute("msgType", "danger");
+            }
 
         } else if ("set_default".equals(action)) {
             int id = Integer.parseInt(request.getParameter("defaultAddressId"));
             boolean ok = dao.setDefaultAddress(id, user.getId());
-            if(ok) {
-                session.setAttribute("msg", "Xóa thành công!");
+            if (ok) {
+                session.setAttribute("msg", "Đã thiết lập địa chỉ mặc định thành công!");
+                session.setAttribute("msgType", "success");
+            } else {
+                session.setAttribute("msg", "Thiết lập mặc định thất bại!");
+                session.setAttribute("msgType", "danger");
             }
         }
         response.sendRedirect(request.getContextPath() + "/dia-chi-nguoi-dung");
