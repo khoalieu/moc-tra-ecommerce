@@ -14,8 +14,9 @@ public class PaymentTransactionDAO {
 
     public int create(PaymentTransaction tx) {
         String sql = "INSERT INTO payment_transactions " +
-                "(order_id, payment_method, provider, request_id, provider_order_id, amount, qr_code_url, pay_url, deeplink, transaction_status, raw_response) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                "(order_id, payment_method, provider, request_id, provider_order_id, amount, " +
+                "qr_code_url, pay_url, deeplink, transaction_status, raw_response, expired_at) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
@@ -31,6 +32,7 @@ public class PaymentTransactionDAO {
             ps.setString(9, tx.getDeeplink());
             ps.setString(10, tx.getTransactionStatus());
             ps.setString(11, tx.getRawResponse());
+            ps.setTimestamp(12, tx.getExpiredAt());
 
             int rows = ps.executeUpdate();
             if (rows > 0) {
@@ -124,6 +126,23 @@ public class PaymentTransactionDAO {
 
         return false;
     }
+    public boolean markExpiredById(int id) {
+        String sql = "UPDATE payment_transactions " +
+                "SET transaction_status = 'expired' " +
+                "WHERE id = ? AND transaction_status = 'pending'";
+
+        try (Connection conn = ds.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, id);
+            return ps.executeUpdate() > 0;
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return false;
+    }
 
     private PaymentTransaction mapRow(ResultSet rs) throws SQLException {
         PaymentTransaction tx = new PaymentTransaction();
@@ -142,6 +161,7 @@ public class PaymentTransactionDAO {
         tx.setRawResponse(rs.getString("raw_response"));
         tx.setCreatedAt(rs.getTimestamp("created_at"));
         tx.setPaidAt(rs.getTimestamp("paid_at"));
+        tx.setExpiredAt(rs.getTimestamp("expired_at"));
 
         return tx;
     }

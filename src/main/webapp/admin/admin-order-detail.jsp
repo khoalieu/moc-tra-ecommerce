@@ -122,7 +122,7 @@
                                     <td><fmt:formatNumber value="${item.price}" pattern="#,###"/>đ</td>
                                     <td style="text-align: center;">
                                         <c:choose>
-                                            <c:when test="${order.status == 'PENDING' || order.status == 'PROCESSING'}">
+                                            <c:when test="${order.status == 'PENDING'}">
                                                 <input type="hidden" name="orderItemIds" value="${item.id}">
 
                                                 <input type="number"

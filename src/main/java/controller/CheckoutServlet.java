@@ -23,6 +23,8 @@ import java.util.List;
 import controller.utils.PaymentUtils;
 import controller.utils.PaymentResult;
 import model.promotion.Coupon;
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
 
 @WebServlet(name = "CheckoutServlet", value = "/thanh-toan")
 public class CheckoutServlet extends HttpServlet {
@@ -372,10 +374,13 @@ public class CheckoutServlet extends HttpServlet {
                     tx.setPaymentMethod(paymentMethod);
                     tx.setProvider(res.getProvider());
                     tx.setRequestId(res.getRequestId());
+                    tx.setProviderOrderId(res.getProviderOrderId());
                     tx.setAmount(totalAmount);
                     tx.setQrCodeUrl(res.getQrCodeUrl());
                     tx.setPayUrl(res.getPayUrl());
+                    tx.setDeeplink(res.getDeeplink());
                     tx.setTransactionStatus("pending");
+                    tx.setExpiredAt(Timestamp.valueOf(LocalDateTime.now().plusMinutes(15)));
 
                     DAOFactory.getInstance().getPaymentTransactionDAO().create(tx);
                     response.sendRedirect("thanh-toan-qr?orderId=" + orderId);
