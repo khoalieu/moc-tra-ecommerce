@@ -234,23 +234,29 @@ public class PaymentServlet extends HttpServlet {
 
             JsonObject data = json.getAsJsonObject("data");
 
-            int orderId = data.get("orderCode").getAsInt();
+            String providerOrderId = data.get("orderCode").getAsString();
             long paidAmount = data.get("amount").getAsLong();
 
             OrderDAO orderDAO = DAOFactory.getInstance().getOrderDAO();
             PaymentTransactionDAO txDAO = DAOFactory.getInstance().getPaymentTransactionDAO();
 
-            Order order = orderDAO.getOrderById(orderId);
+            PaymentTransaction tx = txDAO.getByProviderOrderId(providerOrderId);
+
+            if (tx == null) {
+                response.setStatus(HttpServletResponse.SC_OK);
+                response.getWriter().write("OK");
+                return;}
+
+            Order order = orderDAO.getOrderById(tx.getOrderId());
 
             if (order == null) {
                 response.setStatus(HttpServletResponse.SC_OK);
                 response.getWriter().write("OK");
                 return;
             }
-            PaymentTransaction tx = txDAO.getByProviderOrderId(String.valueOf(orderId));
 
             if (order.getPaymentStatus() == PaymentStatus.PAID
-                    || (tx != null && "paid".equalsIgnoreCase(tx.getTransactionStatus()))) {
+                    || "paid".equalsIgnoreCase(tx.getTransactionStatus())) {
                 response.setStatus(HttpServletResponse.SC_OK);
                 response.getWriter().write("OK");
                 return;
@@ -259,7 +265,8 @@ public class PaymentServlet extends HttpServlet {
             long expectedAmount = Math.round(order.getTotalAmount());
 
             if (expectedAmount != paidAmount) {
-                System.out.println("Sai số tiền payOS. orderId=" + orderId
+                System.out.println("Sai số tiền payOS. orderId=" + order.getId()
+                        + ", providerOrderId=" + providerOrderId
                         + ", expected=" + expectedAmount
                         + ", paid=" + paidAmount);
 
@@ -268,10 +275,11 @@ public class PaymentServlet extends HttpServlet {
                 return;
             }
 
-            orderDAO.updatePaymentStatus(orderId, PaymentStatus.PAID);
-            txDAO.markPaidByProviderOrderId(String.valueOf(orderId), rawBody);
+            orderDAO.updatePaymentStatus(order.getId(), PaymentStatus.PAID);
+            txDAO.markPaidByProviderOrderId(providerOrderId, rawBody);
 
-            System.out.println("Đã cập nhật PAID cho orderId = " + orderId);
+            System.out.println("Đã cập nhật PAID cho orderId = " + order.getId()
+                    + ", providerOrderId = " + providerOrderId);
 
             response.setStatus(HttpServletResponse.SC_OK);
             response.getWriter().write("OK");
@@ -356,7 +364,7 @@ public class PaymentServlet extends HttpServlet {
             tx.setPayUrl(res.getPayUrl());
             tx.setDeeplink(res.getDeeplink());
             tx.setTransactionStatus("pending");
-            tx.setExpiredAt(Timestamp.valueOf(LocalDateTime.now().plusMinutes(15)));
+            tx.setExpiredAt(Timestamp.valueOf(LocalDateTime.now().plusMinutes(2)));
 
             txDAO.create(tx);
             orderDAO.updatePaymentStatus(orderId, PaymentStatus.PENDING);

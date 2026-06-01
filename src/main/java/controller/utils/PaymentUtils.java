@@ -44,6 +44,11 @@ public class PaymentUtils {
     }
 
     public static PaymentResult createPayosPayment(Order order) {
+        long providerOrderCode = generatePayosOrderCode(order.getId());
+        return createPayosPayment(order, providerOrderCode);
+    }
+
+    public static PaymentResult createPayosPayment(Order order, long providerOrderCode) {
         try {
             String endpoint = getConfig("payos.endpoint");
             String clientId = getConfig("payos.clientId");
@@ -54,15 +59,14 @@ public class PaymentUtils {
             String cancelUrl = getConfig("payos.cancelUrl") + "?orderId=" + order.getId();
 
             long amount = Math.round(order.getTotalAmount());
-            long orderCode = order.getId();
+            long orderCode = providerOrderCode;
             String description = "MOCTRA" + order.getId();
 
-            String signatureData =
-                    "amount=" + amount +
-                            "&cancelUrl=" + cancelUrl +
-                            "&description=" + description +
-                            "&orderCode=" + orderCode +
-                            "&returnUrl=" + returnUrl;
+            String signatureData = "amount=" + amount +
+                    "&cancelUrl=" + cancelUrl +
+                    "&description=" + description +
+                    "&orderCode=" + orderCode +
+                    "&returnUrl=" + returnUrl;
 
             String signature = hmacSha256(signatureData, checksumKey);
 
@@ -98,11 +102,6 @@ public class PaymentUtils {
                     HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8)
             );
 
-            System.out.println("===== PAYOS CREATE PAYMENT RESPONSE =====");
-            System.out.println("HTTP status = " + response.statusCode());
-            System.out.println("body = " + response.body());
-            System.out.println("========================================");
-
             JsonObject json = gson.fromJson(response.body(), JsonObject.class);
             String code = getJsonString(json, "code");
 
@@ -125,7 +124,7 @@ public class PaymentUtils {
             PaymentResult result = new PaymentResult();
             result.setProvider("payos");
             result.setRequestId("PAYOS_" + order.getId() + "_" + System.currentTimeMillis());
-            result.setProviderOrderId(String.valueOf(order.getId()));
+            result.setProviderOrderId(String.valueOf(orderCode));
             result.setQrCodeUrl(qrImage);
             result.setPayUrl(checkoutUrl);
             result.setDeeplink(null);
@@ -135,8 +134,13 @@ public class PaymentUtils {
 
         } catch (Exception e) {
             e.printStackTrace();
-            throw new RuntimeException("Lỗi tạo thanh toán payOS: " + e.getMessage());
+            throw new RuntimeException("Lỗi tạo thanh toán payOS: " + e.getMessage(), e);
         }
+    }
+
+    private static long generatePayosOrderCode(int orderId) {
+        String suffix = String.valueOf(System.currentTimeMillis()).substring(5);
+        return Long.parseLong(orderId + suffix);
     }
 
     public static boolean verifyPayosWebhook(JsonObject webhookJson) {
@@ -194,12 +198,6 @@ public class PaymentUtils {
                     request,
                     HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8)
             );
-
-            System.out.println("===== CONFIRM PAYOS WEBHOOK =====");
-            System.out.println("HTTP status = " + response.statusCode());
-            System.out.println("body = " + response.body());
-            System.out.println("=================================");
-
             return response.body();
 
         } catch (Exception e) {
@@ -246,9 +244,7 @@ public class PaymentUtils {
             for (byte b : bytes) {
                 result.append(String.format("%02x", b));
             }
-
             return result.toString();
-
         } catch (Exception e) {
             throw new RuntimeException("Lỗi tạo HMAC SHA256", e);
         }
@@ -293,16 +289,9 @@ public class PaymentUtils {
             String extraData = "";
             long amount = Math.round(order.getTotalAmount());
 
-            String rawSignature =
-                    "accessKey=" + accessKey +
-                            "&amount=" + amount +
-                            "&extraData=" + extraData +
-                            "&ipnUrl=" + ipnUrl +
-                            "&orderId=" + orderId +
-                            "&orderInfo=" + orderInfo +
-                            "&partnerCode=" + partnerCode +
-                            "&redirectUrl=" + redirectUrl +
-                            "&requestId=" + requestId +
+            String rawSignature = "accessKey=" + accessKey + "&amount=" + amount + "&extraData=" + extraData +
+                            "&ipnUrl=" + ipnUrl + "&orderId=" + orderId + "&orderInfo=" + orderInfo +
+                            "&partnerCode=" + partnerCode + "&redirectUrl=" + redirectUrl + "&requestId=" + requestId +
                             "&requestType=" + requestType;
 
             String signature = hmacSha256(rawSignature, secretKey);
@@ -342,11 +331,6 @@ public class PaymentUtils {
                     HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8)
             );
 
-            System.out.println("===== MOMO CREATE PAYMENT RESPONSE =====");
-            System.out.println("HTTP status = " + response.statusCode());
-            System.out.println("body = " + response.body());
-            System.out.println("=======================================");
-
             JsonObject json = gson.fromJson(response.body(), JsonObject.class);
 
             int resultCode = json.has("resultCode") ? json.get("resultCode").getAsInt() : -1;
@@ -376,7 +360,7 @@ public class PaymentUtils {
 
         } catch (Exception e) {
             e.printStackTrace();
-            throw new RuntimeException("Lỗi tạo thanh toán MoMo: " + e.getMessage());
+            throw new RuntimeException("Lỗi tạo thanh toán MoMo: " + e.getMessage(), e);
         }
     }
     public static boolean verifyMomoIpnSignature(JsonObject json) {
