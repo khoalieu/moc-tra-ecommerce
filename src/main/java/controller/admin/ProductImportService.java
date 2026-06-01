@@ -3,6 +3,8 @@ package controller.admin;
 import dao.CategoryDAO;
 import dao.DAOFactory;
 import dao.ProductDAO;
+import dao.ProductVariantDAO;
+import model.product.ProductVariant;
 import service.SystemLogService;
 import model.enums.ProductStatus;
 import model.product.Product;
@@ -16,6 +18,7 @@ import java.io.InputStream;
 public class ProductImportService {
 
     private final ProductDAO productDAO = DAOFactory.getInstance().getProductDAO();
+    private final ProductVariantDAO variantDAO = DAOFactory.getInstance().getProductVariantDAO();
     private final CategoryDAO categoryDAO = DAOFactory.getInstance().getCategoryDAO();
     private final SystemLogService logService = new SystemLogService();
     public ProductImportResult importProducts(InputStream inputStream, Integer adminId) {
@@ -86,6 +89,14 @@ public class ProductImportService {
                         int newId = productDAO.insertProduct(product);
 
                         if (newId > 0) {
+                            ProductVariant v = new ProductVariant();
+                            v.setProductId(newId);
+                            v.setVariantName("Mặc định");
+                            v.setPrice(price);
+                            v.setStockQuantity(stock);
+                            v.setSku("VAR-" + System.nanoTime());
+
+                            variantDAO.addVariant(v);
                             result.increaseAdded();
                         } else {
                             result.addError("Dòng " + (i + 1) + ": Thêm sản phẩm thất bại");
@@ -98,6 +109,7 @@ public class ProductImportService {
                         existingProduct.setCategoryId(categoryId);
                         boolean updated = productDAO.updateProduct(existingProduct);
                         if (updated) {
+                            variantDAO.updateStockByProductId(existingProduct.getId(), stock);
                             result.increaseUpdated();
                         } else {
                             result.addError("Dòng " + (i + 1) + ": Cập nhật sản phẩm thất bại");
@@ -147,15 +159,9 @@ public class ProductImportService {
         }
 
         return switch (cell.getCellType()) {
-            case STRING ->
-                    cell.getStringCellValue().trim();
-
-            case NUMERIC ->
-                    String.valueOf((int) cell.getNumericCellValue());
-
-            case BOOLEAN ->
-                    String.valueOf(cell.getBooleanCellValue());
-
+            case STRING -> cell.getStringCellValue().trim();
+            case NUMERIC -> String.valueOf((int) cell.getNumericCellValue());
+            case BOOLEAN -> String.valueOf(cell.getBooleanCellValue());
             default -> "";
         };
     }
