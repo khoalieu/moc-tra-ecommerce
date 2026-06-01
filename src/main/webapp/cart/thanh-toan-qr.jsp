@@ -153,18 +153,12 @@
 
                     <p><strong>Trạng thái:</strong> <span id="paymentStatusText">${order.paymentStatus}</span></p>
                     <c:if test="${not empty payment.expiredAt}">
-                        <p>
-                            <strong>Thời gian còn lại:</strong>
+                        <div class="countdown-box" id="countdownBox">
+                            Mã QR còn hiệu lực trong:
                             <span id="countdownText">Đang tính...</span>
-                        </p>
+                        </div>
                     </c:if>
                 </div>
-                <c:if test="${not empty payment.expiredAt}">
-                    <div class="countdown-box" id="countdownBox">
-                        Mã QR còn hiệu lực trong:
-                        <span id="countdownText">Đang tính...</span>
-                    </div>
-                </c:if>
 
                 <div class="qr-box" id="qrBox">
                     <img src="${payment.qrCodeUrl}" alt="QR thanh toán">
