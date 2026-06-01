@@ -380,7 +380,7 @@ public class CheckoutServlet extends HttpServlet {
                     tx.setPayUrl(res.getPayUrl());
                     tx.setDeeplink(res.getDeeplink());
                     tx.setTransactionStatus("pending");
-                    tx.setExpiredAt(Timestamp.valueOf(LocalDateTime.now().plusMinutes(15)));
+                    tx.setExpiredAt(Timestamp.valueOf(LocalDateTime.now().plusMinutes(2)));
 
                     DAOFactory.getInstance().getPaymentTransactionDAO().create(tx);
                     response.sendRedirect("thanh-toan-qr?orderId=" + orderId);
