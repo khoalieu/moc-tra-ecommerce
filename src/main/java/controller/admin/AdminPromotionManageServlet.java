@@ -46,6 +46,7 @@ public class AdminPromotionManageServlet extends HttpServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
+        promotionDAO.syncPromotionPrices();
         List<Promotion> promotionList = promotionDAO.getAllPromotions();
         request.setAttribute("promotionList", promotionList);
         request.setAttribute("voucherList", vipVoucherDAO.getAllVouchers());
@@ -128,7 +129,7 @@ public class AdminPromotionManageServlet extends HttpServlet {
         } catch (Exception e) {
             e.printStackTrace();
         }
-
+        promotionDAO.syncPromotionPrices();
         response.sendRedirect(redirectPath + "?tab=" + redirectTab);
     }
 

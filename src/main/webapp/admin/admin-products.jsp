@@ -123,6 +123,9 @@
                     <button class="btn-bulk btn-bulk-quick-discount" onclick="openQuickDiscountModal()">
                         <i class="fas fa-percentage"></i> Giảm giá nhanh
                     </button>
+                    <button class="btn-bulk btn-bulk-cancel" onclick="clearQuickDiscount()">
+                        <i class="fas fa-eraser"></i> Gỡ giảm giá nhanh
+                    </button>
                     <button class="btn-bulk btn-bulk-promo" onclick="openPromoModal()">
                         <i class="fas fa-tags"></i> Thêm vào KM
                     </button>
@@ -566,6 +569,35 @@
                 alert("Đã gỡ KM thành công!");
                 location.reload();
             } else alert("Lỗi khi xử lý.");
+        });
+    }
+    function clearQuickDiscount() {
+        const selectedIds = getSelectedProducts();
+        if (selectedIds.length === 0) {
+            alert("Chưa chọn sản phẩm!");
+            return;
+        }
+        if (!confirm("Gỡ giảm giá nhanh cho các sản phẩm đã chọn?")) {
+            return;
+        }
+
+        const params = new URLSearchParams();
+        params.append('action', 'clear');
+        params.append('productIds', selectedIds.join(','));
+
+        fetch('admin/product/quick-discount', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+            body: params
+        }).then(res => {
+            if (res.ok) {
+                alert("Đã gỡ giảm giá nhanh!");
+                location.reload();
+            } else {
+                alert("Lỗi khi gỡ giảm giá nhanh.");
+            }
+        }).catch(() => {
+            alert("Lỗi kết nối!");
         });
     }
 </script>

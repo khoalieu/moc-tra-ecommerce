@@ -30,6 +30,9 @@ public class ProductServlet extends HttpServlet {
         ProductDAO productDAO = DAOFactory.getInstance().getProductDAO();
         CategoryDAO categoryDAO = DAOFactory.getInstance().getCategoryDAO();
 
+        PromotionDAO promotionDAO = DAOFactory.getInstance().getPromotionDAO();
+        promotionDAO.syncPromotionPrices();
+
         String categoryParam = request.getParameter("category");
         String sortParam = request.getParameter("sort");
         String pageParam = request.getParameter("page");
