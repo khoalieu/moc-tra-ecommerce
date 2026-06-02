@@ -105,6 +105,8 @@ public class UserAddressServlet extends HttpServlet {
         }else if ("edit".equals(action)) {
             try {
                 int addressId = Integer.parseInt(request.getParameter("addressId"));
+                UserAddress oldAddr = dao.getAddressById(addressId);
+
                 String fullName = request.getParameter("fullName");
                 String phone = request.getParameter("phoneNumber");
                 String province = request.getParameter("province");
@@ -115,18 +117,15 @@ public class UserAddressServlet extends HttpServlet {
                 String districtIdStr = request.getParameter("districtId");
                 String wardCode = request.getParameter("wardCode");
 
-                if (fullName == null || fullName.trim().isEmpty() ||
-                        province == null || province.trim().isEmpty() ||
-                        district == null || district.trim().isEmpty() ||
-                        ward == null || ward.trim().isEmpty() ||
-                        street == null || street.trim().isEmpty() ||
-                        phone == null || !userDAO.isValidCarrier(phone.trim())) {
+                if (fullName == null || fullName.trim().isEmpty()) fullName = oldAddr.getFullName();
+                if (phone == null || phone.trim().isEmpty()) phone = oldAddr.getPhoneNumber();
+                if (province == null || province.trim().isEmpty()) province = oldAddr.getProvince();
+                if (district == null || district.trim().isEmpty()) district = oldAddr.getDistrict();
+                if (ward == null || ward.trim().isEmpty()) ward = oldAddr.getWard();
+                if (street == null || street.trim().isEmpty()) street = oldAddr.getStreetAddress();
+                if (label == null || label.trim().isEmpty()) label = oldAddr.getLabel();
+                if (wardCode == null || wardCode.trim().isEmpty()) wardCode = oldAddr.getWardCode();
 
-                    session.setAttribute("msg", "Cập nhật thất bại: Thông tin không được để trống hoặc SĐT sai!");
-                    session.setAttribute("msgType", "danger");
-                    response.sendRedirect(request.getContextPath() + "/dia-chi-nguoi-dung");
-                    return;
-                }
                 UserAddress addr = new UserAddress();
                 addr.setId(addressId);
                 addr.setUserId(user.getId());
@@ -140,8 +139,19 @@ public class UserAddressServlet extends HttpServlet {
 
                 if (districtIdStr != null && !districtIdStr.isEmpty()) {
                     addr.setDistrictId(Integer.parseInt(districtIdStr));
+                } else {
+                    addr.setDistrictId(oldAddr.getDistrictId());
+                }
+                if (wardCode == null || wardCode.trim().isEmpty()) {
+                    wardCode = oldAddr.getWardCode();
                 }
                 addr.setWardCode(wardCode);
+                if (!userDAO.isValidCarrier(phone.trim())) {
+                    session.setAttribute("msg", "Số điện thoại không hợp lệ!");
+                    session.setAttribute("msgType", "danger");
+                    response.sendRedirect(request.getContextPath() + "/dia-chi-nguoi-dung");
+                    return;
+                }
                 boolean ok = dao.updateAddress(addr);
                 if (ok) {
                     session.setAttribute("msg", "Cập nhật địa chỉ thành công!");
