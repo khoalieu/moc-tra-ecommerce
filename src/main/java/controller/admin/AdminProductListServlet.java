@@ -38,6 +38,7 @@ public class AdminProductListServlet extends HttpServlet {
         String pageStr = request.getParameter("page");
         String keyword = request.getParameter("keyword");
         String status = request.getParameter("status");
+        promotionDAO.syncPromotionPrices();
 
         Integer categoryId = null;
         if (categoryIdStr != null && !categoryIdStr.isEmpty()) {
@@ -83,8 +84,7 @@ public class AdminProductListServlet extends HttpServlet {
 
         List<Category> categoryList = categoryDAO.getAllCategories();
 
-        List<Promotion> activePromos = promotionDAO.getActivePromotions();
-
+        List<Promotion> activePromos = promotionDAO.getAvailablePromotionsForAdmin();
         request.setAttribute("productList", productList);
         request.setAttribute("categoryList", categoryList);
         request.setAttribute("activePromos", activePromos);

@@ -640,19 +640,55 @@ public class ProductDAO {
     }
 
     public void updateProductDiscounts(String type, double value, String[] ids) throws Exception {
-        String sql = "percent".equals(type)
+        String productSql = "percent".equals(type)
                 ? "UPDATE products SET sale_price = price * (100 - ?) / 100 WHERE id = ?"
                 : "UPDATE products SET sale_price = GREATEST(0, price - ?) WHERE id = ?";
 
+        String variantSql = "percent".equals(type)
+                ? "UPDATE product_variants SET sale_price = price * (100 - ?) / 100 WHERE product_id = ?"
+                : "UPDATE product_variants SET sale_price = GREATEST(0, price - ?) WHERE product_id = ?";
+
         try (Connection conn = ds.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+             PreparedStatement psProduct = conn.prepareStatement(productSql);
+             PreparedStatement psVariant = conn.prepareStatement(variantSql)) {
 
             for (String id : ids) {
-                ps.setDouble(1, value);
-                ps.setInt(2, Integer.parseInt(id.trim()));
-                ps.addBatch();
+                int productId = Integer.parseInt(id.trim());
+
+                psProduct.setDouble(1, value);
+                psProduct.setInt(2, productId);
+                psProduct.addBatch();
+
+                psVariant.setDouble(1, value);
+                psVariant.setInt(2, productId);
+                psVariant.addBatch();
             }
-            ps.executeBatch();
+
+            psProduct.executeBatch();
+            psVariant.executeBatch();
+        }
+    }
+
+    public void clearProductDiscounts(String[] ids) throws Exception {
+        String productSql = "UPDATE products SET sale_price = 0 WHERE id = ?";
+        String variantSql = "UPDATE product_variants SET sale_price = 0 WHERE product_id = ?";
+
+        try (Connection conn = ds.getConnection();
+             PreparedStatement psProduct = conn.prepareStatement(productSql);
+             PreparedStatement psVariant = conn.prepareStatement(variantSql)) {
+
+            for (String id : ids) {
+                int productId = Integer.parseInt(id.trim());
+
+                psProduct.setInt(1, productId);
+                psProduct.addBatch();
+
+                psVariant.setInt(1, productId);
+                psVariant.addBatch();
+            }
+
+            psProduct.executeBatch();
+            psVariant.executeBatch();
         }
     }
 

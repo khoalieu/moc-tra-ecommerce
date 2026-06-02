@@ -36,8 +36,17 @@ public class AdminAddPromoServlet extends HttpServlet {
             try {
                 int promoId = Integer.parseInt(promoIdStr);
                 String[] ids = productIdsStr.split(",");
+
+                if (dao.hasPromotionConflict(promoId, ids)) {
+                    response.setStatus(HttpServletResponse.SC_CONFLICT);
+                    response.setContentType("text/plain;charset=UTF-8");
+                    response.getWriter().write("Sản phẩm đang thuộc khuyến mãi khác bị trùng thời gian.");
+                    return;
+                }
+
                 dao.addProductsToPromotion(promoId, ids);
                 response.setStatus(HttpServletResponse.SC_OK);
+
             } catch (Exception e) {
                 e.printStackTrace();
                 response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);

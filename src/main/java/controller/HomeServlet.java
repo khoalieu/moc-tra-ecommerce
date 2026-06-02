@@ -22,6 +22,7 @@ public class HomeServlet extends HttpServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
+        DAOFactory.getInstance().getPromotionDAO().syncPromotionPrices();
         BannerDAO bannerDAO = DAOFactory.getInstance().getBannerDAO();
         ProductDAO productDAO = DAOFactory.getInstance().getProductDAO();
         BlogPostDAO blogDAO = DAOFactory.getInstance().getBlogPostDAO();
