@@ -17,6 +17,7 @@ public class PaymentTransaction {
     private String rawResponse;
     private Timestamp createdAt;
     private Timestamp paidAt;
+    private Timestamp expiredAt;
 
     public PaymentTransaction() {}
 
@@ -143,5 +144,12 @@ public class PaymentTransaction {
 
     public void setPaidAt(Timestamp paidAt) {
         this.paidAt = paidAt;
+    }
+    public Timestamp getExpiredAt() {
+        return expiredAt;
+    }
+
+    public void setExpiredAt(Timestamp expiredAt) {
+        this.expiredAt = expiredAt;
     }
 }

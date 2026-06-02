@@ -124,6 +124,19 @@
                                             <i class="fa-solid fa-check-circle" style="font-size:10px;"></i> Đã thanh toán
                                         </span>
                                     </c:when>
+
+                                    <c:when test="${o.paymentStatus.toString() == 'FAILED'}">
+                                        <span class="status-badge payment-pending">
+                                            <i class="fa-solid fa-triangle-exclamation" style="font-size:10px;"></i> Thanh toán thất bại
+                                        </span>
+                                    </c:when>
+
+                                    <c:when test="${o.paymentStatus.toString() == 'EXPIRED'}">
+                                        <span class="status-badge payment-pending">
+                                            <i class="fa-solid fa-clock-rotate-left" style="font-size:10px;"></i> Thanh toán hết hạn
+                                        </span>
+                                    </c:when>
+
                                     <c:otherwise>
                                         <span class="status-badge payment-pending">
                                             <i class="fa-regular fa-clock" style="font-size:10px;"></i> Chưa thanh toán
@@ -260,6 +273,13 @@
                                 <a href="${pageContext.request.contextPath}/hoa-don?id=${o.id}" class="btn-action btn-outline">
                                     <i class="fa-solid fa-file-invoice"></i> Xem hóa đơn
                                 </a>
+                                <c:if test="${statusStr == 'PENDING' && o.paymentMethod != 'cod' && (o.paymentStatus.toString() == 'PENDING'
+                                            || o.paymentStatus.toString() == 'FAILED' || o.paymentStatus.toString() == 'EXPIRED')}">
+                                    <a href="${pageContext.request.contextPath}/thanh-toan-tiep?orderId=${o.id}"
+                                       class="btn-action btn-primary">
+                                        <i class="fa-solid fa-qrcode"></i> Thanh toán tiếp
+                                    </a>
+                                </c:if>
 
                                 <c:if test="${statusStr == 'PENDING'}">
                                     <button type="button" class="btn-action btn-secondary" onclick="openCancelModal(${o.id})">

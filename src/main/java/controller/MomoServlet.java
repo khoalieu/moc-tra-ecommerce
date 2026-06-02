@@ -117,6 +117,11 @@ public class MomoServlet extends HttpServlet {
                 response.getWriter().write("Order not found");
                 return;
             }
+            if (order.getPaymentStatus() == PaymentStatus.PAID
+                    || "paid".equalsIgnoreCase(tx.getTransactionStatus())) {
+                response.setStatus(HttpServletResponse.SC_NO_CONTENT);
+                return;
+            }
 
             long expectedAmount = Math.round(order.getTotalAmount());
 

@@ -393,3 +393,5 @@ ALTER TABLE orders
         FOREIGN KEY (coupon_id) REFERENCES coupons(id)
             ON DELETE SET NULL;
 
+ALTER TABLE payment_transactions
+    ADD COLUMN expired_at DATETIME NULL AFTER created_at;
