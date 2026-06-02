@@ -59,6 +59,54 @@
             color: #f57c00;
             margin-top: 15px;
         }
+        .countdown-box {
+            margin-top: 15px;
+            padding: 12px;
+            background: #fff8e1;
+            border: 1px solid #ffe0a3;
+            border-radius: 8px;
+            color: #8a5a00;
+            font-weight: 600;
+        }
+
+        .countdown-box.expired {
+            background: #ffebee;
+            border-color: #ffcdd2;
+            color: #c62828;
+        }
+
+        .qr-box.expired {
+            display: none;
+        }
+
+        .btn-open-payment.expired {
+            display: none;
+        }
+
+        .expired-action-box {
+            display: none;
+            margin-top: 18px;
+            padding: 16px;
+            background: #ffebee;
+            border: 1px solid #ffcdd2;
+            border-radius: 10px;
+            color: #b71c1c;
+        }
+
+        .expired-action-box.show {
+            display: block;
+        }
+
+        .btn-create-new-payment {
+            display: inline-block;
+            margin-top: 12px;
+            padding: 12px 20px;
+            background: #d32f2f;
+            color: #fff;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+        }
 
         .btn-open-payment {
             display: inline-block;
@@ -132,18 +180,33 @@
                     </p>
 
                     <p><strong>Trạng thái:</strong> <span id="paymentStatusText">${order.paymentStatus}</span></p>
+                    <c:if test="${not empty payment.expiredAt}">
+                        <div class="countdown-box" id="countdownBox">
+                            Mã QR còn hiệu lực trong:
+                            <span id="countdownText">Đang tính...</span>
+                        </div>
+                    </c:if>
                 </div>
 
-                <div class="qr-box">
+                <div class="qr-box" id="qrBox">
                     <img src="${payment.qrCodeUrl}" alt="QR thanh toán">
                 </div>
 
                 <c:if test="${not empty payment.payUrl}">
                     <br>
-                    <a href="${payment.payUrl}" class="btn-open-payment" target="_blank">
+                    <a href="${payment.payUrl}" class="btn-open-payment" id="openPaymentBtn" target="_blank">
                         Mở trang thanh toán
                     </a>
                 </c:if>
+                <div class="expired-action-box" id="expiredActionBox">
+                    <strong>Mã thanh toán đã hết hạn.</strong>
+                    <div>Vui lòng tạo mã thanh toán mới để tiếp tục thanh toán đơn hàng này.</div>
+
+                    <a href="${pageContext.request.contextPath}/thanh-toan-tiep?orderId=${order.id}"
+                       class="btn-create-new-payment">
+                        <i class="fa-solid fa-rotate"></i> Tạo mã thanh toán mới
+                    </a>
+                </div>
 
                 <div class="payment-status" id="waitingText">
                     Đang chờ thanh toán...
@@ -169,23 +232,91 @@
 
 <c:if test="${not empty order}">
     <script>
+        const expiredAtText = '${payment.expiredAt}';
+        const countdownText = document.getElementById('countdownText');
+        const countdownBox = document.getElementById('countdownBox');
+        const qrBox = document.getElementById('qrBox');
+        const waitingText = document.getElementById('waitingText');
+        const paymentStatusText = document.getElementById('paymentStatusText');
+        const openPaymentBtn = document.getElementById('openPaymentBtn');
+        const expiredActionBox = document.getElementById('expiredActionBox');
+
+        let isExpired = false;
+
+        function parseExpiredAt(text) {
+            if (!text) {return null;}
+            const normalized = text.replace(' ', 'T');
+            const date = new Date(normalized);
+
+            if (isNaN(date.getTime())) {return null;}
+            return date;
+        }
+
+        const expiredAt = parseExpiredAt(expiredAtText);
+
+        function showExpiredState() {
+            isExpired = true;
+            if (countdownText) {countdownText.innerText = '00:00';}
+            if (countdownBox) {countdownBox.classList.add('expired');}
+            if (qrBox) {qrBox.classList.add('expired');}
+            if (openPaymentBtn) {openPaymentBtn.classList.add('expired');}
+            if (expiredActionBox) {expiredActionBox.classList.add('show');}
+            if (waitingText) {
+                waitingText.innerText = 'Mã thanh toán đã hết hạn. Vui lòng tạo mã mới.';
+            }
+            if (paymentStatusText && paymentStatusText.innerText !== 'PAID') {
+                paymentStatusText.innerText = 'EXPIRED';
+            }
+        }
+
+        function updateCountdown() {
+            if (!expiredAt || !countdownText || isExpired) {
+                return;
+            }
+            const now = new Date();
+            const diff = expiredAt.getTime() - now.getTime();
+            if (diff <= 0) {
+                showExpiredState();
+                return;
+            }
+
+            const totalSeconds = Math.floor(diff / 1000);
+            const minutes = Math.floor(totalSeconds / 60);
+            const seconds = totalSeconds % 60;
+
+            countdownText.innerText =
+                String(minutes).padStart(2, '0') + ':' + String(seconds).padStart(2, '0');
+        }
+
+        updateCountdown();
+        setInterval(updateCountdown, 1000);
+
         setInterval(async function () {
             try {
                 const res = await fetch('${pageContext.request.contextPath}/payment-status?orderId=${order.id}');
                 const data = await res.json();
 
                 if (data.paymentStatus === 'PAID') {
-                    document.getElementById('paymentStatusText').innerText = 'PAID';
-                    document.getElementById('waitingText').innerText = 'Thanh toán thành công! Đang chuyển về hóa đơn...';
+                    if (paymentStatusText) {paymentStatusText.innerText = 'PAID';}
+                    if (waitingText) {waitingText.innerText = 'Thanh toán thành công! Đang chuyển về hóa đơn...';}
 
                     setTimeout(function () {
                         window.location.href = '${pageContext.request.contextPath}/hoa-don?id=${order.id}';
                     }, 1200);
+                    return;
+                }
+                if (data.paymentStatus === 'FAILED') {
+                    if (paymentStatusText) {
+                        paymentStatusText.innerText = 'FAILED';
+                    }
+                    if (waitingText) {
+                        waitingText.innerText = 'Thanh toán thất bại. Vui lòng thử lại.';
+                    }
+                    return;
                 }
 
-                if (data.paymentStatus === 'FAILED') {
-                    document.getElementById('paymentStatusText').innerText = 'FAILED';
-                    document.getElementById('waitingText').innerText = 'Thanh toán thất bại. Vui lòng thử lại.';
+                if (data.paymentStatus === 'EXPIRED') {
+                    showExpiredState();
                 }
 
             } catch (e) {

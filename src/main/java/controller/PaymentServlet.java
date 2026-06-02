@@ -13,14 +13,18 @@ import model.enums.PaymentStatus;
 import model.order.Order;
 import model.payment.PaymentTransaction;
 import model.user.User;
+import controller.utils.PaymentResult;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
 
 @WebServlet(urlPatterns = {
         "/thanh-toan-qr",
+        "/thanh-toan-tiep",
         "/payment-status",
         "/payos-webhook",
         "/payos-return",
@@ -37,6 +41,8 @@ public class PaymentServlet extends HttpServlet {
 
         if ("/thanh-toan-qr".equals(path)) {
             showPaymentQrPage(request, response);
+        } else if ("/thanh-toan-tiep".equals(path)) {
+            continuePayment(request, response);
 
         } else if ("/payment-status".equals(path)) {
             checkPaymentStatus(request, response);
@@ -86,8 +92,16 @@ public class PaymentServlet extends HttpServlet {
                 response.sendRedirect(request.getContextPath() + "/don-hang");
                 return;
             }
+            if (order.getPaymentStatus() == PaymentStatus.PAID) {
+                response.sendRedirect(request.getContextPath() + "/hoa-don?id=" + orderId);
+                return;
+            }
 
             PaymentTransaction payment = txDAO.getByOrderId(orderId);
+            if (payment == null) {
+                response.sendRedirect(request.getContextPath() + "/don-hang");
+                return;
+            }
 
             request.setAttribute("order", order);
             request.setAttribute("payment", payment);
@@ -123,6 +137,22 @@ public class PaymentServlet extends HttpServlet {
 
             if (order == null || order.getUserId() != user.getId()) {
                 data.put("paymentStatus", "NOT_FOUND");
+                response.getWriter().write(gson.toJson(data));
+                return;
+            }
+            PaymentTransactionDAO txDAO = DAOFactory.getInstance().getPaymentTransactionDAO();
+            PaymentTransaction payment = txDAO.getByOrderId(orderId);
+
+            if (order.getPaymentStatus() == PaymentStatus.PENDING
+                    && payment != null
+                    && "pending".equalsIgnoreCase(payment.getTransactionStatus())
+                    && payment.getExpiredAt() != null
+                    && payment.getExpiredAt().before(new Timestamp(System.currentTimeMillis()))) {
+
+                txDAO.markExpiredById(payment.getId());
+                orderDAO.updatePaymentStatus(orderId, PaymentStatus.EXPIRED);
+
+                data.put("paymentStatus", "EXPIRED");
                 response.getWriter().write(gson.toJson(data));
                 return;
             }
@@ -204,15 +234,29 @@ public class PaymentServlet extends HttpServlet {
 
             JsonObject data = json.getAsJsonObject("data");
 
-            int orderId = data.get("orderCode").getAsInt();
+            String providerOrderId = data.get("orderCode").getAsString();
             long paidAmount = data.get("amount").getAsLong();
 
             OrderDAO orderDAO = DAOFactory.getInstance().getOrderDAO();
             PaymentTransactionDAO txDAO = DAOFactory.getInstance().getPaymentTransactionDAO();
 
-            Order order = orderDAO.getOrderById(orderId);
+            PaymentTransaction tx = txDAO.getByProviderOrderId(providerOrderId);
+
+            if (tx == null) {
+                response.setStatus(HttpServletResponse.SC_OK);
+                response.getWriter().write("OK");
+                return;}
+
+            Order order = orderDAO.getOrderById(tx.getOrderId());
 
             if (order == null) {
+                response.setStatus(HttpServletResponse.SC_OK);
+                response.getWriter().write("OK");
+                return;
+            }
+
+            if (order.getPaymentStatus() == PaymentStatus.PAID
+                    || "paid".equalsIgnoreCase(tx.getTransactionStatus())) {
                 response.setStatus(HttpServletResponse.SC_OK);
                 response.getWriter().write("OK");
                 return;
@@ -221,7 +265,8 @@ public class PaymentServlet extends HttpServlet {
             long expectedAmount = Math.round(order.getTotalAmount());
 
             if (expectedAmount != paidAmount) {
-                System.out.println("Sai số tiền payOS. orderId=" + orderId
+                System.out.println("Sai số tiền payOS. orderId=" + order.getId()
+                        + ", providerOrderId=" + providerOrderId
                         + ", expected=" + expectedAmount
                         + ", paid=" + paidAmount);
 
@@ -230,10 +275,11 @@ public class PaymentServlet extends HttpServlet {
                 return;
             }
 
-            orderDAO.updatePaymentStatus(orderId, PaymentStatus.PAID);
-            txDAO.markPaidByProviderOrderId(String.valueOf(orderId), rawBody);
+            orderDAO.updatePaymentStatus(order.getId(), PaymentStatus.PAID);
+            txDAO.markPaidByProviderOrderId(providerOrderId, rawBody);
 
-            System.out.println("Đã cập nhật PAID cho orderId = " + orderId);
+            System.out.println("Đã cập nhật PAID cho orderId = " + order.getId()
+                    + ", providerOrderId = " + providerOrderId);
 
             response.setStatus(HttpServletResponse.SC_OK);
             response.getWriter().write("OK");
@@ -242,6 +288,92 @@ public class PaymentServlet extends HttpServlet {
             e.printStackTrace();
             response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
             response.getWriter().write("Webhook error");
+        }
+    }
+    private void continuePayment(HttpServletRequest request, HttpServletResponse response)
+            throws IOException {
+        try {
+            HttpSession session = request.getSession();
+            User user = (User) session.getAttribute("user");
+
+            if (user == null) {
+                response.sendRedirect(request.getContextPath() + "/auth/login.jsp");
+                return;
+            }
+
+            int orderId = Integer.parseInt(request.getParameter("orderId"));
+
+            OrderDAO orderDAO = DAOFactory.getInstance().getOrderDAO();
+            PaymentTransactionDAO txDAO = DAOFactory.getInstance().getPaymentTransactionDAO();
+
+            Order order = orderDAO.getOrderById(orderId);
+
+            if (order == null || order.getUserId() != user.getId()) {
+                response.sendRedirect(request.getContextPath() + "/don-hang");
+                return;
+            }
+
+            if (order.getPaymentStatus() == PaymentStatus.PAID) {
+                response.sendRedirect(request.getContextPath() + "/hoa-don?id=" + orderId);
+                return;
+            }
+
+            if ("cod".equalsIgnoreCase(order.getPaymentMethod())) {
+                response.sendRedirect(request.getContextPath() + "/hoa-don?id=" + orderId);
+                return;
+            }
+
+            if (order.getStatus() != null && !"PENDING".equalsIgnoreCase(order.getStatus().toString())) {
+                response.sendRedirect(request.getContextPath() + "/hoa-don?id=" + orderId);
+                return;
+            }
+
+            PaymentTransaction oldTx = txDAO.getByOrderId(orderId);
+
+            if (oldTx != null
+                    && "pending".equalsIgnoreCase(oldTx.getTransactionStatus())
+                    && oldTx.getExpiredAt() != null
+                    && oldTx.getExpiredAt().after(new Timestamp(System.currentTimeMillis()))) {
+
+                response.sendRedirect(request.getContextPath() + "/thanh-toan-qr?orderId=" + orderId);
+                return;
+            }
+
+            if (oldTx != null && "pending".equalsIgnoreCase(oldTx.getTransactionStatus())) {
+                txDAO.markExpiredById(oldTx.getId());
+                orderDAO.updatePaymentStatus(orderId, PaymentStatus.EXPIRED);
+            }
+
+            PaymentResult res = "bank".equalsIgnoreCase(order.getPaymentMethod())
+                    ? PaymentUtils.createPayosPayment(order)
+                    : PaymentUtils.createMomoPayment(order);
+
+            if (res == null) {
+                response.sendRedirect(request.getContextPath() + "/hoa-don?id=" + orderId);
+                return;
+            }
+
+            PaymentTransaction tx = new PaymentTransaction();
+            tx.setOrderId(orderId);
+            tx.setPaymentMethod(order.getPaymentMethod());
+            tx.setProvider(res.getProvider());
+            tx.setRequestId(res.getRequestId());
+            tx.setProviderOrderId(res.getProviderOrderId());
+            tx.setAmount(order.getTotalAmount());
+            tx.setQrCodeUrl(res.getQrCodeUrl());
+            tx.setPayUrl(res.getPayUrl());
+            tx.setDeeplink(res.getDeeplink());
+            tx.setTransactionStatus("pending");
+            tx.setExpiredAt(Timestamp.valueOf(LocalDateTime.now().plusMinutes(2)));
+
+            txDAO.create(tx);
+            orderDAO.updatePaymentStatus(orderId, PaymentStatus.PENDING);
+
+            response.sendRedirect(request.getContextPath() + "/thanh-toan-qr?orderId=" + orderId);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            response.sendRedirect(request.getContextPath() + "/don-hang");
         }
     }
 }
