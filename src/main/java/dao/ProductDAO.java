@@ -6,6 +6,7 @@ import model.enums.ProductStatus;
 import javax.sql.DataSource;
 import java.sql.*;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class ProductDAO {
@@ -26,10 +27,20 @@ public class ProductDAO {
 
     public List<Product> getProducts(Integer categoryId, Integer promotionId, String sort, Double maxPrice,
                                      String search, int index, int size, String status) {
-        return getProducts(categoryId, promotionId, sort, null, maxPrice, search, index, size, status);
+        return getProducts(toCategoryList(categoryId), promotionId, sort, null, maxPrice, search, index, size, status);
     }
 
     public List<Product> getProducts(Integer categoryId, Integer promotionId, String sort, Double minPrice, Double maxPrice,
+                                     String search, int index, int size, String status) {
+        return getProducts(toCategoryList(categoryId), promotionId, sort, minPrice, maxPrice, search, index, size, status);
+    }
+
+    public List<Product> getProducts(List<Integer> categoryIds, Integer promotionId, String sort, Double minPrice, Double maxPrice,
+                                     String search, int index, int size, String status) {
+        return getProducts(categoryIds, promotionId, false, sort, minPrice, maxPrice, search, index, size, status);
+    }
+
+    public List<Product> getProducts(List<Integer> categoryIds, Integer promotionId, boolean promotionOnly, String sort, Double minPrice, Double maxPrice,
                                      String search, int index, int size, String status) {
 
         List<Product> list = new ArrayList<>();
@@ -62,8 +73,10 @@ public class ProductDAO {
         );
         sql.append(" WHERE 1=1 ");
 
-        if (categoryId != null) {
-            sql.append(" AND p.category_id = ? ");
+        if (categoryIds != null && !categoryIds.isEmpty()) {
+            sql.append(" AND p.category_id IN (");
+            appendPlaceholders(sql, categoryIds.size());
+            sql.append(") ");
         }
 
         if (minPrice != null) {
@@ -76,6 +89,12 @@ public class ProductDAO {
 
         if (promotionId != null) {
             sql.append(" AND p.id IN (SELECT product_id FROM promotion_items WHERE promotion_id = ?) ");
+        } else if (promotionOnly) {
+            sql.append(" AND p.id IN (");
+            sql.append("SELECT pi.product_id FROM promotion_items pi ");
+            sql.append("JOIN promotions pr ON pr.id = pi.promotion_id ");
+            sql.append("WHERE pr.is_active = 1 AND pr.start_date <= NOW() AND pr.end_date >= NOW()");
+            sql.append(") ");
         }
 
         if (!keywords.isEmpty()) {
@@ -165,8 +184,10 @@ public class ProductDAO {
 
             int paramIndex = 1;
 
-            if (categoryId != null) {
-                ps.setInt(paramIndex++, categoryId);
+            if (categoryIds != null && !categoryIds.isEmpty()) {
+                for (Integer categoryId : categoryIds) {
+                    ps.setInt(paramIndex++, categoryId);
+                }
             }
 
             if (minPrice != null) {
@@ -251,10 +272,18 @@ public class ProductDAO {
         return countProducts(categoryId, promotionId, maxPrice, null, status);
     }
     public int countProducts(Integer categoryId, Integer promotionId, Double maxPrice, String search, String status) {
-        return countProducts(categoryId, promotionId, null, maxPrice, search, status);
+        return countProducts(toCategoryList(categoryId), promotionId, null, maxPrice, search, status);
     }
 
     public int countProducts(Integer categoryId, Integer promotionId, Double minPrice, Double maxPrice, String search, String status) {
+        return countProducts(toCategoryList(categoryId), promotionId, minPrice, maxPrice, search, status);
+    }
+
+    public int countProducts(List<Integer> categoryIds, Integer promotionId, Double minPrice, Double maxPrice, String search, String status) {
+        return countProducts(categoryIds, promotionId, false, minPrice, maxPrice, search, status);
+    }
+
+    public int countProducts(List<Integer> categoryIds, Integer promotionId, boolean promotionOnly, Double minPrice, Double maxPrice, String search, String status) {
         List<String> keywords = new ArrayList<>();
 
         if (search != null && !search.isBlank()) {
@@ -272,8 +301,10 @@ public class ProductDAO {
         }
         sql.append(" WHERE 1=1 ");
 
-        if (categoryId != null) {
-            sql.append(" AND p.category_id = ? ");
+        if (categoryIds != null && !categoryIds.isEmpty()) {
+            sql.append(" AND p.category_id IN (");
+            appendPlaceholders(sql, categoryIds.size());
+            sql.append(") ");
         }
 
         if (minPrice != null) {
@@ -285,6 +316,12 @@ public class ProductDAO {
         }
         if (promotionId != null) {
             sql.append(" AND pi.promotion_id = ? ");
+        } else if (promotionOnly) {
+            sql.append(" AND p.id IN (");
+            sql.append("SELECT pi.product_id FROM promotion_items pi ");
+            sql.append("JOIN promotions pr ON pr.id = pi.promotion_id ");
+            sql.append("WHERE pr.is_active = 1 AND pr.start_date <= NOW() AND pr.end_date >= NOW()");
+            sql.append(") ");
         }
 
         if (!keywords.isEmpty()) {
@@ -313,8 +350,10 @@ public class ProductDAO {
 
             int paramIndex = 1;
 
-            if (categoryId != null) {
-                ps.setInt(paramIndex++, categoryId);
+            if (categoryIds != null && !categoryIds.isEmpty()) {
+                for (Integer categoryId : categoryIds) {
+                    ps.setInt(paramIndex++, categoryId);
+                }
             }
 
             if (minPrice != null) {
@@ -345,14 +384,93 @@ public class ProductDAO {
     }
 
     public double[] getActiveProductPriceRange() {
-        String sql = "SELECT " +
-                "MIN(CASE WHEN sale_price > 0 THEN sale_price ELSE price END) AS min_price, " +
-                "MAX(CASE WHEN sale_price > 0 THEN sale_price ELSE price END) AS max_price " +
-                "FROM products WHERE status = 'active'";
+        return getProductPriceRange(null, null, null, "active");
+    }
+
+    public double[] getProductPriceRange(List<Integer> categoryIds, Integer promotionId, String search, String status) {
+        return getProductPriceRange(categoryIds, promotionId, false, search, status);
+    }
+
+    public double[] getProductPriceRange(List<Integer> categoryIds, Integer promotionId, boolean promotionOnly, String search, String status) {
+        List<String> keywords = new ArrayList<>();
+        if (search != null && !search.isBlank()) {
+            for (String keyword : search.trim().toLowerCase().split("\\s+")) {
+                if (!keyword.isBlank()) {
+                    keywords.add(keyword);
+                }
+            }
+        }
+
+        StringBuilder sql = new StringBuilder(
+                "SELECT " +
+                        "MIN(CASE WHEN p.sale_price > 0 THEN p.sale_price ELSE p.price END) AS min_price, " +
+                        "MAX(CASE WHEN p.sale_price > 0 THEN p.sale_price ELSE p.price END) AS max_price " +
+                        "FROM products p "
+        );
+
+        if (promotionId != null) {
+            sql.append(" JOIN promotion_items pi ON p.id = pi.product_id ");
+        }
+
+        sql.append(" WHERE 1=1 ");
+
+        if (categoryIds != null && !categoryIds.isEmpty()) {
+            sql.append(" AND p.category_id IN (");
+            appendPlaceholders(sql, categoryIds.size());
+            sql.append(") ");
+        }
+
+        if (promotionId != null) {
+            sql.append(" AND pi.promotion_id = ? ");
+        } else if (promotionOnly) {
+            sql.append(" AND p.id IN (");
+            sql.append("SELECT pi.product_id FROM promotion_items pi ");
+            sql.append("JOIN promotions pr ON pr.id = pi.promotion_id ");
+            sql.append("WHERE pr.is_active = 1 AND pr.start_date <= NOW() AND pr.end_date >= NOW()");
+            sql.append(") ");
+        }
+
+        if (!keywords.isEmpty()) {
+            sql.append(" AND (");
+            for (int i = 0; i < keywords.size(); i++) {
+                if (i > 0) {
+                    sql.append(" OR ");
+                }
+                sql.append("LOWER(p.name) LIKE ? ");
+            }
+            sql.append(") ");
+        }
+
+        if (status != null && !status.isEmpty()) {
+            if ("active".equals(status)) {
+                sql.append(" AND p.status = 'active' ");
+            } else if ("inactive".equals(status)) {
+                sql.append(" AND p.status = 'inactive' ");
+            } else if ("out-of-stock".equals(status)) {
+                sql.append(" AND p.stock_quantity = 0 ");
+            }
+        }
 
         try (Connection conn = ds.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
+             PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+
+            int paramIndex = 1;
+
+            if (categoryIds != null && !categoryIds.isEmpty()) {
+                for (Integer categoryId : categoryIds) {
+                    ps.setInt(paramIndex++, categoryId);
+                }
+            }
+
+            if (promotionId != null) {
+                ps.setInt(paramIndex++, promotionId);
+            }
+
+            for (String keyword : keywords) {
+                ps.setString(paramIndex++, "%" + keyword + "%");
+            }
+
+            ResultSet rs = ps.executeQuery();
 
             if (rs.next()) {
                 double min = rs.getDouble("min_price");
@@ -369,6 +487,23 @@ public class ProductDAO {
 
         return new double[]{0, 0};
     }
+
+    private List<Integer> toCategoryList(Integer categoryId) {
+        if (categoryId == null) {
+            return null;
+        }
+        return Collections.singletonList(categoryId);
+    }
+
+    private void appendPlaceholders(StringBuilder sql, int count) {
+        for (int i = 0; i < count; i++) {
+            if (i > 0) {
+                sql.append(", ");
+            }
+            sql.append("?");
+        }
+    }
+
     public Product getProductById(int id) {
         String sql = "SELECT p.*, " +
                 "pi.promotion_id AS current_promo_id, " +
