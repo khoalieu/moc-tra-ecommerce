@@ -146,9 +146,9 @@ public class ProductDAO {
             sql.append("CHAR_LENGTH(p.name) ASC, ");
 
             if ("price-asc".equals(sort)) {
-                sql.append("p.price ASC ");
+                sql.append("(CASE WHEN p.sale_price > 0 THEN p.sale_price ELSE p.price END) ASC ");
             } else if ("price-desc".equals(sort)) {
-                sql.append("p.price DESC ");
+                sql.append("(CASE WHEN p.sale_price > 0 THEN p.sale_price ELSE p.price END) DESC ");
             } else if ("name-asc".equals(sort)) {
                 sql.append("p.name ASC ");
             } else {
@@ -158,10 +158,10 @@ public class ProductDAO {
             if (sort != null) {
                 switch (sort) {
                     case "price-asc":
-                        sql.append(" ORDER BY p.price ASC ");
+                        sql.append(" ORDER BY (CASE WHEN p.sale_price > 0 THEN p.sale_price ELSE p.price END) ASC ");
                         break;
                     case "price-desc":
-                        sql.append(" ORDER BY p.price DESC ");
+                        sql.append(" ORDER BY (CASE WHEN p.sale_price > 0 THEN p.sale_price ELSE p.price END) DESC ");
                         break;
                     case "name-asc":
                         sql.append(" ORDER BY p.name ASC ");

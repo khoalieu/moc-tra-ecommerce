@@ -1364,6 +1364,21 @@
     line-height: 1.5;
 }
 
+.clear-filters-link {
+    padding: 9px 12px;
+    border-radius: 6px;
+    background: #f1f1f1;
+    color: #333;
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.clear-filters-link:hover {
+    background: #e4e4e4;
+    color: #107e84;
+}
+
 @media (max-width: 1100px) {
     .shop-grid-wrapper .product-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
