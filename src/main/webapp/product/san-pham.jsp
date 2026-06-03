@@ -28,7 +28,7 @@
                     <h3>Danh Mục Sản Phẩm</h3>
                     <ul class="category-filter-list">
 
-                        <li class="category-parent ${currentCategory == null ? 'active' : ''}">
+                        <li class="category-parent ${currentCategory == null && currentPromotion == null && empty currentSearch && currentMinPrice == null && currentPrice == null ? 'active' : ''}">
                             <a href="${pageContext.request.contextPath}/san-pham">Tất Cả Sản Phẩm</a>
                         </li>
 
@@ -45,7 +45,25 @@
                                 </c:if>
 
                                 <li class="category-parent ${isActiveParent ? 'active' : ''}">
-                                    <a href="${pageContext.request.contextPath}/san-pham?category=${p.id}">
+                                    <c:url var="parentCategoryUrl" value="/san-pham">
+                                        <c:param name="category" value="${p.id}"/>
+                                        <c:if test="${currentPromotion != null}">
+                                            <c:param name="promotionId" value="${currentPromotion}"/>
+                                        </c:if>
+                                        <c:if test="${currentPrice != null}">
+                                            <c:param name="price" value="${currentPrice}"/>
+                                        </c:if>
+                                        <c:if test="${currentMinPrice != null}">
+                                            <c:param name="minPrice" value="${currentMinPrice}"/>
+                                        </c:if>
+                                        <c:if test="${not empty currentSearch}">
+                                            <c:param name="search" value="${currentSearch}"/>
+                                        </c:if>
+                                        <c:if test="${currentSort != null}">
+                                            <c:param name="sort" value="${currentSort}"/>
+                                        </c:if>
+                                    </c:url>
+                                    <a href="${parentCategoryUrl}">
                                             ${p.name}
                                         (<c:out value="${categoryCountMap[p.id]}" default="0" />)
                                     </a>
@@ -56,7 +74,25 @@
 
                                                 <c:if test="${categoryCountMap[c.id] > 0}">
                                                     <li class="${currentCategory == c.id ? 'active-child' : ''}">
-                                                        <a href="${pageContext.request.contextPath}/san-pham?category=${c.id}">
+                                                        <c:url var="childCategoryUrl" value="/san-pham">
+                                                            <c:param name="category" value="${c.id}"/>
+                                                            <c:if test="${currentPromotion != null}">
+                                                                <c:param name="promotionId" value="${currentPromotion}"/>
+                                                            </c:if>
+                                                            <c:if test="${currentPrice != null}">
+                                                                <c:param name="price" value="${currentPrice}"/>
+                                                            </c:if>
+                                                            <c:if test="${currentMinPrice != null}">
+                                                                <c:param name="minPrice" value="${currentMinPrice}"/>
+                                                            </c:if>
+                                                            <c:if test="${not empty currentSearch}">
+                                                                <c:param name="search" value="${currentSearch}"/>
+                                                            </c:if>
+                                                            <c:if test="${currentSort != null}">
+                                                                <c:param name="sort" value="${currentSort}"/>
+                                                            </c:if>
+                                                        </c:url>
+                                                        <a href="${childCategoryUrl}">
                                                                 ${c.name}
                                                             (<c:out value="${categoryCountMap[c.id]}" default="0" />)
                                                         </a>
@@ -80,43 +116,135 @@
                     </a>
                 </div>
                 <div class="filter-group">
-                    <h3>Lọc Theo Giá</h3>
+                    <h3>Chương Trình Khuyến Mãi</h3>
 
-                    <input type="range"
-                           id="priceRange"
-                           min="0" max="500000" step="5000"
-                           value="${currentPrice != null ? currentPrice : 500000}"
-                           style="width: 100%; cursor: pointer;"
-                           oninput="updatePriceLabel(this.value)"
-                           onchange="applyPriceFilter(this.value)">
+                    <ul class="category-filter-list">
+                        <li class="category-parent ${currentPromotion == null && currentCategory == null && empty currentSearch && currentMinPrice == null && currentPrice == null ? 'active' : ''}">
+                            <a href="${pageContext.request.contextPath}/san-pham">Tất cả khuyến mãi</a>
 
-                    <p>
-                        Giá: 0đ — <span id="priceValue" style="font-weight: bold; color: #28a745;">
-                            <c:choose>
-                                <c:when test="${currentPrice != null}">
-                                    <fmt:formatNumber value="${currentPrice}" pattern="#,###"/>
-                                </c:when>
-                                <c:otherwise>500.000</c:otherwise>
-                            </c:choose>
-                        </span>đ
-                    </p>
+                            <c:if test="${not empty activePromotions}">
+                                <ul class="category-child-list">
+                                    <c:forEach var="promo" items="${activePromotions}">
+                                        <li class="${currentPromotion == promo.id ? 'active-child' : ''}">
+                                            <c:url var="promotionUrl" value="/san-pham">
+                                                <c:param name="promotionId" value="${promo.id}"/>
+                                                <c:if test="${currentCategory != null}">
+                                                    <c:param name="category" value="${currentCategory}"/>
+                                                </c:if>
+                                                <c:if test="${currentPrice != null}">
+                                                    <c:param name="price" value="${currentPrice}"/>
+                                                </c:if>
+                                                <c:if test="${currentMinPrice != null}">
+                                                    <c:param name="minPrice" value="${currentMinPrice}"/>
+                                                </c:if>
+                                                <c:if test="${not empty currentSearch}">
+                                                    <c:param name="search" value="${currentSearch}"/>
+                                                </c:if>
+                                                <c:if test="${currentSort != null}">
+                                                    <c:param name="sort" value="${currentSort}"/>
+                                                </c:if>
+                                            </c:url>
+                                            <a href="${promotionUrl}">
+                                                ${promo.name}
+                                            </a>
+                                        </li>
+                                    </c:forEach>
+                                </ul>
+                            </c:if>
+                        </li>
+                    </ul>
                 </div>
-                <script>
-                    function updatePriceLabel(value) {
-                        let formattedVal = new Intl.NumberFormat('vi-VN').format(value);
-                        document.getElementById('priceValue').innerText = formattedVal;
-                    }
+                <div class="filter-group">
+                    <h3>Lọc Theo Khoảng Giá</h3>
 
-                    function applyPriceFilter(value) {
-                        let currentUrl = new URL(window.location.href);
+                    <div class="price-filter-form">
+                        <div class="price-slider-values">
+                            <span id="minPriceText"></span>
+                            <span id="maxPriceText"></span>
+                        </div>
 
-                        currentUrl.searchParams.set('price', value);
+                        <div class="price-range-slider">
+                            <input type="range"
+                                   id="minPriceRange"
+                                   name="minPrice"
+                                   min="${minProductPrice}"
+                                   max="${maxProductPrice}"
+                                   step="5000"
+                                   value="${currentMinPrice != null ? currentMinPrice : minProductPrice}">
 
-                        currentUrl.searchParams.set('page', '1');
+                            <input type="range"
+                                   id="maxPriceRange"
+                                   name="price"
+                                   min="${minProductPrice}"
+                                   max="${maxProductPrice}"
+                                   step="5000"
+                                   value="${currentPrice != null ? currentPrice : maxProductPrice}">
+                        </div>
 
-                        window.location.href = currentUrl.toString();
-                    }
-                </script>
+                        <p class="price-filter-range">
+                            Khoảng giá hiện có:
+                            <strong><fmt:formatNumber value="${minProductPrice}" pattern="#,###"/>đ</strong>
+                            -
+                            <strong><fmt:formatNumber value="${maxProductPrice}" pattern="#,###"/>đ</strong>
+                        </p>
+                    </div>
+                    <script>
+                        (function () {
+                            const minRange = document.getElementById('minPriceRange');
+                            const maxRange = document.getElementById('maxPriceRange');
+                            const minText = document.getElementById('minPriceText');
+                            const maxText = document.getElementById('maxPriceText');
+                            const gap = 5000;
+
+                            if (!minRange || !maxRange || !minText || !maxText) return;
+
+                            function formatCurrency(value) {
+                                return new Intl.NumberFormat('vi-VN').format(Math.round(Number(value))) + 'đ';
+                            }
+
+                            function syncPriceRange(changed) {
+                                let minValue = Number(minRange.value);
+                                let maxValue = Number(maxRange.value);
+                                const minAllowed = Number(minRange.min);
+                                const maxAllowed = Number(maxRange.max);
+                                const effectiveGap = maxAllowed - minAllowed >= gap ? gap : 0;
+
+                                if (maxValue - minValue < effectiveGap) {
+                                    if (changed === 'min') {
+                                        minValue = maxValue - effectiveGap;
+                                        minRange.value = minValue;
+                                    } else {
+                                        maxValue = minValue + effectiveGap;
+                                        maxRange.value = maxValue;
+                                    }
+                                }
+
+                                minText.textContent = formatCurrency(minRange.value);
+                                maxText.textContent = formatCurrency(maxRange.value);
+                            }
+
+                            function applyPriceRange() {
+                                const currentUrl = new URL(window.location.href);
+
+                                currentUrl.searchParams.set('minPrice', minRange.value);
+                                currentUrl.searchParams.set('price', maxRange.value);
+                                currentUrl.searchParams.set('page', '1');
+
+                                window.location.href = currentUrl.toString();
+                            }
+
+                            minRange.addEventListener('input', function () {
+                                syncPriceRange('min');
+                            });
+                            maxRange.addEventListener('input', function () {
+                                syncPriceRange('max');
+                            });
+                            minRange.addEventListener('change', applyPriceRange);
+                            maxRange.addEventListener('change', applyPriceRange);
+                            syncPriceRange();
+                        })();
+                    </script>
+                </div>
             </aside>
 
             <div class="shop-grid-wrapper">
@@ -137,6 +265,10 @@
 
                         <c:if test="${currentPrice != null}">
                             <input type="hidden" name="price" value="${currentPrice}">
+                        </c:if>
+
+                        <c:if test="${currentMinPrice != null}">
+                            <input type="hidden" name="minPrice" value="${currentMinPrice}">
                         </c:if>
 
                         <c:if test="${currentPromotion != null}">
@@ -164,10 +296,10 @@
                     <div style="display: flex; align-items: center; gap: 8px;">
                         <label for="sort-by">Sắp xếp theo:</label>
                         <select id="sort-by" class="sort-select" onchange="location = this.value;">
-                            <option value="${pageContext.request.contextPath}/san-pham?sort=default&category=${currentCategory}&price=${currentPrice}&promotionId=${currentPromotion}&search=${currentSearch}" ${currentSort == 'default' ? 'selected' : ''}>Mặc định</option>
-                            <option value="${pageContext.request.contextPath}/san-pham?sort=newest&category=${currentCategory}&price=${currentPrice}&promotionId=${currentPromotion}&search=${currentSearch}" ${currentSort == 'newest' ? 'selected' : ''}>Mới nhất</option>
-                            <option value="${pageContext.request.contextPath}/san-pham?sort=price-asc&category=${currentCategory}&price=${currentPrice}&promotionId=${currentPromotion}&search=${currentSearch}" ${currentSort == 'price-asc' ? 'selected' : ''}>Giá: Thấp đến Cao</option>
-                            <option value="${pageContext.request.contextPath}/san-pham?sort=price-desc&category=${currentCategory}&price=${currentPrice}&promotionId=${currentPromotion}&search=${currentSearch}" ${currentSort == 'price-desc' ? 'selected' : ''}>Giá: Cao đến Thấp</option>
+                            <option value="${pageContext.request.contextPath}/san-pham?sort=default&category=${currentCategory}&price=${currentPrice}&minPrice=${currentMinPrice}&promotionId=${currentPromotion}&search=${currentSearch}" ${currentSort == 'default' ? 'selected' : ''}>Mặc định</option>
+                            <option value="${pageContext.request.contextPath}/san-pham?sort=newest&category=${currentCategory}&price=${currentPrice}&minPrice=${currentMinPrice}&promotionId=${currentPromotion}&search=${currentSearch}" ${currentSort == 'newest' ? 'selected' : ''}>Mới nhất</option>
+                            <option value="${pageContext.request.contextPath}/san-pham?sort=price-asc&category=${currentCategory}&price=${currentPrice}&minPrice=${currentMinPrice}&promotionId=${currentPromotion}&search=${currentSearch}" ${currentSort == 'price-asc' ? 'selected' : ''}>Giá: Thấp đến Cao</option>
+                            <option value="${pageContext.request.contextPath}/san-pham?sort=price-desc&category=${currentCategory}&price=${currentPrice}&minPrice=${currentMinPrice}&promotionId=${currentPromotion}&search=${currentSearch}" ${currentSort == 'price-desc' ? 'selected' : ''}>Giá: Cao đến Thấp</option>
                         </select>
                     </div>
                 </div>
@@ -262,19 +394,19 @@
 
                         <div class="pagination">
                             <!--  lùi 6  -->
-                            <a href="${pageContext.request.contextPath}/san-pham?page=${prevPage < 1 ? 1 : prevPage}&category=${currentCategory}&sort=${currentSort}&price=${currentPrice}&promotionId=${currentPromotion}&search=${currentSearch}"                               class="${currentPage <= windowSize ? 'disabled' : ''}">
+                            <a href="${pageContext.request.contextPath}/san-pham?page=${prevPage < 1 ? 1 : prevPage}&category=${currentCategory}&sort=${currentSort}&price=${currentPrice}&minPrice=${currentMinPrice}&promotionId=${currentPromotion}&search=${currentSearch}"                               class="${currentPage <= windowSize ? 'disabled' : ''}">
                                 &laquo;
                             </a>
 
                             <!-- block -->
                             <c:forEach begin="${startPage}" end="${endPage}" var="i">
-                                <a href="${pageContext.request.contextPath}/san-pham?page=${i}&category=${currentCategory}&sort=${currentSort}&price=${currentPrice}&promotionId=${currentPromotion}&search=${currentSearch}"                                   class="${currentPage == i ? 'active' : ''}">
+                                <a href="${pageContext.request.contextPath}/san-pham?page=${i}&category=${currentCategory}&sort=${currentSort}&price=${currentPrice}&minPrice=${currentMinPrice}&promotionId=${currentPromotion}&search=${currentSearch}"                                   class="${currentPage == i ? 'active' : ''}">
                                         ${i}
                                 </a>
                             </c:forEach>
 
                             <!--  tiến 6 page -->
-                            <a href="${pageContext.request.contextPath}/san-pham?page=${nextPage > totalPages ? totalPages : nextPage}&category=${currentCategory}&sort=${currentSort}&price=${currentPrice}&promotionId=${currentPromotion}&search=${currentSearch}"                               class="${currentPage + windowSize > totalPages ? 'disabled' : ''}">
+                            <a href="${pageContext.request.contextPath}/san-pham?page=${nextPage > totalPages ? totalPages : nextPage}&category=${currentCategory}&sort=${currentSort}&price=${currentPrice}&minPrice=${currentMinPrice}&promotionId=${currentPromotion}&search=${currentSearch}"                               class="${currentPage + windowSize > totalPages ? 'disabled' : ''}">
                                 &raquo;
                             </a>
                         </div>

@@ -7,6 +7,7 @@ import dao.PromotionDAO;
 import jakarta.servlet.http.HttpSession;
 import model.product.Category;
 import model.product.Product;
+import model.promotion.Promotion;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -37,6 +38,7 @@ public class ProductServlet extends HttpServlet {
         String sortParam = request.getParameter("sort");
         String pageParam = request.getParameter("page");
         String priceParam = request.getParameter("price");
+        String minPriceParam = request.getParameter("minPrice");
         String promoParam = request.getParameter("promotionId");
 
         String searchParam = request.getParameter("search");
@@ -72,6 +74,14 @@ public class ProductServlet extends HttpServlet {
                 maxPrice = null;
             }
         }
+        Double minPrice = null;
+        if (minPriceParam != null && !minPriceParam.isEmpty()) {
+            try {
+                minPrice = Double.parseDouble(minPriceParam);
+            } catch (Exception e) {
+                minPrice = null;
+            }
+        }
 
         Integer promotionId = null;
         if (promoParam != null && !promoParam.isEmpty()) {
@@ -82,9 +92,10 @@ public class ProductServlet extends HttpServlet {
         }
 
         int pageSize = 12;
-        List<Product> products = productDAO.getProducts(categoryId, promotionId, sortParam, maxPrice,  searchParam, page, pageSize, "active");
-        int totalProducts = productDAO.countProducts(categoryId, promotionId, maxPrice, searchParam , "active");
+        List<Product> products = productDAO.getProducts(categoryId, promotionId, sortParam, minPrice, maxPrice,  searchParam, page, pageSize, "active");
+        int totalProducts = productDAO.countProducts(categoryId, promotionId, minPrice, maxPrice, searchParam , "active");
         int totalPages = (int) Math.ceil((double) totalProducts / pageSize);
+        double[] priceRange = productDAO.getActiveProductPriceRange();
 
         String categoryName = "Tất Cả Sản Phẩm";
 
@@ -101,6 +112,7 @@ public class ProductServlet extends HttpServlet {
 
         List<Category> allCategories = categoryDAO.getAllActiveCategories();
         Map<Integer, Integer> counts = categoryDAO.getCategoryCounts();
+        List<Promotion> activePromotions = promotionDAO.getActivePromotions();
 
         List<Category> parentCategories = new ArrayList<>();
         Map<Integer, List<Category>> childrenMap = new HashMap<>();
@@ -131,6 +143,7 @@ public class ProductServlet extends HttpServlet {
         request.setAttribute("parentCategories", parentCategories);
         request.setAttribute("childrenMap", childrenMap);
         request.setAttribute("categoryCountMap", counts);
+        request.setAttribute("activePromotions", activePromotions);
 
         request.setAttribute("categoryName", categoryName);
         request.setAttribute("products", products);
@@ -139,8 +152,11 @@ public class ProductServlet extends HttpServlet {
 
         request.setAttribute("currentCategory", categoryId);
         request.setAttribute("currentSort", sortParam);
+        request.setAttribute("currentMinPrice", minPrice);
         request.setAttribute("currentPrice", maxPrice);
         request.setAttribute("currentPromotion", promotionId);
+        request.setAttribute("minProductPrice", priceRange[0]);
+        request.setAttribute("maxProductPrice", priceRange[1]);
 
         request.setAttribute("currentSearch", searchParam);
 

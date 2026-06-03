@@ -26,6 +26,11 @@ public class ProductDAO {
 
     public List<Product> getProducts(Integer categoryId, Integer promotionId, String sort, Double maxPrice,
                                      String search, int index, int size, String status) {
+        return getProducts(categoryId, promotionId, sort, null, maxPrice, search, index, size, status);
+    }
+
+    public List<Product> getProducts(Integer categoryId, Integer promotionId, String sort, Double minPrice, Double maxPrice,
+                                     String search, int index, int size, String status) {
 
         List<Product> list = new ArrayList<>();
 
@@ -59,6 +64,10 @@ public class ProductDAO {
 
         if (categoryId != null) {
             sql.append(" AND p.category_id = ? ");
+        }
+
+        if (minPrice != null) {
+            sql.append(" AND (CASE WHEN p.sale_price > 0 THEN p.sale_price ELSE p.price END) >= ? ");
         }
 
         if (maxPrice != null) {
@@ -160,6 +169,10 @@ public class ProductDAO {
                 ps.setInt(paramIndex++, categoryId);
             }
 
+            if (minPrice != null) {
+                ps.setDouble(paramIndex++, minPrice);
+            }
+
             if (maxPrice != null) {
                 ps.setDouble(paramIndex++, maxPrice);
             }
@@ -238,6 +251,10 @@ public class ProductDAO {
         return countProducts(categoryId, promotionId, maxPrice, null, status);
     }
     public int countProducts(Integer categoryId, Integer promotionId, Double maxPrice, String search, String status) {
+        return countProducts(categoryId, promotionId, null, maxPrice, search, status);
+    }
+
+    public int countProducts(Integer categoryId, Integer promotionId, Double minPrice, Double maxPrice, String search, String status) {
         List<String> keywords = new ArrayList<>();
 
         if (search != null && !search.isBlank()) {
@@ -257,6 +274,10 @@ public class ProductDAO {
 
         if (categoryId != null) {
             sql.append(" AND p.category_id = ? ");
+        }
+
+        if (minPrice != null) {
+            sql.append(" AND (CASE WHEN p.sale_price > 0 THEN p.sale_price ELSE p.price END) >= ? ");
         }
 
         if (maxPrice != null) {
@@ -296,6 +317,10 @@ public class ProductDAO {
                 ps.setInt(paramIndex++, categoryId);
             }
 
+            if (minPrice != null) {
+                ps.setDouble(paramIndex++, minPrice);
+            }
+
             if (maxPrice != null) {
                 ps.setDouble(paramIndex++, maxPrice);
             }
@@ -317,6 +342,32 @@ public class ProductDAO {
             e.printStackTrace();
         }
         return 0;
+    }
+
+    public double[] getActiveProductPriceRange() {
+        String sql = "SELECT " +
+                "MIN(CASE WHEN sale_price > 0 THEN sale_price ELSE price END) AS min_price, " +
+                "MAX(CASE WHEN sale_price > 0 THEN sale_price ELSE price END) AS max_price " +
+                "FROM products WHERE status = 'active'";
+
+        try (Connection conn = ds.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+
+            if (rs.next()) {
+                double min = rs.getDouble("min_price");
+                if (rs.wasNull()) min = 0;
+
+                double max = rs.getDouble("max_price");
+                if (rs.wasNull()) max = 0;
+
+                return new double[]{min, max};
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return new double[]{0, 0};
     }
     public Product getProductById(int id) {
         String sql = "SELECT p.*, " +
