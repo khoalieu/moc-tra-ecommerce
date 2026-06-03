@@ -303,23 +303,37 @@
                             Tìm
                         </button>
 
-                        <c:if test="${not empty currentSearch}">
-                            <a href="${pageContext.request.contextPath}/san-pham"
-                               style="padding: 9px 12px; border-radius: 6px; background: #f1f1f1; color: #333; text-decoration: none;">
-                                Xóa
-                            </a>
-                        </c:if>
                     </form>
 
-                    <div style="display: flex; align-items: center; gap: 8px;">
+                    <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
                         <label for="sort-by">Sắp xếp theo:</label>
-                        <select id="sort-by" class="sort-select" onchange="location = this.value;">
-                            <option value="${pageContext.request.contextPath}/san-pham?sort=default&category=${currentCategory}&price=${currentPrice}&minPrice=${currentMinPrice}&promotionId=${currentPromotionParam}&search=${currentSearch}" ${currentSort == 'default' ? 'selected' : ''}>Mặc định</option>
-                            <option value="${pageContext.request.contextPath}/san-pham?sort=newest&category=${currentCategory}&price=${currentPrice}&minPrice=${currentMinPrice}&promotionId=${currentPromotionParam}&search=${currentSearch}" ${currentSort == 'newest' ? 'selected' : ''}>Mới nhất</option>
-                            <option value="${pageContext.request.contextPath}/san-pham?sort=price-asc&category=${currentCategory}&price=${currentPrice}&minPrice=${currentMinPrice}&promotionId=${currentPromotionParam}&search=${currentSearch}" ${currentSort == 'price-asc' ? 'selected' : ''}>Giá: Thấp đến Cao</option>
-                            <option value="${pageContext.request.contextPath}/san-pham?sort=price-desc&category=${currentCategory}&price=${currentPrice}&minPrice=${currentMinPrice}&promotionId=${currentPromotionParam}&search=${currentSearch}" ${currentSort == 'price-desc' ? 'selected' : ''}>Giá: Cao đến Thấp</option>
+                        <select id="sort-by" class="sort-select" onchange="applyProductSort(this.value);">
+                            <option value="default" ${empty currentSort || currentSort == 'default' ? 'selected' : ''}>Mặc định</option>
+                            <option value="newest" ${currentSort == 'newest' ? 'selected' : ''}>Mới nhất</option>
+                            <option value="price-asc" ${currentSort == 'price-asc' ? 'selected' : ''}>Giá: Thấp đến Cao</option>
+                            <option value="price-desc" ${currentSort == 'price-desc' ? 'selected' : ''}>Giá: Cao đến Thấp</option>
                         </select>
+
+                        <c:if test="${currentCategory != null || not empty currentPromotionParam || currentMinPrice != null || currentPrice != null || not empty currentSearch || (not empty currentSort && currentSort != 'default')}">
+                            <a href="${pageContext.request.contextPath}/san-pham" class="clear-filters-link">
+                                Xóa bộ lọc
+                            </a>
+                        </c:if>
                     </div>
+                    <script>
+                        function applyProductSort(sortValue) {
+                            const currentUrl = new URL(window.location.href);
+
+                            if (!sortValue || sortValue === 'default') {
+                                currentUrl.searchParams.delete('sort');
+                            } else {
+                                currentUrl.searchParams.set('sort', sortValue);
+                            }
+
+                            currentUrl.searchParams.set('page', '1');
+                            window.location.href = currentUrl.toString();
+                        }
+                    </script>
                 </div>
 
                 <section class="product-group">
@@ -412,19 +426,82 @@
 
                         <div class="pagination">
                             <!--  lùi 6  -->
-                            <a href="${pageContext.request.contextPath}/san-pham?page=${prevPage < 1 ? 1 : prevPage}&category=${currentCategory}&sort=${currentSort}&price=${currentPrice}&minPrice=${currentMinPrice}&promotionId=${currentPromotionParam}&search=${currentSearch}"                               class="${currentPage <= windowSize ? 'disabled' : ''}">
+                            <c:url var="prevPageUrl" value="/san-pham">
+                                <c:param name="page" value="${prevPage < 1 ? 1 : prevPage}"/>
+                                <c:if test="${currentCategory != null}">
+                                    <c:param name="category" value="${currentCategory}"/>
+                                </c:if>
+                                <c:if test="${not empty currentSort && currentSort != 'default'}">
+                                    <c:param name="sort" value="${currentSort}"/>
+                                </c:if>
+                                <c:if test="${currentPrice != null}">
+                                    <c:param name="price" value="${currentPrice}"/>
+                                </c:if>
+                                <c:if test="${currentMinPrice != null}">
+                                    <c:param name="minPrice" value="${currentMinPrice}"/>
+                                </c:if>
+                                <c:if test="${not empty currentPromotionParam}">
+                                    <c:param name="promotionId" value="${currentPromotionParam}"/>
+                                </c:if>
+                                <c:if test="${not empty currentSearch}">
+                                    <c:param name="search" value="${currentSearch}"/>
+                                </c:if>
+                            </c:url>
+                            <a href="${prevPageUrl}" class="${currentPage <= windowSize ? 'disabled' : ''}">
                                 &laquo;
                             </a>
 
                             <!-- block -->
                             <c:forEach begin="${startPage}" end="${endPage}" var="i">
-                                <a href="${pageContext.request.contextPath}/san-pham?page=${i}&category=${currentCategory}&sort=${currentSort}&price=${currentPrice}&minPrice=${currentMinPrice}&promotionId=${currentPromotionParam}&search=${currentSearch}"                                   class="${currentPage == i ? 'active' : ''}">
+                                <c:url var="pageUrl" value="/san-pham">
+                                    <c:param name="page" value="${i}"/>
+                                    <c:if test="${currentCategory != null}">
+                                        <c:param name="category" value="${currentCategory}"/>
+                                    </c:if>
+                                    <c:if test="${not empty currentSort && currentSort != 'default'}">
+                                        <c:param name="sort" value="${currentSort}"/>
+                                    </c:if>
+                                    <c:if test="${currentPrice != null}">
+                                        <c:param name="price" value="${currentPrice}"/>
+                                    </c:if>
+                                    <c:if test="${currentMinPrice != null}">
+                                        <c:param name="minPrice" value="${currentMinPrice}"/>
+                                    </c:if>
+                                    <c:if test="${not empty currentPromotionParam}">
+                                        <c:param name="promotionId" value="${currentPromotionParam}"/>
+                                    </c:if>
+                                    <c:if test="${not empty currentSearch}">
+                                        <c:param name="search" value="${currentSearch}"/>
+                                    </c:if>
+                                </c:url>
+                                <a href="${pageUrl}" class="${currentPage == i ? 'active' : ''}">
                                         ${i}
                                 </a>
                             </c:forEach>
 
                             <!--  tiến 6 page -->
-                            <a href="${pageContext.request.contextPath}/san-pham?page=${nextPage > totalPages ? totalPages : nextPage}&category=${currentCategory}&sort=${currentSort}&price=${currentPrice}&minPrice=${currentMinPrice}&promotionId=${currentPromotionParam}&search=${currentSearch}"                               class="${currentPage + windowSize > totalPages ? 'disabled' : ''}">
+                            <c:url var="nextPageUrl" value="/san-pham">
+                                <c:param name="page" value="${nextPage > totalPages ? totalPages : nextPage}"/>
+                                <c:if test="${currentCategory != null}">
+                                    <c:param name="category" value="${currentCategory}"/>
+                                </c:if>
+                                <c:if test="${not empty currentSort && currentSort != 'default'}">
+                                    <c:param name="sort" value="${currentSort}"/>
+                                </c:if>
+                                <c:if test="${currentPrice != null}">
+                                    <c:param name="price" value="${currentPrice}"/>
+                                </c:if>
+                                <c:if test="${currentMinPrice != null}">
+                                    <c:param name="minPrice" value="${currentMinPrice}"/>
+                                </c:if>
+                                <c:if test="${not empty currentPromotionParam}">
+                                    <c:param name="promotionId" value="${currentPromotionParam}"/>
+                                </c:if>
+                                <c:if test="${not empty currentSearch}">
+                                    <c:param name="search" value="${currentSearch}"/>
+                                </c:if>
+                            </c:url>
+                            <a href="${nextPageUrl}" class="${currentPage + windowSize > totalPages ? 'disabled' : ''}">
                                 &raquo;
                             </a>
                         </div>
