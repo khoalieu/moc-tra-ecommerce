@@ -83,30 +83,14 @@ public class ProductServlet extends HttpServlet {
             }
         }
 
+        boolean promotionOnly = false;
         Integer promotionId = null;
-        if (promoParam != null && !promoParam.isEmpty()) {
+        if ("all".equalsIgnoreCase(promoParam)) {
+            promotionOnly = true;
+        } else if (promoParam != null && !promoParam.isEmpty()) {
             try {
                 promotionId = Integer.parseInt(promoParam);
             } catch (Exception e) {
-            }
-        }
-
-        int pageSize = 12;
-        List<Product> products = productDAO.getProducts(categoryId, promotionId, sortParam, minPrice, maxPrice,  searchParam, page, pageSize, "active");
-        int totalProducts = productDAO.countProducts(categoryId, promotionId, minPrice, maxPrice, searchParam , "active");
-        int totalPages = (int) Math.ceil((double) totalProducts / pageSize);
-        double[] priceRange = productDAO.getActiveProductPriceRange();
-
-        String categoryName = "Tất Cả Sản Phẩm";
-
-        if (promotionId != null) {
-            PromotionDAO promoDAO = DAOFactory.getInstance().getPromotionDAO();
-            categoryName = promoDAO.getPromotionName(promotionId);
-        } else if (categoryId != null) {
-            if (categoryId == 1) {
-                categoryName = "Trà Thảo Mộc";
-            } else if (categoryId == 2) {
-                categoryName = "Nguyên Liệu Trà Sữa";
             }
         }
 
@@ -131,6 +115,41 @@ public class ProductServlet extends HttpServlet {
                 }
             }
         }
+
+        List<Integer> selectedCategoryIds = null;
+        if (categoryId != null) {
+            selectedCategoryIds = new ArrayList<>();
+            selectedCategoryIds.add(categoryId);
+
+            List<Category> childCategories = childrenMap.get(categoryId);
+            if (childCategories != null) {
+                for (Category child : childCategories) {
+                    selectedCategoryIds.add(child.getId());
+                }
+            }
+        }
+
+        int pageSize = 12;
+        List<Product> products = productDAO.getProducts(selectedCategoryIds, promotionId, promotionOnly, sortParam, minPrice, maxPrice,  searchParam, page, pageSize, "active");
+        int totalProducts = productDAO.countProducts(selectedCategoryIds, promotionId, promotionOnly, minPrice, maxPrice, searchParam , "active");
+        int totalPages = (int) Math.ceil((double) totalProducts / pageSize);
+        double[] priceRange = productDAO.getProductPriceRange(selectedCategoryIds, promotionId, promotionOnly, searchParam, "active");
+
+        String categoryName = "Tất Cả Sản Phẩm";
+
+        if (promotionOnly) {
+            categoryName = "Tất Cả Khuyến Mãi";
+        } else if (promotionId != null) {
+            categoryName = promotionDAO.getPromotionName(promotionId);
+        } else if (categoryId != null) {
+            for (Category category : allCategories) {
+                if (category.getId() != null && category.getId().equals(categoryId)) {
+                    categoryName = category.getName();
+                    break;
+                }
+            }
+        }
+
         HttpSession session = request.getSession(false);
         User user = session != null ? (User) session.getAttribute("user") : null;
 
@@ -155,6 +174,8 @@ public class ProductServlet extends HttpServlet {
         request.setAttribute("currentMinPrice", minPrice);
         request.setAttribute("currentPrice", maxPrice);
         request.setAttribute("currentPromotion", promotionId);
+        request.setAttribute("currentPromotionOnly", promotionOnly);
+        request.setAttribute("currentPromotionParam", promotionOnly ? "all" : promotionId);
         request.setAttribute("minProductPrice", priceRange[0]);
         request.setAttribute("maxProductPrice", priceRange[1]);
 
