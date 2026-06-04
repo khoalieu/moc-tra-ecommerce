@@ -396,7 +396,9 @@ public class OrderDAO {
         return o;
     }
 
-    public List<Order> getAllOrders(int index, int size, String search, String status, String timeFilter, String sortOrder) {
+    public List<Order> getAllOrders(int index, int size, String search, String status, String paymentStatus,
+                                    String paymentMethod, String timeFilter, String dateFrom, String dateTo,
+                                    String sortOrder, String quickFilter) {
         List<Order> list = new ArrayList<>();
         StringBuilder sql = new StringBuilder(
                 "SELECT o.*, a.full_name, a.phone_number, u.email AS user_email FROM orders o " +
@@ -405,25 +407,8 @@ public class OrderDAO {
                         "WHERE 1=1 "
         );
 
-        if (search != null && !search.trim().isEmpty()) {
-            sql.append(" AND (");
-            sql.append("o.order_number LIKE ? ");
-            sql.append("OR CAST(o.id AS CHAR) LIKE ? ");
-            sql.append("OR a.full_name LIKE ? ");
-            sql.append("OR a.phone_number LIKE ? ");
-            sql.append("OR u.email LIKE ? ");
-            sql.append(") ");
-        }
-
-        if (status != null && !status.isEmpty()) {
-            sql.append(" AND o.status = ? ");
-        }
-
-        if ("this_month".equals(timeFilter)) {
-            sql.append(" AND MONTH(o.created_at) = MONTH(CURRENT_DATE()) AND YEAR(o.created_at) = YEAR(CURRENT_DATE()) ");
-        } else if ("last_month".equals(timeFilter)) {
-            sql.append(" AND MONTH(o.created_at) = MONTH(CURRENT_DATE() - INTERVAL 1 MONTH) ");
-        }
+        appendAdminOrderFilters(sql, search, status, paymentStatus, paymentMethod, timeFilter, dateFrom, dateTo,
+                quickFilter);
 
         if ("price_asc".equals(sortOrder)) {
             sql.append(" ORDER BY o.total_amount ASC ");
@@ -442,19 +427,8 @@ public class OrderDAO {
 
             int paramIndex = 1;
 
-            if (search != null && !search.trim().isEmpty()) {
-                String kw = "%" + search.trim() + "%";
-
-                ps.setString(paramIndex++, kw);
-                ps.setString(paramIndex++, kw);
-                ps.setString(paramIndex++, kw);
-                ps.setString(paramIndex++, kw);
-                ps.setString(paramIndex++, kw);
-            }
-
-            if (status != null && !status.isEmpty()) {
-                ps.setString(paramIndex++, status.toLowerCase());
-            }
+            paramIndex = bindAdminOrderFilters(ps, paramIndex, search, status, paymentStatus, paymentMethod,
+                    timeFilter, dateFrom, dateTo);
 
             ps.setInt(paramIndex++, size);
             ps.setInt(paramIndex++, (index - 1) * size);
@@ -471,7 +445,8 @@ public class OrderDAO {
         return list;
     }
 
-    public int countAllOrders(String search, String status, String timeFilter) {
+    public int countAllOrders(String search, String status, String paymentStatus, String paymentMethod,
+                              String timeFilter, String dateFrom, String dateTo, String quickFilter) {
         StringBuilder sql = new StringBuilder(
                 "SELECT COUNT(*) " +
                         "FROM orders o " +
@@ -480,42 +455,16 @@ public class OrderDAO {
                         "WHERE 1=1 "
         );
 
-        if (search != null && !search.trim().isEmpty()) {
-            sql.append(" AND (");
-            sql.append("o.order_number LIKE ? ");
-            sql.append("OR CAST(o.id AS CHAR) LIKE ? ");
-            sql.append("OR a.full_name LIKE ? ");
-            sql.append("OR a.phone_number LIKE ? ");
-            sql.append("OR u.email LIKE ? ");
-            sql.append(") ");
-        }
-        if (status != null && !status.isEmpty()) {
-            sql.append(" AND o.status = ? ");
-        }
-        if ("this_month".equals(timeFilter)) {
-            sql.append(" AND MONTH(o.created_at) = MONTH(CURRENT_DATE()) AND YEAR(o.created_at) = YEAR(CURRENT_DATE()) ");
-        } else if ("last_month".equals(timeFilter)) {
-            sql.append(" AND MONTH(o.created_at) = MONTH(CURRENT_DATE() - INTERVAL 1 MONTH) ");
-        }
+        appendAdminOrderFilters(sql, search, status, paymentStatus, paymentMethod, timeFilter, dateFrom, dateTo,
+                quickFilter);
 
         try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql.toString())) {
 
             int paramIndex = 1;
 
-            if (search != null && !search.trim().isEmpty()) {
-                String kw = "%" + search.trim() + "%";
-
-                ps.setString(paramIndex++, kw);
-                ps.setString(paramIndex++, kw);
-                ps.setString(paramIndex++, kw);
-                ps.setString(paramIndex++, kw);
-                ps.setString(paramIndex++, kw);
-            }
-
-            if (status != null && !status.isEmpty()) {
-                ps.setString(paramIndex++, status.toLowerCase());
-            }
+            bindAdminOrderFilters(ps, paramIndex, search, status, paymentStatus, paymentMethod,
+                    timeFilter, dateFrom, dateTo);
             ResultSet rs = ps.executeQuery();
             if (rs.next()) {
                 return rs.getInt(1);
@@ -590,6 +539,103 @@ public class OrderDAO {
         }
 
         return o;
+    }
+
+    private void appendAdminOrderFilters(StringBuilder sql, String search, String status, String paymentStatus,
+                                         String paymentMethod, String timeFilter, String dateFrom, String dateTo,
+                                         String quickFilter) {
+        if (search != null && !search.trim().isEmpty()) {
+            sql.append(" AND (");
+            sql.append("o.order_number LIKE ? ");
+            sql.append("OR CAST(o.id AS CHAR) LIKE ? ");
+            sql.append("OR a.full_name LIKE ? ");
+            sql.append("OR a.phone_number LIKE ? ");
+            sql.append("OR u.email LIKE ? ");
+            sql.append("OR o.tracking_code LIKE ? ");
+            sql.append(") ");
+        }
+        if (status != null && !status.isEmpty()) {
+            sql.append(" AND o.status = ? ");
+        }
+        if (paymentStatus != null && !paymentStatus.isEmpty()) {
+            sql.append(" AND o.payment_status = ? ");
+        }
+        if (paymentMethod != null && !paymentMethod.isEmpty()) {
+            sql.append(" AND o.payment_method = ? ");
+        }
+
+        appendQuickFilter(sql, quickFilter);
+
+        if ("today".equals(timeFilter)) {
+            sql.append(" AND DATE(o.created_at) = CURRENT_DATE() ");
+        } else if ("last_7_days".equals(timeFilter)) {
+            sql.append(" AND o.created_at >= CURRENT_DATE() - INTERVAL 7 DAY ");
+        } else if ("last_30_days".equals(timeFilter)) {
+            sql.append(" AND o.created_at >= CURRENT_DATE() - INTERVAL 30 DAY ");
+        } else if ("custom".equals(timeFilter)) {
+            if (dateFrom != null && !dateFrom.isEmpty()) {
+                sql.append(" AND DATE(o.created_at) >= ? ");
+            }
+            if (dateTo != null && !dateTo.isEmpty()) {
+                sql.append(" AND DATE(o.created_at) <= ? ");
+            }
+        }
+    }
+
+    private int bindAdminOrderFilters(PreparedStatement ps, int paramIndex, String search, String status,
+                                      String paymentStatus, String paymentMethod, String timeFilter,
+                                      String dateFrom, String dateTo) throws SQLException {
+        if (search != null && !search.trim().isEmpty()) {
+            String kw = "%" + search.trim() + "%";
+
+            ps.setString(paramIndex++, kw);
+            ps.setString(paramIndex++, kw);
+            ps.setString(paramIndex++, kw);
+            ps.setString(paramIndex++, kw);
+            ps.setString(paramIndex++, kw);
+            ps.setString(paramIndex++, kw);
+        }
+
+        if (status != null && !status.isEmpty()) {
+            ps.setString(paramIndex++, status.toLowerCase());
+        }
+        if (paymentStatus != null && !paymentStatus.isEmpty()) {
+            ps.setString(paramIndex++, paymentStatus.toLowerCase());
+        }
+        if (paymentMethod != null && !paymentMethod.isEmpty()) {
+            ps.setString(paramIndex++, paymentMethod.toLowerCase());
+        }
+        if ("custom".equals(timeFilter)) {
+            if (dateFrom != null && !dateFrom.isEmpty()) {
+                ps.setString(paramIndex++, dateFrom);
+            }
+            if (dateTo != null && !dateTo.isEmpty()) {
+                ps.setString(paramIndex++, dateTo);
+            }
+        }
+        return paramIndex;
+    }
+
+    private void appendQuickFilter(StringBuilder sql, String quickFilter) {
+        if ("need_process".equals(quickFilter)) {
+            sql.append(" AND o.status = 'pending' ");
+        } else if ("paid_waiting_process".equals(quickFilter)) {
+            sql.append(" AND o.status = 'pending' ");
+            sql.append(" AND o.payment_method <> 'cod' ");
+            sql.append(" AND o.payment_status = 'paid' ");
+        } else if ("cancelled_waiting_refund".equals(quickFilter)) {
+            sql.append(" AND o.status = 'cancelled' ");
+            sql.append(" AND o.payment_method <> 'cod' ");
+            sql.append(" AND o.payment_status = 'paid' ");
+            sql.append(" AND NOT EXISTS (");
+            sql.append("SELECT 1 FROM refund_requests rr ");
+            sql.append("WHERE rr.order_id = o.id AND rr.status IN ('refunded', 'rejected')");
+            sql.append(") ");
+        } else if ("shipping".equals(quickFilter)) {
+            sql.append(" AND o.status = 'shipping' ");
+        } else if ("delivery_failed".equals(quickFilter)) {
+            sql.append(" AND o.status = 'delivery_failed' ");
+        }
     }
 
     public List<Order> getRecentOrders(int limit) {

@@ -49,7 +49,7 @@
                     <i class="fa-solid fa-search"></i>
                     <input type="text" name="search" form="filterForm"
                            value="${search}"
-                           placeholder="Tìm kiếm mã đơn hoặc khách hàng..."
+                           placeholder="Tìm mã đơn, khách hàng, email, SĐT, mã vận đơn..."
                            autocomplete="off">
                 </div>
             </div>
@@ -65,27 +65,87 @@
             </div>
 
             <div class="filters-section">
+                <div class="quick-filters">
+                    <a href="admin/orders?quickFilter=need_process${quickFilterBaseQuery}"
+                       class="quick-filter-btn ${quickFilter == 'need_process' ? 'active' : ''}">
+                        Cần xử lý
+                    </a>
+                    <a href="admin/orders?quickFilter=paid_waiting_process${quickFilterBaseQuery}"
+                       class="quick-filter-btn ${quickFilter == 'paid_waiting_process' ? 'active' : ''}">
+                        Đã thanh toán chờ xử lý
+                    </a>
+                    <a href="admin/orders?quickFilter=cancelled_waiting_refund${quickFilterBaseQuery}"
+                       class="quick-filter-btn ${quickFilter == 'cancelled_waiting_refund' ? 'active' : ''}">
+                        Đã hủy chờ hoàn tiền
+                    </a>
+                    <a href="admin/orders?quickFilter=shipping${quickFilterBaseQuery}"
+                       class="quick-filter-btn ${quickFilter == 'shipping' ? 'active' : ''}">
+                        Đang giao
+                    </a>
+                    <a href="admin/orders?quickFilter=delivery_failed${quickFilterBaseQuery}"
+                       class="quick-filter-btn ${quickFilter == 'delivery_failed' ? 'active' : ''}">
+                        Giao thất bại
+                    </a>
+                </div>
+
                 <form id="filterForm" action="admin/orders" method="GET">
-                    <input type="hidden" name="search" value="${search}">
+                    <input type="hidden" name="quickFilter" id="quickFilterInput" value="${quickFilter}">
                     <div class="filters-grid">
                         <div class="filter-group">
-                            <label>Trạng thái</label>
-                            <select name="status" class="form-select" onchange="this.form.submit()">
+                            <label>Trạng thái đơn</label>
+                            <select name="status" class="form-select" onchange="clearQuickFilterAndSubmit(this.form)">
                                 <option value="">Tất cả trạng thái</option>
-                                <option value="PENDING" ${status == 'PENDING' ? 'selected' : ''}>Chờ xử lý</option>
-                                <option value="COMPLETED" ${status == 'COMPLETED' ? 'selected' : ''}>Hoàn tất</option>
+                                <option value="PENDING" ${status == 'PENDING' ? 'selected' : ''}>Chờ xác nhận</option>
+                                <option value="SHIPPING" ${status == 'SHIPPING' ? 'selected' : ''}>Đang giao</option>
+                                <option value="COMPLETED" ${status == 'COMPLETED' ? 'selected' : ''}>Hoàn thành</option>
                                 <option value="CANCELLED" ${status == 'CANCELLED' ? 'selected' : ''}>Đã hủy</option>
+                                <option value="DELIVERY_FAILED" ${status == 'DELIVERY_FAILED' ? 'selected' : ''}>Giao thất bại</option>
+                            </select>
+                        </div>
+
+                        <div class="filter-group">
+                            <label>Trạng thái thanh toán</label>
+                            <select name="paymentStatus" class="form-select" onchange="clearQuickFilterAndSubmit(this.form)">
+                                <option value="">Tất cả thanh toán</option>
+                                <option value="PENDING" ${paymentStatus == 'PENDING' ? 'selected' : ''}>Chưa thanh toán</option>
+                                <option value="PAID" ${paymentStatus == 'PAID' ? 'selected' : ''}>Đã thanh toán</option>
+                                <option value="FAILED" ${paymentStatus == 'FAILED' ? 'selected' : ''}>Thanh toán thất bại</option>
+                                <option value="EXPIRED" ${paymentStatus == 'EXPIRED' ? 'selected' : ''}>Hết hạn thanh toán</option>
+                                <option value="REFUNDED" ${paymentStatus == 'REFUNDED' ? 'selected' : ''}>Đã hoàn tiền</option>
+                            </select>
+                        </div>
+
+                        <div class="filter-group">
+                            <label>Phương thức thanh toán</label>
+                            <select name="paymentMethod" class="form-select" onchange="clearQuickFilterAndSubmit(this.form)">
+                                <option value="">Tất cả phương thức</option>
+                                <option value="cod" ${paymentMethod == 'cod' ? 'selected' : ''}>COD</option>
+                                <option value="bank" ${paymentMethod == 'bank' ? 'selected' : ''}>Ngân hàng</option>
+                                <option value="momo" ${paymentMethod == 'momo' ? 'selected' : ''}>MoMo</option>
                             </select>
                         </div>
 
                         <div class="filter-group">
                             <label>Thời gian</label>
-                            <select name="time" class="form-select" onchange="this.form.submit()">
+                            <select name="time" class="form-select" onchange="handleTimeFilterChange(this)">
                                 <option value="">Toàn thời gian</option>
-                                <option value="this_month" ${time == 'this_month' ? 'selected' : ''}>Tháng này</option>
-                                <option value="last_month" ${time == 'last_month' ? 'selected' : ''}>Tháng trước
-                                </option>
+                                <option value="today" ${time == 'today' ? 'selected' : ''}>Hôm nay</option>
+                                <option value="last_7_days" ${time == 'last_7_days' ? 'selected' : ''}>7 ngày gần đây</option>
+                                <option value="last_30_days" ${time == 'last_30_days' ? 'selected' : ''}>30 ngày gần đây</option>
+                                <option value="custom" ${time == 'custom' ? 'selected' : ''}>Tùy chọn</option>
                             </select>
+                        </div>
+
+                        <div class="filter-group custom-date-filter" style="${time == 'custom' ? '' : 'display:none;'}">
+                            <label>Từ ngày</label>
+                            <input type="date" name="dateFrom" class="form-select" value="${dateFrom}"
+                                   onchange="document.querySelector('#filterForm select[name=time]').value='custom'; this.form.submit()">
+                        </div>
+
+                        <div class="filter-group custom-date-filter" style="${time == 'custom' ? '' : 'display:none;'}">
+                            <label>Đến ngày</label>
+                            <input type="date" name="dateTo" class="form-select" value="${dateTo}"
+                                   onchange="document.querySelector('#filterForm select[name=time]').value='custom'; this.form.submit()">
                         </div>
 
                         <div class="filter-group">
@@ -93,13 +153,16 @@
                             <select name="sort" class="form-select" onchange="this.form.submit()">
                                 <option value="newest" ${sort == 'newest' ? 'selected' : ''}>Mới nhất</option>
                                 <option value="oldest" ${sort == 'oldest' ? 'selected' : ''}>Cũ nhất</option>
-                                <option value="price_desc" ${sort == 'price_desc' ? 'selected' : ''}>Tổng tiền: Cao -
-                                    Thấp
-                                </option>
-                                <option value="price_asc" ${sort == 'price_asc' ? 'selected' : ''}>Tổng tiền: Thấp -
-                                    Cao
-                                </option>
+                                <option value="price_desc" ${sort == 'price_desc' ? 'selected' : ''}>Tổng tiền: Cao - Thấp</option>
+                                <option value="price_asc" ${sort == 'price_asc' ? 'selected' : ''}>Tổng tiền: Thấp - Cao</option>
                             </select>
+                        </div>
+
+                        <div class="filter-group">
+                            <label>&nbsp;</label>
+                            <a href="admin/orders" class="admin-filter-reset">
+                                Xóa bộ lọc
+                            </a>
                         </div>
                     </div>
                 </form>
@@ -141,6 +204,7 @@
                             <th>Sản phẩm</th>
                             <th>Tổng tiền</th>
                             <th>Trạng thái</th>
+                            <th>Thanh toán</th>
                             <th>Ngày đặt</th>
                             <th>Thao tác</th>
                         </tr>
@@ -182,11 +246,37 @@
                                     <c:choose>
                                         <c:when test="${o.status == 'PENDING'}"><span
                                                 class="status-badge status-pending">Chờ xử lý</span></c:when>
+                                        <c:when test="${o.status == 'SHIPPING'}"><span
+                                                class="status-badge status-pending">Đang giao</span></c:when>
                                         <c:when test="${o.status == 'COMPLETED'}"><span
                                                 class="status-badge status-active">Hoàn tất</span></c:when>
                                         <c:when test="${o.status == 'CANCELLED'}"><span
                                                 class="status-badge status-inactive">Đã hủy</span></c:when>
+                                        <c:when test="${o.status == 'DELIVERY_FAILED'}"><span
+                                                class="status-badge status-inactive">Giao thất bại</span></c:when>
                                     </c:choose>
+                                </td>
+                                <td>
+                                    <div style="display:flex; flex-direction:column; gap:6px;">
+                                        <span>${o.paymentMethod == 'cod' ? 'COD' : o.paymentMethod}</span>
+                                        <c:choose>
+                                            <c:when test="${o.paymentStatus == 'PAID'}">
+                                                <span class="status-badge status-active">Đã thanh toán</span>
+                                            </c:when>
+                                            <c:when test="${o.paymentStatus == 'FAILED'}">
+                                                <span class="status-badge status-inactive">Thất bại</span>
+                                            </c:when>
+                                            <c:when test="${o.paymentStatus == 'EXPIRED'}">
+                                                <span class="status-badge status-inactive">Hết hạn</span>
+                                            </c:when>
+                                            <c:when test="${o.paymentStatus == 'REFUNDED'}">
+                                                <span class="status-badge status-active">Đã hoàn tiền</span>
+                                            </c:when>
+                                            <c:otherwise>
+                                                <span class="status-badge status-pending">Chưa thanh toán</span>
+                                            </c:otherwise>
+                                        </c:choose>
+                                    </div>
                                 </td>
                                 <td>
                                     <div class="order-date">
@@ -227,7 +317,7 @@
 
                     <div class="pagination">
                         <c:if test="${currentPage > 1}">
-                            <a href="admin/orders?page=${currentPage - 1}&search=${search}&status=${status}&time=${time}&sort=${sort}"
+                            <a href="admin/orders?page=${currentPage - 1}${filterQuery}"
                                class="page-btn">
                                 <i class="fas fa-chevron-left"></i>
                             </a>
@@ -237,12 +327,12 @@
                         </c:if>
 
                         <c:forEach begin="1" end="${totalPages}" var="i">
-                            <a href="admin/orders?page=${i}&search=${search}&status=${status}&time=${time}&sort=${sort}"
+                            <a href="admin/orders?page=${i}${filterQuery}"
                                class="page-btn ${currentPage == i ? 'active' : ''}">${i}</a>
                         </c:forEach>
 
                         <c:if test="${currentPage < totalPages}">
-                            <a href="admin/orders?page=${currentPage + 1}&search=${search}&status=${status}&time=${time}&sort=${sort}"
+                            <a href="admin/orders?page=${currentPage + 1}${filterQuery}"
                                class="page-btn">
                                 <i class="fas fa-chevron-right"></i>
                             </a>
@@ -263,6 +353,27 @@
     const bulkBar = document.getElementById('bulkBar');
     const countSpan = document.getElementById('countSelected');
     const btnSingleView = document.getElementById('btnSingleView');
+
+    function clearQuickFilterAndSubmit(form) {
+        const quickFilterInput = document.getElementById('quickFilterInput');
+        if (quickFilterInput) {
+            quickFilterInput.value = '';
+        }
+        form.submit();
+    }
+    function handleTimeFilterChange(select) {
+        const customDateFilters = document.querySelectorAll('.custom-date-filter');
+        customDateFilters.forEach(group => {
+            group.style.display = select.value === 'custom' ? 'flex' : 'none';
+        });
+
+        if (select.value !== 'custom') {
+            const form = select.form;
+            form.querySelector('input[name="dateFrom"]').value = '';
+            form.querySelector('input[name="dateTo"]').value = '';
+            form.submit();
+        }
+    }
 
     function toggleBulkBar() {
         const selectedCount = document.querySelectorAll('.order-check:checked').length;
