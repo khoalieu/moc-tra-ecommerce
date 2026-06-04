@@ -642,6 +642,11 @@ public class ProductDAO {
         } else if ("active".equals(promotionStatus)) {
             sql.append(" AND EXISTS (SELECT 1 FROM promotion_items pi JOIN promotions pr ON pr.id = pi.promotion_id ");
             sql.append("WHERE pi.product_id = p.id AND pr.is_active = 1 AND pr.start_date <= NOW() AND pr.end_date >= NOW()) ");
+        } else if ("discounted".equals(promotionStatus)) {
+            sql.append(" AND (p.sale_price > 0 ");
+            sql.append("OR EXISTS (SELECT 1 FROM promotion_items pi JOIN promotions pr ON pr.id = pi.promotion_id ");
+            sql.append("WHERE pi.product_id = p.id AND pr.is_active = 1 AND pr.start_date <= NOW() AND pr.end_date >= NOW()) ");
+            sql.append("OR EXISTS (SELECT 1 FROM product_variants v WHERE v.product_id = p.id AND v.is_active = 1 AND v.sale_price > 0)) ");
         } else if ("none".equals(promotionStatus)) {
             sql.append(" AND NOT EXISTS (SELECT 1 FROM promotion_items pi JOIN promotions pr ON pr.id = pi.promotion_id ");
             sql.append("WHERE pi.product_id = p.id AND pr.is_active = 1 AND pr.start_date <= NOW() AND pr.end_date >= NOW()) ");

@@ -95,7 +95,7 @@ public class AdminProductListServlet extends HttpServlet {
             } catch (Exception ignored) {
                 promotionFilter = null;
             }
-        } else if ("active".equals(promotionFilter) || "none".equals(promotionFilter)) {
+        } else if ("active".equals(promotionFilter) || "none".equals(promotionFilter) || "discounted".equals(promotionFilter)) {
             promotionStatus = promotionFilter;
         } else {
             promotionFilter = null;

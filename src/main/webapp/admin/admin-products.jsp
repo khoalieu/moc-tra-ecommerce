@@ -60,6 +60,33 @@
                 </div>
             </div>
 
+            <div class="admin-product-quick-filters">
+                <button type="button"
+                        class="admin-product-quick-btn ${currentStockFilter == 'need-reorder' ? 'active' : ''}"
+                        data-filter-field="stockFilter"
+                        data-filter-value="need-reorder">
+                    <i class="fas fa-box-open"></i> Cần nhập hàng
+                </button>
+                <button type="button"
+                        class="admin-product-quick-btn ${currentPromotionFilter == 'discounted' ? 'active' : ''}"
+                        data-filter-field="promotionFilter"
+                        data-filter-value="discounted">
+                    <i class="fas fa-percent"></i> Đang giảm giá
+                </button>
+                <button type="button"
+                        class="admin-product-quick-btn ${currentStockFilter == 'low-stock' ? 'active' : ''}"
+                        data-filter-field="stockFilter"
+                        data-filter-value="low-stock">
+                    <i class="fas fa-battery-quarter"></i> Sắp hết hàng
+                </button>
+                <button type="button"
+                        class="admin-product-quick-btn ${currentStockFilter == 'out-of-stock' ? 'active' : ''}"
+                        data-filter-field="stockFilter"
+                        data-filter-value="out-of-stock">
+                    <i class="fas fa-triangle-exclamation"></i> Hết hàng
+                </button>
+            </div>
+
             <form id="productFilterForm" action="admin/products" method="get" class="filters-section">
                 <div class="filters-grid admin-product-filters-grid">
                     <div class="filter-group">
@@ -105,6 +132,7 @@
                         <select name="promotionFilter" id="promotion-filter" class="form-select" onchange="this.form.submit()">
                             <option value="">Tất cả khuyến mãi</option>
                             <option value="active" ${currentPromotionFilter == 'active' ? 'selected' : ''}>Đang khuyến mãi</option>
+                            <option value="discounted" ${currentPromotionFilter == 'discounted' ? 'selected' : ''}>Đang giảm giá</option>
                             <option value="none" ${currentPromotionFilter == 'none' ? 'selected' : ''}>Không khuyến mãi</option>
                             <c:forEach var="promo" items="${activePromos}">
                                 <c:set var="promoFilterValue" value="promo-${promo.id}" />
@@ -150,6 +178,38 @@
                     </div>
                 </div>
             </form>
+
+            <script>
+                function applyProductQuickFilter(fieldName, value) {
+                    var form = document.getElementById('productFilterForm');
+                    if (!form || !fieldName) return;
+
+                    var field = form.elements[fieldName];
+                    if (!field) return;
+
+                    var nextValue = field.value === value ? '' : value;
+                    field.value = nextValue;
+
+                    if (fieldName === 'stockFilter' && nextValue && form.elements['status']) {
+                        form.elements['status'].value = '';
+                    }
+
+                    if (form.requestSubmit) {
+                        form.requestSubmit();
+                    } else {
+                        form.submit();
+                    }
+                }
+
+                document.addEventListener('DOMContentLoaded', function () {
+                    var buttons = document.querySelectorAll('.admin-product-quick-btn');
+                    for (var i = 0; i < buttons.length; i++) {
+                        buttons[i].addEventListener('click', function () {
+                            applyProductQuickFilter(this.getAttribute('data-filter-field'), this.getAttribute('data-filter-value'));
+                        });
+                    }
+                });
+            </script>
 
             <div class="bulk-actions-bar full-width" id="bulkActionsBar">
                 <div style="display: flex; align-items: center; gap: 10px;">
