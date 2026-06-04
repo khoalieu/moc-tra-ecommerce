@@ -126,6 +126,15 @@ public class DAOFactory {
         return new ReviewDAO(dataSource);
     }
 
+    // RBAC
+    public RoleDAO getRoleDAO() {
+        return new RoleDAO(dataSource);
+    }
+
+    public PermissionDAO getPermissionDAO() {
+        return new PermissionDAO(dataSource);
+    }
+
     // User
     public UserAddressDAO getUserAddressDAO() {
         return new UserAddressDAO(dataSource);
