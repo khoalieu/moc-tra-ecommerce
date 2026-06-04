@@ -1,5 +1,7 @@
 package dao;
 
+import model.enums.PaymentStatus;
+import model.order.Order;
 import model.refund.RefundRequest;
 
 import javax.sql.DataSource;
@@ -46,9 +48,61 @@ public class RefundDAO {
         return false;
     }
 
+    public boolean createPendingInfoRefundForFailedDelivery(Order order, String reason) {
+        if (!isPaidOnlineOrder(order) || hasOpenRefundRequest(order.getId())) {
+            return false;
+        }
+
+        String sql = "INSERT INTO refund_requests " +
+                "(order_id, user_id, amount, reason, receive_method, account_holder, account_number, qr_image_url, note, status) " +
+                "VALUES (?, ?, ?, ?, NULL, NULL, NULL, NULL, NULL, 'pending_info')";
+
+        try (Connection conn = ds.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, order.getId());
+            ps.setInt(2, order.getUserId());
+            ps.setDouble(3, order.getTotalAmount());
+            ps.setString(4, reason);
+
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return false;
+    }
+
+    public boolean completePendingInfoRefund(RefundRequest refund) {
+        String sql = "UPDATE refund_requests " +
+                "SET reason = ?, receive_method = ?, account_holder = ?, account_number = ?, " +
+                "qr_image_url = ?, note = ?, status = 'pending' " +
+                "WHERE id = ? AND user_id = ? AND order_id = ? AND status = 'pending_info'";
+
+        try (Connection conn = ds.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, refund.getReason());
+            ps.setString(2, refund.getReceiveMethod());
+            ps.setString(3, refund.getAccountHolder());
+            ps.setString(4, refund.getAccountNumber());
+            ps.setString(5, refund.getQrImageUrl());
+            ps.setString(6, refund.getNote());
+            ps.setInt(7, refund.getId());
+            ps.setInt(8, refund.getUserId());
+            ps.setInt(9, refund.getOrderId());
+
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return false;
+    }
+
     public boolean hasOpenRefundRequest(int orderId) {
         String sql = "SELECT 1 FROM refund_requests " +
-                "WHERE order_id = ? AND status IN ('pending', 'approved', 'refunded') LIMIT 1";
+                "WHERE order_id = ? AND status IN ('pending_info', 'pending', 'approved', 'refunded') LIMIT 1";
 
         try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -276,5 +330,12 @@ public class RefundDAO {
             }
             sql.append("?");
         }
+    }
+
+    private boolean isPaidOnlineOrder(Order order) {
+        return order != null
+                && order.getPaymentStatus() == PaymentStatus.PAID
+                && order.getPaymentMethod() != null
+                && !"cod".equalsIgnoreCase(order.getPaymentMethod());
     }
 }

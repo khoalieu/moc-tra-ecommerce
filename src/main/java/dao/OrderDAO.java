@@ -528,6 +528,7 @@ public class OrderDAO {
     }
 
     public boolean updateOrderStatus(int orderId, OrderStatus status) {
+        Order oldOrder = getOrderById(orderId);
         String sql = "UPDATE orders SET status = ? WHERE id = ?";
         try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -535,7 +536,14 @@ public class OrderDAO {
             ps.setString(1, status.name().toLowerCase());
             ps.setInt(2, orderId);
 
-            return ps.executeUpdate() > 0;
+            boolean updated = ps.executeUpdate() > 0;
+            if (updated && oldOrder != null
+                    && oldOrder.getStatus() == OrderStatus.SHIPPING
+                    && status == OrderStatus.DELIVERY_FAILED) {
+                oldOrder.setStatus(OrderStatus.DELIVERY_FAILED);
+                new RefundDAO(ds).createPendingInfoRefundForFailedDelivery(oldOrder, "Đơn giao không thành công");
+            }
+            return updated;
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -802,6 +810,14 @@ public class OrderDAO {
                 }
             }
             conn.commit();
+            if (order != null) {
+                String refundReason = "Đơn giao không thành công";
+                if (reason != null && !reason.trim().isEmpty()) {
+                    refundReason += ": " + reason.trim();
+                }
+                new RefundDAO(ds).createPendingInfoRefundForFailedDelivery(order,
+                        refundReason);
+            }
             return true;
 
         } catch (SQLException e) {

@@ -59,8 +59,10 @@ public class UserRefundRequestServlet extends HttpServlet {
             OrderDAO orderDAO = DAOFactory.getInstance().getOrderDAO();
             RefundDAO refundDAO = DAOFactory.getInstance().getRefundDAO();
             Order order = orderDAO.getOrderById(orderId);
+            RefundRequest existingRefund = refundDAO.getLatestRefundByOrderId(orderId);
+            boolean completingPendingInfo = canCompletePendingInfoRefund(order, user.getId(), existingRefund);
 
-            if (!canRequestRefund(order, user.getId(), refundDAO)) {
+            if (!completingPendingInfo && !canCreateRefundRequest(order, user.getId(), refundDAO)) {
                 setMessage(session, "Đơn hàng này chưa đủ điều kiện yêu cầu hoàn tiền.", "danger");
                 response.sendRedirect(request.getContextPath() + "/don-hang");
                 return;
@@ -69,6 +71,9 @@ public class UserRefundRequestServlet extends HttpServlet {
             String qrImageUrl = saveQrImage(qrImagePart);
 
             RefundRequest refund = new RefundRequest();
+            if (completingPendingInfo) {
+                refund.setId(existingRefund.getId());
+            }
             refund.setOrderId(order.getId());
             refund.setUserId(user.getId());
             refund.setAmount(order.getTotalAmount());
@@ -79,7 +84,9 @@ public class UserRefundRequestServlet extends HttpServlet {
             refund.setQrImageUrl(qrImageUrl);
             refund.setNote(note);
 
-            boolean success = refundDAO.createRefundRequest(refund);
+            boolean success = completingPendingInfo
+                    ? refundDAO.completePendingInfoRefund(refund)
+                    : refundDAO.createRefundRequest(refund);
             setMessage(session,
                     success ? "Yêu cầu hoàn tiền đã được gửi. Shop sẽ xử lý thủ công trong thời gian sớm nhất."
                             : "Không thể gửi yêu cầu hoàn tiền. Vui lòng thử lại sau.",
@@ -92,16 +99,30 @@ public class UserRefundRequestServlet extends HttpServlet {
         response.sendRedirect(request.getContextPath() + "/don-hang");
     }
 
-    private boolean canRequestRefund(Order order, int userId, RefundDAO refundDAO) {
+    private boolean canCreateRefundRequest(Order order, int userId, RefundDAO refundDAO) {
         if (order == null || order.getUserId() != userId) {
             return false;
         }
-        if ("cod".equalsIgnoreCase(order.getPaymentMethod())) {
-            return false;
-        }
         return order.getStatus() == OrderStatus.CANCELLED
-                && order.getPaymentStatus() == PaymentStatus.PAID
+                && isPaidOnlineOrder(order)
                 && !refundDAO.hasOpenRefundRequest(order.getId());
+    }
+
+    private boolean canCompletePendingInfoRefund(Order order, int userId, RefundRequest refund) {
+        return order != null
+                && order.getUserId() == userId
+                && isPaidOnlineOrder(order)
+                && order.getStatus() == OrderStatus.DELIVERY_FAILED
+                && refund != null
+                && refund.getUserId() == userId
+                && refund.getOrderId() == order.getId()
+                && "pending_info".equals(refund.getStatus());
+    }
+
+    private boolean isPaidOnlineOrder(Order order) {
+        return order.getPaymentStatus() == PaymentStatus.PAID
+                && order.getPaymentMethod() != null
+                && !"cod".equalsIgnoreCase(order.getPaymentMethod());
     }
 
     private String trimOrNull(String value) {
