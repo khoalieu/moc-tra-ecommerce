@@ -389,6 +389,7 @@ public class ProductDAO {
                                           int reorderThreshold, int lowStockThreshold) {
         List<Product> list = new ArrayList<>();
         List<Object> params = new ArrayList<>();
+        List<String> keywords = splitSearchKeywords(search);
 
         StringBuilder sql = new StringBuilder(
                 "SELECT p.*, " +
@@ -411,8 +412,8 @@ public class ProductDAO {
         params.add(reorderThreshold);
 
         appendAdminProductFilters(sql, params, categoryIds, promotionId, promotionStatus, stockFilter,
-                minPrice, maxPrice, search, status, reorderThreshold, lowStockThreshold);
-        appendAdminProductSort(sql, sort);
+                minPrice, maxPrice, search, keywords, status, reorderThreshold, lowStockThreshold);
+        appendAdminProductSort(sql, params, sort, search, keywords);
         sql.append(" LIMIT ? OFFSET ?");
         params.add(size);
         params.add((index - 1) * size);
@@ -471,6 +472,7 @@ public class ProductDAO {
                                   String stockFilter, Double minPrice, Double maxPrice, String search,
                                   String status, int reorderThreshold, int lowStockThreshold) {
         List<Object> params = new ArrayList<>();
+        List<String> keywords = splitSearchKeywords(search);
         StringBuilder sql = new StringBuilder(
                 "SELECT COUNT(DISTINCT p.id) FROM products p " +
                         "LEFT JOIN categories c ON c.id = p.category_id " +
@@ -478,7 +480,7 @@ public class ProductDAO {
         );
 
         appendAdminProductFilters(sql, params, categoryIds, promotionId, promotionStatus, stockFilter,
-                minPrice, maxPrice, search, status, reorderThreshold, lowStockThreshold);
+                minPrice, maxPrice, search, keywords, status, reorderThreshold, lowStockThreshold);
 
         try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql.toString())) {
@@ -617,7 +619,7 @@ public class ProductDAO {
 
     private void appendAdminProductFilters(StringBuilder sql, List<Object> params, List<Integer> categoryIds,
                                            Integer promotionId, String promotionStatus, String stockFilter,
-                                           Double minPrice, Double maxPrice, String search, String status,
+                                           Double minPrice, Double maxPrice, String search, List<String> keywords, String status,
                                            int reorderThreshold, int lowStockThreshold) {
         if (categoryIds != null && !categoryIds.isEmpty()) {
             sql.append(" AND p.category_id IN (");
@@ -652,15 +654,23 @@ public class ProductDAO {
             sql.append("WHERE pi.product_id = p.id AND pr.is_active = 1 AND pr.start_date <= NOW() AND pr.end_date >= NOW()) ");
         }
 
-        if (search != null && !search.isBlank()) {
-            String searchLike = "%" + search.trim().toLowerCase() + "%";
-            sql.append(" AND (LOWER(p.name) LIKE ? OR LOWER(IFNULL(p.slug, '')) LIKE ? ");
-            sql.append("OR LOWER(IFNULL(p.sku, '')) LIKE ? OR LOWER(IFNULL(c.name, '')) LIKE ? ");
-            sql.append("OR EXISTS (SELECT 1 FROM product_variants v WHERE v.product_id = p.id ");
-            sql.append("AND (LOWER(IFNULL(v.sku, '')) LIKE ? OR LOWER(IFNULL(v.variant_name, '')) LIKE ?))) ");
-            for (int i = 0; i < 6; i++) {
-                params.add(searchLike);
+        if (!keywords.isEmpty()) {
+            sql.append(" AND (");
+            for (int i = 0; i < keywords.size(); i++) {
+                if (i > 0) {
+                    sql.append(" OR ");
+                }
+                sql.append("LOWER(p.name) LIKE ? OR LOWER(IFNULL(p.slug, '')) LIKE ? ");
+                sql.append("OR LOWER(IFNULL(p.sku, '')) LIKE ? OR LOWER(IFNULL(c.name, '')) LIKE ? ");
+                sql.append("OR EXISTS (SELECT 1 FROM product_variants v WHERE v.product_id = p.id ");
+                sql.append("AND (LOWER(IFNULL(v.sku, '')) LIKE ? OR LOWER(IFNULL(v.variant_name, '')) LIKE ?)) ");
+
+                String keywordLike = "%" + keywords.get(i) + "%";
+                for (int j = 0; j < 6; j++) {
+                    params.add(keywordLike);
+                }
             }
+            sql.append(") ");
         }
 
         if (status != null && !status.isEmpty()) {
@@ -693,19 +703,63 @@ public class ProductDAO {
         }
     }
 
-    private void appendAdminProductSort(StringBuilder sql, String sort) {
+    private void appendAdminProductSort(StringBuilder sql, List<Object> params, String sort, String search, List<String> keywords) {
+        sql.append(" ORDER BY ");
+
+        if (!keywords.isEmpty()) {
+            String phrase = search != null ? search.trim().toLowerCase() : "";
+            String phraseLike = "%" + phrase + "%";
+            String phraseStart = phrase + "%";
+
+            sql.append("CASE WHEN LOWER(p.name) = ? THEN 10000 ELSE 0 END DESC, ");
+            sql.append("CASE WHEN LOWER(p.name) LIKE ? THEN 9000 ELSE 0 END DESC, ");
+            sql.append("CASE WHEN LOWER(p.name) LIKE ? THEN 8000 ELSE 0 END DESC, ");
+
+            sql.append("CASE WHEN ");
+            for (int i = 0; i < keywords.size(); i++) {
+                if (i > 0) {
+                    sql.append(" AND ");
+                }
+                sql.append("LOWER(p.name) LIKE ? ");
+            }
+            sql.append("THEN 7000 ELSE 0 END DESC, ");
+
+            sql.append("(");
+            for (int i = 0; i < keywords.size(); i++) {
+                if (i > 0) {
+                    sql.append(" + ");
+                }
+                sql.append("CASE WHEN LOWER(p.name) LIKE ? THEN 1 ELSE 0 END ");
+            }
+            sql.append(") DESC, ");
+
+            sql.append("CASE WHEN LOWER(p.name) LIKE ? THEN 1 ELSE 0 END DESC, ");
+            sql.append("CHAR_LENGTH(p.name) ASC, ");
+
+            params.add(phrase);
+            params.add(phraseStart);
+            params.add(phraseLike);
+            for (String keyword : keywords) {
+                params.add("%" + keyword + "%");
+            }
+            for (String keyword : keywords) {
+                params.add("%" + keyword + "%");
+            }
+            params.add("%" + keywords.get(0) + "%");
+        }
+
         if ("oldest".equals(sort)) {
-            sql.append(" ORDER BY p.created_at ASC ");
+            sql.append("p.created_at ASC ");
         } else if ("price-asc".equals(sort)) {
-            sql.append(" ORDER BY (CASE WHEN p.sale_price > 0 THEN p.sale_price ELSE p.price END) ASC ");
+            sql.append("(CASE WHEN p.sale_price > 0 THEN p.sale_price ELSE p.price END) ASC ");
         } else if ("price-desc".equals(sort)) {
-            sql.append(" ORDER BY (CASE WHEN p.sale_price > 0 THEN p.sale_price ELSE p.price END) DESC ");
+            sql.append("(CASE WHEN p.sale_price > 0 THEN p.sale_price ELSE p.price END) DESC ");
         } else if ("stock-asc".equals(sort)) {
-            sql.append(" ORDER BY p.stock_quantity ASC ");
+            sql.append("p.stock_quantity ASC ");
         } else if ("name-asc".equals(sort)) {
-            sql.append(" ORDER BY p.name ASC ");
+            sql.append("p.name ASC ");
         } else {
-            sql.append(" ORDER BY p.created_at DESC ");
+            sql.append("p.created_at DESC ");
         }
     }
 
