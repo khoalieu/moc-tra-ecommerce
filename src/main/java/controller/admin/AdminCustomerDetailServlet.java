@@ -4,7 +4,7 @@ import dao.*;
 import model.order.Order;
 import model.user.User;
 import model.user.UserAddress;
-import model.enums.UserRole;
+
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.*;
@@ -28,10 +28,7 @@ public class AdminCustomerDetailServlet extends HttpServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         HttpSession session = request.getSession(false);
         User admin = (session != null) ? (User) session.getAttribute("user") : null;
-        if (admin == null || (admin.getRole() != UserRole.ADMIN && admin.getRole() != UserRole.EDITOR)) {
-            response.sendRedirect(request.getContextPath() + "/login");
-            return;
-        }
+        if (admin == null) { response.sendRedirect(request.getContextPath() + "/login"); return; }
 
         String idParam = request.getParameter("id");
         if (idParam == null || idParam.isEmpty()) {

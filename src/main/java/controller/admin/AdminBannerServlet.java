@@ -7,7 +7,6 @@ import dao.PromotionDAO;
 import model.Banner;
 import model.promotion.Promotion;
 import model.user.User;
-import model.enums.UserRole;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.MultipartConfig;
@@ -35,8 +34,9 @@ public class AdminBannerServlet extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        User me = requireAdminOrEditor(request, response);
-        if (me == null) return;
+        HttpSession session = request.getSession(false);
+        User me = (session != null) ? (User) session.getAttribute("user") : null;
+        if (me == null) { response.sendRedirect(request.getContextPath() + "/login"); return; }
 
         String path = request.getServletPath();
         switch (path) {
@@ -56,8 +56,9 @@ public class AdminBannerServlet extends HttpServlet {
 
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        User me = requireAdminOrEditor(request, response);
-        if (me == null) return;
+        HttpSession session = request.getSession(false);
+        User me = (session != null) ? (User) session.getAttribute("user") : null;
+        if (me == null) { response.sendRedirect(request.getContextPath() + "/login"); return; }
 
         request.setCharacterEncoding("UTF-8");
 
@@ -284,20 +285,6 @@ public class AdminBannerServlet extends HttpServlet {
         int[] ids = new int[list.size()];
         for (int i = 0; i < list.size(); i++) ids[i] = list.get(i);
         return ids;
-    }
-
-    private User requireAdminOrEditor(HttpServletRequest request, HttpServletResponse response) throws IOException {
-        HttpSession session = request.getSession(false);
-        if (session == null || !(session.getAttribute("user") instanceof User)) {
-            response.sendRedirect(request.getContextPath() + "/login");
-            return null;
-        }
-        User u = (User) session.getAttribute("user");
-        if (u.getRole() == null || !(u.getRole() == UserRole.ADMIN)) {
-            response.sendError(HttpServletResponse.SC_FORBIDDEN);
-            return null;
-        }
-        return u;
     }
 
     private static int parseInt(String s, int def) {
