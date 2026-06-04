@@ -23,6 +23,8 @@ import java.util.List;
 import controller.utils.PaymentUtils;
 import controller.utils.PaymentResult;
 import model.promotion.Coupon;
+import service.NotificationService;
+
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 
@@ -336,6 +338,7 @@ public class CheckoutServlet extends HttpServlet {
             }
 
             txConn.commit();
+            new NotificationService().notifyOrderCreated(user.getId(), orderId, order.getOrderNumber());
 
         } catch (Exception e) {
             if (txConn != null) {

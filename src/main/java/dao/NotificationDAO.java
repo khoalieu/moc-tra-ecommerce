@@ -95,6 +95,26 @@ public class NotificationDAO {
         return list;
     }
 
+    public Notification getByIdForUser(int notificationId, int userId) {
+        String sql = "SELECT * FROM notifications WHERE id = ? AND user_id = ?";
+
+        try (Connection conn = ds.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, notificationId);
+            ps.setInt(2, userId);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return mapRow(rs);
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
     public int countUnreadByUser(int userId) {
         String sql = "SELECT COUNT(*) FROM notifications WHERE user_id = ? AND is_read = 0";
 

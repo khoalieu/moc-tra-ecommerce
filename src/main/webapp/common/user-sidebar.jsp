@@ -79,6 +79,12 @@
                 <a href="${pageContext.request.contextPath}/don-hang"><i class="fa-solid fa-cart-shopping"></i> Đơn hàng của tôi</a>
             </li>
 
+            <li class="${param.activePage == 'thong-bao' ? 'active' : ''}">
+                <a href="${pageContext.request.contextPath}/thong-bao">
+                    <i class="fa-regular fa-bell"></i> Thông báo
+                </a>
+            </li>
+
             <li class="${param.activePage == 'yeu-thich' ? 'active' : ''}">
                 <a href="${pageContext.request.contextPath}/san-pham-yeu-thich">
                     <i class="fa-solid fa-heart"></i> Sản phẩm yêu thích
