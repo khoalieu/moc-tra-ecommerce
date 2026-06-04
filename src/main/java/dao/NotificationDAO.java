@@ -48,6 +48,35 @@ public class NotificationDAO {
         return 0;
     }
 
+    public int createForRole(Notification notification) {
+        String sql = "INSERT INTO notifications " +
+                "(recipient_role, type, title, message, target_url, entity_type, entity_id) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?)";
+
+        try (Connection conn = ds.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+
+            ps.setString(1, notification.getRecipientRole());
+            ps.setString(2, notification.getType());
+            ps.setString(3, notification.getTitle());
+            ps.setString(4, notification.getMessage());
+            ps.setString(5, notification.getTargetUrl());
+            ps.setString(6, notification.getEntityType());
+            setNullableInt(ps, 7, notification.getEntityId());
+
+            if (ps.executeUpdate() > 0) {
+                try (ResultSet rs = ps.getGeneratedKeys()) {
+                    if (rs.next()) {
+                        return rs.getInt(1);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return 0;
+    }
+
     public List<Notification> getByUser(int userId, int page, int pageSize) {
         String sql = "SELECT * FROM notifications " +
                 "WHERE user_id = ? " +
@@ -95,6 +124,53 @@ public class NotificationDAO {
         return list;
     }
 
+    public List<Notification> getByRole(String recipientRole, int page, int pageSize) {
+        String sql = "SELECT * FROM notifications " +
+                "WHERE recipient_role = ? " +
+                "ORDER BY created_at DESC LIMIT ? OFFSET ?";
+
+        List<Notification> list = new ArrayList<>();
+        try (Connection conn = ds.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, recipientRole);
+            ps.setInt(2, pageSize);
+            ps.setInt(3, Math.max(0, (page - 1) * pageSize));
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    list.add(mapRow(rs));
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+
+    public List<Notification> getLatestByRole(String recipientRole, int limit) {
+        String sql = "SELECT * FROM notifications " +
+                "WHERE recipient_role = ? " +
+                "ORDER BY created_at DESC LIMIT ?";
+
+        List<Notification> list = new ArrayList<>();
+        try (Connection conn = ds.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, recipientRole);
+            ps.setInt(2, limit);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    list.add(mapRow(rs));
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+
     public Notification getByIdForUser(int notificationId, int userId) {
         String sql = "SELECT * FROM notifications WHERE id = ? AND user_id = ?";
 
@@ -103,6 +179,26 @@ public class NotificationDAO {
 
             ps.setInt(1, notificationId);
             ps.setInt(2, userId);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return mapRow(rs);
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public Notification getByIdForRole(int notificationId, String recipientRole) {
+        String sql = "SELECT * FROM notifications WHERE id = ? AND recipient_role = ?";
+
+        try (Connection conn = ds.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, notificationId);
+            ps.setString(2, recipientRole);
 
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
@@ -133,6 +229,24 @@ public class NotificationDAO {
         return 0;
     }
 
+    public int countUnreadByRole(String recipientRole) {
+        String sql = "SELECT COUNT(*) FROM notifications WHERE recipient_role = ? AND is_read = 0";
+
+        try (Connection conn = ds.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, recipientRole);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1);
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return 0;
+    }
+
     public boolean markAsReadForUser(int notificationId, int userId) {
         String sql = "UPDATE notifications SET is_read = 1, read_at = NOW() " +
                 "WHERE id = ? AND user_id = ?";
@@ -149,6 +263,22 @@ public class NotificationDAO {
         return false;
     }
 
+    public boolean markAsReadForRole(int notificationId, String recipientRole) {
+        String sql = "UPDATE notifications SET is_read = 1, read_at = NOW() " +
+                "WHERE id = ? AND recipient_role = ?";
+
+        try (Connection conn = ds.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, notificationId);
+            ps.setString(2, recipientRole);
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
     public boolean markAllAsReadForUser(int userId) {
         String sql = "UPDATE notifications SET is_read = 1, read_at = NOW() " +
                 "WHERE user_id = ? AND is_read = 0";
@@ -157,6 +287,22 @@ public class NotificationDAO {
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setInt(1, userId);
+            ps.executeUpdate();
+            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    public boolean markAllAsReadForRole(String recipientRole) {
+        String sql = "UPDATE notifications SET is_read = 1, read_at = NOW() " +
+                "WHERE recipient_role = ? AND is_read = 0";
+
+        try (Connection conn = ds.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, recipientRole);
             ps.executeUpdate();
             return true;
         } catch (Exception e) {

@@ -13,6 +13,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 public class NotificationService {
+    private static final String ADMIN_ROLE = "ADMIN";
     private final NotificationDAO notificationDAO;
 
     public NotificationService() {
@@ -32,18 +33,38 @@ public class NotificationService {
         return notificationDAO.createForUser(notification);
     }
 
+    public int notifyAdmin(String type, String title, String message,
+                           String targetUrl, String entityType, Integer entityId) {
+        Notification notification = new Notification();
+        notification.setRecipientRole(ADMIN_ROLE);
+        notification.setType(type);
+        notification.setTitle(title);
+        notification.setMessage(message);
+        notification.setTargetUrl(targetUrl);
+        notification.setEntityType(entityType);
+        notification.setEntityId(entityId);
+        return notificationDAO.createForRole(notification);
+    }
+
     public List<Notification> getUserNotifications(int userId, int page, int pageSize) {
         return notificationDAO.getByUser(userId, page, pageSize);
     }
-
     public List<Notification> getLatestUserNotifications(int userId, int limit) {
         return notificationDAO.getLatestByUser(userId, limit);
     }
-
+    public List<Notification> getAdminNotifications(int page, int pageSize) {
+        return notificationDAO.getByRole(ADMIN_ROLE, page, pageSize);
+    }
+    public List<Notification> getLatestAdminNotifications(int limit) {
+        return notificationDAO.getLatestByRole(ADMIN_ROLE, limit);
+    }
     public Notification getUserNotification(int notificationId, int userId) {
         return notificationDAO.getByIdForUser(notificationId, userId);
     }
 
+    public Notification getAdminNotification(int notificationId) {
+        return notificationDAO.getByIdForRole(notificationId, ADMIN_ROLE);
+    }
     public int notifyOrderCreated(int userId, int orderId, String orderNumber) {
         String code = displayOrderNumber(orderNumber, orderId);
         return notifyUser(userId,
@@ -59,7 +80,6 @@ public class NotificationService {
         if (order == null || newStatus == null) {
             return 0;
         }
-
         String code = displayOrderNumber(order.getOrderNumber(), order.getId());
         String type;
         String title;
@@ -101,7 +121,6 @@ public class NotificationService {
         if (order == null || paymentStatus == null) {
             return 0;
         }
-
         String code = displayOrderNumber(order.getOrderNumber(), order.getId());
         String type;
         String title;
@@ -132,9 +151,7 @@ public class NotificationService {
     }
 
     public int notifyRefundRequested(Order order, boolean completedPendingInfo) {
-        if (order == null) {
-            return 0;
-        }
+        if (order == null) {return 0;}
 
         String code = displayOrderNumber(order.getOrderNumber(), order.getId());
         String title = completedPendingInfo
@@ -149,9 +166,7 @@ public class NotificationService {
     }
 
     public int notifyRefundPendingInfo(Order order) {
-        if (order == null) {
-            return 0;
-        }
+        if (order == null) {return 0;}
 
         String code = displayOrderNumber(order.getOrderNumber(), order.getId());
         return notifyUser(order.getUserId(),
@@ -164,9 +179,7 @@ public class NotificationService {
     }
 
     public int notifyRefundStatusChanged(RefundRequest refund, String status) {
-        if (refund == null || status == null) {
-            return 0;
-        }
+        if (refund == null || status == null) {return 0;}
 
         String code = displayOrderNumber(refund.getOrderNumber(), refund.getOrderId());
         String type;
@@ -206,9 +219,7 @@ public class NotificationService {
                 message != null && !message.trim().isEmpty()
                         ? message
                         : "Thông tin tài khoản của bạn vừa được cập nhật thành công.",
-                "tai-khoan-cua-toi",
-                "account",
-                userId);
+                "tai-khoan-cua-toi", "account", userId);
     }
 
     public int notifyPromotionCreated(Promotion promotion) {
@@ -218,13 +229,11 @@ public class NotificationService {
 
         boolean vipOnly = "VIP".equalsIgnoreCase(promotion.getPromotionType());
         List<Integer> userIds = DAOFactory.getInstance()
-                .getUserDAO()
-                .getActiveCustomerIdsForNotifications(vipOnly);
+                .getUserDAO().getActiveCustomerIdsForNotifications(vipOnly);
 
         int createdCount = 0;
         String promotionName = promotion.getName() != null && !promotion.getName().trim().isEmpty()
-                ? promotion.getName().trim()
-                : "chương trình khuyến mãi mới";
+                ? promotion.getName().trim() : "chương trình khuyến mãi mới";
 
         for (Integer userId : userIds) {
             if (userId == null) {
@@ -242,7 +251,6 @@ public class NotificationService {
                 createdCount++;
             }
         }
-
         return createdCount;
     }
 
@@ -260,14 +268,21 @@ public class NotificationService {
         return notificationDAO.countUnreadByUser(userId);
     }
 
+    public int countUnreadForAdmin() {
+        return notificationDAO.countUnreadByRole(ADMIN_ROLE);
+    }
     public boolean markAsReadForUser(int notificationId, int userId) {
         return notificationDAO.markAsReadForUser(notificationId, userId);
     }
-
+    public boolean markAsReadForAdmin(int notificationId) {
+        return notificationDAO.markAsReadForRole(notificationId, ADMIN_ROLE);
+    }
     public boolean markAllAsReadForUser(int userId) {
         return notificationDAO.markAllAsReadForUser(userId);
     }
-
+    public boolean markAllAsReadForAdmin() {
+        return notificationDAO.markAllAsReadForRole(ADMIN_ROLE);
+    }
     private String displayOrderNumber(String orderNumber, int orderId) {
         if (orderNumber != null && !orderNumber.trim().isEmpty()) {
             return "#" + orderNumber.trim();
