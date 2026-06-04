@@ -219,6 +219,9 @@
                                 <span class="info-label">Trạng thái</span>
                                 <div class="info-value">
                                     <c:choose>
+                                        <c:when test="${refund.status == 'pending_info'}">
+                                            <span class="status-badge status-pending">Chờ khách bổ sung</span>
+                                        </c:when>
                                         <c:when test="${refund.status == 'pending'}">
                                             <span class="status-badge status-pending">Chờ xử lý</span>
                                         </c:when>
@@ -247,11 +250,18 @@
                             <div class="info-row">
                                 <span class="info-label">Nhận tiền</span>
                                 <div class="info-value" style="line-height:1.6;">
-                                    <strong>${refund.receiveMethod == 'momo' ? 'MoMo' : 'Ngân hàng'}</strong><br>
-                                    Chủ TK: ${refund.accountHolder}<br>
-                                    <c:if test="${not empty refund.accountNumber}">
-                                        STK/SĐT: ${refund.accountNumber}
-                                    </c:if>
+                                    <c:choose>
+                                        <c:when test="${refund.status == 'pending_info'}">
+                                            <span class="text-muted">Chưa có thông tin nhận tiền</span>
+                                        </c:when>
+                                        <c:otherwise>
+                                            <strong>${refund.receiveMethod == 'momo' ? 'MoMo' : 'Ngân hàng'}</strong><br>
+                                            Chủ TK: ${refund.accountHolder}<br>
+                                            <c:if test="${not empty refund.accountNumber}">
+                                                STK/SĐT: ${refund.accountNumber}
+                                            </c:if>
+                                        </c:otherwise>
+                                    </c:choose>
                                 </div>
                             </div>
 

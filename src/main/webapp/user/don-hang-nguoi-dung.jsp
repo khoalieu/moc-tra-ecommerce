@@ -203,6 +203,7 @@
                                             <c:when test="${refund.status == 'pending'}">Đang chờ shop xử lý</c:when>
                                             <c:when test="${refund.status == 'refunded'}">Đã hoàn tiền</c:when>
                                             <c:when test="${refund.status == 'rejected'}">Đã từ chối</c:when>
+                                            <c:when test="${refund.status == 'pending_info'}">Chờ bổ sung thông tin nhận tiền</c:when>
                                             <c:otherwise>${refund.status}</c:otherwise>
                                         </c:choose>
                                     </span>
@@ -311,6 +312,14 @@
                                             class="btn-action btn-primary"
                                             onclick="openRefundModal(${o.id}, '${o.orderNumber}', '${o.totalAmount}')">
                                         <i class="fa-solid fa-money-bill-transfer"></i> Yêu cầu hoàn tiền
+                                    </button>
+                                </c:if>
+
+                                <c:if test="${statusStr == 'DELIVERY_FAILED' && o.paymentMethod != 'cod' && o.paymentStatus.toString() == 'PAID' && not empty refund && refund.status == 'pending_info'}">
+                                    <button type="button"
+                                            class="btn-action btn-primary"
+                                            onclick="openRefundModal(${o.id}, '${o.orderNumber}', '${o.totalAmount}')">
+                                        <i class="fa-solid fa-money-bill-transfer"></i> Bổ sung thông tin hoàn tiền
                                     </button>
                                 </c:if>
 

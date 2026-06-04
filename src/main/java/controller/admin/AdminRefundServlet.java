@@ -104,7 +104,8 @@ public class AdminRefundServlet extends HttpServlet {
         }
 
         String normalized = status.trim().toLowerCase();
-        return ("pending".equals(normalized) || "refunded".equals(normalized) || "rejected".equals(normalized))
+        return ("pending_info".equals(normalized) || "pending".equals(normalized)
+                || "refunded".equals(normalized) || "rejected".equals(normalized))
                 ? normalized
                 : null;
     }

@@ -49,6 +49,7 @@
                             <label>Trạng thái</label>
                             <select name="status" class="form-select" onchange="this.form.submit()">
                                 <option value="" ${empty status ? 'selected' : ''}>Tất cả</option>
+                                <option value="pending_info" ${status == 'pending_info' ? 'selected' : ''}>Chờ khách bổ sung</option>
                                 <option value="pending" ${status == 'pending' ? 'selected' : ''}>Chờ xử lý</option>
                                 <option value="refunded" ${status == 'refunded' ? 'selected' : ''}>Đã hoàn tiền</option>
                                 <option value="rejected" ${status == 'rejected' ? 'selected' : ''}>Từ chối</option>
@@ -96,11 +97,18 @@
                                 </td>
                                 <td>
                                     <div class="refund-receive-info">
-                                        <div><strong>${r.receiveMethod == 'momo' ? 'MoMo' : 'Ngân hàng'}</strong></div>
-                                        <div>Chủ TK: ${r.accountHolder}</div>
-                                        <c:if test="${not empty r.accountNumber}">
-                                            <div>STK/SĐT: ${r.accountNumber}</div>
-                                        </c:if>
+                                        <c:choose>
+                                            <c:when test="${r.status == 'pending_info'}">
+                                                <div class="text-muted">Chưa có thông tin nhận tiền</div>
+                                            </c:when>
+                                            <c:otherwise>
+                                                <div><strong>${r.receiveMethod == 'momo' ? 'MoMo' : 'Ngân hàng'}</strong></div>
+                                                <div>Chủ TK: ${r.accountHolder}</div>
+                                                <c:if test="${not empty r.accountNumber}">
+                                                    <div>STK/SĐT: ${r.accountNumber}</div>
+                                                </c:if>
+                                            </c:otherwise>
+                                        </c:choose>
                                         <div class="refund-reason">Lý do: ${r.reason}</div>
                                     </div>
                                 </td>
@@ -119,6 +127,9 @@
                                 </td>
                                 <td>
                                     <c:choose>
+                                        <c:when test="${r.status == 'pending_info'}">
+                                            <span class="status-badge status-pending">Chờ khách bổ sung</span>
+                                        </c:when>
                                         <c:when test="${r.status == 'pending'}">
                                             <span class="status-badge status-pending">Chờ xử lý</span>
                                         </c:when>
@@ -150,7 +161,12 @@
                                             </div>
                                         </form>
                                     </c:if>
-                                    <c:if test="${r.status != 'pending'}">
+                                    <c:if test="${r.status == 'pending_info'}">
+                                        <div class="refund-admin-note">
+                                            Chờ khách nhập thông tin nhận tiền
+                                        </div>
+                                    </c:if>
+                                    <c:if test="${r.status != 'pending' && r.status != 'pending_info'}">
                                         <div class="refund-admin-note">
                                             ${empty r.adminNote ? 'Đã xử lý' : r.adminNote}
                                         </div>
