@@ -96,6 +96,14 @@
                     <span>Nhật ký hệ thống</span>
                 </a>
             </li>
+            <c:if test="${sessionScope.user.hasPermission('role.manage')}">
+                <li class="nav-item ${param.activePage == 'roles' ? 'active' : ''}">
+                    <a href="${ctx}/admin/roles">
+                        <i class="fas fa-shield-alt"></i>
+                        <span>Phân quyền RBAC</span>
+                    </a>
+                </li>
+            </c:if>
         </ul>
     </nav>
 </aside>
