@@ -45,7 +45,7 @@ public class UserDAO {
                     user.setFirstName(rs.getString("first_name"));
                     user.setLastName(rs.getString("last_name"));
                     user.setPhone(rs.getString("phone"));
-                    user.setIsVip(rs.getBoolean("is_vip"));
+                    user.setVip(rs.getBoolean("is_vip"));
                     java.sql.Timestamp ts = rs.getTimestamp("dateOfBirth");
                     if (ts != null) {
                         user.setDateOfBirth(ts.toLocalDateTime());
@@ -282,7 +282,7 @@ public class UserDAO {
         u.setFirstName(rs.getString("first_name"));
         u.setLastName(rs.getString("last_name"));
         u.setAvatar(rs.getString("avatar"));
-        u.setIsVip(rs.getBoolean("is_vip"));
+        u.setVip(rs.getBoolean("is_vip"));
 
         String role = rs.getString("role");
         if (role != null) u.setRole(UserRole.valueOf(role.trim().toUpperCase()));
@@ -319,7 +319,7 @@ public class UserDAO {
                     u.setLastName(rs.getString("last_name"));
                     u.setPhone(rs.getString("phone"));
                     u.setAvatar(rs.getString("avatar"));
-                    u.setIsVip(rs.getBoolean("is_vip"));
+                    u.setVip(rs.getBoolean("is_vip"));
 
                     try {
                         String roleStr = rs.getString("role");
@@ -337,7 +337,7 @@ public class UserDAO {
                     if (rs.getTimestamp("created_at") != null)
                         u.setCreatedAt(rs.getTimestamp("created_at").toLocalDateTime());
 
-                    u.setIsActive(rs.getBoolean("is_active"));
+                    u.setActive(rs.getBoolean("is_active"));
                     return u;
                 }
             }
@@ -613,7 +613,7 @@ public class UserDAO {
             ps.setString(5, addr.getProvince());
             ps.setString(6, addr.getWard());
             ps.setString(7, addr.getStreetAddress());
-            ps.setBoolean(8, addr.getIsDefault());
+            ps.setBoolean(8, addr.isDefault());
 
             int rows = ps.executeUpdate();
             if (rows > 0) {
@@ -633,7 +633,7 @@ public class UserDAO {
             ps.setString(2, u.getLastName());
             ps.setString(3, u.getPhone());
             ps.setString(4, u.getRole().name());
-            ps.setBoolean(5, u.getIsActive());
+            ps.setBoolean(5, u.isActive());
             ps.setInt(6, u.getId());
 
             return ps.executeUpdate() > 0;
@@ -658,7 +658,7 @@ public class UserDAO {
                 user.setFirstName(rs.getString("first_name"));
                 user.setLastName(rs.getString("last_name"));
                 user.setAvatar(rs.getString("avatar"));
-                user.setIsVip(rs.getBoolean("is_vip"));
+                user.setVip(rs.getBoolean("is_vip"));
                 try {
                     user.setRole(UserRole.valueOf(rs.getString("role").toUpperCase()));
                 } catch (Exception e) {
@@ -761,7 +761,7 @@ public class UserDAO {
                     user.setFirstName(rs.getString("first_name"));
                     user.setLastName(rs.getString("last_name"));
                     user.setAvatar(rs.getString("avatar"));
-                    user.setIsVip(rs.getBoolean("is_vip"));
+                    user.setVip(rs.getBoolean("is_vip"));
 
                     String roleStr = rs.getString("role");
                     if (roleStr != null){

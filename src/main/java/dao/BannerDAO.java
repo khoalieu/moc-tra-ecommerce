@@ -68,7 +68,7 @@ public class BannerDAO {
             if (b.getSortOrder() == null) ps.setNull(7, Types.INTEGER);
             else ps.setInt(7, b.getSortOrder());
 
-            ps.setBoolean(8, Boolean.TRUE.equals(b.getIsActive()));
+            ps.setBoolean(8, Boolean.TRUE.equals(b.isActive()));
             ps.executeUpdate();
         }
     }
@@ -94,7 +94,7 @@ public class BannerDAO {
             if (b.getSortOrder() == null) ps.setNull(7, Types.INTEGER);
             else ps.setInt(7, b.getSortOrder());
 
-            ps.setBoolean(8, Boolean.TRUE.equals(b.getIsActive()));
+            ps.setBoolean(8, Boolean.TRUE.equals(b.isActive()));
             ps.setInt(9, b.getId());
 
             ps.executeUpdate();
@@ -166,7 +166,7 @@ public class BannerDAO {
         int so = rs.getInt("sort_order");
         b.setSortOrder(rs.wasNull() ? null : so);
 
-        b.setIsActive(rs.getBoolean("is_active"));
+        b.setActive(rs.getBoolean("is_active"));
 
         Timestamp c = rs.getTimestamp("created_at");
         Timestamp u = rs.getTimestamp("updated_at");

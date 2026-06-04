@@ -98,7 +98,7 @@ public class CategoryDAO {
         int parentId = rs.getInt("parent_id");
         c.setParentId(rs.wasNull() ? null : parentId);
 
-        c.setIsActive(rs.getBoolean("is_active"));
+        c.setActive(rs.getBoolean("is_active"));
         return c;
     }
 
@@ -198,7 +198,7 @@ public class CategoryDAO {
             if (cat.getParentId() != null && cat.getParentId() > 0) ps.setInt(3, cat.getParentId());
             else ps.setNull(3, java.sql.Types.INTEGER);
 
-            ps.setBoolean(4, cat.getIsActive() != null ? cat.getIsActive() : true);
+            ps.setBoolean(4, cat.isActive() != null ? cat.isActive() : true);
 
             int ok = ps.executeUpdate();
             if (ok > 0) {
@@ -224,7 +224,7 @@ public class CategoryDAO {
             if (cat.getParentId() != null && cat.getParentId() > 0) ps.setInt(3, cat.getParentId());
             else ps.setNull(3, java.sql.Types.INTEGER);
 
-            ps.setBoolean(4, cat.getIsActive() != null ? cat.getIsActive() : true);
+            ps.setBoolean(4, cat.isActive() != null ? cat.isActive() : true);
             ps.setInt(5, cat.getId());
 
             return ps.executeUpdate() > 0;

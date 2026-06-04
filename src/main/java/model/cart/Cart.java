@@ -3,12 +3,15 @@ package model.cart;
 import model.product.Product;
 import model.product.ProductVariant;
 
+import java.io.Serializable;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class Cart {
+public class Cart implements Serializable {
+    private static final long serialVersionUID = 1L;
+
     private Map<Integer, CartItem> items;
 
     public Cart() {

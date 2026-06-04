@@ -58,7 +58,7 @@ public class AdminCustomerEditServlet extends HttpServlet {
             user.setLastName(lastName);
             user.setPhone(phone);
             user.setRole(UserRole.valueOf(roleStr));
-            user.setIsActive(isActive);
+            user.setActive(isActive);
 
             boolean success = userDAO.updateUserByAdmin(user);
 

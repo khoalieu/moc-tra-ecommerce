@@ -76,7 +76,7 @@ public class BlogCategoryDAO {
         c.setName(rs.getString("name"));
         c.setSlug(rs.getString("slug"));
         c.setDescription(rs.getString("description"));
-        c.setIsActive(rs.getBoolean("is_active"));
+        c.setActive(rs.getBoolean("is_active"));
         return c;
     }
 
@@ -135,7 +135,7 @@ public class BlogCategoryDAO {
                 ps.setString(1, cat.getName());
                 ps.setString(2, cat.getSlug());
                 ps.setString(3, cat.getDescription());
-                ps.setBoolean(4, cat.getIsActive() != null ? cat.getIsActive() : true);
+                ps.setBoolean(4, cat.isActive() != null ? cat.isActive() : true);
 
                 int ok = ps.executeUpdate();
                 if (ok > 0) {
@@ -164,7 +164,7 @@ public class BlogCategoryDAO {
                         cat.setName(rs.getString("name"));
                         cat.setSlug(rs.getString("slug"));
                         cat.setDescription(rs.getString("description"));
-                        cat.setIsActive(rs.getBoolean("is_active"));
+                        cat.setActive(rs.getBoolean("is_active"));
                         return cat;
                     }
                 }
@@ -183,7 +183,7 @@ public class BlogCategoryDAO {
                 ps.setString(1, cat.getName());
                 ps.setString(2, cat.getSlug());
                 ps.setString(3, cat.getDescription());
-                ps.setBoolean(4, cat.getIsActive() != null ? cat.getIsActive() : true);
+                ps.setBoolean(4, cat.isActive() != null ? cat.isActive() : true);
                 ps.setInt(5, cat.getId());
 
                 return ps.executeUpdate() > 0;

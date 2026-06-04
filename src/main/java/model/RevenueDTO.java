@@ -1,8 +1,14 @@
 package model;
 
-public class RevenueDTO {
+import java.io.Serializable;
+
+public class RevenueDTO implements Serializable {
+    private static final long serialVersionUID = 1L;
+
     private String label;
     private double revenue;
+
+    public RevenueDTO() {}
 
     public String getLabel() {
         return label;
