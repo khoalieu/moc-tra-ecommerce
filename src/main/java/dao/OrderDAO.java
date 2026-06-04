@@ -494,7 +494,11 @@ public class OrderDAO {
                     && oldOrder.getStatus() == OrderStatus.SHIPPING
                     && status == OrderStatus.DELIVERY_FAILED) {
                 oldOrder.setStatus(OrderStatus.DELIVERY_FAILED);
-                new RefundDAO(ds).createPendingInfoRefundForFailedDelivery(oldOrder, "Đơn giao không thành công");
+                boolean refundCreated = new RefundDAO(ds)
+                        .createPendingInfoRefundForFailedDelivery(oldOrder, "Đơn giao không thành công");
+                if (refundCreated) {
+                    new NotificationService().notifyRefundPendingInfo(oldOrder);
+                }
             }
             return updated;
         } catch (SQLException e) {
@@ -872,8 +876,11 @@ public class OrderDAO {
                 if (reason != null && !reason.trim().isEmpty()) {
                     refundReason += ": " + reason.trim();
                 }
-                new RefundDAO(ds).createPendingInfoRefundForFailedDelivery(order,
+                boolean refundCreated = new RefundDAO(ds).createPendingInfoRefundForFailedDelivery(order,
                         refundReason);
+                if (refundCreated) {
+                    new NotificationService().notifyRefundPendingInfo(order);
+                }
             }
             return true;
 

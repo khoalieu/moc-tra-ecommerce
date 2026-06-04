@@ -12,6 +12,7 @@ import jakarta.servlet.http.HttpSession;
 import model.enums.PaymentStatus;
 import model.refund.RefundRequest;
 import model.user.User;
+import service.NotificationService;
 import service.SystemLogService;
 
 import java.io.IOException;
@@ -72,6 +73,9 @@ public class AdminRefundServlet extends HttpServlet {
             boolean success = refundDAO.updateRefundStatus(refundId, newStatus, adminNote, adminId);
             if (success && "refunded".equals(newStatus)) {
                 orderDAO.updatePaymentStatus(refund.getOrderId(), PaymentStatus.REFUNDED);
+            }
+            if (success) {
+                new NotificationService().notifyRefundStatusChanged(refund, newStatus);
             }
 
             if (success) {

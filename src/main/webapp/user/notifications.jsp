@@ -1,6 +1,7 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %>
+<%@ taglib prefix="fn" uri="jakarta.tags.functions" %>
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -45,9 +46,29 @@
                 </c:when>
                 <c:otherwise>
                     <c:forEach var="notification" items="${notifications}">
+                        <c:set var="iconClass" value="order"/>
+                        <c:set var="iconName" value="fa-box"/>
+                        <c:choose>
+                            <c:when test="${fn:startsWith(notification.type, 'payment_')}">
+                                <c:set var="iconClass" value="payment"/>
+                                <c:set var="iconName" value="fa-credit-card"/>
+                            </c:when>
+                            <c:when test="${fn:startsWith(notification.type, 'refund_')}">
+                                <c:set var="iconClass" value="refund"/>
+                                <c:set var="iconName" value="fa-rotate-left"/>
+                            </c:when>
+                            <c:when test="${fn:startsWith(notification.type, 'account_')}">
+                                <c:set var="iconClass" value="account"/>
+                                <c:set var="iconName" value="fa-user-gear"/>
+                            </c:when>
+                            <c:when test="${fn:startsWith(notification.type, 'promotion_')}">
+                                <c:set var="iconClass" value="promotion"/>
+                                <c:set var="iconName" value="fa-tags"/>
+                            </c:when>
+                        </c:choose>
                         <article class="notification-item ${!notification.read ? 'unread' : ''}">
-                            <div class="notification-icon order">
-                                <i class="fa-solid fa-box"></i>
+                            <div class="notification-icon ${iconClass}">
+                                <i class="fa-solid ${iconName}"></i>
                             </div>
 
                             <div class="notification-content">

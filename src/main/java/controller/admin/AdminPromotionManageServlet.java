@@ -14,6 +14,7 @@ import jakarta.servlet.http.Part;
 import model.enums.DiscountType;
 import model.promotion.Coupon;
 import model.promotion.Promotion;
+import service.NotificationService;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -136,7 +137,10 @@ public class AdminPromotionManageServlet extends HttpServlet {
     private void handleCreatePromotion(HttpServletRequest request) {
         Promotion promotion = buildPromotionFromRequest(request, false);
         if (promotion != null) {
-            promotionDAO.insertPromotion(promotion);
+            boolean created = promotionDAO.insertPromotion(promotion);
+            if (created) {
+                new NotificationService().notifyPromotionCreated(promotion);
+            }
         }
     }
 

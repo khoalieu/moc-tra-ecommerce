@@ -208,6 +208,16 @@
     color: #7350a2;
 }
 
+.notification-icon.account {
+    background: #eef2ff;
+    color: #4f46e5;
+}
+
+.notification-icon.promotion {
+    background: #fff1f2;
+    color: #be123c;
+}
+
 .notification-content {
     flex: 1;
     min-width: 0;
