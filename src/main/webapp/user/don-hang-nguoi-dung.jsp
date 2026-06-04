@@ -43,6 +43,7 @@
             <c:if test="${not empty orders}">
                 <c:forEach var="o" items="${orders}">
                     <c:set var="statusStr" value="${o.status.toString()}" />
+                    <c:set var="refund" value="${refundByOrderId[o.id]}" />
                     <c:set var="statusClass" value="status-pending" />
                     <c:set var="statusText" value="Chờ xử lý" />
 
@@ -191,6 +192,25 @@
                             </div>
                         </c:if>
 
+                        <c:if test="${not empty refund}">
+                            <div class="cancel-reason-banner">
+                                <i class="fa-solid fa-money-bill-transfer"></i>
+                                <div>
+                                    <span class="cancel-reason-title">Yêu cầu hoàn tiền</span>
+                                    <span class="cancel-reason-text">
+                                        Trạng thái:
+                                        <c:choose>
+                                            <c:when test="${refund.status == 'pending'}">Đang chờ shop xử lý</c:when>
+                                            <c:when test="${refund.status == 'refunded'}">Đã hoàn tiền</c:when>
+                                            <c:when test="${refund.status == 'rejected'}">Đã từ chối</c:when>
+                                            <c:when test="${refund.status == 'pending_info'}">Chờ bổ sung thông tin nhận tiền</c:when>
+                                            <c:otherwise>${refund.status}</c:otherwise>
+                                        </c:choose>
+                                    </span>
+                                </div>
+                            </div>
+                        </c:if>
+
                         <div class="items-preview">
                             <c:forEach var="item" items="${o.items}" varStatus="s">
                                 <c:if test="${s.index < 4}">
@@ -287,6 +307,22 @@
                                     </button>
                                 </c:if>
 
+                                <c:if test="${statusStr == 'CANCELLED' && o.paymentMethod != 'cod' && o.paymentStatus.toString() == 'PAID' && empty refund}">
+                                    <button type="button"
+                                            class="btn-action btn-primary"
+                                            onclick="openRefundModal(${o.id}, '${o.orderNumber}', '${o.totalAmount}')">
+                                        <i class="fa-solid fa-money-bill-transfer"></i> Yêu cầu hoàn tiền
+                                    </button>
+                                </c:if>
+
+                                <c:if test="${statusStr == 'DELIVERY_FAILED' && o.paymentMethod != 'cod' && o.paymentStatus.toString() == 'PAID' && not empty refund && refund.status == 'pending_info'}">
+                                    <button type="button"
+                                            class="btn-action btn-primary"
+                                            onclick="openRefundModal(${o.id}, '${o.orderNumber}', '${o.totalAmount}')">
+                                        <i class="fa-solid fa-money-bill-transfer"></i> Bổ sung thông tin hoàn tiền
+                                    </button>
+                                </c:if>
+
                                 <c:if test="${statusStr == 'COMPLETED' || statusStr == 'CANCELLED'}">
                                     <a href="${pageContext.request.contextPath}/san-pham" class="btn-action btn-primary">
                                         <i class="fa-solid fa-rotate"></i> Mua lại
@@ -348,6 +384,66 @@
                         <button type="button" class="btn btn-secondary-modal" onclick="closeCancelModal()">Đóng</button>
                         <button type="submit" class="btn btn-danger" onclick="prepareSubmit(event)">
                             <i class="fa-solid fa-ban"></i> Xác nhận hủy
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div id="refundModal" class="modal-overlay refund-modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Yêu cầu hoàn tiền</h3>
+                    <span class="close-modal" onclick="closeRefundModal()">&times;</span>
+                </div>
+                <form action="${pageContext.request.contextPath}/refund-request" method="post" enctype="multipart/form-data"
+                      onsubmit="return validateRefundSubmit()">
+                    <input type="hidden" name="orderId" id="refundOrderId">
+                    <div class="modal-body">
+                        <p style="margin-top: 0; color: #555;">
+                            Đơn hàng <strong id="refundOrderNumber"></strong> sẽ được shop kiểm tra và hoàn tiền thủ công.
+                        </p>
+
+                        <label class="refund-field-label" for="refundReason">Lý do hoàn tiền</label>
+                        <textarea name="reason" id="refundReason" rows="3" required></textarea>
+
+                        <label class="refund-field-label" for="receiveMethod">Phương thức nhận tiền</label>
+                        <select name="receiveMethod" id="receiveMethod" class="refund-input" required>
+                            <option value="bank">Ngân hàng</option>
+                            <option value="momo">MoMo</option>
+                        </select>
+
+                        <label class="refund-field-label" for="accountHolder">Tên chủ tài khoản</label>
+                        <input type="text" name="accountHolder" id="accountHolder" class="refund-input"
+                               placeholder="Ví dụ: Nguyễn Văn A" required>
+
+                        <label class="refund-field-label" for="accountNumber">Số tài khoản / Số điện thoại ví</label>
+                        <input type="text" name="accountNumber" id="accountNumber" class="refund-input"
+                               placeholder="Có thể bỏ trống nếu đã tải ảnh QR">
+
+                        <label class="refund-field-label" for="qrImage">Ảnh QR nhận tiền</label>
+                        <label class="refund-file-upload" for="qrImage">
+                            <i class="fa-solid fa-cloud-arrow-up"></i>
+                            <span id="qrImageText">Chọn ảnh QR</span>
+                        </label>
+                        <input type="file" name="qrImage" id="qrImage" class="refund-file-input" accept="image/*"
+                               onchange="previewRefundQr(this)">
+
+                        <div id="refundQrPreview" class="refund-qr-preview" style="display: none;">
+                            <img id="refundQrPreviewImg" src="" alt="Ảnh QR nhận tiền">
+                            <button type="button" class="refund-remove-file" onclick="removeRefundQr()">
+                                <i class="fa-solid fa-xmark"></i>
+                                Bỏ ảnh
+                            </button>
+                        </div>
+
+                        <label class="refund-field-label" for="refundNote">Ghi chú thêm</label>
+                        <textarea name="note" id="refundNote" rows="2"></textarea>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary-modal" onclick="closeRefundModal()">Đóng</button>
+                        <button type="submit" class="btn btn-danger">
+                            <i class="fa-solid fa-paper-plane"></i> Gửi yêu cầu
                         </button>
                     </div>
                 </form>
@@ -430,6 +526,77 @@
     document.getElementById('cancelModal').addEventListener('click', function(e) {
         if (e.target === this) closeCancelModal();
     });
+
+    function openRefundModal(orderId, orderNumber) {
+        document.getElementById('refundOrderId').value = orderId;
+        document.getElementById('refundOrderNumber').textContent = '#' + orderNumber;
+        document.getElementById('refundReason').value = '';
+        document.getElementById('receiveMethod').value = 'bank';
+        document.getElementById('accountHolder').value = '';
+        document.getElementById('accountNumber').value = '';
+        document.getElementById('qrImage').value = '';
+        removeRefundQr();
+        document.getElementById('refundNote').value = '';
+        document.getElementById('refundModal').classList.add('active');
+    }
+
+    function closeRefundModal() {
+        document.getElementById('refundModal').classList.remove('active');
+    }
+
+    document.getElementById('refundModal').addEventListener('click', function(e) {
+        if (e.target === this) closeRefundModal();
+    });
+
+    function previewRefundQr(input) {
+        const preview = document.getElementById('refundQrPreview');
+        const previewImg = document.getElementById('refundQrPreviewImg');
+        const fileText = document.getElementById('qrImageText');
+
+        if (!input.files || input.files.length === 0) {
+            removeRefundQr();
+            return;
+        }
+
+        const file = input.files[0];
+        if (!file.type || !file.type.startsWith('image/')) {
+            alert('Vui lòng chọn file ảnh QR.');
+            removeRefundQr();
+            return;
+        }
+
+        fileText.textContent = file.name;
+        const reader = new FileReader();
+        reader.onload = function (event) {
+            previewImg.src = event.target.result;
+            preview.style.display = 'flex';
+        };
+        reader.readAsDataURL(file);
+    }
+
+    function removeRefundQr() {
+        const qrInput = document.getElementById('qrImage');
+        const preview = document.getElementById('refundQrPreview');
+        const previewImg = document.getElementById('refundQrPreviewImg');
+
+        qrInput.value = '';
+        previewImg.src = '';
+        preview.style.display = 'none';
+        document.getElementById('qrImageText').textContent = 'Chọn ảnh QR';
+    }
+
+    function validateRefundSubmit() {
+        const accountNumber = document.getElementById('accountNumber').value.trim();
+        const qrImage = document.getElementById('qrImage');
+        const hasQr = qrImage.files && qrImage.files.length > 0;
+
+        if (!accountNumber && !hasQr) {
+            alert('Vui lòng nhập số tài khoản/số điện thoại ví hoặc tải ảnh QR.');
+            return false;
+        }
+
+        return true;
+    }
 </script>
 </body>
 </html>

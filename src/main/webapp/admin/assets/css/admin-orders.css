@@ -247,3 +247,137 @@
     color: #333;
     text-decoration: none;
 }
+
+.refund-table td {
+    vertical-align: top;
+}
+
+.refund-receive-info {
+    display: grid;
+    gap: 4px;
+    color: #333;
+    font-size: 13px;
+    line-height: 1.4;
+}
+
+.refund-reason {
+    color: #666;
+    margin-top: 4px;
+}
+
+.refund-qr-thumb {
+    width: 72px;
+    height: 72px;
+    border: 1px solid #eeeeee;
+    border-radius: 6px;
+    object-fit: contain;
+    background: #f8f9fa;
+}
+
+.refund-qr-button {
+    padding: 0;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+}
+
+.refund-qr-button:hover .refund-qr-thumb {
+    border-color: #107e84;
+    box-shadow: 0 0 0 3px rgba(16, 126, 132, 0.12);
+}
+
+.refund-qr-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.55);
+    padding: 24px;
+}
+
+.refund-qr-modal.active {
+    display: flex;
+}
+
+.refund-qr-modal-content {
+    width: min(420px, 100%);
+    border-radius: 10px;
+    background: #ffffff;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+    overflow: hidden;
+}
+
+.refund-qr-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 14px 18px;
+    border-bottom: 1px solid #eeeeee;
+}
+
+.refund-qr-modal-header h3 {
+    margin: 0;
+    color: #333333;
+    font-size: 16px;
+}
+
+.refund-qr-modal-header button {
+    width: 32px;
+    height: 32px;
+    border: none;
+    border-radius: 50%;
+    background: #f1f1f1;
+    color: #555555;
+    cursor: pointer;
+    font-size: 22px;
+    line-height: 1;
+}
+
+.refund-qr-modal-body {
+    padding: 18px;
+    text-align: center;
+}
+
+.refund-qr-modal-body img {
+    width: min(320px, 100%);
+    max-height: 70vh;
+    object-fit: contain;
+}
+
+.refund-action-form {
+    display: grid;
+    gap: 8px;
+    min-width: 220px;
+}
+
+.refund-action-form textarea {
+    width: 100%;
+    min-height: 54px;
+    padding: 8px 10px;
+    border: 1px solid #dddddd;
+    border-radius: 6px;
+    box-sizing: border-box;
+    font-family: inherit;
+    font-size: 13px;
+    resize: vertical;
+}
+
+.refund-action-buttons {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.refund-admin-note {
+    max-width: 220px;
+    color: #666666;
+    font-size: 13px;
+    line-height: 1.4;
+}
+
+.text-muted {
+    color: #999999;
+}

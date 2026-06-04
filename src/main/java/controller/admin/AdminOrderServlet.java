@@ -2,6 +2,7 @@ package controller.admin;
 
 import dao.DAOFactory;
 import dao.OrderDAO;
+import dao.RefundDAO;
 import model.order.Order;
 import model.enums.OrderStatus;
 
@@ -20,6 +21,7 @@ import java.util.List;
 public class AdminOrderServlet extends HttpServlet {
 
     private final OrderDAO orderDAO = DAOFactory.getInstance().getOrderDAO();
+    private final RefundDAO refundDAO = DAOFactory.getInstance().getRefundDAO();
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
@@ -29,7 +31,12 @@ public class AdminOrderServlet extends HttpServlet {
             String idStr = request.getParameter("id");
             if (idStr != null) {
                 Order order = orderDAO.getOrderById(Integer.parseInt(idStr));
+                if (order == null) {
+                    response.sendRedirect(request.getContextPath() + "/admin/orders");
+                    return;
+                }
                 request.setAttribute("order", order);
+                request.setAttribute("refund", refundDAO.getLatestRefundByOrderId(order.getId()));
                 request.getRequestDispatcher("/admin/admin-order-detail.jsp").forward(request, response);
             } else {
                 response.sendRedirect(request.getContextPath() + "/admin/orders");

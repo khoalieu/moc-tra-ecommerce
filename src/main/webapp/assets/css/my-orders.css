@@ -131,6 +131,28 @@
     animation: slideDown 0.4s ease;
 }
 
+.refund-modal .modal-content {
+    display: flex;
+    flex-direction: column;
+    max-height: calc(100vh - 32px);
+}
+
+.refund-modal form {
+    display: flex;
+    min-height: 0;
+    flex: 1;
+    flex-direction: column;
+}
+
+.refund-modal .modal-body {
+    max-height: calc(100vh - 180px);
+    overflow-y: auto;
+}
+
+.refund-modal .modal-footer {
+    flex-shrink: 0;
+}
+
 .modal-header {
     background: #f8f9fa;
     padding: 16px 24px;
@@ -245,6 +267,97 @@
     opacity: 0.92;
     transform: translateY(-1px);
 }
+
+.refund-field-label {
+    display: block;
+    margin: 12px 0 6px;
+    color: #333333;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.refund-input,
+#refundModal textarea {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #dddddd;
+    border-radius: 8px;
+    box-sizing: border-box;
+    font-family: inherit;
+    font-size: 14px;
+    resize: vertical;
+}
+
+.refund-input:focus,
+#refundModal textarea:focus {
+    border-color: #4caf50;
+    box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
+    outline: none;
+}
+
+.refund-file-input {
+    display: none;
+}
+
+.refund-file-upload {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    min-height: 44px;
+    padding: 10px 12px;
+    border: 1px dashed #107e84;
+    border-radius: 8px;
+    background: #f3fbf9;
+    color: #107e84;
+    box-sizing: border-box;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.refund-file-upload:hover {
+    background: #e8f6f3;
+}
+
+.refund-qr-preview {
+    align-items: center;
+    gap: 12px;
+    margin-top: 10px;
+    padding: 10px;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    background: #ffffff;
+}
+
+.refund-qr-preview img {
+    width: 96px;
+    height: 96px;
+    border-radius: 6px;
+    border: 1px solid #eeeeee;
+    object-fit: contain;
+    background: #f8f9fa;
+}
+
+.refund-remove-file {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 10px;
+    border: none;
+    border-radius: 6px;
+    background: #f1f1f1;
+    color: #555555;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.refund-remove-file:hover {
+    background: #ffe8e8;
+    color: #c62828;
+}
+
 .order-card {
     background: #fff;
     border-radius: 16px;
