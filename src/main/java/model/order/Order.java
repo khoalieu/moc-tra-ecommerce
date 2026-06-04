@@ -3,11 +3,14 @@ package model.order;
 import model.enums.OrderStatus;
 import model.enums.PaymentStatus;
 
+import java.io.Serializable;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Order {
+public class Order implements Serializable {
+    private static final long serialVersionUID = 1L;
+
     private int id;
     private int userId;
     private Integer shippingAddressId;

@@ -1,10 +1,13 @@
 package model.user;
 
+import java.io.Serializable;
 import java.sql.Timestamp;
 import java.text.NumberFormat;
 import java.util.Locale;
 
-public class CustomerDTO {
+public class CustomerDTO implements Serializable {
+    private static final long serialVersionUID = 1L;
+
     private int id;
     private String fullName;
     private String email;

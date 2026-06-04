@@ -1,9 +1,12 @@
 package model.order;
 
+import java.io.Serializable;
 import model.product.Product;
 import model.product.ProductVariant;
 
-public class OrderItem {
+public class OrderItem implements Serializable {
+    private static final long serialVersionUID = 1L;
+
     private int id;
     private int orderId;
     private int productId;

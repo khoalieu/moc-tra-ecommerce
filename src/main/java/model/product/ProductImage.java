@@ -1,8 +1,11 @@
 package model.product;
 
+import java.io.Serializable;
 import java.time.LocalDateTime;
 
-public class ProductImage {
+public class ProductImage implements Serializable {
+    private static final long serialVersionUID = 1L;
+
     private Integer id;
     private Integer productId;
     private String imageUrl;

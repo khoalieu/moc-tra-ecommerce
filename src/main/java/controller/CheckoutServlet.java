@@ -81,7 +81,7 @@ public class CheckoutServlet extends HttpServlet {
         UserAddress defaultAddr = null;
         if (addresses != null && !addresses.isEmpty()) {
             for (UserAddress a : addresses) {
-                if (a.getIsDefault()) {
+                if (a.isDefault()) {
                     defaultAddr = a;
                     break;
                 }
@@ -127,7 +127,7 @@ public class CheckoutServlet extends HttpServlet {
         request.setAttribute("selectedProvince", provinceFromForm);
         request.setAttribute("selectedMethod", shippingMethod);
 
-        if (Boolean.TRUE.equals(user.getIsVip())) {
+        if (Boolean.TRUE.equals(user.isVip())) {
             VipVoucherDAO voucherDAO = DAOFactory.getInstance().getVipVoucherDAO();
             List<VipVoucher> userVipVouchers = voucherDAO.getActiveVouchersForUser(user.getId());
             request.setAttribute("userVipVouchers", userVipVouchers);
@@ -178,7 +178,7 @@ public class CheckoutServlet extends HttpServlet {
             newAddr.setWard(request.getParameter("ward"));
             newAddr.setStreetAddress(request.getParameter("addressLine"));
             newAddr.setLabel("Địa chỉ mới");
-            newAddr.setIsDefault(false);
+            newAddr.setDefault(false);
             String districtIdStr = request.getParameter("districtId");
             String wardCode = request.getParameter("wardCode");
             if (districtIdStr != null && !districtIdStr.isEmpty()) {
@@ -231,7 +231,7 @@ public class CheckoutServlet extends HttpServlet {
 
         double vipDiscount = 0;
         Integer appliedVoucherId = null;
-        if ("true".equals(request.getParameter("applyVipVoucher")) && Boolean.TRUE.equals(user.getIsVip())) {
+        if ("true".equals(request.getParameter("applyVipVoucher")) && Boolean.TRUE.equals(user.isVip())) {
             try {
                 int vId = Integer.parseInt(request.getParameter("selectedVoucher"));
                 VipVoucher voucher = DAOFactory.getInstance()
