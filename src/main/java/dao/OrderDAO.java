@@ -398,7 +398,7 @@ public class OrderDAO {
 
     public List<Order> getAllOrders(int index, int size, String search, String status, String paymentStatus,
                                     String paymentMethod, String timeFilter, String dateFrom, String dateTo,
-                                    String sortOrder) {
+                                    String sortOrder, String quickFilter) {
         List<Order> list = new ArrayList<>();
         StringBuilder sql = new StringBuilder(
                 "SELECT o.*, a.full_name, a.phone_number, u.email AS user_email FROM orders o " +
@@ -407,7 +407,8 @@ public class OrderDAO {
                         "WHERE 1=1 "
         );
 
-        appendAdminOrderFilters(sql, search, status, paymentStatus, paymentMethod, timeFilter, dateFrom, dateTo);
+        appendAdminOrderFilters(sql, search, status, paymentStatus, paymentMethod, timeFilter, dateFrom, dateTo,
+                quickFilter);
 
         if ("price_asc".equals(sortOrder)) {
             sql.append(" ORDER BY o.total_amount ASC ");
@@ -445,7 +446,7 @@ public class OrderDAO {
     }
 
     public int countAllOrders(String search, String status, String paymentStatus, String paymentMethod,
-                              String timeFilter, String dateFrom, String dateTo) {
+                              String timeFilter, String dateFrom, String dateTo, String quickFilter) {
         StringBuilder sql = new StringBuilder(
                 "SELECT COUNT(*) " +
                         "FROM orders o " +
@@ -454,7 +455,8 @@ public class OrderDAO {
                         "WHERE 1=1 "
         );
 
-        appendAdminOrderFilters(sql, search, status, paymentStatus, paymentMethod, timeFilter, dateFrom, dateTo);
+        appendAdminOrderFilters(sql, search, status, paymentStatus, paymentMethod, timeFilter, dateFrom, dateTo,
+                quickFilter);
 
         try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql.toString())) {
@@ -540,7 +542,8 @@ public class OrderDAO {
     }
 
     private void appendAdminOrderFilters(StringBuilder sql, String search, String status, String paymentStatus,
-                                         String paymentMethod, String timeFilter, String dateFrom, String dateTo) {
+                                         String paymentMethod, String timeFilter, String dateFrom, String dateTo,
+                                         String quickFilter) {
         if (search != null && !search.trim().isEmpty()) {
             sql.append(" AND (");
             sql.append("o.order_number LIKE ? ");
@@ -560,6 +563,8 @@ public class OrderDAO {
         if (paymentMethod != null && !paymentMethod.isEmpty()) {
             sql.append(" AND o.payment_method = ? ");
         }
+
+        appendQuickFilter(sql, quickFilter);
 
         if ("today".equals(timeFilter)) {
             sql.append(" AND DATE(o.created_at) = CURRENT_DATE() ");
@@ -609,6 +614,28 @@ public class OrderDAO {
             }
         }
         return paramIndex;
+    }
+
+    private void appendQuickFilter(StringBuilder sql, String quickFilter) {
+        if ("need_process".equals(quickFilter)) {
+            sql.append(" AND o.status = 'pending' ");
+        } else if ("paid_waiting_process".equals(quickFilter)) {
+            sql.append(" AND o.status = 'pending' ");
+            sql.append(" AND o.payment_method <> 'cod' ");
+            sql.append(" AND o.payment_status = 'paid' ");
+        } else if ("cancelled_waiting_refund".equals(quickFilter)) {
+            sql.append(" AND o.status = 'cancelled' ");
+            sql.append(" AND o.payment_method <> 'cod' ");
+            sql.append(" AND o.payment_status = 'paid' ");
+            sql.append(" AND NOT EXISTS (");
+            sql.append("SELECT 1 FROM refund_requests rr ");
+            sql.append("WHERE rr.order_id = o.id AND rr.status IN ('refunded', 'rejected')");
+            sql.append(") ");
+        } else if ("shipping".equals(quickFilter)) {
+            sql.append(" AND o.status = 'shipping' ");
+        } else if ("delivery_failed".equals(quickFilter)) {
+            sql.append(" AND o.status = 'delivery_failed' ");
+        }
     }
 
     public List<Order> getRecentOrders(int limit) {

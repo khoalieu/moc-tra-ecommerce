@@ -8,6 +8,49 @@
     border: 1px solid #eee;
 }
 
+.quick-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.quick-filter-btn {
+    min-height: 34px;
+    padding: 7px 12px;
+    border: 1px solid #d9e7e8;
+    border-radius: 4px;
+    background: #fff;
+    color: #2f4f52;
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.quick-filter-btn:hover {
+    border-color: #107e84;
+    color: #107e84;
+    background: #eefafa;
+}
+
+.quick-filter-btn.active {
+    border-color: #107e84;
+    background: #107e84;
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(16, 126, 132, 0.22);
+}
+
+.quick-filter-btn:active {
+    border-color: #0b6469;
+    background: #0b6469;
+    color: #fff;
+    box-shadow: none;
+}
+
 .filters-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
