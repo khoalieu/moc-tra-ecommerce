@@ -202,9 +202,105 @@
                                     <span class="status-badge status-pending"
                                           style="color: #856404; background: #fff3cd;">Chưa thanh toán</span>
                                 </c:if>
+                                <c:if test="${order.paymentStatus == 'REFUNDED'}">
+                                    <span class="status-badge status-inactive">Đã hoàn tiền</span>
+                                </c:if>
                             </div>
                         </div>
                     </div>
+
+                    <c:if test="${not empty refund}">
+                        <div class="detail-card refund-detail-card">
+                            <h3 class="card-title">
+                                <i class="fa-solid fa-money-bill-transfer" style="margin-right: 6px;"></i>Yêu cầu hoàn tiền
+                            </h3>
+
+                            <div class="info-row">
+                                <span class="info-label">Trạng thái</span>
+                                <div class="info-value">
+                                    <c:choose>
+                                        <c:when test="${refund.status == 'pending'}">
+                                            <span class="status-badge status-pending">Chờ xử lý</span>
+                                        </c:when>
+                                        <c:when test="${refund.status == 'refunded'}">
+                                            <span class="status-badge status-active">Đã hoàn tiền</span>
+                                        </c:when>
+                                        <c:when test="${refund.status == 'rejected'}">
+                                            <span class="status-badge status-inactive">Từ chối</span>
+                                        </c:when>
+                                    </c:choose>
+                                </div>
+                            </div>
+
+                            <div class="info-row">
+                                <span class="info-label">Số tiền</span>
+                                <div class="info-value">
+                                    <strong style="color:#d32f2f;"><fmt:formatNumber value="${refund.amount}" pattern="#,###"/>đ</strong>
+                                </div>
+                            </div>
+
+                            <div class="info-row">
+                                <span class="info-label">Lý do</span>
+                                <div class="info-value">${refund.reason}</div>
+                            </div>
+
+                            <div class="info-row">
+                                <span class="info-label">Nhận tiền</span>
+                                <div class="info-value" style="line-height:1.6;">
+                                    <strong>${refund.receiveMethod == 'momo' ? 'MoMo' : 'Ngân hàng'}</strong><br>
+                                    Chủ TK: ${refund.accountHolder}<br>
+                                    <c:if test="${not empty refund.accountNumber}">
+                                        STK/SĐT: ${refund.accountNumber}
+                                    </c:if>
+                                </div>
+                            </div>
+
+                            <c:if test="${not empty refund.qrImageUrl}">
+                                <div class="info-row">
+                                    <span class="info-label">QR</span>
+                                    <div class="info-value">
+                                        <button type="button" class="refund-detail-qr-button"
+                                                onclick="openRefundQrModal('${refund.qrImageUrl}', '#${order.orderNumber}')">
+                                            <img src="${refund.qrImageUrl}" alt="QR hoàn tiền">
+                                        </button>
+                                    </div>
+                                </div>
+                            </c:if>
+
+                            <c:if test="${not empty refund.note}">
+                                <div class="info-row">
+                                    <span class="info-label">Ghi chú khách</span>
+                                    <div class="info-value">${refund.note}</div>
+                                </div>
+                            </c:if>
+
+                            <c:if test="${refund.status == 'pending'}">
+                                <form action="admin/refunds" method="post" class="refund-detail-form">
+                                    <input type="hidden" name="refundId" value="${refund.id}">
+                                    <textarea name="adminNote" rows="3" placeholder="Ghi chú xử lý cho yêu cầu hoàn tiền" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:6px;box-sizing:border-box;resize:vertical;margin-bottom:10px;"></textarea>
+                                    <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                                        <button type="submit" name="action" value="mark_refunded"
+                                                onclick="return confirm('Xác nhận đã hoàn tiền thủ công?')"
+                                                style="padding:10px 14px;border:none;border-radius:6px;background:#28a745;color:#fff;font-weight:600;cursor:pointer;">
+                                            Đã hoàn tiền
+                                        </button>
+                                        <button type="submit" name="action" value="reject"
+                                                onclick="return confirm('Từ chối yêu cầu hoàn tiền này?')"
+                                                style="padding:10px 14px;border:none;border-radius:6px;background:#dc3545;color:#fff;font-weight:600;cursor:pointer;">
+                                            Từ chối
+                                        </button>
+                                    </div>
+                                </form>
+                            </c:if>
+
+                            <c:if test="${refund.status != 'pending' && not empty refund.adminNote}">
+                                <div class="info-row">
+                                    <span class="info-label">Ghi chú admin</span>
+                                    <div class="info-value">${refund.adminNote}</div>
+                                </div>
+                            </c:if>
+                        </div>
+                    </c:if>
 
                     <div class="detail-card">
                         <h3 class="card-title"><i class="fa-solid fa-truck-fast" style="margin-right: 6px;"></i>Giao hàng (GHN)</h3>
@@ -335,6 +431,18 @@
     </main>
 </div>
 
+<div id="refundQrModal" class="refund-detail-qr-modal" onclick="closeRefundQrModal(event)">
+    <div class="refund-detail-qr-modal-content">
+        <div class="refund-detail-qr-modal-header">
+            <h3>QR hoàn tiền <span id="refundQrOrderNumber"></span></h3>
+            <button type="button" onclick="closeRefundQrModal()" aria-label="Đóng">&times;</button>
+        </div>
+        <div class="refund-detail-qr-modal-body">
+            <img id="refundQrModalImg" src="" alt="QR hoàn tiền">
+        </div>
+    </div>
+</div>
+
 <div id="cancelModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:9999; justify-content:center; align-items:center;">
     <div style="background:#fff; border-radius:12px; padding:28px 32px; width:480px; max-width:90%; box-shadow: 0 20px 60px rgba(0,0,0,0.3);">
         <h3 style="margin:0 0 6px 0; font-size:18px; color:#333;">
@@ -400,6 +508,21 @@
 </div>
 
 <script>
+    function openRefundQrModal(src, orderNumber) {
+        document.getElementById('refundQrModalImg').src = src;
+        document.getElementById('refundQrOrderNumber').textContent = orderNumber || '';
+        document.getElementById('refundQrModal').classList.add('active');
+    }
+
+    function closeRefundQrModal(event) {
+        if (event && event.target !== document.getElementById('refundQrModal')) {
+            return;
+        }
+
+        document.getElementById('refundQrModal').classList.remove('active');
+        document.getElementById('refundQrModalImg').src = '';
+    }
+
     function updateSingleStatus(orderId, status) {
         if (!confirm("Xác nhận thay đổi trạng thái?")) return;
         const params = new URLSearchParams();

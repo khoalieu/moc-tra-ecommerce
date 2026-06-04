@@ -18,6 +18,9 @@ public class RefundRequest {
     private Integer processedBy;
     private Timestamp createdAt;
     private Timestamp processedAt;
+    private String orderNumber;
+    private String customerName;
+    private String customerEmail;
 
     public int getId() {
         return id;
@@ -137,5 +140,29 @@ public class RefundRequest {
 
     public void setProcessedAt(Timestamp processedAt) {
         this.processedAt = processedAt;
+    }
+
+    public String getOrderNumber() {
+        return orderNumber;
+    }
+
+    public void setOrderNumber(String orderNumber) {
+        this.orderNumber = orderNumber;
+    }
+
+    public String getCustomerName() {
+        return customerName;
+    }
+
+    public void setCustomerName(String customerName) {
+        this.customerName = customerName;
+    }
+
+    public String getCustomerEmail() {
+        return customerEmail;
+    }
+
+    public void setCustomerEmail(String customerEmail) {
+        this.customerEmail = customerEmail;
     }
 }
