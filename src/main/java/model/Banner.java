@@ -1,10 +1,13 @@
 package model;
 
+import java.io.Serializable;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.Date;
 
-public class Banner {
+public class Banner implements Serializable {
+    private static final long serialVersionUID = 1L;
+
     private Integer id;
     private String title;
     private String subtitle;
@@ -60,14 +63,17 @@ public class Banner {
     public Integer getSortOrder() { return sortOrder; }
     public void setSortOrder(Integer sortOrder) { this.sortOrder = sortOrder; }
 
+    public Boolean isActive() { return isActive; }
+    /** @deprecated Use {@link #isActive()} in Java code; kept for JSP EL compatibility (${banner.isActive}) */
     public Boolean getIsActive() { return isActive; }
-    public void setIsActive(Boolean active) { isActive = active; }
+    public void setActive(Boolean active) { isActive = active; }
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
 
     public LocalDateTime getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
+
     public Date getCreatedAtDate() {
         if (createdAt == null) return null;
         return Timestamp.valueOf(createdAt);

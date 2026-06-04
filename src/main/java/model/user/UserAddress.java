@@ -1,6 +1,10 @@
 package model.user;
 
-public class UserAddress {
+import java.io.Serializable;
+
+public class UserAddress implements Serializable {
+    private static final long serialVersionUID = 1L;
+
     private Integer id;
     private Integer userId;
     private String fullName;
@@ -56,8 +60,10 @@ public class UserAddress {
     public String getStreetAddress() { return streetAddress; }
     public void setStreetAddress(String streetAddress) { this.streetAddress = streetAddress; }
 
+    public Boolean isDefault() { return isDefault; }
+    /** @deprecated Use {@link #isDefault()} in Java code; kept for JSP EL compatibility (${addr.isDefault}) */
     public Boolean getIsDefault() { return isDefault; }
-    public void setIsDefault(Boolean aDefault) { isDefault = aDefault; }
+    public void setDefault(Boolean aDefault) { isDefault = aDefault; }
 
     public Integer getDistrictId() { return districtId; }
     public void setDistrictId(Integer districtId) { this.districtId = districtId; }

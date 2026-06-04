@@ -155,7 +155,7 @@ public class AdminBannerServlet extends HttpServlet {
             b.setButtonLink(buttonLink);
             b.setSection(section);
             b.setSortOrder(sortOrder);
-            b.setIsActive(isActive);
+            b.setActive(isActive);
             b.setImageUrl(imageUrl);
 
             request.setAttribute("mode", mode);
@@ -174,7 +174,7 @@ public class AdminBannerServlet extends HttpServlet {
         b.setButtonLink(buttonLink);
         b.setSection(section);
         b.setSortOrder(sortOrder);
-        b.setIsActive(isActive);
+        b.setActive(isActive);
 
         BannerDAO dao = DAOFactory.getInstance().getBannerDAO();
         try {

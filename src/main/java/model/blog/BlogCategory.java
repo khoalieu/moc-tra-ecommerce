@@ -1,6 +1,10 @@
 package model.blog;
 
-public class BlogCategory {
+import java.io.Serializable;
+
+public class BlogCategory implements Serializable {
+    private static final long serialVersionUID = 1L;
+
     private Integer id;
     private String name;
     private String slug;
@@ -29,6 +33,8 @@ public class BlogCategory {
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
 
+    public Boolean isActive() { return isActive; }
+    /** @deprecated Use {@link #isActive()} in Java code; kept for JSP EL compatibility (${cat.isActive}) */
     public Boolean getIsActive() { return isActive; }
-    public void setIsActive(Boolean active) { isActive = active; }
+    public void setActive(Boolean active) { isActive = active; }
 }

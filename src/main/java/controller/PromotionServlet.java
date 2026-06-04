@@ -30,7 +30,7 @@ public class PromotionServlet extends HttpServlet {
 
         User loggedInUser = (User) request.getSession().getAttribute("user");
 
-        boolean isVipUser = loggedInUser != null && Boolean.TRUE.equals(loggedInUser.getIsVip());
+        boolean isVipUser = loggedInUser != null && Boolean.TRUE.equals(loggedInUser.isVip());
 
         List<Promotion> allPromotions = dao.getPromotionsByType("ALL");
         List<Promotion> vipPromotions = new ArrayList<>();

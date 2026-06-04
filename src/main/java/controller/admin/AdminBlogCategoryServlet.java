@@ -89,7 +89,7 @@ public class AdminBlogCategoryServlet extends HttpServlet {
                 c.setName(name);
                 c.setSlug(finalSlug);
                 c.setDescription(description);
-                c.setIsActive("true".equals(isActiveStr));
+                c.setActive("true".equals(isActiveStr));
 
                 int ok = dao.insertCategory(c);
                 response.sendRedirect(request.getContextPath() + "/admin/blog-categories?msg=added");
@@ -135,7 +135,7 @@ public class AdminBlogCategoryServlet extends HttpServlet {
             updated.setName(name);
             updated.setSlug(finalSlug);
             updated.setDescription(description);
-            updated.setIsActive("true".equals(isActiveStr));
+            updated.setActive("true".equals(isActiveStr));
 
             dao.updateCategory(updated);
             response.sendRedirect(request.getContextPath() + "/admin/blog-categories?msg=updated");
