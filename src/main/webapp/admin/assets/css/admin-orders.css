@@ -39,6 +39,37 @@
     border-color: #107e84;
 }
 
+.admin-filter-reset {
+    width: 100%;
+    min-height: 36px;
+    padding: 8px 16px;
+    border: 1px solid #107e84;
+    border-radius: 4px;
+    background: #fff;
+    color: #107e84;
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    transition: background-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.admin-filter-reset:hover {
+    background: #107e84;
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(16, 126, 132, 0.22);
+}
+
+.admin-filter-reset:active {
+    background: #0b6469;
+    border-color: #0b6469;
+    color: #fff;
+    box-shadow: none;
+}
+
 /* 2. Orders Container & Table */
 .orders-container {
     background: #fff;
