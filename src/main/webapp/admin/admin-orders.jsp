@@ -65,11 +65,35 @@
             </div>
 
             <div class="filters-section">
+                <div class="quick-filters">
+                    <a href="admin/orders?quickFilter=need_process${quickFilterBaseQuery}"
+                       class="quick-filter-btn ${quickFilter == 'need_process' ? 'active' : ''}">
+                        Cần xử lý
+                    </a>
+                    <a href="admin/orders?quickFilter=paid_waiting_process${quickFilterBaseQuery}"
+                       class="quick-filter-btn ${quickFilter == 'paid_waiting_process' ? 'active' : ''}">
+                        Đã thanh toán chờ xử lý
+                    </a>
+                    <a href="admin/orders?quickFilter=cancelled_waiting_refund${quickFilterBaseQuery}"
+                       class="quick-filter-btn ${quickFilter == 'cancelled_waiting_refund' ? 'active' : ''}">
+                        Đã hủy chờ hoàn tiền
+                    </a>
+                    <a href="admin/orders?quickFilter=shipping${quickFilterBaseQuery}"
+                       class="quick-filter-btn ${quickFilter == 'shipping' ? 'active' : ''}">
+                        Đang giao
+                    </a>
+                    <a href="admin/orders?quickFilter=delivery_failed${quickFilterBaseQuery}"
+                       class="quick-filter-btn ${quickFilter == 'delivery_failed' ? 'active' : ''}">
+                        Giao thất bại
+                    </a>
+                </div>
+
                 <form id="filterForm" action="admin/orders" method="GET">
+                    <input type="hidden" name="quickFilter" id="quickFilterInput" value="${quickFilter}">
                     <div class="filters-grid">
                         <div class="filter-group">
                             <label>Trạng thái đơn</label>
-                            <select name="status" class="form-select" onchange="this.form.submit()">
+                            <select name="status" class="form-select" onchange="clearQuickFilterAndSubmit(this.form)">
                                 <option value="">Tất cả trạng thái</option>
                                 <option value="PENDING" ${status == 'PENDING' ? 'selected' : ''}>Chờ xác nhận</option>
                                 <option value="SHIPPING" ${status == 'SHIPPING' ? 'selected' : ''}>Đang giao</option>
@@ -81,7 +105,7 @@
 
                         <div class="filter-group">
                             <label>Trạng thái thanh toán</label>
-                            <select name="paymentStatus" class="form-select" onchange="this.form.submit()">
+                            <select name="paymentStatus" class="form-select" onchange="clearQuickFilterAndSubmit(this.form)">
                                 <option value="">Tất cả thanh toán</option>
                                 <option value="PENDING" ${paymentStatus == 'PENDING' ? 'selected' : ''}>Chưa thanh toán</option>
                                 <option value="PAID" ${paymentStatus == 'PAID' ? 'selected' : ''}>Đã thanh toán</option>
@@ -93,7 +117,7 @@
 
                         <div class="filter-group">
                             <label>Phương thức thanh toán</label>
-                            <select name="paymentMethod" class="form-select" onchange="this.form.submit()">
+                            <select name="paymentMethod" class="form-select" onchange="clearQuickFilterAndSubmit(this.form)">
                                 <option value="">Tất cả phương thức</option>
                                 <option value="cod" ${paymentMethod == 'cod' ? 'selected' : ''}>COD</option>
                                 <option value="bank" ${paymentMethod == 'bank' ? 'selected' : ''}>Ngân hàng</option>
@@ -330,6 +354,13 @@
     const countSpan = document.getElementById('countSelected');
     const btnSingleView = document.getElementById('btnSingleView');
 
+    function clearQuickFilterAndSubmit(form) {
+        const quickFilterInput = document.getElementById('quickFilterInput');
+        if (quickFilterInput) {
+            quickFilterInput.value = '';
+        }
+        form.submit();
+    }
     function handleTimeFilterChange(select) {
         const customDateFilters = document.querySelectorAll('.custom-date-filter');
         customDateFilters.forEach(group => {

@@ -62,14 +62,21 @@ public class AdminOrderServlet extends HttpServlet {
             String dateFrom = normalizeDate(request.getParameter("dateFrom"));
             String dateTo = normalizeDate(request.getParameter("dateTo"));
             String sort = normalizeSort(request.getParameter("sort"));
+            String quickFilter = normalizeQuickFilter(request.getParameter("quickFilter"));
+            if (quickFilter != null) {
+                status = null;
+                paymentStatus = null;
+                paymentMethod = null;
+            }
 
             List<Order> list = orderDAO.getAllOrders(page, 10, search, status, paymentStatus, paymentMethod,
-                    timeFilter, dateFrom, dateTo, sort);
+                    timeFilter, dateFrom, dateTo, sort, quickFilter);
             int totalOrders = orderDAO.countAllOrders(search, status, paymentStatus, paymentMethod,
-                    timeFilter, dateFrom, dateTo);
+                    timeFilter, dateFrom, dateTo, quickFilter);
             int totalPages = (int) Math.ceil((double) totalOrders / 10);
             String filterQuery = buildFilterQuery(search, status, paymentStatus, paymentMethod, timeFilter,
-                    dateFrom, dateTo, sort);
+                    dateFrom, dateTo, sort, quickFilter);
+            String quickFilterBaseQuery = buildQuickFilterBaseQuery(search, timeFilter, dateFrom, dateTo, sort);
 
             request.setAttribute("orders", list);
             request.setAttribute("currentPage", page);
@@ -83,7 +90,9 @@ public class AdminOrderServlet extends HttpServlet {
             request.setAttribute("dateFrom", dateFrom);
             request.setAttribute("dateTo", dateTo);
             request.setAttribute("sort", sort);
+            request.setAttribute("quickFilter", quickFilter);
             request.setAttribute("filterQuery", filterQuery);
+            request.setAttribute("quickFilterBaseQuery", quickFilterBaseQuery);
 
             request.getRequestDispatcher("/admin/admin-orders.jsp").forward(request, response);
         }
@@ -180,13 +189,39 @@ public class AdminOrderServlet extends HttpServlet {
         return normalized.matches("\\d{4}-\\d{2}-\\d{2}") ? normalized : null;
     }
 
+    private String normalizeQuickFilter(String quickFilter) {
+        if (quickFilter == null || quickFilter.isBlank()) {
+            return null;
+        }
+
+        String normalized = quickFilter.trim().toLowerCase();
+        return ("need_process".equals(normalized) || "paid_waiting_process".equals(normalized)
+                || "cancelled_waiting_refund".equals(normalized) || "shipping".equals(normalized)
+                || "delivery_failed".equals(normalized))
+                ? normalized
+                : null;
+    }
+
     private String buildFilterQuery(String search, String status, String paymentStatus, String paymentMethod,
-                                    String timeFilter, String dateFrom, String dateTo, String sort) {
+                                    String timeFilter, String dateFrom, String dateTo, String sort,
+                                    String quickFilter) {
         StringBuilder query = new StringBuilder();
         appendQueryParam(query, "search", search);
         appendQueryParam(query, "status", status);
         appendQueryParam(query, "paymentStatus", paymentStatus);
         appendQueryParam(query, "paymentMethod", paymentMethod);
+        appendQueryParam(query, "time", timeFilter);
+        appendQueryParam(query, "dateFrom", dateFrom);
+        appendQueryParam(query, "dateTo", dateTo);
+        appendQueryParam(query, "sort", sort);
+        appendQueryParam(query, "quickFilter", quickFilter);
+        return query.toString();
+    }
+
+    private String buildQuickFilterBaseQuery(String search, String timeFilter, String dateFrom,
+                                             String dateTo, String sort) {
+        StringBuilder query = new StringBuilder();
+        appendQueryParam(query, "search", search);
         appendQueryParam(query, "time", timeFilter);
         appendQueryParam(query, "dateFrom", dateFrom);
         appendQueryParam(query, "dateTo", dateTo);
