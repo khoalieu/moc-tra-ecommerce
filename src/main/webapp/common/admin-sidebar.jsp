@@ -48,6 +48,13 @@
                 </a>
             </li>
 
+            <li class="nav-item ${param.activePage == 'refunds' ? 'active' : ''}">
+                <a href="${ctx}/admin/refunds">
+                    <i class="fas fa-money-bill-transfer"></i>
+                    <span>Hoàn tiền</span>
+                </a>
+            </li>
+
             <li class="nav-item ${param.activePage == 'customers' ? 'active' : ''}">
                 <a href="${ctx}/admin/customers">
                     <i class="fas fa-users"></i>

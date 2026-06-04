@@ -187,3 +187,85 @@
 .order-items-table tbody tr:hover {
     background-color: #f9fafb;
 }
+
+.refund-detail-qr-button {
+    padding: 0;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+}
+
+.refund-detail-qr-button img {
+    width: 96px;
+    height: 96px;
+    border: 1px solid #eeeeee;
+    border-radius: 8px;
+    object-fit: contain;
+    background: #f8f9fa;
+}
+
+.refund-detail-qr-button:hover img {
+    border-color: #107e84;
+    box-shadow: 0 0 0 3px rgba(16, 126, 132, 0.12);
+}
+
+.refund-detail-qr-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 10000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    background: rgba(0, 0, 0, 0.55);
+}
+
+.refund-detail-qr-modal.active {
+    display: flex;
+}
+
+.refund-detail-qr-modal-content {
+    width: min(420px, 100%);
+    border-radius: 10px;
+    background: #ffffff;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+    overflow: hidden;
+}
+
+.refund-detail-qr-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 14px 18px;
+    border-bottom: 1px solid #eeeeee;
+}
+
+.refund-detail-qr-modal-header h3 {
+    margin: 0;
+    color: #333333;
+    font-size: 16px;
+}
+
+.refund-detail-qr-modal-header button {
+    width: 32px;
+    height: 32px;
+    border: none;
+    border-radius: 50%;
+    background: #f1f1f1;
+    color: #555555;
+    cursor: pointer;
+    font-size: 22px;
+    line-height: 1;
+}
+
+.refund-detail-qr-modal-body {
+    padding: 18px;
+    text-align: center;
+}
+
+.refund-detail-qr-modal-body img {
+    width: min(320px, 100%);
+    max-height: 70vh;
+    object-fit: contain;
+}

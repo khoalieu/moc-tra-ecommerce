@@ -96,6 +96,10 @@ public class DAOFactory {
         return new OrderDAO(dataSource);
     }
 
+    public RefundDAO getRefundDAO() {
+        return new RefundDAO(dataSource);
+    }
+
     public ProductDAO getProductDAO() {
         return new ProductDAO(dataSource);
     }

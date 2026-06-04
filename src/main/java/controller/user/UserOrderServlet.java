@@ -2,7 +2,9 @@ package controller.user;
 
 import dao.DAOFactory;
 import dao.OrderDAO;
+import dao.RefundDAO;
 import model.order.Order;
+import model.refund.RefundRequest;
 import model.user.User;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -12,7 +14,9 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @WebServlet(name = "UserOrderServlet", value = "/don-hang")
 public class UserOrderServlet extends HttpServlet {
@@ -26,7 +30,16 @@ public class UserOrderServlet extends HttpServlet {
         }
         OrderDAO orderDAO = DAOFactory.getInstance().getOrderDAO();
         List<Order> orders = orderDAO.getOrdersByUserId(user.getId());
+        List<Integer> orderIds = new ArrayList<>();
+        for (Order order : orders) {
+            orderIds.add(order.getId());
+        }
+
+        RefundDAO refundDAO = DAOFactory.getInstance().getRefundDAO();
+        Map<Integer, RefundRequest> refundByOrderId = refundDAO.getLatestRefundsByUserOrders(user.getId(), orderIds);
+
         request.setAttribute("orders", orders);
+        request.setAttribute("refundByOrderId", refundByOrderId);
         request.getRequestDispatcher("/user/don-hang-nguoi-dung.jsp").forward(request, response);
     }
 }
