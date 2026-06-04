@@ -43,7 +43,7 @@ public class UserAddressDAO {
         a.setDistrict(rs.getString("district"));
         a.setWard(rs.getString("ward"));
         a.setStreetAddress(rs.getString("street_address"));
-        a.setIsDefault(rs.getBoolean("is_default"));
+        a.setDefault(rs.getBoolean("is_default"));
         int dId = rs.getInt("district_id");
         if (!rs.wasNull()) a.setDistrictId(dId);
         a.setWardCode(rs.getString("ward_code"));
@@ -62,7 +62,7 @@ public class UserAddressDAO {
             ps.setString(6, addr.getDistrict());
             ps.setString(7, addr.getWard());
             ps.setString(8, addr.getStreetAddress());
-            ps.setBoolean(9, addr.getIsDefault());
+            ps.setBoolean(9, addr.isDefault());
             if (addr.getDistrictId() != null) ps.setInt(10, addr.getDistrictId());
             else ps.setNull(10, java.sql.Types.INTEGER);
             ps.setString(11, addr.getWardCode());
@@ -179,7 +179,7 @@ public class UserAddressDAO {
             ps.setString(6, addr.getDistrict());
             ps.setString(7, addr.getWard());
             ps.setString(8, addr.getStreetAddress());
-            ps.setBoolean(9, addr.getIsDefault());
+            ps.setBoolean(9, addr.isDefault());
             if (addr.getDistrictId() != null) ps.setInt(10, addr.getDistrictId());
             else ps.setNull(10, java.sql.Types.INTEGER);
             ps.setString(11, addr.getWardCode());

@@ -95,9 +95,9 @@ public class UserAddressServlet extends HttpServlet {
 
             List<UserAddress> existing = dao.getListAddress(user.getId());
             if (existing.isEmpty()) {
-                addr.setIsDefault(true);
+                addr.setDefault(true);
             } else {
-                addr.setIsDefault(false);
+                addr.setDefault(false);
             }
             dao.addAddress(addr);
             session.setAttribute("msg", "Thêm địa chỉ mới thành công!");

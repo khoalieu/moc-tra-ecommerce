@@ -148,7 +148,7 @@ public class AdminCustomerDetailServlet extends HttpServlet {
 
             VipVoucherDAO vipVoucherDAO = DAOFactory.getInstance().getVipVoucherDAO();
 
-            if (Boolean.TRUE.equals(customer.getIsVip())) {
+            if (Boolean.TRUE.equals(customer.isVip())) {
                 request.setAttribute("voucherList", vipVoucherDAO.getAllVouchers());
                 request.setAttribute("customerVouchers", vipVoucherDAO.getAssignedVouchersByUser(userId));
             }

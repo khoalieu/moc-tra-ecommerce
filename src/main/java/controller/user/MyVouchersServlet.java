@@ -33,7 +33,7 @@ public class MyVouchersServlet extends HttpServlet {
 
         List<VipVoucher> vipVouchers = new ArrayList<>();
 
-        if (Boolean.TRUE.equals(user.getIsVip())) {
+        if (Boolean.TRUE.equals(user.isVip())) {
             VipVoucherDAO vipVoucherDAO = DAOFactory.getInstance().getVipVoucherDAO();
             vipVouchers = vipVoucherDAO.getActiveVouchersForUser(user.getId());
         }

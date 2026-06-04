@@ -3,9 +3,12 @@ package model.user;
 import model.enums.UserGender;
 import model.enums.UserRole;
 
+import java.io.Serializable;
 import java.time.LocalDateTime;
 
-public class User {
+public class User implements Serializable {
+    private static final long serialVersionUID = 1L;
+
     private Integer id;
     private String username;
     private String email;
@@ -21,6 +24,7 @@ public class User {
     private LocalDateTime createdAt;
     private Integer failedAttempts;
     private LocalDateTime lockUntil;
+    private Boolean isVip;
 
     public User() {}
 
@@ -75,8 +79,10 @@ public class User {
     public UserGender getGender() { return gender; }
     public void setGender(UserGender gender) { this.gender = gender; }
 
+    public Boolean isActive() { return isActive; }
+    /** @deprecated Use {@link #isActive()} in Java code; kept for JSP EL compatibility (${user.isActive}) */
     public Boolean getIsActive() { return isActive; }
-    public void setIsActive(Boolean active) { isActive = active; }
+    public void setActive(Boolean active) { isActive = active; }
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
@@ -87,14 +93,16 @@ public class User {
         String name = (fn + " " + ln).trim();
         return name.isEmpty() ? username : name;
     }
+
     public Integer getFailedAttempts() { return failedAttempts; }
     public void setFailedAttempts(Integer failedAttempts) { this.failedAttempts = failedAttempts; }
 
     public LocalDateTime getLockUntil() { return lockUntil; }
     public void setLockUntil(LocalDateTime lockUntil) { this.lockUntil = lockUntil; }
-    private Boolean isVip;
 
+    public Boolean isVip() { return isVip; }
+    /** @deprecated Use {@link #isVip()} in Java code; kept for JSP EL compatibility (${user.isVip}) */
     public Boolean getIsVip() { return isVip; }
-    public void setIsVip(Boolean vip) { this.isVip = vip; }
+    public void setVip(Boolean vip) { this.isVip = vip; }
 
 }

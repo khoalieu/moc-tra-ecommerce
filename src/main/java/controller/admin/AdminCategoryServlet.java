@@ -99,7 +99,7 @@ public class AdminCategoryServlet extends HttpServlet {
                 c.setName(name);
                 c.setSlug(finalSlug);
                 c.setParentId(parentId);
-                c.setIsActive("true".equals(isActiveStr));
+                c.setActive("true".equals(isActiveStr));
 
                 dao.create(c);
                 response.sendRedirect(request.getContextPath() + "/admin/categories?msg=added");
@@ -155,7 +155,7 @@ public class AdminCategoryServlet extends HttpServlet {
             updated.setName(name);
             updated.setSlug(finalSlug);
             updated.setParentId(parentId);
-            updated.setIsActive("true".equals(isActiveStr));
+            updated.setActive("true".equals(isActiveStr));
 
             dao.update(updated);
             response.sendRedirect(request.getContextPath() + "/admin/categories?msg=updated");
