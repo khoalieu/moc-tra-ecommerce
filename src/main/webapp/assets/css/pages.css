@@ -1281,6 +1281,115 @@
     background: #e8f5e9;
     color: #4CAF50;
 }
+
+.category-child-list li.active-child a {
+    background: #e8f5e9;
+    color: #2e7d32;
+    font-weight: 600;
+}
+
+.shop-grid-wrapper .product-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.price-filter-form {
+    display: grid;
+    gap: 12px;
+}
+
+.price-slider-values {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    color: #2e7d32;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.price-range-slider {
+    position: relative;
+    height: 28px;
+}
+
+.price-range-slider::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 13px;
+    height: 4px;
+    border-radius: 999px;
+    background: #dfeee2;
+}
+
+.price-range-slider input[type="range"] {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 28px;
+    margin: 0;
+    background: transparent;
+    pointer-events: none;
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+.price-range-slider input[type="range"]::-webkit-slider-thumb {
+    width: 16px;
+    height: 16px;
+    border: 2px solid #107e84;
+    border-radius: 50%;
+    background: #fff;
+    cursor: pointer;
+    pointer-events: auto;
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+.price-range-slider input[type="range"]::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    border: 2px solid #107e84;
+    border-radius: 50%;
+    background: #fff;
+    cursor: pointer;
+    pointer-events: auto;
+}
+
+.price-filter-range {
+    margin: 0;
+    color: #666;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.clear-filters-link {
+    padding: 9px 12px;
+    border-radius: 6px;
+    background: #f1f1f1;
+    color: #333;
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.clear-filters-link:hover {
+    background: #e4e4e4;
+    color: #107e84;
+}
+
+@media (max-width: 1100px) {
+    .shop-grid-wrapper .product-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 720px) {
+    .shop-grid-wrapper .product-grid {
+        grid-template-columns: 1fr;
+    }
+}
 /* Chính sách bảo hành */
 .section-content {
     padding: 60px 0;
