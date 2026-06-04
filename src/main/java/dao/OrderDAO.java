@@ -494,10 +494,12 @@ public class OrderDAO {
                     && oldOrder.getStatus() == OrderStatus.SHIPPING
                     && status == OrderStatus.DELIVERY_FAILED) {
                 oldOrder.setStatus(OrderStatus.DELIVERY_FAILED);
+                NotificationService notificationService = new NotificationService();
+                notificationService.notifyAdminDeliveryFailed(oldOrder);
                 boolean refundCreated = new RefundDAO(ds)
                         .createPendingInfoRefundForFailedDelivery(oldOrder, "Đơn giao không thành công");
                 if (refundCreated) {
-                    new NotificationService().notifyRefundPendingInfo(oldOrder);
+                    notificationService.notifyRefundPendingInfo(oldOrder);
                 }
             }
             return updated;
@@ -871,7 +873,9 @@ public class OrderDAO {
             }
             conn.commit();
             if (order != null) {
-                new NotificationService().notifyOrderStatusChanged(order, OrderStatus.DELIVERY_FAILED);
+                NotificationService notificationService = new NotificationService();
+                notificationService.notifyOrderStatusChanged(order, OrderStatus.DELIVERY_FAILED);
+                notificationService.notifyAdminDeliveryFailed(order);
                 String refundReason = "Đơn giao không thành công";
                 if (reason != null && !reason.trim().isEmpty()) {
                     refundReason += ": " + reason.trim();
@@ -879,7 +883,7 @@ public class OrderDAO {
                 boolean refundCreated = new RefundDAO(ds).createPendingInfoRefundForFailedDelivery(order,
                         refundReason);
                 if (refundCreated) {
-                    new NotificationService().notifyRefundPendingInfo(order);
+                    notificationService.notifyRefundPendingInfo(order);
                 }
             }
             return true;

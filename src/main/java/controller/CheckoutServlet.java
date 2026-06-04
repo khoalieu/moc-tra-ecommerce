@@ -338,7 +338,10 @@ public class CheckoutServlet extends HttpServlet {
             }
 
             txConn.commit();
-            new NotificationService().notifyOrderCreated(user.getId(), orderId, order.getOrderNumber());
+            order.setId(orderId);
+            NotificationService notificationService = new NotificationService();
+            notificationService.notifyOrderCreated(user.getId(), orderId, order.getOrderNumber());
+            notificationService.notifyAdminOrderCreated(order);
 
         } catch (Exception e) {
             if (txConn != null) {

@@ -76,6 +76,21 @@ public class NotificationService {
                 orderId);
     }
 
+    public int notifyAdminOrderCreated(Order order) {
+        if (order == null) {
+            return 0;
+        }
+
+        String code = displayOrderNumber(order.getOrderNumber(), order.getId());
+        return notifyAdmin(
+                "admin_order_created",
+                "Có đơn hàng mới",
+                "Đơn hàng " + code + " vừa được tạo. Admin cần kiểm tra và xử lý đơn.",
+                "admin/order/detail?id=" + order.getId(),
+                "order",
+                order.getId());
+    }
+
     public int notifyOrderStatusChanged(Order order, OrderStatus newStatus) {
         if (order == null || newStatus == null) {
             return 0;
@@ -175,6 +190,36 @@ public class NotificationService {
                 "Đơn hàng " + code + " giao không thành công. Vui lòng bổ sung thông tin nhận tiền để shop hoàn tiền.",
                 "don-hang",
                 "refund",
+                order.getId());
+    }
+
+    public int notifyAdminDeliveryFailed(Order order) {
+        if (order == null) {
+            return 0;
+        }
+
+        String code = displayOrderNumber(order.getOrderNumber(), order.getId());
+        return notifyAdmin(
+                "admin_order_delivery_failed",
+                "Có đơn giao thất bại cần xử lý",
+                "Đơn hàng " + code + " giao không thành công. Admin cần kiểm tra đơn và xử lý hoàn tiền nếu cần.",
+                "admin/order/detail?id=" + order.getId(),
+                "order",
+                order.getId());
+    }
+
+    public int notifyAdminRefundRequested(Order order, boolean completedPendingInfo) {
+        if (order == null) {return 0;}
+
+        String code = displayOrderNumber(order.getOrderNumber(), order.getId());
+        String title = completedPendingInfo
+                ? "Khách đã bổ sung thông tin hoàn tiền" : "Có yêu cầu hoàn tiền mới";
+        String message = completedPendingInfo
+                ? "Khách đã bổ sung thông tin nhận tiền cho đơn hàng " + code + ". Admin cần kiểm tra và hoàn tiền thủ công." : "Khách vừa gửi yêu cầu hoàn tiền cho đơn hàng " + code + ". Admin cần kiểm tra thông tin nhận tiền.";
+
+        return notifyAdmin(
+                "admin_refund_requested", title, message,
+                "admin/refunds?status=pending", "refund",
                 order.getId());
     }
 

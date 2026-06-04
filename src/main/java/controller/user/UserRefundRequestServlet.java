@@ -89,7 +89,9 @@ public class UserRefundRequestServlet extends HttpServlet {
                     ? refundDAO.completePendingInfoRefund(refund)
                     : refundDAO.createRefundRequest(refund);
             if (success) {
-                new NotificationService().notifyRefundRequested(order, completingPendingInfo);
+                NotificationService notificationService = new NotificationService();
+                notificationService.notifyRefundRequested(order, completingPendingInfo);
+                notificationService.notifyAdminRefundRequested(order, completingPendingInfo);
             }
             setMessage(session,
                     success ? "Yêu cầu hoàn tiền đã được gửi. Shop sẽ xử lý thủ công trong thời gian sớm nhất."
