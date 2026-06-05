@@ -6,6 +6,7 @@ import model.order.OrderItem;
 import model.product.Product;
 import model.enums.OrderStatus;
 import model.enums.PaymentStatus;
+import service.NotificationService;
 
 import javax.sql.DataSource;
 import java.sql.*;
@@ -486,11 +487,20 @@ public class OrderDAO {
             ps.setInt(2, orderId);
 
             boolean updated = ps.executeUpdate() > 0;
+            if (updated && oldOrder != null && oldOrder.getStatus() != status) {
+                new NotificationService().notifyOrderStatusChanged(oldOrder, status);
+            }
             if (updated && oldOrder != null
                     && oldOrder.getStatus() == OrderStatus.SHIPPING
                     && status == OrderStatus.DELIVERY_FAILED) {
                 oldOrder.setStatus(OrderStatus.DELIVERY_FAILED);
-                new RefundDAO(ds).createPendingInfoRefundForFailedDelivery(oldOrder, "Đơn giao không thành công");
+                NotificationService notificationService = new NotificationService();
+                notificationService.notifyAdminDeliveryFailed(oldOrder);
+                boolean refundCreated = new RefundDAO(ds)
+                        .createPendingInfoRefundForFailedDelivery(oldOrder, "Đơn giao không thành công");
+                if (refundCreated) {
+                    notificationService.notifyRefundPendingInfo(oldOrder);
+                }
             }
             return updated;
         } catch (SQLException e) {
@@ -695,6 +705,7 @@ public class OrderDAO {
             }
 
             conn.commit();
+            new NotificationService().notifyOrderStatusChanged(order, OrderStatus.CANCELLED);
             return true;
         } catch (SQLException e) {
             if (conn != null) {
@@ -801,6 +812,7 @@ public class OrderDAO {
         return false;
     }
     public boolean shipperCompleteOrder(int orderId, int shipperId) {
+        Order order = getOrderById(orderId);
         String sql = "UPDATE orders " +
                 "SET status = 'completed', " +
                 "    payment_status = CASE WHEN payment_status = 'pending' THEN 'paid' ELSE payment_status END " +
@@ -812,7 +824,11 @@ public class OrderDAO {
             ps.setInt(1, orderId);
             ps.setInt(2, shipperId);
 
-            return ps.executeUpdate() > 0;
+            boolean updated = ps.executeUpdate() > 0;
+            if (updated && order != null) {
+                new NotificationService().notifyOrderStatusChanged(order, OrderStatus.COMPLETED);
+            }
+            return updated;
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -857,12 +873,18 @@ public class OrderDAO {
             }
             conn.commit();
             if (order != null) {
+                NotificationService notificationService = new NotificationService();
+                notificationService.notifyOrderStatusChanged(order, OrderStatus.DELIVERY_FAILED);
+                notificationService.notifyAdminDeliveryFailed(order);
                 String refundReason = "Đơn giao không thành công";
                 if (reason != null && !reason.trim().isEmpty()) {
                     refundReason += ": " + reason.trim();
                 }
-                new RefundDAO(ds).createPendingInfoRefundForFailedDelivery(order,
+                boolean refundCreated = new RefundDAO(ds).createPendingInfoRefundForFailedDelivery(order,
                         refundReason);
+                if (refundCreated) {
+                    notificationService.notifyRefundPendingInfo(order);
+                }
             }
             return true;
 
@@ -888,6 +910,10 @@ public class OrderDAO {
             ps.setInt(4, orderId);
             ps.setInt(5, shipperId);
             int rowsAffected = ps.executeUpdate();
+            if (rowsAffected > 0 && "shipping".equalsIgnoreCase(status)) {
+                Order order = getOrderById(orderId);
+                new NotificationService().notifyOrderStatusChanged(order, OrderStatus.SHIPPING);
+            }
             return rowsAffected > 0;
         } catch (SQLException e) {
             e.printStackTrace();
@@ -1047,7 +1073,12 @@ public class OrderDAO {
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, ghnOrderCode);
             ps.setInt(2, orderId);
-            return ps.executeUpdate() > 0;
+            boolean updated = ps.executeUpdate() > 0;
+            if (updated) {
+                Order order = getOrderById(orderId);
+                new NotificationService().notifyOrderStatusChanged(order, OrderStatus.SHIPPING);
+            }
+            return updated;
         } catch (SQLException e) {
             e.printStackTrace();
         }

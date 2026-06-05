@@ -23,6 +23,8 @@ import java.util.List;
 import controller.utils.PaymentUtils;
 import controller.utils.PaymentResult;
 import model.promotion.Coupon;
+import service.NotificationService;
+
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 
@@ -336,6 +338,26 @@ public class CheckoutServlet extends HttpServlet {
             }
 
             txConn.commit();
+            order.setId(orderId);
+            NotificationService notificationService = new NotificationService();
+            notificationService.notifyOrderCreated(user.getId(), orderId, order.getOrderNumber());
+            notificationService.notifyAdminOrderCreated(order);
+            ProductDAO productDAO = DAOFactory.getInstance().getProductDAO();
+            for (CartItem item : selectedCartItems) {
+                if (item.getVariantId() > 0) {
+                    model.product.ProductVariant variant = vDAO.getVariantById(item.getVariantId());
+                    model.product.Product product = variant != null
+                            ? productDAO.getProductById(variant.getProductId())
+                            : null;
+                    notificationService.notifyAdminVariantStock(variant, product);
+                }
+            }
+            if (appliedCouponId != null) {
+                notificationService.notifyAdminCouponLifecycle(couponDAO2.getCouponById(appliedCouponId));
+            }
+            if (appliedVoucherId != null) {
+                notificationService.notifyAdminVoucherLifecycle(vvDAO.getVoucherById(appliedVoucherId));
+            }
 
         } catch (Exception e) {
             if (txConn != null) {

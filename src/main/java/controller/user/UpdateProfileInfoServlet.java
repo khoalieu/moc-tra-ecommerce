@@ -8,6 +8,7 @@ import model.user.User;
 import model.enums.UserGender;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
+import service.NotificationService;
 
 import java.io.File;
 import java.io.IOException;
@@ -109,6 +110,8 @@ public class UpdateProfileInfoServlet extends HttpServlet {
                 if (genderRaw != null) user.setGender(UserGender.valueOf(genderRaw.toUpperCase()));
                 
                 session.setAttribute("user", user);
+                new NotificationService().notifyProfileUpdated(user.getId(),
+                        "Thông tin cá nhân của bạn vừa được cập nhật thành công.");
                 session.setAttribute("msg", "Cập nhật thông tin thành công!");
                 session.setAttribute("msgType", "success");
             }
@@ -179,7 +182,9 @@ public class UpdateProfileInfoServlet extends HttpServlet {
             userDAO.updateAvatar(currentUser.getId(), uniqueFileName);
             // Refresh user from database and update session
             User updatedUser = userDAO.getUserDetailById(currentUser.getId());
-            session.setAttribute("user", updatedUser); 
+            session.setAttribute("user", updatedUser);
+            new NotificationService().notifyProfileUpdated(currentUser.getId(),
+                    "Ảnh đại diện của bạn vừa được cập nhật thành công.");
             response.sendRedirect(request.getContextPath() + "/tai-khoan-cua-toi?success=avatar_updated");
 
         } catch (Exception e) {
@@ -208,6 +213,8 @@ public class UpdateProfileInfoServlet extends HttpServlet {
             // Refresh user from database and update session
             User updatedUser = userDAO.getUserDetailById(currentUser.getId());
             session.setAttribute("user", updatedUser);
+            new NotificationService().notifyProfileUpdated(currentUser.getId(),
+                    "Ảnh đại diện của bạn vừa được xóa.");
 
             response.sendRedirect(request.getContextPath() + "/tai-khoan-cua-toi?success=avatar_removed");
         } catch (Exception e) {
