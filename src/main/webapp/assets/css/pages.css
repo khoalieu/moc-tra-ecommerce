@@ -1644,6 +1644,26 @@
     margin-bottom: 12px;
 }
 
+.checkout-page .checkout-right .order-items {
+    max-height: 365px;
+    overflow-y: auto;
+    padding-right: 6px;
+}
+
+.checkout-page .checkout-right .order-items::-webkit-scrollbar {
+    width: 6px;
+}
+
+.checkout-page .checkout-right .order-items::-webkit-scrollbar-track {
+    background: #f3f4f6;
+    border-radius: 999px;
+}
+
+.checkout-page .checkout-right .order-items::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 999px;
+}
+
 .order-item {
     display: grid;
     grid-template-columns: 60px 1fr auto;

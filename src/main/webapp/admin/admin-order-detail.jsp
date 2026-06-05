@@ -119,7 +119,23 @@
                                             </div>
                                         </div>
                                     </td>
-                                    <td><fmt:formatNumber value="${item.price}" pattern="#,###"/>đ</td>
+                                    <td>
+                                        <div class="admin-item-price-stack">
+                                            <div class="admin-item-original-price">
+                                                Giá gốc:
+                                                <fmt:formatNumber value="${item.originalPrice}" pattern="#,###"/>đ
+                                            </div>
+                                            <div class="admin-item-promo-discount">
+                                                Khuyến mãi:
+                                                <c:choose>
+                                                    <c:when test="${item.discountAmount > 0}">
+                                                        -<fmt:formatNumber value="${item.discountAmount}" pattern="#,###"/>đ
+                                                    </c:when>
+                                                    <c:otherwise>0đ</c:otherwise>
+                                                </c:choose>
+                                            </div>
+                                        </div>
+                                    </td>
                                     <td style="text-align: center;">
                                         <c:choose>
                                             <c:when test="${order.status == 'PENDING'}">
@@ -138,7 +154,7 @@
                                             </c:otherwise>
                                         </c:choose>
                                     </td>
-                                    <td style="text-align: right; font-weight: 600; color: #107e84;">
+                                    <td class="admin-item-line-total">
                                         <fmt:formatNumber value="${item.price * item.quantity}" pattern="#,###"/>đ
                                     </td>
                                 </tr>
@@ -150,7 +166,7 @@
                             <div class="order-summary-row" style="display: flex; justify-content: space-between; margin-bottom: 10px; color: #666; font-size: 14px;">
                                 <span>Tạm tính</span>
                                 <span style="font-weight: 600; color: #333;">
-                                    <fmt:formatNumber value="${order.totalAmount - order.shippingFee}" pattern="#,###"/>đ
+                                    <fmt:formatNumber value="${order.subtotalAmount}" pattern="#,###"/>đ
                                 </span>
                             </div>
                             <div class="order-summary-row" style="display: flex; justify-content: space-between; margin-bottom: 10px; color: #666; font-size: 14px;">
@@ -159,6 +175,25 @@
                                     <fmt:formatNumber value="${order.shippingFee}" pattern="#,###"/>đ
                                 </span>
                             </div>
+                            <c:if test="${order.couponDiscountAmount > 0}">
+                                <div class="order-summary-row order-summary-row--discount" style="display: flex; justify-content: space-between; margin-bottom: 10px; color: #666; font-size: 14px;">
+                                    <span>
+                                        Giảm mã ưu đãi
+                                        <c:if test="${not empty order.couponCode}">(${order.couponCode})</c:if>
+                                    </span>
+                                    <span style="font-weight: 600; color: #d32f2f;">
+                                        -<fmt:formatNumber value="${order.couponDiscountAmount}" pattern="#,###"/>đ
+                                    </span>
+                                </div>
+                            </c:if>
+                            <c:if test="${order.vipDiscountAmount > 0}">
+                                <div class="order-summary-row order-summary-row--discount" style="display: flex; justify-content: space-between; margin-bottom: 10px; color: #666; font-size: 14px;">
+                                    <span>Giảm voucher VIP</span>
+                                    <span style="font-weight: 600; color: #d32f2f;">
+                                        -<fmt:formatNumber value="${order.vipDiscountAmount}" pattern="#,###"/>đ
+                                    </span>
+                                </div>
+                            </c:if>
                             <div class="order-summary-row total" style="display: flex; justify-content: space-between; margin-top: 15px; padding-top: 15px; border-top: 1px solid #eee; color: #107e84; font-size: 18px; font-weight: 700;">
                                 <span>Tổng cộng</span>
                                 <span>
