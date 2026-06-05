@@ -104,5 +104,10 @@ public class User implements Serializable {
     /** @deprecated Use {@link #isVip()} in Java code; kept for JSP EL compatibility (${user.isVip}) */
     public Boolean getIsVip() { return isVip; }
     public void setVip(Boolean vip) { this.isVip = vip; }
+    public boolean isIncomplete() {
+        return firstName == null || firstName.trim().isEmpty()
+                || lastName == null || lastName.trim().isEmpty()
+                || email == null || email.trim().isEmpty();
+    }
 
 }
