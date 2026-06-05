@@ -247,6 +247,29 @@ public class NotificationDAO {
         return 0;
     }
 
+    public boolean existsByRoleTypeAndEntity(String recipientRole, String type, String entityType, Integer entityId) {
+        String sql = "SELECT 1 FROM notifications " +
+                "WHERE recipient_role = ? AND type = ? AND entity_type = ? AND entity_id = ? LIMIT 1";
+
+        if (entityId == null) {return false;}
+
+        try (Connection conn = ds.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, recipientRole);
+            ps.setString(2, type);
+            ps.setString(3, entityType);
+            ps.setInt(4, entityId);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
     public boolean markAsReadForUser(int notificationId, int userId) {
         String sql = "UPDATE notifications SET is_read = 1, read_at = NOW() " +
                 "WHERE id = ? AND user_id = ?";

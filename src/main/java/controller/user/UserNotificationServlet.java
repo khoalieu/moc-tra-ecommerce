@@ -63,7 +63,7 @@ public class UserNotificationServlet extends HttpServlet {
         }
 
         int unreadCount = notificationService.countUnreadForUser(user.getId());
-        List<Notification> notifications = notificationService.getLatestUserNotifications(user.getId(), 5);
+        List<Notification> notifications = notificationService.getLatestUserNotifications(user.getId(), 7);
 
         StringBuilder json = new StringBuilder();
         json.append("{\"unreadCount\":").append(unreadCount).append(",\"notifications\":[");

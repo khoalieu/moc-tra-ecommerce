@@ -390,6 +390,11 @@
         text-decoration: none;
     }
 
+    .notification-header-list {
+        max-height: 340px;
+        overflow-y: auto;
+    }
+
     .notification-mini-item {
         display: flex;
         gap: 8px;

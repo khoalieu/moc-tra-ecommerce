@@ -49,9 +49,12 @@ public class AdminPromotionManageServlet extends HttpServlet {
 
         promotionDAO.syncPromotionPrices();
         List<Promotion> promotionList = promotionDAO.getAllPromotions();
+        List<model.promotion.VipVoucher> voucherList = vipVoucherDAO.getAllVouchers();
+        List<Coupon> couponList = couponDAO.getAllCoupons();
+        notifyAdminPromotionState(promotionList, voucherList, couponList);
         request.setAttribute("promotionList", promotionList);
-        request.setAttribute("voucherList", vipVoucherDAO.getAllVouchers());
-        request.setAttribute("couponList", couponDAO.getAllCoupons());
+        request.setAttribute("voucherList", voucherList);
+        request.setAttribute("couponList", couponList);
 
         request.getRequestDispatcher("/admin/admin-promotions.jsp").forward(request, response);
     }
@@ -458,5 +461,27 @@ public class AdminPromotionManageServlet extends HttpServlet {
         if (s == null) return null;
         s = s.trim();
         return s.isEmpty() ? null : s;
+    }
+
+    private void notifyAdminPromotionState(List<Promotion> promotions,
+                                           List<model.promotion.VipVoucher> vouchers,
+                                           List<Coupon> coupons) {
+        NotificationService notificationService = new NotificationService();
+
+        if (promotions != null) {
+            for (Promotion promotion : promotions) {
+                notificationService.notifyAdminPromotionLifecycle(promotion);
+            }
+        }
+        if (vouchers != null) {
+            for (model.promotion.VipVoucher voucher : vouchers) {
+                notificationService.notifyAdminVoucherLifecycle(voucher);
+            }
+        }
+        if (coupons != null) {
+            for (Coupon coupon : coupons) {
+                notificationService.notifyAdminCouponLifecycle(coupon);
+            }
+        }
     }
 }

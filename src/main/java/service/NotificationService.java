@@ -6,7 +6,11 @@ import model.enums.OrderStatus;
 import model.enums.PaymentStatus;
 import model.notification.Notification;
 import model.order.Order;
+import model.product.Product;
+import model.product.ProductVariant;
+import model.promotion.Coupon;
 import model.promotion.Promotion;
+import model.promotion.VipVoucher;
 import model.refund.RefundRequest;
 
 import java.time.LocalDateTime;
@@ -44,6 +48,14 @@ public class NotificationService {
         notification.setEntityType(entityType);
         notification.setEntityId(entityId);
         return notificationDAO.createForRole(notification);
+    }
+
+    private int notifyAdminOnce(String type, String title, String message,
+                                String targetUrl, String entityType, Integer entityId) {
+        if (entityId != null && notificationDAO.existsByRoleTypeAndEntity(ADMIN_ROLE, type, entityType, entityId)) {
+            return 0;
+        }
+        return notifyAdmin(type, title, message, targetUrl, entityType, entityId);
     }
 
     public List<Notification> getUserNotifications(int userId, int page, int pageSize) {
@@ -221,6 +233,133 @@ public class NotificationService {
                 "admin_refund_requested", title, message,
                 "admin/refunds?status=pending", "refund",
                 order.getId());
+    }
+
+    public int notifyAdminVariantStock(ProductVariant variant, Product product) {
+        if (variant == null) {return 0;}
+        int stock = variant.getStockQuantity();
+        if (stock > 10) {return 0;}
+
+        String productName = product != null && product.getName() != null
+                ? product.getName() : "Sản phẩm #" + variant.getProductId();
+        String variantName = variant.getVariantName() != null && !variant.getVariantName().trim().isEmpty()
+                ? variant.getVariantName().trim() : "Biến thể #" + variant.getId();
+
+        if (stock <= 0) {
+            return notifyAdminOnce(
+                    "admin_variant_out_of_stock",
+                    "Biến thể sản phẩm hết hàng",
+                    productName + " - " + variantName + " đã hết hàng.",
+                    "admin/products?stockFilter=out-of-stock",
+                    "product_variant",
+                    variant.getId());
+        }
+
+        String type = stock < 3 ? "admin_variant_need_reorder" : "admin_variant_low_stock";
+        String title = stock < 3 ? "Biến thể cần nhập hàng" : "Biến thể sắp hết hàng";
+        String target = stock < 3 ? "admin/products?stockFilter=need-reorder"
+                : "admin/products?stockFilter=low-stock";
+
+        return notifyAdminOnce(type, title,
+                productName + " - " + variantName + " chỉ còn " + stock + " sản phẩm.",
+                target, "product_variant", variant.getId());
+    }
+
+    public int notifyAdminPromotionLifecycle(Promotion promotion) {
+        if (promotion == null || promotion.getStartDate() == null || promotion.getEndDate() == null) {
+            return 0;
+        }
+
+        LocalDateTime now = LocalDateTime.now();
+        String name = promotion.getName() != null ? promotion.getName() : "Chương trình #" + promotion.getId();
+
+        if (promotion.isActive() && !promotion.getStartDate().isAfter(now) && !promotion.getEndDate().isBefore(now)) {
+            return notifyAdminOnce("admin_promotion_started", "Chương trình khuyến mãi đã đến hạn",
+                    "Chương trình \"" + name + "\" đang trong thời gian hiển thị.",
+                    "admin/promotions?tab=promotion", "promotion", promotion.getId());
+        }
+
+        if (promotion.getEndDate().isBefore(now)) {
+            return notifyAdminOnce("admin_promotion_expired",
+                    "Chương trình khuyến mãi đã hết hạn",
+                    "Chương trình \"" + name + "\" đã hết hạn.",
+                    "admin/promotions?tab=promotion", "promotion", promotion.getId());
+        }
+        return 0;
+    }
+
+    public int notifyAdminCouponLifecycle(Coupon coupon) {
+        if (coupon == null || coupon.getStartDate() == null || coupon.getEndDate() == null) {
+            return 0;
+        }
+
+        LocalDateTime now = LocalDateTime.now();
+        String code = coupon.getCode() != null ? coupon.getCode() : "Coupon #" + coupon.getId();
+        int created = 0;
+
+        if (coupon.isActive() && !coupon.getStartDate().isAfter(now) && !coupon.getEndDate().isBefore(now)) {
+            created += notifyAdminOnce(
+                    "admin_coupon_started", "Mã giảm giá đã đến hạn",
+                    "Mã \"" + code + "\" đang trong thời gian hiển thị.",
+                    "admin/promotions?tab=coupon", "coupon", coupon.getId());
+        }
+
+        if (coupon.getEndDate().isBefore(now)) {
+            created += notifyAdminOnce(
+                    "admin_coupon_expired", "Mã giảm giá đã hết hạn",
+                    "Mã \"" + code + "\" đã hết hạn.",
+                    "admin/promotions?tab=coupon", "coupon", coupon.getId());
+        }
+
+        if (coupon.getClaimLimit() != null && coupon.getCurrentClaims() >= coupon.getClaimLimit()) {
+            created += notifyAdminOnce(
+                    "admin_coupon_claim_limit_reached", "Mã giảm giá đã hết lượt nhận",
+                    "Mã \"" + code + "\" đã đạt giới hạn lượt nhận.",
+                    "admin/promotions?tab=coupon", "coupon", coupon.getId());
+        }
+
+        if (coupon.getMaxUses() != null && coupon.getCurrentUses() >= coupon.getMaxUses()) {
+            created += notifyAdminOnce(
+                    "admin_coupon_use_limit_reached", "Mã giảm giá đã hết lượt sử dụng",
+                    "Mã \"" + code + "\" đã đạt giới hạn lượt sử dụng.",
+                    "admin/promotions?tab=coupon", "coupon",
+                    coupon.getId());
+        }
+        return created;
+    }
+
+    public int notifyAdminVoucherLifecycle(VipVoucher voucher) {
+        if (voucher == null || voucher.getStartDate() == null || voucher.getEndDate() == null) {
+            return 0;
+        }
+
+        LocalDateTime now = LocalDateTime.now();
+        String code = voucher.getCode() != null ? voucher.getCode() : "Voucher #" + voucher.getId();
+        int created = 0;
+
+        if (Boolean.TRUE.equals(voucher.getActive())
+                && !voucher.getStartDate().isAfter(now) && !voucher.getEndDate().isBefore(now)) {
+            created += notifyAdminOnce(
+                    "admin_voucher_started", "Voucher VIP đã đến hạn",
+                    "Voucher \"" + code + "\" đang trong thời gian sử dụng.",
+                    "admin/promotions?tab=voucher", "voucher", voucher.getId());
+        }
+
+        if (voucher.getEndDate().isBefore(now)) {
+            created += notifyAdminOnce(
+                    "admin_voucher_expired", "Voucher VIP đã hết hạn",
+                    "Voucher \"" + code + "\" đã hết hạn.",
+                    "admin/promotions?tab=voucher", "voucher", voucher.getId());
+        }
+
+        if (voucher.getMaxUses() != null && voucher.getCurrentUses() != null
+                && voucher.getCurrentUses() >= voucher.getMaxUses()) {
+            created += notifyAdminOnce(
+                    "admin_voucher_use_limit_reached", "Voucher VIP đã hết lượt sử dụng",
+                    "Voucher \"" + code + "\" đã đạt giới hạn lượt sử dụng.",
+                    "admin/promotions?tab=voucher", "voucher", voucher.getId());
+        }
+        return created;
     }
 
     public int notifyRefundStatusChanged(RefundRequest refund, String status) {
