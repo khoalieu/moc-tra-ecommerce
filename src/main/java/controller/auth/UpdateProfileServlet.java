@@ -1,0 +1,86 @@
+package controller.auth;
+
+import controller.utils.EmailService;
+import dao.DAOFactory;
+import dao.UserDAO;
+import jakarta.servlet.*;
+import jakarta.servlet.http.*;
+import jakarta.servlet.annotation.*;
+import java.io.IOException;
+import java.util.Random;
+
+@WebServlet(name = "UpdateProfileServlet", value = "/auth/update-profile")
+public class UpdateProfileServlet extends HttpServlet {
+    private final UserDAO userDAO = DAOFactory.getInstance().getUserDAO();
+
+    @Override
+    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        request.setCharacterEncoding("UTF-8");
+        HttpSession session = request.getSession();
+        String firstName = request.getParameter("firstName");
+        String lastName = request.getParameter("lastName");
+        String fullName = lastName + " " + firstName;
+        String phone = request.getParameter("phoneFromSession");
+        if (phone == null || phone.trim().isEmpty()) {
+            phone = (String) session.getAttribute("temp_phone");
+        }
+        String label = request.getParameter("addressLabel");
+        if (label == null || label.isEmpty()) label = "Địa chỉ mặc định";
+        String email = request.getParameter("email");
+        String province = request.getParameter("province");
+        String district = request.getParameter("district");
+        String ward = request.getParameter("ward");
+        String addressDetail = request.getParameter("addressDetail");
+        String districtId = request.getParameter("districtId");
+        String wardCode = request.getParameter("wardCode");
+        if (userDAO.isEmailExists(email)) {
+            request.setAttribute("errorMessage", "Lỗi: Email này đã được sử dụng...");
+            request.setAttribute("temp_firstName", firstName);
+            request.setAttribute("temp_lastName", lastName);
+            request.setAttribute("temp_email", email);
+            request.setAttribute("temp_province", province);
+            request.setAttribute("temp_district", district);
+            request.setAttribute("temp_ward", ward);
+            request.setAttribute("temp_addressDetail", addressDetail);
+            request.getRequestDispatcher("/auth/update-profile.jsp").forward(request, response);
+            return;
+        }
+        Random rnd = new Random();
+        String emailOtp = String.format("%06d", rnd.nextInt(999999));
+        long now = System.currentTimeMillis();
+
+        String subject = "Ma xac nhan Email dang ky - Moc Tra Shop";
+        String emailContent = "Xin chào "+fullName+",\n\n"
+                + "Bạn vừa yêu cầu thay đổi địa chỉ email cho tài khoản tại hệ thống Mộc Trà Shop.\n"
+                + "Mã OTP xác thực của bạn là: " + emailOtp + "\n\n"
+                + "Lưu ý: Mã này có hiệu lực trong 5 phút. Vui lòng không chia sẻ mã này cho bất kỳ ai.\n\n"
+                + "Trân trọng,\n"
+                + "Đội ngũ Mộc Trà Shop.";
+
+        try {
+            EmailService.sendEmail(email, subject, emailContent);
+            session.setAttribute("OTP_CODE", emailOtp);
+            session.setAttribute("OTP_PURPOSE", "VERIFY_REGISTER_EMAIL");
+            session.setAttribute("OTP_CREATED_AT", now);
+            session.setAttribute("OTP_LAST_SENT_AT", now);
+            session.setAttribute("TEMP_EMAIL", email);
+            session.setAttribute("TEMP_FIRSTNAME", firstName);
+            session.setAttribute("TEMP_LASTNAME", lastName);
+            session.setAttribute("TEMP_FULLNAME", fullName);
+            session.setAttribute("TEMP_PHONE_ADDR", phone);
+            session.setAttribute("TEMP_LABEL", label);
+            session.setAttribute("TEMP_PROVINCE", province);
+            session.setAttribute("TEMP_DISTRICT", district);
+            session.setAttribute("TEMP_WARD", ward);
+            session.setAttribute("TEMP_ADDRESS", addressDetail);
+            session.setAttribute("TEMP_DISTRICT_ID", districtId);
+            session.setAttribute("TEMP_WARD_CODE", wardCode);
+            request.setAttribute("resendCooldown", 60);
+            request.getRequestDispatcher("/auth/verify-otp.jsp").forward(request, response);
+        } catch (Exception e) {
+            e.printStackTrace();
+            request.setAttribute("errorMessage", "Hệ thống gửi mail gặp sự cố!");
+            request.getRequestDispatcher("/auth/update-profile.jsp").forward(request, response);
+        }
+    }
+}

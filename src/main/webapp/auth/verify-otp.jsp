@@ -25,36 +25,56 @@
         <div class="login-box">
             <div class="login-header">
                 <div class="login-icon-circle">
-                    <i class="fa-solid fa-key"></i>
+                    <%-- Icon tự đổi: Điện thoại cho Register, Chìa khóa cho các luồng khác --%>
+                        <i class="fa-solid ${(sessionScope.OTP_PURPOSE == 'CHANGE_EMAIL' or sessionScope.OTP_PURPOSE == 'VERIFY_REGISTER_EMAIL') ? 'fa-envelope-open-text' : (sessionScope.OTP_PURPOSE == 'REGISTER' ? 'fa-mobile-screen-button' : 'fa-key')}"></i>
                 </div>
-                <h2 class="login-title">Xác nhận mã OTP</h2>
+                <h2 class="login-title">
+                    <c:choose>
+                        <c:when test="${sessionScope.OTP_PURPOSE == 'REGISTER'}">Xác minh Số điện thoại</c:when>
+                        <c:when test="${sessionScope.OTP_PURPOSE == 'VERIFY_REGISTER_EMAIL' or sessionScope.OTP_PURPOSE == 'CHANGE_EMAIL'}">Xác nhận Email mới</c:when>
+                        <c:otherwise>Xác nhận mã OTP</c:otherwise>
+                    </c:choose>
+                </h2>
                 <p class="login-subtitle">
-                    Nhập mã OTP đã được gửi tới email của bạn.
+                    Nhập mã OTP đã được gửi tới
+                    <strong>
+                        <c:choose>
+                            <c:when test="${sessionScope.OTP_PURPOSE == 'REGISTER'}">số điện thoại</c:when>
+                            <c:otherwise>địa chỉ email</c:otherwise>
+                        </c:choose>
+                    </strong> của bạn.
                 </p>
                 <div style="margin-top: 10px; font-weight: 600; color: #333; background: #f0f2f5; padding: 5px 15px; border-radius: 20px; display: inline-block;">
-                    <c:set var="targetMail" value="${not empty sessionScope.NEW_EMAIL ? sessionScope.NEW_EMAIL : sessionScope.RESET_EMAIL}" />
-
                     <c:choose>
-                        <c:when test="${not empty targetMail}">
-                            <c:out value="${targetMail.replaceAll('(?<=.{3}).(?=.*@)', '*')}" />
+                        <c:when test="${sessionScope.OTP_PURPOSE == 'REGISTER'}">
+                            <c:out value="${sessionScope.temp_phone.replaceAll('([0-9]{3})[0-9]{4}([0-9]{3})', '$1****$2')}" />
                         </c:when>
-                        <c:otherwise>Email của bạn</c:otherwise>
+                        <c:when test="${sessionScope.OTP_PURPOSE == 'VERIFY_REGISTER_EMAIL' or sessionScope.OTP_PURPOSE == 'CHANGE_EMAIL'}">
+                            <c:set var="mailTarget" value="${not empty sessionScope.TEMP_EMAIL ? sessionScope.TEMP_EMAIL : sessionScope.NEW_EMAIL}" />
+                            <c:out value="${mailTarget.replaceAll('(?<=.{3}).(?=.*@)', '*')}" />
+                        </c:when>
+                        <c:when test="${sessionScope.OTP_PURPOSE == 'FORGOT_PASSWORD'}">
+                            <c:out value="${sessionScope.RESET_EMAIL.replaceAll('(?<=.{3}).(?=.*@)', '*')}" />
+                        </c:when>
+
+                        <c:otherwise>Thông tin xác thực</c:otherwise>
                     </c:choose>
                 </div>
             </div>
 
             <div class="login-content">
-                <c:if test="${not empty requestScope.otp_display and sessionScope.OTP_PURPOSE != 'FORGOT'}">
-                    <div id="otp-auto-fill" class="otp-demo-container animate-pulse">
-                        <p style="margin: 0; color: #856404;">Mã xác thực của bạn là:</p>
-                        <strong id="source-code">${requestScope.otp_display}</strong>
-                        <span class="quick-fill-hint">
+                <c:if test="${not empty sessionScope.OTP_CODE and sessionScope.OTP_PURPOSE == 'REGISTER'}">
+                    <div id="otp-auto-fill" class="otp-demo-container animate-pulse"
+                         style="cursor:pointer; background:#fff3cd; padding:10px; border-radius:8px; margin-bottom:15px; border:1px dashed #856404;">
+                        <p style="margin: 0; color: #856404; font-size:0.9rem;">Mã xác thực mẫu (chỉ hiện khi test SĐT):</p>
+                        <strong id="source-code" style="font-size:1.2rem; color:#d39e00;">${sessionScope.OTP_CODE}</strong>
+                        <span class="quick-fill-hint" style="display:block; font-size:0.8rem; color:#666;">
                             <i class="fa-solid fa-hand-pointer"></i> Chạm vào đây để điền nhanh
                         </span>
                     </div>
                 </c:if>
                 <form id="otpForm"
-                      action="${pageContext.request.contextPath}/${sessionScope.OTP_PURPOSE == 'CHANGE_EMAIL' ? 'verify-change-email-otp' : (sessionScope.OTP_PURPOSE == 'FORGOT' ? 'verify-otp' : 'verify-register-otp')}"
+                      action="${pageContext.request.contextPath}/${(sessionScope.OTP_PURPOSE == 'CHANGE_EMAIL' or sessionScope.OTP_PURPOSE == 'VERIFY_REGISTER_EMAIL') ? 'verify-change-email-otp' : 'verify-register-otp'}"
                       method="post"
                       autocomplete="off">
                     <div class="otp-input-group">
@@ -79,31 +99,47 @@
 
                 <div class="auth-extra-links">
                     <c:choose>
-                        <c:when test="${sessionScope.OTP_PURPOSE == 'CHANGE_EMAIL'}">
+                        <c:when test="${sessionScope.OTP_PURPOSE == 'CHANGE_EMAIL' or sessionScope.OTP_PURPOSE == 'VERIFY_REGISTER_EMAIL'}">
                             <form action="${pageContext.request.contextPath}/change-email" method="post" style="display:inline;">
                                 <input type="hidden" name="action" value="resend_otp">
                                 <button type="submit" id="resendOtpBtn" class="link-button">
-                                    Gửi lại mã OTP
+                                    <i class="fa-solid fa-rotate-right"></i> Gửi lại mã OTP
                                 </button>
                             </form>
-                            <a href="${pageContext.request.contextPath}/tai-khoan-cua-toi">Hủy đổi email</a>
+                            <a href="${pageContext.request.contextPath}/tai-khoan-cua-toi" class="back-link">Hủy đổi email</a>
                         </c:when>
-                        <c:otherwise>
-                            <div class="resend-section" style="margin-bottom: 15px;">
+                        <c:when test="${sessionScope.OTP_PURPOSE == 'REGISTER'}">
+                            <div class="resend-section">
                                 <p style="font-size: 0.9em; color: #666; margin-bottom: 5px;">Bạn chưa nhận được mã?</p>
-                                <form action="${pageContext.request.contextPath}/forgot-password" method="post" style="display:inline;">
+                                <form action="${pageContext.request.contextPath}/signup" method="post" style="display:inline;">
                                     <input type="hidden" name="action" value="resend">
-                                    <button type="submit" class="link-button" style="font-weight: bold; color: #007bff; border: none; background: none; cursor: pointer; text-decoration: underline;">
-                                        <i class="fa-solid fa-rotate-right"></i> Gửi lại mã OTP
+                                    <button type="submit" id="resendOtpBtn" class="link-button">
+                                        <i class="fa-solid fa-rotate-right"></i> Gửi lại mã qua SĐT
                                     </button>
                                 </form>
                             </div>
-
                             <hr style="border: 0; border-top: 1px solid #eee; margin: 15px 0;">
-
-                            <div class="change-email-section">
-                                <p style="font-size: 0.9em; color: #666; margin-bottom: 5px;">Nhập nhầm địa chỉ email?</p>
-                                <a href="${pageContext.request.contextPath}/forgot-password" class="back-link" style="font-size: 0.95em; color: #dc3545; text-decoration: none; font-weight: 500;">
+                            <div class="change-info-section">
+                                <p style="font-size: 0.9em; color: #666; margin-bottom: 5px;">Sai số điện thoại?</p>
+                                <a href="${pageContext.request.contextPath}/signup" class="back-link" style="color: #dc3545;">
+                                    <i class="fa-solid fa-pen-to-square"></i> Quay lại sửa SĐT
+                                </a>
+                            </div>
+                        </c:when>
+                        <c:otherwise>
+                            <div class="resend-section">
+                                <p style="font-size: 0.9em; color: #666; margin-bottom: 5px;">Chưa nhận được mã?</p>
+                                <form action="${pageContext.request.contextPath}/forgot-password" method="post" style="display:inline;">
+                                    <input type="hidden" name="action" value="resend">
+                                    <button type="submit" id="resendOtpBtn" class="link-button">
+                                        <i class="fa-solid fa-rotate-right"></i> Gửi lại mã qua Email
+                                    </button>
+                                </form>
+                            </div>
+                            <hr style="border: 0; border-top: 1px solid #eee; margin: 15px 0;">
+                            <div class="change-info-section">
+                                <p style="font-size: 0.9em; color: #666; margin-bottom: 5px;">Nhập nhầm email?</p>
+                                <a href="${pageContext.request.contextPath}/forgot-password" class="back-link" style="color: #dc3545;">
                                     <i class="fa-solid fa-pen-to-square"></i> Thay đổi email khác
                                 </a>
                             </div>
