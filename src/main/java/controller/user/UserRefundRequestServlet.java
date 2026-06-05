@@ -16,6 +16,7 @@ import model.enums.PaymentStatus;
 import model.order.Order;
 import model.refund.RefundRequest;
 import model.user.User;
+import service.EcommerceEmailService;
 import service.NotificationService;
 
 import java.io.File;
@@ -92,6 +93,9 @@ public class UserRefundRequestServlet extends HttpServlet {
                 NotificationService notificationService = new NotificationService();
                 notificationService.notifyRefundRequested(order, completingPendingInfo);
                 notificationService.notifyAdminRefundRequested(order, completingPendingInfo);
+                EcommerceEmailService emailService = new EcommerceEmailService();
+                emailService.sendRefundRequestedToUser(user, order);
+                emailService.sendRefundRequestedToAdmin(order);
             }
             setMessage(session,
                     success ? "Yêu cầu hoàn tiền đã được gửi. Shop sẽ xử lý thủ công trong thời gian sớm nhất."
