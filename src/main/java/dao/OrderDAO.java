@@ -482,20 +482,33 @@ public class OrderDAO {
     public boolean updateOrderStatus(int orderId, OrderStatus status) {
         Order oldOrder = getOrderById(orderId);
         String sql = "UPDATE orders SET status = ? WHERE id = ?";
-        try (Connection conn = ds.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+        boolean updated = false;
+        boolean deliveryFailedFromShipping = oldOrder != null
+                && oldOrder.getStatus() == OrderStatus.SHIPPING
+                && status == OrderStatus.DELIVERY_FAILED;
 
-            ps.setString(1, status.name().toLowerCase());
-            ps.setInt(2, orderId);
+        try (Connection conn = ds.getConnection()) {
+            conn.setAutoCommit(false);
+            try {
+                try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                    ps.setString(1, status.name().toLowerCase());
+                    ps.setInt(2, orderId);
+                    updated = ps.executeUpdate() > 0;
+                }
+                if (updated && shouldRestoreStockOnStatusChange(oldOrder, status)) {
+                    restoreOrderStock(conn, oldOrder);
+                }
+                conn.commit();
+            } catch (SQLException e) {
+                conn.rollback();
+                throw e;
+            }
 
-            boolean updated = ps.executeUpdate() > 0;
             if (updated && oldOrder != null && oldOrder.getStatus() != status) {
                 new NotificationService().notifyOrderStatusChanged(oldOrder, status);
                 sendOrderStatusEmail(oldOrder, status);
             }
-            if (updated && oldOrder != null
-                    && oldOrder.getStatus() == OrderStatus.SHIPPING
-                    && status == OrderStatus.DELIVERY_FAILED) {
+            if (updated && deliveryFailedFromShipping) {
                 oldOrder.setStatus(OrderStatus.DELIVERY_FAILED);
                 NotificationService notificationService = new NotificationService();
                 notificationService.notifyAdminDeliveryFailed(oldOrder);
@@ -510,6 +523,43 @@ public class OrderDAO {
             e.printStackTrace();
         }
         return false;
+    }
+
+    private boolean shouldRestoreStockOnStatusChange(Order oldOrder, OrderStatus newStatus) {
+        if (oldOrder == null || oldOrder.getStatus() == null || newStatus == null) {
+            return false;
+        }
+        OrderStatus oldStatus = oldOrder.getStatus();
+        boolean movingToReturnStockStatus = newStatus == OrderStatus.CANCELLED
+                || newStatus == OrderStatus.DELIVERY_FAILED;
+        boolean alreadyReturnedStock = oldStatus == OrderStatus.CANCELLED
+                || oldStatus == OrderStatus.DELIVERY_FAILED;
+
+        return movingToReturnStockStatus && !alreadyReturnedStock && oldStatus != newStatus;
+    }
+
+    private void restoreOrderStock(Connection conn, Order order) throws SQLException {
+        if (order == null || order.getItems() == null) {return;}
+
+        for (OrderItem item : order.getItems()) {
+            Integer variantId = item.getVariantId();
+
+            if (variantId != null && variantId > 0) {
+                String sqlUpdateVariant = "UPDATE product_variants SET stock_quantity = stock_quantity + ? WHERE id = ?";
+                try (PreparedStatement psStock = conn.prepareStatement(sqlUpdateVariant)) {
+                    psStock.setInt(1, item.getQuantity());
+                    psStock.setInt(2, variantId);
+                    psStock.executeUpdate();
+                }
+            } else {
+                String sqlUpdateStock = "UPDATE products SET stock_quantity = stock_quantity + ? WHERE id = ?";
+                try (PreparedStatement psStock = conn.prepareStatement(sqlUpdateStock)) {
+                    psStock.setInt(1, item.getQuantity());
+                    psStock.setInt(2, item.getProductId());
+                    psStock.executeUpdate();
+                }
+            }
+        }
     }
 
     private Order mapRowToOrder(ResultSet rs) throws SQLException {

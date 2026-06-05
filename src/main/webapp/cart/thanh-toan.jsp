@@ -162,7 +162,7 @@
                             </div>
                         </div>
 
-                        <c:if test="${sessionScope.user != null && sessionScope.user.isVip}">
+                        <c:if test="${sessionScope.user != null && sessionScope.user.isVip && not empty userVipVouchers}">
                             <div class="checkout-card vip-voucher-card">
                                 <h2 class="checkout-card__title">💎 Voucher Khách Hàng VIP</h2>
 
@@ -209,11 +209,11 @@
                             <h2 class="checkout-card__title">🎟️ Mã giảm giá</h2>
 
                             <div class="coupon-checkout-section">
+                                <c:if test="${not empty userCoupons}">
                                 <div class="form-field">
                                     <label for="selectedCoupon">Chọn mã đã nhận:</label>
 
-                                    <c:choose>
-                                        <c:when test="${not empty userCoupons}">
+
                                             <select id="selectedCoupon" class="form-control">
                                                 <option value="">-- Không áp dụng mã --</option>
 
@@ -239,19 +239,12 @@
                                                     </option>
                                                 </c:forEach>
                                             </select>
-                                        </c:when>
-
-                                        <c:otherwise>
-                                            <div style="padding: 12px; background: #f8f9fa; border-radius: 8px; color: #666;">
-                                                Bạn chưa có mã ưu đãi nào.
-                                            </div>
-                                        </c:otherwise>
-                                    </c:choose>
                                 </div>
 
                                 <div style="margin: 15px 0; text-align: center; color: #777;">
                                     hoặc
                                 </div>
+                                </c:if>
 
                                 <div class="form-field">
                                     <label for="couponCodeInput">Nhập mã giảm giá:</label>
