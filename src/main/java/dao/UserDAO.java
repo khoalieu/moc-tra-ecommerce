@@ -804,6 +804,24 @@ public class UserDAO {
         return null;
     }
 
+    public List<String> getActiveAdminEmails() {
+        List<String> emails = new ArrayList<>();
+        String sql = "SELECT email FROM users WHERE role = 'admin' AND is_active = 1 " +
+                "AND email IS NOT NULL AND email <> ''";
+
+        try (Connection conn = ds.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+
+            while (rs.next()) {
+                emails.add(rs.getString("email"));
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return emails;
+    }
+
     public void resetFailedAttempts(int userId) {
         String query = "UPDATE users SET failed_attempts = 0, lock_until = NULL WHERE id = ?";
         try (Connection conn = ds.getConnection();
