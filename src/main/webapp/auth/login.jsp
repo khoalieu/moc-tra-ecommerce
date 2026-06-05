@@ -1,4 +1,5 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -6,19 +7,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Đăng Nhập</title>
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/main.css">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/update-profile.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css" integrity="sha512-2SwdPD6INVrV/lHTZbO2nodKhrnDdJK9/kg2XD1r9uGqPo1cUbujc+IYdlYdEErWNu69gVcYgdxlmVmzTWnetw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
-
-    <style>
-        .error-message {
-            color: #dc3545;
-            text-align: center;
-            margin-bottom: 10px;
-            font-style: italic;
-            font-size: 0.9rem;
-        }
-
-    </style>
 </head>
 <body>
 <jsp:include page="/common/header.jsp"></jsp:include>
@@ -35,7 +26,13 @@
 
 
         <div class="login-content">
-
+            <c:if test="${not empty sessionScope.msg}">
+                <div id="msg-alert" class="success-alert">
+                    <i class="fa-solid fa-circle-check"></i>
+                    <span>${sessionScope.msg}</span>
+                </div>
+                <c:remove var="msg" scope="session" />
+            </c:if>
             <p class="error-message">${errorMessage}</p>
 
             <form action="${pageContext.request.contextPath}/login" method="post" autocomplete="on">
@@ -96,5 +93,20 @@
     <i class="fa-solid fa-chevron-up"></i>
 </button>
 <script src="${pageContext.request.contextPath}/assets/js/main.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const alertBox = document.getElementById('msg-alert');
+        if (alertBox) {
+            setTimeout(function() {
+                alertBox.style.transition = "opacity 1s ease, transform 1s ease";
+                alertBox.style.opacity = "0";
+                alertBox.style.transform = "translateY(-10px)";
+                setTimeout(function() {
+                    alertBox.remove();
+                }, 1000);
+            }, 4000);
+        }
+    });
+</script>
 </body>
 </html>

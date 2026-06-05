@@ -99,7 +99,7 @@ public class RegisterServlet extends HttpServlet {
             session.setAttribute("temp_username", user);
             session.setAttribute("temp_password", pass);
             session.setAttribute("temp_phone", phone);
-            session.setAttribute("otp_code", otp);
+            session.setAttribute("OTP_CODE", otp);
             System.out.println(">>> MÃ OTP CỦA BẠN LÀ: " + otp);
             request.setAttribute("otp_display", otp);
             request.getRequestDispatcher("/auth/verify-otp.jsp").forward(request,response);
