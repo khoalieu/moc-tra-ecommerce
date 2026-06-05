@@ -1,0 +1,135 @@
+package controller.user;
+
+import jakarta.servlet.ServletException;
+import jakarta.servlet.annotation.WebServlet;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
+import model.notification.Notification;
+import model.user.User;
+import service.NotificationService;
+
+import java.io.IOException;
+import java.util.List;
+
+@WebServlet(name = "UserNotificationServlet", value = "/thong-bao")
+public class UserNotificationServlet extends HttpServlet {
+    private final NotificationService notificationService = new NotificationService();
+
+    @Override
+    protected void doGet(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        HttpSession session = request.getSession();
+        User user = (User) session.getAttribute("user");
+
+        String action = request.getParameter("action");
+        if ("summary".equals(action)) {
+            handleSummary(response, user);
+            return;
+        }
+
+        if (user == null) {
+            response.sendRedirect(request.getContextPath() + "/auth/login.jsp?redirect=/thong-bao");
+            return;
+        }
+
+        if ("markAll".equals(action)) {
+            notificationService.markAllAsReadForUser(user.getId());
+            response.sendRedirect(request.getContextPath() + "/thong-bao");
+            return;
+        }
+        if ("read".equals(action)) {
+            handleRead(request, response, user);
+            return;
+        }
+        int page = parsePositiveInt(request.getParameter("page"), 1);
+        int pageSize = 10;
+        List<Notification> notifications = notificationService.getUserNotifications(user.getId(), page, pageSize);
+
+        request.setAttribute("notifications", notifications);
+        request.setAttribute("unreadCount", notificationService.countUnreadForUser(user.getId()));
+        request.setAttribute("currentPage", page);
+        request.setAttribute("hasNextPage", notifications.size() == pageSize);
+        request.getRequestDispatcher("/user/notifications.jsp").forward(request, response);
+    }
+
+    private void handleSummary(HttpServletResponse response, User user) throws IOException {
+        response.setContentType("application/json;charset=UTF-8");
+
+        if (user == null) {
+            response.getWriter().write("{\"unreadCount\":0,\"notifications\":[]}");
+            return;
+        }
+
+        int unreadCount = notificationService.countUnreadForUser(user.getId());
+        List<Notification> notifications = notificationService.getLatestUserNotifications(user.getId(), 7);
+
+        StringBuilder json = new StringBuilder();
+        json.append("{\"unreadCount\":").append(unreadCount).append(",\"notifications\":[");
+        for (int i = 0; i < notifications.size(); i++) {
+            Notification notification = notifications.get(i);
+            if (i > 0) {
+                json.append(",");
+            }
+            json.append("{")
+                    .append("\"id\":").append(notification.getId()).append(",")
+                    .append("\"title\":\"").append(escapeJson(notification.getTitle())).append("\",")
+                    .append("\"read\":").append(notification.isRead())
+                    .append("}");
+        }
+        json.append("]}");
+
+        response.getWriter().write(json.toString());
+    }
+
+    private void handleRead(HttpServletRequest request, HttpServletResponse response, User user) throws IOException {
+        int notificationId = parsePositiveInt(request.getParameter("id"), 0);
+        if (notificationId <= 0) {
+            response.sendRedirect(request.getContextPath() + "/thong-bao");
+            return;
+        }
+
+        Notification notification = notificationService.getUserNotification(notificationId, user.getId());
+        if (notification == null) {
+            response.sendRedirect(request.getContextPath() + "/thong-bao");
+            return;
+        }
+
+        notificationService.markAsReadForUser(notificationId, user.getId());
+        String targetUrl = normalizeTargetUrl(notification.getTargetUrl());
+        response.sendRedirect(request.getContextPath() + targetUrl);
+    }
+
+    private String normalizeTargetUrl(String targetUrl) {
+        if (targetUrl == null || targetUrl.trim().isEmpty()) {
+            return "/thong-bao";
+        }
+        String value = targetUrl.trim();
+        if (value.contains("://") || value.startsWith("//")) {
+            return "/thong-bao";
+        }
+        return value.startsWith("/") ? value : "/" + value;
+    }
+
+    private int parsePositiveInt(String value, int defaultValue) {
+        try {
+            int parsed = Integer.parseInt(value);
+            return parsed > 0 ? parsed : defaultValue;
+        } catch (Exception e) {
+            return defaultValue;
+        }
+    }
+
+    private String escapeJson(String value) {
+        if (value == null) {
+            return "";
+        }
+
+        return value
+                .replace("\\", "\\\\")
+                .replace("\"", "\\\"")
+                .replace("\r", "\\r")
+                .replace("\n", "\\n");
+    }
+}

@@ -1,6 +1,7 @@
 package dao;
 
 import model.promotion.Coupon;
+import service.NotificationService;
 
 import javax.sql.DataSource;
 import java.sql.*;
@@ -126,6 +127,7 @@ public class CouponDAO {
             }
 
             conn.commit();
+            new NotificationService().notifyAdminCouponLifecycle(getCouponById(couponId));
             return "SUCCESS";
 
         } catch (SQLIntegrityConstraintViolationException e) {
@@ -383,6 +385,7 @@ public class CouponDAO {
             }
 
             conn.commit();
+            new NotificationService().notifyAdminCouponLifecycle(getCouponById(couponId));
             return true;
 
         } catch (Exception e) {
@@ -513,6 +516,24 @@ public class CouponDAO {
         }
 
         return list;
+    }
+
+    public Coupon getCouponById(int couponId) {
+        String sql = "SELECT * FROM coupons WHERE id = ?";
+
+        try (Connection conn = ds.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, couponId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return mapCoupon(rs);
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 
     public boolean insertCoupon(Coupon coupon) {

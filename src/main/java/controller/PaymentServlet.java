@@ -14,6 +14,7 @@ import model.order.Order;
 import model.payment.PaymentTransaction;
 import model.user.User;
 import controller.utils.PaymentResult;
+import service.NotificationService;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -151,6 +152,7 @@ public class PaymentServlet extends HttpServlet {
 
                 txDAO.markExpiredById(payment.getId());
                 orderDAO.updatePaymentStatus(orderId, PaymentStatus.EXPIRED);
+                new NotificationService().notifyPaymentStatusChanged(order, PaymentStatus.EXPIRED);
 
                 data.put("paymentStatus", "EXPIRED");
                 response.getWriter().write(gson.toJson(data));
@@ -191,6 +193,17 @@ public class PaymentServlet extends HttpServlet {
         String orderId = request.getParameter("orderId");
 
         if (orderId != null && !orderId.isEmpty()) {
+            try {
+                int parsedOrderId = Integer.parseInt(orderId);
+                OrderDAO orderDAO = DAOFactory.getInstance().getOrderDAO();
+                Order order = orderDAO.getOrderById(parsedOrderId);
+                if (order != null && order.getPaymentStatus() == PaymentStatus.PENDING) {
+                    orderDAO.updatePaymentStatus(parsedOrderId, PaymentStatus.FAILED);
+                    new NotificationService().notifyPaymentStatusChanged(order, PaymentStatus.FAILED);
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
             response.sendRedirect(request.getContextPath() + "/hoa-don?id=" + orderId);
         } else {
             response.sendRedirect(request.getContextPath() + "/don-hang");
@@ -277,6 +290,7 @@ public class PaymentServlet extends HttpServlet {
 
             orderDAO.updatePaymentStatus(order.getId(), PaymentStatus.PAID);
             txDAO.markPaidByProviderOrderId(providerOrderId, rawBody);
+            new NotificationService().notifyPaymentStatusChanged(order, PaymentStatus.PAID);
 
             System.out.println("Đã cập nhật PAID cho orderId = " + order.getId()
                     + ", providerOrderId = " + providerOrderId);
@@ -342,6 +356,7 @@ public class PaymentServlet extends HttpServlet {
             if (oldTx != null && "pending".equalsIgnoreCase(oldTx.getTransactionStatus())) {
                 txDAO.markExpiredById(oldTx.getId());
                 orderDAO.updatePaymentStatus(orderId, PaymentStatus.EXPIRED);
+                new NotificationService().notifyPaymentStatusChanged(order, PaymentStatus.EXPIRED);
             }
 
             PaymentResult res = "bank".equalsIgnoreCase(order.getPaymentMethod())

@@ -383,6 +383,119 @@ public class ProductDAO {
         return 0;
     }
 
+    public List<Product> getAdminProducts(List<Integer> categoryIds, Integer promotionId, String promotionStatus,
+                                          String stockFilter, String sort, Double minPrice, Double maxPrice,
+                                          String search, int index, int size, String status,
+                                          int reorderThreshold, int lowStockThreshold) {
+        List<Product> list = new ArrayList<>();
+        List<Object> params = new ArrayList<>();
+        List<String> keywords = splitSearchKeywords(search);
+
+        StringBuilder sql = new StringBuilder(
+                "SELECT p.*, " +
+                        "(SELECT pi.promotion_id FROM promotion_items pi JOIN promotions pr ON pr.id = pi.promotion_id " +
+                        "   WHERE pi.product_id = p.id AND pr.is_active = 1 AND pr.start_date <= NOW() AND pr.end_date >= NOW() LIMIT 1) AS current_promo_id, " +
+                        "(SELECT pr.discount_type FROM promotion_items pi JOIN promotions pr ON pr.id = pi.promotion_id " +
+                        "   WHERE pi.product_id = p.id AND pr.is_active = 1 AND pr.start_date <= NOW() AND pr.end_date >= NOW() LIMIT 1) AS current_promo_type, " +
+                        "(SELECT pr.discount_value FROM promotion_items pi JOIN promotions pr ON pr.id = pi.promotion_id " +
+                        "   WHERE pi.product_id = p.id AND pr.is_active = 1 AND pr.start_date <= NOW() AND pr.end_date >= NOW() LIMIT 1) AS current_promo_value, " +
+                        "(SELECT COUNT(*) FROM product_variants v WHERE v.product_id = p.id AND v.is_active = 1 " +
+                        "   AND v.stock_quantity > 0 AND v.stock_quantity < ?) AS low_stock_variant_count, " +
+                        "(SELECT GROUP_CONCAT(CONCAT(v.variant_name, ' còn ', v.stock_quantity) ORDER BY v.stock_quantity ASC SEPARATOR ', ') " +
+                        "   FROM product_variants v WHERE v.product_id = p.id AND v.is_active = 1 " +
+                        "   AND v.stock_quantity > 0 AND v.stock_quantity < ?) AS low_stock_variant_summary " +
+                        "FROM products p " +
+                        "LEFT JOIN categories c ON c.id = p.category_id " +
+                        "WHERE 1=1 "
+        );
+        params.add(reorderThreshold);
+        params.add(reorderThreshold);
+
+        appendAdminProductFilters(sql, params, categoryIds, promotionId, promotionStatus, stockFilter,
+                minPrice, maxPrice, search, keywords, status, reorderThreshold, lowStockThreshold);
+        appendAdminProductSort(sql, params, sort, search, keywords);
+        sql.append(" LIMIT ? OFFSET ?");
+        params.add(size);
+        params.add((index - 1) * size);
+
+        try (Connection conn = ds.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+            setParams(ps, params);
+
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                Product p = new Product();
+                p.setId(rs.getInt("id"));
+                p.setName(rs.getString("name"));
+                p.setSlug(rs.getString("slug"));
+                p.setDescription(rs.getString("description"));
+                p.setShortDescription(rs.getString("short_description"));
+                p.setPrice(rs.getDouble("price"));
+                p.setSalePrice(rs.getDouble("sale_price"));
+                p.setSku(rs.getString("sku"));
+                p.setStockQuantity(rs.getInt("stock_quantity"));
+                p.setCategoryId(rs.getInt("category_id"));
+                p.setImageUrl(rs.getString("image_url"));
+                p.setBestseller(rs.getBoolean("is_bestseller"));
+
+                int currentPromoId = rs.getInt("current_promo_id");
+                if (!rs.wasNull()) {
+                    p.setCurrentPromotionId(currentPromoId);
+                }
+                p.setCurrentPromotionType(rs.getString("current_promo_type"));
+
+                double promoValue = rs.getDouble("current_promo_value");
+                if (!rs.wasNull()) {
+                    p.setCurrentPromotionValue(promoValue);
+                }
+
+                p.setLowStockVariantCount(rs.getInt("low_stock_variant_count"));
+                p.setLowStockVariantSummary(rs.getString("low_stock_variant_summary"));
+
+                String statusStr = rs.getString("status");
+                if (statusStr != null) {
+                    try {
+                        p.setStatus(ProductStatus.valueOf(statusStr.toUpperCase()));
+                    } catch (IllegalArgumentException e) {
+                        p.setStatus(ProductStatus.ACTIVE);
+                    }
+                }
+                list.add(p);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+
+    public int countAdminProducts(List<Integer> categoryIds, Integer promotionId, String promotionStatus,
+                                  String stockFilter, Double minPrice, Double maxPrice, String search,
+                                  String status, int reorderThreshold, int lowStockThreshold) {
+        List<Object> params = new ArrayList<>();
+        List<String> keywords = splitSearchKeywords(search);
+        StringBuilder sql = new StringBuilder(
+                "SELECT COUNT(DISTINCT p.id) FROM products p " +
+                        "LEFT JOIN categories c ON c.id = p.category_id " +
+                        "WHERE 1=1 "
+        );
+
+        appendAdminProductFilters(sql, params, categoryIds, promotionId, promotionStatus, stockFilter,
+                minPrice, maxPrice, search, keywords, status, reorderThreshold, lowStockThreshold);
+
+        try (Connection conn = ds.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+            setParams(ps, params);
+
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                return rs.getInt(1);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return 0;
+    }
+
     public double[] getActiveProductPriceRange() {
         return getProductPriceRange(null, null, null, "active");
     }
@@ -501,6 +614,165 @@ public class ProductDAO {
                 sql.append(", ");
             }
             sql.append("?");
+        }
+    }
+
+    private void appendAdminProductFilters(StringBuilder sql, List<Object> params, List<Integer> categoryIds,
+                                           Integer promotionId, String promotionStatus, String stockFilter,
+                                           Double minPrice, Double maxPrice, String search, List<String> keywords, String status,
+                                           int reorderThreshold, int lowStockThreshold) {
+        if (categoryIds != null && !categoryIds.isEmpty()) {
+            sql.append(" AND p.category_id IN (");
+            appendPlaceholders(sql, categoryIds.size());
+            sql.append(") ");
+            params.addAll(categoryIds);
+        }
+
+        if (minPrice != null) {
+            sql.append(" AND (CASE WHEN p.sale_price > 0 THEN p.sale_price ELSE p.price END) >= ? ");
+            params.add(minPrice);
+        }
+
+        if (maxPrice != null) {
+            sql.append(" AND (CASE WHEN p.sale_price > 0 THEN p.sale_price ELSE p.price END) <= ? ");
+            params.add(maxPrice);
+        }
+
+        if (promotionId != null) {
+            sql.append(" AND EXISTS (SELECT 1 FROM promotion_items pi WHERE pi.product_id = p.id AND pi.promotion_id = ?) ");
+            params.add(promotionId);
+        } else if ("active".equals(promotionStatus)) {
+            sql.append(" AND EXISTS (SELECT 1 FROM promotion_items pi JOIN promotions pr ON pr.id = pi.promotion_id ");
+            sql.append("WHERE pi.product_id = p.id AND pr.is_active = 1 AND pr.start_date <= NOW() AND pr.end_date >= NOW()) ");
+        } else if ("discounted".equals(promotionStatus)) {
+            sql.append(" AND (p.sale_price > 0 ");
+            sql.append("OR EXISTS (SELECT 1 FROM promotion_items pi JOIN promotions pr ON pr.id = pi.promotion_id ");
+            sql.append("WHERE pi.product_id = p.id AND pr.is_active = 1 AND pr.start_date <= NOW() AND pr.end_date >= NOW()) ");
+            sql.append("OR EXISTS (SELECT 1 FROM product_variants v WHERE v.product_id = p.id AND v.is_active = 1 AND v.sale_price > 0)) ");
+        } else if ("none".equals(promotionStatus)) {
+            sql.append(" AND NOT EXISTS (SELECT 1 FROM promotion_items pi JOIN promotions pr ON pr.id = pi.promotion_id ");
+            sql.append("WHERE pi.product_id = p.id AND pr.is_active = 1 AND pr.start_date <= NOW() AND pr.end_date >= NOW()) ");
+        }
+
+        if (!keywords.isEmpty()) {
+            sql.append(" AND (");
+            for (int i = 0; i < keywords.size(); i++) {
+                if (i > 0) {
+                    sql.append(" OR ");
+                }
+                sql.append("LOWER(p.name) LIKE ? OR LOWER(IFNULL(p.slug, '')) LIKE ? ");
+                sql.append("OR LOWER(IFNULL(p.sku, '')) LIKE ? OR LOWER(IFNULL(c.name, '')) LIKE ? ");
+                sql.append("OR EXISTS (SELECT 1 FROM product_variants v WHERE v.product_id = p.id ");
+                sql.append("AND (LOWER(IFNULL(v.sku, '')) LIKE ? OR LOWER(IFNULL(v.variant_name, '')) LIKE ?)) ");
+
+                String keywordLike = "%" + keywords.get(i) + "%";
+                for (int j = 0; j < 6; j++) {
+                    params.add(keywordLike);
+                }
+            }
+            sql.append(") ");
+        }
+
+        if (status != null && !status.isEmpty()) {
+            if ("active".equals(status)) {
+                sql.append(" AND p.status = 'active' ");
+            } else if ("inactive".equals(status)) {
+                sql.append(" AND p.status = 'inactive' ");
+            } else if ("out-of-stock".equals(status)) {
+                sql.append(" AND (p.status = 'out_of_stock' OR p.stock_quantity = 0 ");
+                sql.append("OR EXISTS (SELECT 1 FROM product_variants v WHERE v.product_id = p.id AND v.is_active = 1 AND v.stock_quantity = 0)) ");
+            }
+        }
+
+        if ("in-stock".equals(stockFilter)) {
+            sql.append(" AND (p.stock_quantity > 0 OR EXISTS (SELECT 1 FROM product_variants v WHERE v.product_id = p.id AND v.is_active = 1 AND v.stock_quantity > 0)) ");
+        } else if ("need-reorder".equals(stockFilter)) {
+            sql.append(" AND ((p.stock_quantity > 0 AND p.stock_quantity < ?) ");
+            sql.append("OR EXISTS (SELECT 1 FROM product_variants v WHERE v.product_id = p.id AND v.is_active = 1 AND v.stock_quantity > 0 AND v.stock_quantity < ?)) ");
+            params.add(reorderThreshold);
+            params.add(reorderThreshold);
+        } else if ("low-stock".equals(stockFilter)) {
+            sql.append(" AND ((p.stock_quantity >= ? AND p.stock_quantity <= ?) ");
+            sql.append("OR EXISTS (SELECT 1 FROM product_variants v WHERE v.product_id = p.id AND v.is_active = 1 AND v.stock_quantity >= ? AND v.stock_quantity <= ?)) ");
+            params.add(reorderThreshold);
+            params.add(lowStockThreshold);
+            params.add(reorderThreshold);
+            params.add(lowStockThreshold);
+        } else if ("out-of-stock".equals(stockFilter)) {
+            sql.append(" AND (p.stock_quantity = 0 OR EXISTS (SELECT 1 FROM product_variants v WHERE v.product_id = p.id AND v.is_active = 1 AND v.stock_quantity = 0)) ");
+        }
+    }
+
+    private void appendAdminProductSort(StringBuilder sql, List<Object> params, String sort, String search, List<String> keywords) {
+        sql.append(" ORDER BY ");
+
+        if (!keywords.isEmpty()) {
+            String phrase = search != null ? search.trim().toLowerCase() : "";
+            String phraseLike = "%" + phrase + "%";
+            String phraseStart = phrase + "%";
+
+            sql.append("CASE WHEN LOWER(p.name) = ? THEN 10000 ELSE 0 END DESC, ");
+            sql.append("CASE WHEN LOWER(p.name) LIKE ? THEN 9000 ELSE 0 END DESC, ");
+            sql.append("CASE WHEN LOWER(p.name) LIKE ? THEN 8000 ELSE 0 END DESC, ");
+
+            sql.append("CASE WHEN ");
+            for (int i = 0; i < keywords.size(); i++) {
+                if (i > 0) {
+                    sql.append(" AND ");
+                }
+                sql.append("LOWER(p.name) LIKE ? ");
+            }
+            sql.append("THEN 7000 ELSE 0 END DESC, ");
+
+            sql.append("(");
+            for (int i = 0; i < keywords.size(); i++) {
+                if (i > 0) {
+                    sql.append(" + ");
+                }
+                sql.append("CASE WHEN LOWER(p.name) LIKE ? THEN 1 ELSE 0 END ");
+            }
+            sql.append(") DESC, ");
+
+            sql.append("CASE WHEN LOWER(p.name) LIKE ? THEN 1 ELSE 0 END DESC, ");
+            sql.append("CHAR_LENGTH(p.name) ASC, ");
+
+            params.add(phrase);
+            params.add(phraseStart);
+            params.add(phraseLike);
+            for (String keyword : keywords) {
+                params.add("%" + keyword + "%");
+            }
+            for (String keyword : keywords) {
+                params.add("%" + keyword + "%");
+            }
+            params.add("%" + keywords.get(0) + "%");
+        }
+
+        if ("oldest".equals(sort)) {
+            sql.append("p.created_at ASC ");
+        } else if ("price-asc".equals(sort)) {
+            sql.append("(CASE WHEN p.sale_price > 0 THEN p.sale_price ELSE p.price END) ASC ");
+        } else if ("price-desc".equals(sort)) {
+            sql.append("(CASE WHEN p.sale_price > 0 THEN p.sale_price ELSE p.price END) DESC ");
+        } else if ("stock-asc".equals(sort)) {
+            sql.append("p.stock_quantity ASC ");
+        } else if ("name-asc".equals(sort)) {
+            sql.append("p.name ASC ");
+        } else {
+            sql.append("p.created_at DESC ");
+        }
+    }
+
+    private void setParams(PreparedStatement ps, List<Object> params) throws SQLException {
+        for (int i = 0; i < params.size(); i++) {
+            Object value = params.get(i);
+            if (value instanceof Integer) {
+                ps.setInt(i + 1, (Integer) value);
+            } else if (value instanceof Double) {
+                ps.setDouble(i + 1, (Double) value);
+            } else {
+                ps.setString(i + 1, String.valueOf(value));
+            }
         }
     }
 

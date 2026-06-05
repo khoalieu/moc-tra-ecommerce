@@ -137,6 +137,9 @@ public class DAOFactory {
     public PaymentTransactionDAO getPaymentTransactionDAO() {
         return new PaymentTransactionDAO(dataSource);
     }
+    public NotificationDAO getNotificationDAO() {
+        return new NotificationDAO(dataSource);
+    }
     public GHNShippingDAO getGHNShippingDAO() {
         return new GHNShippingDAO();
     }

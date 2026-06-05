@@ -395,3 +395,57 @@ ALTER TABLE orders
 
 ALTER TABLE payment_transactions
     ADD COLUMN expired_at DATETIME NULL AFTER created_at;
+CREATE TABLE refund_requests (
+                                 id INT AUTO_INCREMENT PRIMARY KEY,
+                                 order_id INT NOT NULL,
+                                 user_id INT NOT NULL,
+                                 amount DECIMAL(12,2) NOT NULL,
+                                 reason TEXT NOT NULL,
+                                 receive_method VARCHAR(20) NULL,
+                                 account_holder VARCHAR(120) NULL,
+                                 account_number VARCHAR(80) NULL,
+                                 qr_image_url VARCHAR(255) NULL,
+                                 note TEXT NULL,
+                                 status VARCHAR(20) NOT NULL DEFAULT 'pending',
+                                 admin_note TEXT NULL,
+                                 processed_by INT NULL,
+                                 created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                                 processed_at TIMESTAMP NULL,
+                                 CONSTRAINT fk_refund_requests_order
+                                     FOREIGN KEY (order_id) REFERENCES orders(id),
+                                 CONSTRAINT fk_refund_requests_user
+                                     FOREIGN KEY (user_id) REFERENCES users(id),
+                                 INDEX idx_refund_requests_order_id (order_id),
+                                 INDEX idx_refund_requests_user_id (user_id),
+                                 INDEX idx_refund_requests_status (status)
+);
+DROP TABLE IF EXISTS notifications;
+
+CREATE TABLE notifications (
+                               id INT AUTO_INCREMENT PRIMARY KEY,
+                               user_id INT NULL,
+                               recipient_role VARCHAR(50) NULL,
+                               type VARCHAR(50) NOT NULL,
+                               title VARCHAR(255) NOT NULL,
+                               message TEXT NULL,
+                               target_url VARCHAR(500) NULL,
+                               entity_type VARCHAR(50) NULL,
+                               entity_id INT NULL,
+                               is_read TINYINT(1) NOT NULL DEFAULT 0,
+                               read_at DATETIME NULL,
+                               created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                               CONSTRAINT fk_notifications_user
+                                   FOREIGN KEY (user_id) REFERENCES users(id)
+                                       ON DELETE CASCADE,
+                               CONSTRAINT chk_notifications_recipient
+                                   CHECK (user_id IS NOT NULL OR recipient_role IS NOT NULL)
+);
+
+CREATE INDEX idx_notifications_user_read_created
+    ON notifications (user_id, is_read, created_at);
+
+CREATE INDEX idx_notifications_role_read_created
+    ON notifications (recipient_role, is_read, created_at);
+
+CREATE INDEX idx_notifications_entity
+    ON notifications (entity_type, entity_id);

@@ -12,6 +12,7 @@ import jakarta.servlet.http.*;
 import model.enums.PaymentStatus;
 import model.order.Order;
 import model.payment.PaymentTransaction;
+import service.NotificationService;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -138,10 +139,12 @@ public class MomoServlet extends HttpServlet {
             if (resultCode == 0) {
                 txDAO.markPaidByProviderOrderId(orderNumber, rawBody);
                 orderDAO.updatePaymentStatus(tx.getOrderId(), PaymentStatus.PAID);
+                new NotificationService().notifyPaymentStatusChanged(order, PaymentStatus.PAID);
                 System.out.println("Đã cập nhật PAID cho orderId = " + tx.getOrderId());
             } else {
                 txDAO.updateStatusByProviderOrderId(orderNumber, "failed", rawBody);
                 orderDAO.updatePaymentStatus(tx.getOrderId(), PaymentStatus.FAILED);
+                new NotificationService().notifyPaymentStatusChanged(order, PaymentStatus.FAILED);
                 System.out.println("MoMo thanh toán thất bại cho orderId = " + tx.getOrderId());
             }
             response.setStatus(HttpServletResponse.SC_NO_CONTENT);
