@@ -354,6 +354,7 @@ public class CheckoutServlet extends HttpServlet {
                             ? productDAO.getProductById(variant.getProductId())
                             : null;
                     notificationService.notifyAdminVariantStock(variant, product);
+                    ecommerceEmailService.sendVariantStockAlertToAdmin(variant, product);
                 }
             }
             if (appliedCouponId != null) {

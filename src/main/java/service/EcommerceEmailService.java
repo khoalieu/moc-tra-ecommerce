@@ -104,7 +104,7 @@ public class EcommerceEmailService {
     }
 
     public void sendVariantStockAlertToAdmin(ProductVariant variant, Product product) {
-        if (variant == null || variant.getStockQuantity() > 10) {return;}
+        if (variant == null || !shouldSendStockAlertEmail(variant.getStockQuantity())) {return;}
         String productName = product != null && product.getName() != null
                 ? product.getName()
                 : "San pham #" + variant.getProductId();
@@ -116,6 +116,10 @@ public class EcommerceEmailService {
         String body = productName + " - " + variantName + " hien con " + stock + " san pham.\n"
                 + "Admin can kiem tra va nhap hang neu can.";
         sendToAdmins(subject + " - " + productName, body);
+    }
+
+    private boolean shouldSendStockAlertEmail(int stock) {
+        return stock <= 0 || stock == 2 || stock == 10;
     }
 
     private void sendToUser(User user, String subject, String body) {
