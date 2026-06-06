@@ -13,7 +13,7 @@ public class GoogleUtils {
 private static final java.util.Properties PROPS = loadProperties();
     private static final String GOOGLE_CLIENT_ID = PROPS.getProperty("GOOGLE_CLIENT_ID");
     private static final String GOOGLE_CLIENT_SECRET = PROPS.getProperty("GOOGLE_CLIENT_SECRET");
-    public static final String GOOGLE_REDIRECT_URI = "http://localhost:8080/the_tea_house_project_war_exploded/login-google";
+
     public static final String GOOGLE_LINK_GET_TOKEN = "https://accounts.google.com/o/oauth2/token";
     public static final String GOOGLE_LINK_GET_USER_INFO = "https://www.googleapis.com/oauth2/v1/userinfo?access_token=";
     public static final String GOOGLE_GRANT_TYPE = "authorization_code";
