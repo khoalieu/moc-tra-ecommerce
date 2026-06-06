@@ -17,7 +17,7 @@ public class RoleDAO {
 
     public List<Role> getAllRoles() {
         List<Role> list = new ArrayList<>();
-        String sql = "SELECT id, name, display_name, description, is_system, created_at FROM roles ORDER BY id";
+        String sql = "SELECT id, name, display_name, description, is_system, max_discount_percent, created_at FROM roles ORDER BY id";
         try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
@@ -31,7 +31,7 @@ public class RoleDAO {
     }
 
     public Role getRoleById(int id) {
-        String sql = "SELECT id, name, display_name, description, is_system, created_at FROM roles WHERE id = ?";
+        String sql = "SELECT id, name, display_name, description, is_system, max_discount_percent, created_at FROM roles WHERE id = ?";
         try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, id);
@@ -45,7 +45,7 @@ public class RoleDAO {
     }
 
     public Role getRoleByName(String name) {
-        String sql = "SELECT id, name, display_name, description, is_system, created_at FROM roles WHERE name = ?";
+        String sql = "SELECT id, name, display_name, description, is_system, max_discount_percent, created_at FROM roles WHERE name = ?";
         try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, name);
@@ -79,12 +79,13 @@ public class RoleDAO {
     }
 
     public boolean updateRole(Role role) {
-        String sql = "UPDATE roles SET display_name = ?, description = ? WHERE id = ?";
+        String sql = "UPDATE roles SET display_name = ?, description = ?, max_discount_percent = ? WHERE id = ?";
         try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, role.getDisplayName());
             ps.setString(2, role.getDescription());
-            ps.setInt(3, role.getId());
+            ps.setDouble(3, role.getMaxDiscountPercent() != null ? role.getMaxDiscountPercent() : 100.0);
+            ps.setInt(4, role.getId());
             return ps.executeUpdate() > 0;
         } catch (Exception e) {
             e.printStackTrace();
@@ -190,6 +191,7 @@ public class RoleDAO {
         r.setDisplayName(rs.getString("display_name"));
         r.setDescription(rs.getString("description"));
         r.setIsSystem(rs.getBoolean("is_system"));
+        r.setMaxDiscountPercent(rs.getDouble("max_discount_percent"));
         Timestamp ts = rs.getTimestamp("created_at");
         if (ts != null) r.setCreatedAt(ts.toLocalDateTime());
         return r;

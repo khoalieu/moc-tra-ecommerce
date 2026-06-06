@@ -17,7 +17,7 @@ public class PromotionDAO {
 
     public List<Promotion> getActivePromotions() {
         List<Promotion> list = new ArrayList<>();
-        String sql = "SELECT * FROM promotions WHERE is_active = 1 AND start_date <= NOW() AND end_date >= NOW()";
+        String sql = "SELECT * FROM promotions WHERE is_active = 1 AND approval_status = 'APPROVED' AND start_date <= NOW() AND end_date >= NOW()";
 
         try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql);
@@ -33,6 +33,7 @@ public class PromotionDAO {
                 p.setDiscountValue(rs.getDouble("discount_value"));
                 p.setStartDate(rs.getTimestamp("start_date").toLocalDateTime());
                 p.setEndDate(rs.getTimestamp("end_date").toLocalDateTime());
+                p.setApprovalStatus(rs.getString("approval_status"));
                 list.add(p);
             }
         } catch (Exception e) {
@@ -127,11 +128,12 @@ public class PromotionDAO {
                         value = rs.getDouble("discount_value");
 
                         boolean active = rs.getBoolean("is_active");
+                        boolean approved = "APPROVED".equals(rs.getString("approval_status"));
                         Timestamp startDate = rs.getTimestamp("start_date");
                         Timestamp endDate = rs.getTimestamp("end_date");
                         Timestamp now = new Timestamp(System.currentTimeMillis());
 
-                        running = active
+                        running = active && approved
                                 && startDate != null
                                 && endDate != null
                                 && !startDate.after(now)
@@ -278,6 +280,7 @@ public class PromotionDAO {
                 p.setStartDate(rs.getTimestamp("start_date").toLocalDateTime());
                 p.setEndDate(rs.getTimestamp("end_date").toLocalDateTime());
                 p.setActive(rs.getBoolean("is_active"));
+                p.setApprovalStatus(rs.getString("approval_status"));
 
                 p.setImageUrl(rs.getString("image_url"));
                 p.setPromotionType(rs.getString("promotion_type"));
@@ -292,8 +295,8 @@ public class PromotionDAO {
 
     public boolean insertPromotion(Promotion p) {
         String sql = "INSERT INTO promotions " +
-                "(name, description, discount_type, discount_value, promotion_type, start_date, end_date, is_active, image_url, created_at) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())";
+                "(name, description, discount_type, discount_value, promotion_type, start_date, end_date, is_active, image_url, approval_status, created_at) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())";
 
         try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -306,6 +309,7 @@ public class PromotionDAO {
             ps.setTimestamp(7, Timestamp.valueOf(p.getEndDate()));
             ps.setBoolean(8, p.isActive());
             ps.setString(9, p.getImageUrl());
+            ps.setString(10, p.getApprovalStatus() != null ? p.getApprovalStatus() : "PENDING");
 
             return ps.executeUpdate() > 0;
         } catch (Exception e) {
@@ -371,7 +375,7 @@ public class PromotionDAO {
     }
     public boolean updatePromotion(Promotion p) {
         String sql = "UPDATE promotions SET name=?, description=?, discount_type=?, discount_value=?, promotion_type=?, " +
-                "start_date=?, end_date=?, image_url=? WHERE id=?";
+                "start_date=?, end_date=?, image_url=?, approval_status=? WHERE id=?";
         try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
@@ -383,7 +387,8 @@ public class PromotionDAO {
             ps.setTimestamp(6, Timestamp.valueOf(p.getStartDate()));
             ps.setTimestamp(7, Timestamp.valueOf(p.getEndDate()));
             ps.setString(8, p.getImageUrl());
-            ps.setInt(9, p.getId());
+            ps.setString(9, p.getApprovalStatus() != null ? p.getApprovalStatus() : "PENDING");
+            ps.setInt(10, p.getId());
 
             return ps.executeUpdate() > 0;
         } catch (Exception e) {
@@ -396,6 +401,7 @@ public class PromotionDAO {
     public List<Promotion> getPromotionsByType(String type) {
         List<Promotion> list = new ArrayList<>();
         String sql = "SELECT * FROM promotions WHERE is_active = 1 " +
+                "AND approval_status = 'APPROVED' " +
                 "AND start_date <= NOW() AND end_date >= NOW() " +
                 "AND promotion_type = ?";
 
@@ -415,6 +421,7 @@ public class PromotionDAO {
                 p.setImageUrl(rs.getString("image_url"));
                 p.setStartDate(rs.getTimestamp("start_date").toLocalDateTime());
                 p.setEndDate(rs.getTimestamp("end_date").toLocalDateTime());
+                p.setApprovalStatus(rs.getString("approval_status"));
                 list.add(p);
             }
         } catch (Exception e) {
@@ -509,14 +516,14 @@ public class PromotionDAO {
                         "JOIN promotion_items pi ON p.id = pi.product_id " +
                         "JOIN promotions pr ON pr.id = pi.promotion_id " +
                         "SET p.sale_price = 0 " +
-                        "WHERE pr.is_active = 0 OR pr.start_date > NOW() OR pr.end_date < NOW()";
+                        "WHERE pr.is_active = 0 OR pr.approval_status != 'APPROVED' OR pr.start_date > NOW() OR pr.end_date < NOW()";
 
         String resetVariantSql =
                 "UPDATE product_variants v " +
                         "JOIN promotion_items pi ON v.product_id = pi.product_id " +
                         "JOIN promotions pr ON pr.id = pi.promotion_id " +
                         "SET v.sale_price = 0 " +
-                        "WHERE pr.is_active = 0 OR pr.start_date > NOW() OR pr.end_date < NOW()";
+                        "WHERE pr.is_active = 0 OR pr.approval_status != 'APPROVED' OR pr.start_date > NOW() OR pr.end_date < NOW()";
 
         String applyProductSql =
                 "UPDATE products p " +
@@ -526,7 +533,7 @@ public class PromotionDAO {
                         "   WHEN pr.discount_type = 'PERCENT' THEN p.price * (100 - pr.discount_value) / 100 " +
                         "   ELSE GREATEST(0, p.price - pr.discount_value) " +
                         "END " +
-                        "WHERE pr.is_active = 1 " +
+                        "WHERE pr.is_active = 1 AND pr.approval_status = 'APPROVED' " +
                         "AND pr.start_date <= NOW() " +
                         "AND pr.end_date >= NOW()";
 
@@ -538,7 +545,7 @@ public class PromotionDAO {
                         "   WHEN pr.discount_type = 'PERCENT' THEN v.price * (100 - pr.discount_value) / 100 " +
                         "   ELSE GREATEST(0, v.price - pr.discount_value) " +
                         "END " +
-                        "WHERE pr.is_active = 1 " +
+                        "WHERE pr.is_active = 1 AND pr.approval_status = 'APPROVED' " +
                         "AND pr.start_date <= NOW() " +
                         "AND pr.end_date >= NOW()";
 
@@ -634,6 +641,19 @@ public class PromotionDAO {
                 }
             }
 
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    public boolean approvePromotion(int promoId) {
+        String sql = "UPDATE promotions SET approval_status = 'APPROVED' WHERE id = ?";
+        try (Connection conn = ds.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, promoId);
+            return ps.executeUpdate() > 0;
         } catch (Exception e) {
             e.printStackTrace();
         }

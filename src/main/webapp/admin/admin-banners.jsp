@@ -215,6 +215,26 @@
                                 </div>
 
                                 <div class="form-group">
+                                    <label>Thời gian bắt đầu <span class="required">*</span></label>
+                                    <input type="datetime-local" name="start_time" required
+                                           class="form-control ${not empty errors.start_time ? 'field-error' : ''}"
+                                           value="${banner.startTime != null ? banner.startTime : ''}">
+                                    <c:if test="${not empty errors.start_time}">
+                                        <div class="err-text">${fn:escapeXml(errors.start_time)}</div>
+                                    </c:if>
+                                </div>
+
+                                <div class="form-group">
+                                    <label>Thời gian kết thúc <span class="required">*</span></label>
+                                    <input type="datetime-local" name="end_time" required
+                                           class="form-control ${not empty errors.end_time ? 'field-error' : ''}"
+                                           value="${banner.endTime != null ? banner.endTime : ''}">
+                                    <c:if test="${not empty errors.end_time}">
+                                        <div class="err-text">${fn:escapeXml(errors.end_time)}</div>
+                                    </c:if>
+                                </div>
+
+                                <div class="form-group">
                                     <label>Trạng thái</label>
                                     <div class="checkbox-group">
                                         <input type="radio" id="active1" name="is_active" value="1"
