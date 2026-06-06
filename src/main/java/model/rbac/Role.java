@@ -11,16 +11,18 @@ public class Role implements Serializable {
     private String displayName;
     private String description;
     private Boolean isSystem;
+    private Double maxDiscountPercent;
     private LocalDateTime createdAt;
 
     public Role() {}
 
-    public Role(Integer id, String name, String displayName, String description, Boolean isSystem, LocalDateTime createdAt) {
+    public Role(Integer id, String name, String displayName, String description, Boolean isSystem, Double maxDiscountPercent, LocalDateTime createdAt) {
         this.id = id;
         this.name = name;
         this.displayName = displayName;
         this.description = description;
         this.isSystem = isSystem;
+        this.maxDiscountPercent = maxDiscountPercent;
         this.createdAt = createdAt;
     }
 
@@ -41,4 +43,7 @@ public class Role implements Serializable {
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+
+    public Double getMaxDiscountPercent() { return maxDiscountPercent; }
+    public void setMaxDiscountPercent(Double maxDiscountPercent) { this.maxDiscountPercent = maxDiscountPercent; }
 }
