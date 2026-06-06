@@ -259,15 +259,22 @@
                                             </span>
                                         </c:if>
                                     </div>                                </div>
-                                <c:if test="${sessionScope.user.role == 'ADMIN'}">
-                                    <a href="${pageContext.request.contextPath}/admin/admin-dashboard.jsp">Trang quản trị</a>
-                                </c:if>
-                                <c:if test="${sessionScope.user.role == 'EDITOR'}">
-                                    <a href="${pageContext.request.contextPath}/editor/dashboard">
-                                        <i class="fa-solid fa-pen-nib" style="margin-right: 8px;"></i>
-                                        Trang quản trị
-                                    </a>
-                                </c:if>
+                                 <c:if test="${not empty sessionScope.user and sessionScope.user.hasPermission('dashboard.view')}">
+                                     <c:choose>
+                                         <c:when test="${sessionScope.user.hasPermission('role.manage') || sessionScope.user.hasPermission('product.create') || sessionScope.user.hasPermission('blog.publish') || sessionScope.user.hasPermission('customer.view')}">
+                                             <a href="${pageContext.request.contextPath}/admin/dashboard">Trang quản trị</a>
+                                         </c:when>
+                                         <c:when test="${sessionScope.user.hasPermission('blog.create')}">
+                                             <a href="${pageContext.request.contextPath}/editor/dashboard">
+                                                 <i class="fa-solid fa-pen-nib" style="margin-right: 8px;"></i>
+                                                 Trang quản trị
+                                             </a>
+                                         </c:when>
+                                         <c:when test="${sessionScope.user.hasPermission('shipper.view')}">
+                                             <a href="${pageContext.request.contextPath}/shipper/dashboard">Trang quản trị</a>
+                                         </c:when>
+                                     </c:choose>
+                                 </c:if>
                                 <a href="${pageContext.request.contextPath}/tai-khoan-cua-toi">
                                     <i class="fa-regular fa-user" style="margin-right: 8px;"></i>
                                     Tài khoản của tôi

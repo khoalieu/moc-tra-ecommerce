@@ -271,7 +271,16 @@
                                         chỉ: ${c.province != null ? c.province : 'Chưa cập nhật'}</div>
                                 </td>
                                 <td>
-                                    <div class="product-name-cell">${c.email}</div>
+                                    <div class="product-name-cell">
+                                        <c:choose>
+                                            <c:when test="${sessionScope.user.hasPermission('customer.view_unmasked') || sessionScope.user.hasPermission('customer.edit')}">
+                                                ${c.email}
+                                            </c:when>
+                                            <c:otherwise>
+                                                ${c.maskedEmail}
+                                            </c:otherwise>
+                                        </c:choose>
+                                    </div>
                                     <div class="product-description-cell">${c.phone}</div>
                                 </td>
                                 <td>
