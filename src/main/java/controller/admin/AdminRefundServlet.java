@@ -12,6 +12,7 @@ import jakarta.servlet.http.HttpSession;
 import model.enums.PaymentStatus;
 import model.refund.RefundRequest;
 import model.user.User;
+import service.EcommerceEmailService;
 import service.NotificationService;
 import service.SystemLogService;
 
@@ -76,6 +77,7 @@ public class AdminRefundServlet extends HttpServlet {
             }
             if (success) {
                 new NotificationService().notifyRefundStatusChanged(refund, newStatus);
+                new EcommerceEmailService().sendRefundResolvedToUser(refund, newStatus);
             }
 
             if (success) {

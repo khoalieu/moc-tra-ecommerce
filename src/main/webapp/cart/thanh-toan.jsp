@@ -491,10 +491,34 @@
         const vipDiscountRow       = document.getElementById('vipDiscountRow');
         const vipDiscountAmount    = document.getElementById('vipDiscountAmount');
         const checkoutForm         = document.getElementById("checkoutForm");
+        const selectedCouponSelect = document.getElementById('selectedCoupon');
+        const couponCodeInput      = document.getElementById('couponCodeInput');
+        const btnApplyCoupon       = document.getElementById('btnApplyCoupon');
+        const couponCheckoutMessage = document.getElementById('couponCheckoutMessage');
+        const selectedCouponIdInput = document.getElementById('selectedCouponId');
+        const manualCouponCodeInput = document.getElementById('manualCouponCode');
+        const hiddenCouponDiscount = document.getElementById('hiddenCouponDiscount');
+        const checkoutRight        = document.querySelector('.checkout-right');
+        const orderCard            = checkoutRight ? checkoutRight.querySelector('.checkout-card') : null;
+        const couponCard           = document.querySelector('.coupon-checkout-card');
+        const vipCard              = document.querySelector('.vip-voucher-card');
         const SHIPPING_API_URL     = "${pageContext.request.contextPath}/api/get-shipping-fee";
 
         let provinceFee = 0, serviceFee = 0;
 
+        if (checkoutRight && orderCard) {
+            if (vipCard) {
+                orderCard.insertAdjacentElement('afterend', vipCard);
+            }
+
+            if (couponCard) {
+                if (vipCard) {
+                    vipCard.insertAdjacentElement('afterend', couponCard);
+                } else {
+                    orderCard.insertAdjacentElement('afterend', couponCard);
+                }
+            }
+        }
 
         function formatCurrency(amount) {
             return new Intl.NumberFormat('vi-VN').format(amount) + 'đ';
@@ -577,11 +601,11 @@
                     }
 
                     if (selectedCouponIdInput) {
-                        selectedCouponIdInput.value = data.couponId || '';
+                        selectedCouponIdInput.value = couponId ? (data.couponId || '') : '';
                     }
 
                     if (manualCouponCodeInput) {
-                        manualCouponCodeInput.value = couponCode || '';
+                        manualCouponCodeInput.value = couponCode ? (data.couponCode || couponCode) : '';
                     }
 
                     if (hiddenCouponDiscount) {
@@ -633,9 +657,10 @@
         }
 
         function updateTotal() {
+            const couponDiscount = getCouponDiscountAmount();
             const vipDiscount = getVipDiscountAmount();
             const totalShipping = provinceFee + serviceFee;
-            const newTotal = Math.max(0, subtotal - vipDiscount + totalShipping);
+            const newTotal = Math.max(0, subtotal - couponDiscount - vipDiscount + totalShipping);
 
             shippingFeeDisplay.innerText = formatCurrency(totalShipping);
             totalAmountDisplay.innerText = formatCurrency(newTotal);

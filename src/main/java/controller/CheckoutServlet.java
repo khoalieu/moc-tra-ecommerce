@@ -23,6 +23,7 @@ import java.util.List;
 import controller.utils.PaymentUtils;
 import controller.utils.PaymentResult;
 import model.promotion.Coupon;
+import service.EcommerceEmailService;
 import service.NotificationService;
 
 import java.sql.Timestamp;
@@ -342,6 +343,9 @@ public class CheckoutServlet extends HttpServlet {
             NotificationService notificationService = new NotificationService();
             notificationService.notifyOrderCreated(user.getId(), orderId, order.getOrderNumber());
             notificationService.notifyAdminOrderCreated(order);
+            EcommerceEmailService ecommerceEmailService = new EcommerceEmailService();
+            ecommerceEmailService.sendOrderCreatedToUser(user, order);
+            ecommerceEmailService.sendNewOrderToAdmin(order);
             ProductDAO productDAO = DAOFactory.getInstance().getProductDAO();
             for (CartItem item : selectedCartItems) {
                 if (item.getVariantId() > 0) {
@@ -350,6 +354,7 @@ public class CheckoutServlet extends HttpServlet {
                             ? productDAO.getProductById(variant.getProductId())
                             : null;
                     notificationService.notifyAdminVariantStock(variant, product);
+                    ecommerceEmailService.sendVariantStockAlertToAdmin(variant, product);
                 }
             }
             if (appliedCouponId != null) {

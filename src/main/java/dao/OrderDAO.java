@@ -6,6 +6,8 @@ import model.order.OrderItem;
 import model.product.Product;
 import model.enums.OrderStatus;
 import model.enums.PaymentStatus;
+import model.user.User;
+import service.EcommerceEmailService;
 import service.NotificationService;
 
 import javax.sql.DataSource;
@@ -489,6 +491,7 @@ public class OrderDAO {
             boolean updated = ps.executeUpdate() > 0;
             if (updated && oldOrder != null && oldOrder.getStatus() != status) {
                 new NotificationService().notifyOrderStatusChanged(oldOrder, status);
+                sendOrderStatusEmail(oldOrder, status);
             }
             if (updated && oldOrder != null
                     && oldOrder.getStatus() == OrderStatus.SHIPPING
@@ -706,6 +709,7 @@ public class OrderDAO {
 
             conn.commit();
             new NotificationService().notifyOrderStatusChanged(order, OrderStatus.CANCELLED);
+            sendOrderStatusEmail(order, OrderStatus.CANCELLED);
             return true;
         } catch (SQLException e) {
             if (conn != null) {
@@ -827,6 +831,7 @@ public class OrderDAO {
             boolean updated = ps.executeUpdate() > 0;
             if (updated && order != null) {
                 new NotificationService().notifyOrderStatusChanged(order, OrderStatus.COMPLETED);
+                sendOrderStatusEmail(order, OrderStatus.COMPLETED);
             }
             return updated;
         } catch (SQLException e) {
@@ -876,6 +881,7 @@ public class OrderDAO {
                 NotificationService notificationService = new NotificationService();
                 notificationService.notifyOrderStatusChanged(order, OrderStatus.DELIVERY_FAILED);
                 notificationService.notifyAdminDeliveryFailed(order);
+                sendOrderStatusEmail(order, OrderStatus.DELIVERY_FAILED);
                 String refundReason = "Đơn giao không thành công";
                 if (reason != null && !reason.trim().isEmpty()) {
                     refundReason += ": " + reason.trim();
@@ -1083,6 +1089,24 @@ public class OrderDAO {
             e.printStackTrace();
         }
         return false;
+    }
+
+    private void sendOrderStatusEmail(Order order, OrderStatus status) {
+        if (order == null || status == null) {
+            return;
+        }
+
+        User user = new UserDAO(ds).getById(order.getUserId());
+        EcommerceEmailService emailService = new EcommerceEmailService();
+
+        if (status == OrderStatus.CANCELLED) {
+            emailService.sendOrderCancelledToUser(user, order);
+        } else if (status == OrderStatus.COMPLETED) {
+            emailService.sendOrderCompletedToUser(user, order);
+        } else if (status == OrderStatus.DELIVERY_FAILED) {
+            emailService.sendDeliveryFailedToUser(user, order);
+            emailService.sendDeliveryFailedToAdmin(order);
+        }
     }
 
 }
