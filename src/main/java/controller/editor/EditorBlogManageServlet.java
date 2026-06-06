@@ -80,6 +80,11 @@ public class EditorBlogManageServlet extends HttpServlet {
     }
 
     private void doPostAdd(HttpServletRequest request, HttpServletResponse response, User me) throws ServletException, IOException {
+        if (!me.hasPermission("blog.create")) {
+            response.sendRedirect(request.getContextPath() + "/errors/403.jsp");
+            return;
+        }
+
         BlogPostDAO postDAO = DAOFactory.getInstance().getBlogPostDAO();
         String title = trimOrNull(request.getParameter("title"));
         String slugInp = trimOrNull(request.getParameter("slug"));
@@ -128,6 +133,12 @@ public class EditorBlogManageServlet extends HttpServlet {
             request.setAttribute("error", "Trạng thái không hợp lệ.");
             doGetAdd(request, response);
             return;
+        }
+
+        if (!me.hasPermission("blog.publish")) {
+            if (st == BlogStatus.PUBLISHED || st == BlogStatus.ARCHIVED) {
+                st = BlogStatus.DRAFT;
+            }
         }
 
         Integer categoryId;
@@ -214,9 +225,18 @@ public class EditorBlogManageServlet extends HttpServlet {
             response.sendRedirect(request.getContextPath() + "/errors/404.jsp");
             return;
         }
-        if (!post.getAuthorId().equals(me.getId())) {
-            response.sendRedirect(request.getContextPath() + "/errors/403.jsp");
-            return;
+
+        // Ownership/permission check
+        if (!me.hasPermission("blog.publish") && !me.hasPermission("blog.edit")) {
+            if (me.hasPermission("blog.edit_own")) {
+                if (post.getAuthorId() == null || !post.getAuthorId().equals(me.getId())) {
+                    response.sendRedirect(request.getContextPath() + "/errors/403.jsp");
+                    return;
+                }
+            } else {
+                response.sendRedirect(request.getContextPath() + "/errors/403.jsp");
+                return;
+            }
         }
         request.setAttribute("post", post);
         request.setAttribute("allCategories", DAOFactory.getInstance().getBlogCategoryDAO().getAllCategories());
@@ -239,9 +259,17 @@ public class EditorBlogManageServlet extends HttpServlet {
             return;
         }
 
-        if (!old.getAuthorId().equals(me.getId())) {
-            response.sendRedirect(request.getContextPath() + "/errors/403.jsp");
-            return;
+        // Ownership/permission check
+        if (!me.hasPermission("blog.publish") && !me.hasPermission("blog.edit")) {
+            if (me.hasPermission("blog.edit_own")) {
+                if (old.getAuthorId() == null || !old.getAuthorId().equals(me.getId())) {
+                    response.sendRedirect(request.getContextPath() + "/errors/403.jsp");
+                    return;
+                }
+            } else {
+                response.sendRedirect(request.getContextPath() + "/errors/403.jsp");
+                return;
+            }
         }
 
         String title = trimOrNull(request.getParameter("title"));
@@ -291,6 +319,12 @@ public class EditorBlogManageServlet extends HttpServlet {
             request.setAttribute("error", "Trạng thái không hợp lệ.");
             doGetEdit(request, response);
             return;
+        }
+
+        if (!me.hasPermission("blog.publish")) {
+            if (st == BlogStatus.PUBLISHED || st == BlogStatus.ARCHIVED) {
+                st = BlogStatus.DRAFT;
+            }
         }
 
         Integer categoryId;
@@ -348,34 +382,80 @@ public class EditorBlogManageServlet extends HttpServlet {
     }
 
     private void doPostDelete(HttpServletRequest request, HttpServletResponse response, User me) throws IOException {
-        List<Integer> ids = new ArrayList<>();
-        String[] idParams = request.getParameterValues("ids");
-
-        if (idParams != null) {
-            for (String s : idParams) {
-                try {
-                    ids.add(Integer.parseInt(s.trim()));
-                } catch (Exception ignored) {}
-            }
-        }
-
         BlogPostDAO postDAO = DAOFactory.getInstance().getBlogPostDAO();
-        List<Integer> allowedIds = new ArrayList<>();
-        for (Integer id : ids) {
-            BlogPost post = postDAO.getByIdForAdmin(id);
-            if (post != null && post.getAuthorId() != null && post.getAuthorId().equals(me.getId())) {
-                allowedIds.add(id);
-            }
+        String[] idParams = request.getParameterValues("ids");
+        if (idParams == null || idParams.length == 0) {
+            response.sendRedirect(request.getContextPath() + "/editor/blog");
+            return;
         }
-        boolean success = postDAO.deleteByIds(allowedIds);
-        if (success) {
-            response.sendRedirect(request.getContextPath() + "/editor/blog?msg=deleted&count=" + ids.size());
+
+        List<Integer> idsToHardDelete = new ArrayList<>();
+        List<Integer> idsToArchive = new ArrayList<>();
+        boolean hasUnauthorized = false;
+        boolean hasPublishedOwnBlock = false;
+
+        for (String s : idParams) {
+            try {
+                int id = Integer.parseInt(s.trim());
+                BlogPost post = postDAO.getByIdForAdmin(id);
+                if (post == null) continue;
+
+                if (me.hasPermission("blog.delete_all")) {
+                    if (post.getStatus() == BlogStatus.PUBLISHED) {
+                        idsToArchive.add(id);
+                    } else {
+                        idsToHardDelete.add(id);
+                    }
+                } else if (me.hasPermission("blog.delete_own")) {
+                    if (post.getAuthorId() != null && post.getAuthorId().equals(me.getId())) {
+                        if (post.getStatus() == BlogStatus.DRAFT || post.getStatus() == BlogStatus.PENDING) {
+                            idsToHardDelete.add(id);
+                        } else if (post.getStatus() == BlogStatus.PUBLISHED) {
+                            hasPublishedOwnBlock = true;
+                        } else {
+                            hasUnauthorized = true;
+                        }
+                    } else {
+                        hasUnauthorized = true;
+                    }
+                } else {
+                    hasUnauthorized = true;
+                }
+            } catch (Exception ignored) {}
+        }
+
+        if (hasPublishedOwnBlock) {
+            response.sendError(HttpServletResponse.SC_FORBIDDEN, "Tác giả không được phép xóa bài viết đã xuất bản!");
+            return;
+        }
+
+        if (hasUnauthorized) {
+            response.sendError(HttpServletResponse.SC_FORBIDDEN, "Bạn không có quyền thực hiện thao tác xóa này!");
+            return;
+        }
+
+        boolean ok = true;
+        if (!idsToHardDelete.isEmpty()) {
+            ok = postDAO.deleteByIds(idsToHardDelete);
+        }
+        if (!idsToArchive.isEmpty()) {
+            boolean archiveOk = postDAO.updateStatusByIds(idsToArchive, BlogStatus.ARCHIVED);
+            ok = ok && archiveOk;
+        }
+
+        if (ok) {
+            response.sendRedirect(request.getContextPath() + "/editor/blog?msg=deleted&count=" + (idsToHardDelete.size() + idsToArchive.size()));
         } else {
             response.sendRedirect(request.getContextPath() + "/editor/blog");
         }
     }
 
     private void doPostStatusUpdate(HttpServletRequest request, HttpServletResponse response, User me) throws IOException {
+        if (!me.hasPermission("blog.publish")) {
+            response.sendError(HttpServletResponse.SC_FORBIDDEN, "Bạn không có quyền thay đổi trạng thái bài viết!");
+            return;
+        }
+
         String stStr = request.getParameter("newStatus");
         if (stStr == null || stStr.isEmpty()) {
             stStr = request.getParameter("status");

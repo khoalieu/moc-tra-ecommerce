@@ -89,6 +89,15 @@ public class AdminBlogManageServlet extends HttpServlet {
 
     private void doGetAdd(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
+        HttpSession session = request.getSession(false);
+        User me = (session != null) ? (User) session.getAttribute("user") : null;
+        if (me == null) { response.sendRedirect(request.getContextPath() + "/login"); return; }
+
+        if (!me.hasPermission("blog.create")) {
+            response.sendError(HttpServletResponse.SC_FORBIDDEN, "Bạn không có quyền tạo bài viết!");
+            return;
+        }
+
         BlogCategoryDAO catDAO = DAOFactory.getInstance().getBlogCategoryDAO();
         UserDAO userDAO = DAOFactory.getInstance().getUserDAO();
 
@@ -100,6 +109,11 @@ public class AdminBlogManageServlet extends HttpServlet {
 
     private void doPostAdd(HttpServletRequest request, HttpServletResponse response, User me)
             throws ServletException, IOException {
+
+        if (!me.hasPermission("blog.create")) {
+            response.sendError(HttpServletResponse.SC_FORBIDDEN, "Bạn không có quyền tạo bài viết!");
+            return;
+        }
 
         BlogPostDAO postDAO = DAOFactory.getInstance().getBlogPostDAO();
 
@@ -128,6 +142,12 @@ public class AdminBlogManageServlet extends HttpServlet {
         BlogStatus st;
         try { st = BlogStatus.valueOf(statusStr.toUpperCase()); }
         catch (Exception e) { request.setAttribute("error", "Trạng thái không hợp lệ."); doGetAdd(request,response); return; }
+
+        if (!me.hasPermission("blog.publish")) {
+            if (st == BlogStatus.PUBLISHED || st == BlogStatus.ARCHIVED) {
+                st = BlogStatus.DRAFT;
+            }
+        }
 
         Integer categoryId;
         try { categoryId = Integer.parseInt(categoryStr); }
@@ -194,12 +214,29 @@ public class AdminBlogManageServlet extends HttpServlet {
     private void doGetEdit(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
+        HttpSession session = request.getSession(false);
+        User me = (session != null) ? (User) session.getAttribute("user") : null;
+        if (me == null) { response.sendRedirect(request.getContextPath() + "/login"); return; }
+
         int id = parseInt(request.getParameter("id"));
         if (id <= 0) { response.sendRedirect(request.getContextPath() + "/admin/blog"); return; }
 
         BlogPostDAO postDAO = DAOFactory.getInstance().getBlogPostDAO();
         BlogPost post = postDAO.getByIdForAdmin(id);
         if (post == null) { response.sendError(HttpServletResponse.SC_NOT_FOUND); return; }
+
+        // Ownership/permission check
+        if (!me.hasPermission("blog.publish") && !me.hasPermission("blog.edit")) {
+            if (me.hasPermission("blog.edit_own")) {
+                if (post.getAuthorId() == null || !post.getAuthorId().equals(me.getId())) {
+                    response.sendError(HttpServletResponse.SC_FORBIDDEN, "Bạn không có quyền sửa bài viết của người khác!");
+                    return;
+                }
+            } else {
+                response.sendError(HttpServletResponse.SC_FORBIDDEN, "Bạn không có quyền sửa bài viết!");
+                return;
+            }
+        }
 
         request.setAttribute("post", post);
         request.setAttribute("allCategories", DAOFactory.getInstance().getBlogCategoryDAO().getAllCategories());
@@ -217,6 +254,19 @@ public class AdminBlogManageServlet extends HttpServlet {
         BlogPostDAO postDAO = DAOFactory.getInstance().getBlogPostDAO();
         BlogPost old = postDAO.getByIdForAdmin(id);
         if (old == null) { response.sendError(HttpServletResponse.SC_NOT_FOUND); return; }
+
+        // Ownership/permission check
+        if (!me.hasPermission("blog.publish") && !me.hasPermission("blog.edit")) {
+            if (me.hasPermission("blog.edit_own")) {
+                if (old.getAuthorId() == null || !old.getAuthorId().equals(me.getId())) {
+                    response.sendError(HttpServletResponse.SC_FORBIDDEN, "Bạn không có quyền sửa bài viết của người khác!");
+                    return;
+                }
+            } else {
+                response.sendError(HttpServletResponse.SC_FORBIDDEN, "Bạn không có quyền sửa bài viết!");
+                return;
+            }
+        }
 
         String title   = trimOrNull(request.getParameter("title"));
         String slugInp = trimOrNull(request.getParameter("slug"));
@@ -242,6 +292,12 @@ public class AdminBlogManageServlet extends HttpServlet {
         BlogStatus st;
         try { st = BlogStatus.valueOf(statusStr.toUpperCase()); }
         catch (Exception e) { request.setAttribute("error", "Trạng thái không hợp lệ."); doGetEdit(request,response); return; }
+
+        if (!me.hasPermission("blog.publish")) {
+            if (st == BlogStatus.PUBLISHED || st == BlogStatus.ARCHIVED) {
+                st = BlogStatus.DRAFT;
+            }
+        }
 
         Integer categoryId;
         try { categoryId = Integer.parseInt(categoryStr); }
@@ -293,22 +349,85 @@ public class AdminBlogManageServlet extends HttpServlet {
         else response.sendRedirect(request.getContextPath() + "/admin/blog");
     }
     private void doPostDelete(HttpServletRequest request, HttpServletResponse response) throws IOException {
-        List<Integer> ids = new ArrayList<>();
+        HttpSession session = request.getSession(false);
+        User me = (session != null) ? (User) session.getAttribute("user") : null;
+        if (me == null) { response.sendRedirect(request.getContextPath() + "/login"); return; }
+
+        BlogPostDAO postDAO = DAOFactory.getInstance().getBlogPostDAO();
         String[] idParams = request.getParameterValues("ids");
-        if (idParams != null) {
-            for (String s : idParams) {
-                try { ids.add(Integer.parseInt(s.trim())); } catch (Exception ignored) {}
-            }
+        if (idParams == null || idParams.length == 0) {
+            response.sendRedirect(request.getContextPath() + "/admin/blog");
+            return;
         }
 
-        boolean success = DAOFactory.getInstance().getBlogPostDAO().deleteByIds(ids);
-        if (success) {
-            response.sendRedirect(request.getContextPath() + "/admin/blog?msg=deleted&count=" + ids.size());
+        List<Integer> idsToHardDelete = new ArrayList<>();
+        List<Integer> idsToArchive = new ArrayList<>();
+        boolean hasUnauthorized = false;
+        boolean hasPublishedOwnBlock = false;
+
+        for (String s : idParams) {
+            try {
+                int id = Integer.parseInt(s.trim());
+                BlogPost post = postDAO.getByIdForAdmin(id);
+                if (post == null) continue;
+
+                if (me.hasPermission("blog.delete_all")) {
+                    if (post.getStatus() == BlogStatus.PUBLISHED) {
+                        idsToArchive.add(id);
+                    } else {
+                        idsToHardDelete.add(id);
+                    }
+                } else if (me.hasPermission("blog.delete_own")) {
+                    if (post.getAuthorId() != null && post.getAuthorId().equals(me.getId())) {
+                        if (post.getStatus() == BlogStatus.DRAFT || post.getStatus() == BlogStatus.PENDING) {
+                            idsToHardDelete.add(id);
+                        } else if (post.getStatus() == BlogStatus.PUBLISHED) {
+                            hasPublishedOwnBlock = true;
+                        } else {
+                            hasUnauthorized = true;
+                        }
+                    } else {
+                        hasUnauthorized = true;
+                    }
+                } else {
+                    hasUnauthorized = true;
+                }
+            } catch (Exception ignored) {}
+        }
+
+        if (hasPublishedOwnBlock) {
+            response.sendError(HttpServletResponse.SC_FORBIDDEN, "Tác giả không được phép xóa bài viết đã xuất bản!");
+            return;
+        }
+
+        if (hasUnauthorized) {
+            response.sendError(HttpServletResponse.SC_FORBIDDEN, "Bạn không có quyền thực hiện thao tác xóa này!");
+            return;
+        }
+
+        boolean ok = true;
+        if (!idsToHardDelete.isEmpty()) {
+            ok = postDAO.deleteByIds(idsToHardDelete);
+        }
+        if (!idsToArchive.isEmpty()) {
+            boolean archiveOk = postDAO.updateStatusByIds(idsToArchive, BlogStatus.ARCHIVED);
+            ok = ok && archiveOk;
+        }
+
+        if (ok) {
+            response.sendRedirect(request.getContextPath() + "/admin/blog?msg=deleted&count=" + (idsToHardDelete.size() + idsToArchive.size()));
         } else {
             response.sendRedirect(request.getContextPath() + "/admin/blog");
         }
     }
+
     private void doPostStatusUpdate(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        HttpSession session = request.getSession(false);
+        User me = (session != null) ? (User) session.getAttribute("user") : null;
+        if (me == null || !me.hasPermission("blog.publish")) {
+            response.sendError(HttpServletResponse.SC_FORBIDDEN, "Bạn không có quyền thay đổi trạng thái bài viết!");
+            return;
+        }
 
         String stStr = request.getParameter("newStatus");
         if (stStr == null || stStr.isEmpty()) stStr = request.getParameter("status");

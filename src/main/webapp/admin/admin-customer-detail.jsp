@@ -43,6 +43,7 @@
         </header>
 
         <div class="admin-content">
+            <c:set var="canViewFull" value="${sessionScope.user.hasPermission('customer.view_unmasked') || sessionScope.user.hasPermission('customer.edit')}"/>
 
             <div class="customer-detail-hero">
                 <div class="customer-detail-header">
@@ -68,7 +69,15 @@
 
                             <div class="customer-subline">
                                 <span class="customer-chip">
-                                    <i class="fas fa-envelope"></i> ${customer.email}
+                                    <i class="fas fa-envelope"></i> 
+                                    <c:choose>
+                                        <c:when test="${canViewFull}">
+                                            ${customer.email}
+                                        </c:when>
+                                        <c:otherwise>
+                                            ${customer.maskedEmail}
+                                        </c:otherwise>
+                                    </c:choose>
                                 </span>
                                 <span class="customer-chip">
                                     <i class="fas fa-phone"></i> ${empty customer.phone ? 'Chưa cập nhật' : customer.phone}
@@ -88,21 +97,37 @@
                             <i class="fas fa-arrow-left"></i> Quay lại
                         </a>
 
-                        <a href="${pageContext.request.contextPath}/admin/customer/edit?id=${customer.id}"
-                           class="admin-action-btn admin-action-edit">
-                            <i class="fas fa-pen-to-square"></i> Chỉnh sửa
-                        </a>
+                        <c:if test="${sessionScope.user.hasPermission('customer.edit')}">
+                            <a href="${pageContext.request.contextPath}/admin/customer/edit?id=${customer.id}"
+                               class="admin-action-btn admin-action-edit">
+                                <i class="fas fa-pen-to-square"></i> Chỉnh sửa
+                            </a>
+                        </c:if>
 
-                        <button type="button"
-                                class="admin-action-btn admin-action-delete"
-                                onclick="deleteCustomer(${customer.id})">
-                            <i class="fas fa-trash-can"></i> Xóa
-                        </button>
+                        <c:if test="${sessionScope.user.hasPermission('customer.delete')}">
+                            <button type="button"
+                                    class="admin-action-btn admin-action-delete"
+                                    onclick="deleteCustomer(${customer.id})">
+                                <i class="fas fa-trash-can"></i> Xóa
+                            </button>
+                        </c:if>
                     </div>
                 </div>
             </div>
 
-            <div class="detail-card full-width-card customer-overview-card">
+            <!-- Tab Navigation -->
+            <div class="customer-tabs" style="display: flex; gap: 20px; border-bottom: 2px solid #e0e0e0; margin-bottom: 20px; padding-bottom: 5px;">
+                <button class="tab-link active" onclick="openTab(event, 'tab-overview')" style="background: none; border: none; padding: 10px 15px; font-size: 16px; font-weight: 500; cursor: pointer; border-bottom: 3px solid #1a73e8; color: #1a73e8; outline: none;">
+                    <i class="fas fa-info-circle"></i> Tổng quan
+                </button>
+                <button class="tab-link" onclick="openTab(event, 'tab-history')" style="background: none; border: none; padding: 10px 15px; font-size: 16px; font-weight: 500; cursor: pointer; border-bottom: 3px solid transparent; color: #666; outline: none;">
+                    <i class="fas fa-history"></i> Lịch sử thay đổi
+                </button>
+            </div>
+
+            <!-- Tab Content: Overview -->
+            <div id="tab-overview" class="tab-content">
+                <div class="detail-card full-width-card customer-overview-card">
                 <h3 class="card-title">
                     <i class="fas fa-chart-bar"></i> Thống kê tổng quan
                 </h3>
@@ -147,7 +172,16 @@
                     </div>
                     <div class="info-row">
                         <span class="info-label">Email:</span>
-                        <span class="info-value">${customer.email}</span>
+                        <span class="info-value">
+                            <c:choose>
+                                <c:when test="${canViewFull}">
+                                    ${customer.email}
+                                </c:when>
+                                <c:otherwise>
+                                    ${customer.maskedEmail}
+                                </c:otherwise>
+                            </c:choose>
+                        </span>
                     </div>
                     <div class="info-row">
                         <span class="info-label">Số điện thoại:</span>
@@ -243,14 +277,16 @@
                                     </div>
                                 </div>
 
-                                <form action="${pageContext.request.contextPath}/admin/customer/detail" method="post"
-                                      onsubmit="return confirm('Bạn có chắc muốn hạ khách hàng này xuống khách thường?');">
-                                    <input type="hidden" name="action" value="downgradeVip">
-                                    <input type="hidden" name="customerId" value="${customer.id}">
-                                    <button type="submit" class="btn-vip-action btn-vip-downgrade">
-                                        <i class="fas fa-user-minus"></i> Hạ xuống thường
-                                    </button>
-                                </form>
+                                <c:if test="${sessionScope.user.hasPermission('customer.edit')}">
+                                    <form action="${pageContext.request.contextPath}/admin/customer/detail" method="post"
+                                          onsubmit="return confirm('Bạn có chắc muốn hạ khách hàng này xuống khách thường?');">
+                                        <input type="hidden" name="action" value="downgradeVip">
+                                        <input type="hidden" name="customerId" value="${customer.id}">
+                                        <button type="submit" class="btn-vip-action btn-vip-downgrade">
+                                            <i class="fas fa-user-minus"></i> Hạ xuống thường
+                                        </button>
+                                    </form>
+                                </c:if>
                             </div>
 
                             <div class="voucher-cart-list">
@@ -302,27 +338,38 @@
                                                     </span>
                                                 </c:when>
                                                 <c:when test="${assigned}">
-                                                    <form action="${pageContext.request.contextPath}/admin/customer/detail" method="post"
-                                                          onsubmit="return confirm('Bạn có chắc muốn gỡ voucher này khỏi khách hàng?');">
-                                                        <input type="hidden" name="action" value="removeVoucher">
-                                                        <input type="hidden" name="customerId" value="${customer.id}">
-                                                        <input type="hidden" name="voucherId" value="${voucher.id}">
-                                                        <button type="submit" class="btn-remove-voucher">
-                                                            <i class="fas fa-trash-alt"></i> Gỡ
-                                                        </button>
-                                                    </form>
+                                                    <c:choose>
+                                                        <c:when test="${sessionScope.user.hasPermission('customer.edit')}">
+                                                            <form action="${pageContext.request.contextPath}/admin/customer/detail" method="post"
+                                                                  onsubmit="return confirm('Bạn có chắc muốn gỡ voucher này khỏi khách hàng?');">
+                                                                <input type="hidden" name="action" value="removeVoucher">
+                                                                <input type="hidden" name="customerId" value="${customer.id}">
+                                                                <input type="hidden" name="voucherId" value="${voucher.id}">
+                                                                <button type="submit" class="btn-remove-voucher">
+                                                                    <i class="fas fa-trash-alt"></i> Gỡ
+                                                                </button>
+                                                            </form>
+                                                        </c:when>
+                                                        <c:otherwise>
+                                                            <span class="voucher-assigned-badge" style="color: #1a73e8; background: #e8f0fe; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 500;">
+                                                                <i class="fas fa-check"></i> Đã gán
+                                                            </span>
+                                                        </c:otherwise>
+                                                    </c:choose>
                                                 </c:when>
 
                                                 <c:otherwise>
-                                                    <form action="${pageContext.request.contextPath}/admin/customer/detail" method="post"
-                                                          onsubmit="return confirm('Bạn có muốn áp dụng voucher này cho khách hàng này không?');">
-                                                        <input type="hidden" name="action" value="assignVoucher">
-                                                        <input type="hidden" name="customerId" value="${customer.id}">
-                                                        <input type="hidden" name="voucherId" value="${voucher.id}">
-                                                        <button type="submit" class="btn-save btn-assign-inline">
-                                                            <i class="fas fa-plus-circle"></i> Áp dụng
-                                                        </button>
-                                                    </form>
+                                                    <c:if test="${sessionScope.user.hasPermission('customer.edit')}">
+                                                        <form action="${pageContext.request.contextPath}/admin/customer/detail" method="post"
+                                                              onsubmit="return confirm('Bạn có muốn áp dụng voucher này cho khách hàng này không?');">
+                                                            <input type="hidden" name="action" value="assignVoucher">
+                                                            <input type="hidden" name="customerId" value="${customer.id}">
+                                                            <input type="hidden" name="voucherId" value="${voucher.id}">
+                                                            <button type="submit" class="btn-save btn-assign-inline">
+                                                                <i class="fas fa-plus-circle"></i> Áp dụng
+                                                            </button>
+                                                        </form>
+                                                    </c:if>
                                                 </c:otherwise>
                                             </c:choose>
                                         </div>
@@ -354,15 +401,17 @@
                                         Khách hàng này hiện chưa là VIP. Sau khi nâng cấp, bạn có thể cấp voucher VIP và áp dụng các ưu đãi riêng.
                                     </p>
 
-                                    <form action="${pageContext.request.contextPath}/admin/customer/detail" method="post"
-                                          onsubmit="return confirm('Bạn có chắc muốn nâng cấp khách hàng này lên VIP?');">
-                                        <input type="hidden" name="action" value="upgradeVip">
-                                        <input type="hidden" name="customerId" value="${customer.id}">
+                                    <c:if test="${sessionScope.user.hasPermission('customer.edit')}">
+                                        <form action="${pageContext.request.contextPath}/admin/customer/detail" method="post"
+                                              onsubmit="return confirm('Bạn có chắc muốn nâng cấp khách hàng này lên VIP?');">
+                                            <input type="hidden" name="action" value="upgradeVip">
+                                            <input type="hidden" name="customerId" value="${customer.id}">
 
-                                        <button type="submit" class="btn-vip-action btn-vip-upgrade">
-                                            <i class="fas fa-crown"></i> Nâng cấp VIP
-                                        </button>
-                                    </form>
+                                            <button type="submit" class="btn-vip-action btn-vip-upgrade">
+                                                <i class="fas fa-crown"></i> Nâng cấp VIP
+                                            </button>
+                                        </form>
+                                    </c:if>
                                 </div>
                             </div>
                         </div>
@@ -387,7 +436,16 @@
                                         <span class="address-default-badge">Mặc định</span>
                                     </c:if>
                                 </div>
-                                <div class="address-text">${addr.streetAddress}, ${addr.ward}, ${addr.province}</div>
+                                <div class="address-text">
+                                    <c:choose>
+                                        <c:when test="${canViewFull}">
+                                            ${addr.streetAddress}, ${addr.ward}, ${addr.province}
+                                        </c:when>
+                                        <c:otherwise>
+                                            ${addr.province}
+                                        </c:otherwise>
+                                    </c:choose>
+                                </div>
                                 <div class="address-contact">
                                     <i class="fas fa-user"></i> ${addr.fullName} |
                                     <i class="fas fa-phone"></i> ${addr.phoneNumber}
@@ -603,12 +661,87 @@
                     </div>
                 </div>
 
+            </div> <!-- End of tab-overview -->
+
+            <!-- Tab Content: History (Audit Trail) -->
+            <div id="tab-history" class="tab-content" style="display: none;">
+                <div class="detail-card full-width-card">
+                    <h3 class="card-title">
+                        <i class="fas fa-history"></i> Nhật ký thay đổi thông tin (Audit Trail)
+                    </h3>
+                    <div class="table-responsive">
+                        <table class="orders-table">
+                            <thead>
+                                <tr>
+                                    <th>Thời gian</th>
+                                    <th>Người thực hiện</th>
+                                    <th>Trường thông tin</th>
+                                    <th>Giá trị cũ</th>
+                                    <th>Giá trị mới</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <c:choose>
+                                    <c:when test="${not empty auditLogs}">
+                                        <c:forEach var="log" items="${auditLogs}">
+                                            <tr>
+                                                <td>
+                                                    <fmt:formatDate value="${log.createdAt}" pattern="dd/MM/yyyy HH:mm:ss"/>
+                                                </td>
+                                                <td>
+                                                    <strong style="color: #1a73e8;">${log.performerUsername}</strong>
+                                                </td>
+                                                <td>
+                                                    <span class="status-badge status-confirmed" style="background-color: #f1f3f4; color: #3c4043; border-radius: 4px; padding: 4px 8px; font-size: 12px; font-weight: 500;">
+                                                        ${log.fieldNameVi}
+                                                    </span>
+                                                </td>
+                                                <td style="color: #c5221f; font-family: monospace;">
+                                                    <c:out value="${empty log.oldValue ? '---' : log.oldValue}"/>
+                                                </td>
+                                                <td style="color: #137333; font-family: monospace; font-weight: bold;">
+                                                    <c:out value="${empty log.newValue ? '---' : log.newValue}"/>
+                                                </td>
+                                            </tr>
+                                        </c:forEach>
+                                    </c:when>
+                                    <c:otherwise>
+                                        <tr>
+                                            <td colspan="5" style="text-align: center; color: #666; padding: 25px;">
+                                                Chưa có nhật ký thay đổi nào cho khách hàng này.
+                                            </td>
+                                        </tr>
+                                    </c:otherwise>
+                                </c:choose>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
-        </div>
+
+        </div> <!-- End of admin-content -->
     </main>
 </div>
 
 <script>
+    function openTab(evt, tabName) {
+        var i, tabcontent, tablinks;
+        tabcontent = document.getElementsByClassName("tab-content");
+        for (i = 0; i < tabcontent.length; i++) {
+            tabcontent[i].style.display = "none";
+        }
+        tablinks = document.getElementsByClassName("tab-link");
+        for (i = 0; i < tablinks.length; i++) {
+            tablinks[i].classList.remove("active");
+            tablinks[i].style.borderBottomColor = "transparent";
+            tablinks[i].style.color = "#666";
+        }
+        document.getElementById(tabName).style.display = "block";
+        evt.currentTarget.classList.add("active");
+        evt.currentTarget.style.borderBottomColor = "#1a73e8";
+        evt.currentTarget.style.color = "#1a73e8";
+    }
+
     function deleteCustomer(id) {
         if (confirm('CẢNH BÁO: Bạn có chắc muốn xóa khách hàng này? Hành động này không thể hoàn tác!')) {
             window.location.href = "${pageContext.request.contextPath}/admin/customer/delete?id=" + id;

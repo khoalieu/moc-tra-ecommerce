@@ -4,6 +4,7 @@ import dao.*;
 import model.order.Order;
 import model.user.User;
 import model.user.UserAddress;
+import model.user.AuditLog;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -12,6 +13,7 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Random;
 
 import model.blog.BlogComment;
 import java.util.ArrayList;
@@ -39,13 +41,12 @@ public class AdminCustomerDetailServlet extends HttpServlet {
         try {
             int userId = Integer.parseInt(idParam);
 
-
             UserDAO userDAO = DAOFactory.getInstance().getUserDAO();
             UserAddressDAO addressDAO = DAOFactory.getInstance().getUserAddressDAO();
             OrderDAO orderDAO = DAOFactory.getInstance().getOrderDAO();
             ReviewDAO reviewDAO = DAOFactory.getInstance().getReviewDAO();
             BlogCommentDAO blogCommentDAO = DAOFactory.getInstance().getBlogCommentDAO();
-
+            AuditLogDAO auditLogDAO = DAOFactory.getInstance().getAuditLogDAO();
 
             User customer = userDAO.getUserDetailById(userId);
             if (customer == null) {
@@ -57,6 +58,7 @@ public class AdminCustomerDetailServlet extends HttpServlet {
             List<Order> orders = orderDAO.getOrdersByUserId(userId);
             List<ProductReview> reviews = reviewDAO.getReviewsByUserId(userId);
             List<BlogComment> comments = blogCommentDAO.getByUserId(userId);
+            List<AuditLog> auditLogs = auditLogDAO.getLogsByCustomerId(userId);
 
             List<UserActivityDTO> activities = new ArrayList<>();
             DecimalFormat df = new DecimalFormat("#,###");
@@ -85,7 +87,6 @@ public class AdminCustomerDetailServlet extends HttpServlet {
                 }
             }
 
-
             if (comments != null) {
                 for (BlogComment c : comments) {
                     String shortContent = c.getCommentText();
@@ -107,7 +108,6 @@ public class AdminCustomerDetailServlet extends HttpServlet {
             if (activities.size() > 10) {
                 activities = activities.subList(0, 10);
             }
-
 
             double totalSpent = 0;
             int completedOrders = 0;
@@ -154,6 +154,7 @@ public class AdminCustomerDetailServlet extends HttpServlet {
             request.setAttribute("orders", orders);
             request.setAttribute("reviews", reviews);
             request.setAttribute("activities", activities);
+            request.setAttribute("auditLogs", auditLogs);
 
             request.setAttribute("totalOrders", (orders != null) ? orders.size() : 0);
             request.setAttribute("totalSpent", totalSpent);
@@ -171,12 +172,20 @@ public class AdminCustomerDetailServlet extends HttpServlet {
             response.sendRedirect(request.getContextPath() + "/admin/customers");
         }
     }
+
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         request.setCharacterEncoding("UTF-8");
+        HttpSession session = request.getSession(false);
+        User admin = (session != null) ? (User) session.getAttribute("user") : null;
+        if (admin == null) {
+            response.sendRedirect(request.getContextPath() + "/login");
+            return;
+        }
 
         String action = request.getParameter("action");
         String customerIdStr = request.getParameter("customerId");
+        String otpParam = request.getParameter("otp");
 
         if (customerIdStr == null || customerIdStr.trim().isEmpty()) {
             response.sendRedirect(request.getContextPath() + "/admin/customers");
@@ -188,12 +197,74 @@ public class AdminCustomerDetailServlet extends HttpServlet {
         try {
             UserDAO userDAO = DAOFactory.getInstance().getUserDAO();
             VipVoucherDAO vipVoucherDAO = DAOFactory.getInstance().getVipVoucherDAO();
+            AuditLogDAO auditLogDAO = DAOFactory.getInstance().getAuditLogDAO();
 
-            if ("upgradeVip".equals(action)) {
-                userDAO.updateVipStatus(customerId, true);
+            // 1. 2FA Verification Stage for VIP status change
+            if (otpParam != null && !otpParam.trim().isEmpty()) {
+                String sessOtp = (String) session.getAttribute("CUSTOMER_VIP_OTP_" + customerId);
+                Long expiry = (Long) session.getAttribute("CUSTOMER_VIP_OTP_EXPIRY_" + customerId);
+                String pendingAction = (String) session.getAttribute("PENDING_CUSTOMER_VIP_ACTION_" + customerId);
 
-            } else if ("downgradeVip".equals(action)) {
-                userDAO.updateVipStatus(customerId, false);
+                if (pendingAction == null) {
+                    response.sendRedirect(request.getContextPath() + "/admin/customer/detail?id=" + customerId);
+                    return;
+                }
+
+                if (sessOtp != null && expiry != null && System.currentTimeMillis() <= expiry && sessOtp.equals(otpParam.trim())) {
+                    if ("upgradeVip".equals(pendingAction)) {
+                        userDAO.updateVipStatus(customerId, true);
+                        auditLogDAO.insert(admin.getId(), customerId, "isVip", "Thành viên thường", "VIP");
+                    } else if ("downgradeVip".equals(pendingAction)) {
+                        userDAO.updateVipStatus(customerId, false);
+                        auditLogDAO.insert(admin.getId(), customerId, "isVip", "VIP", "Thành viên thường");
+                    }
+
+                    // Clear 2FA session variables
+                    session.removeAttribute("CUSTOMER_VIP_OTP_" + customerId);
+                    session.removeAttribute("CUSTOMER_VIP_OTP_EXPIRY_" + customerId);
+                    session.removeAttribute("PENDING_CUSTOMER_VIP_ACTION_" + customerId);
+                    session.removeAttribute("CUSTOMER_VIP_OTP_DISPLAY_" + customerId);
+
+                    response.sendRedirect(request.getContextPath() + "/admin/customer/detail?id=" + customerId + "&msg=success");
+                } else {
+                    request.setAttribute("error", "Mã OTP không chính xác hoặc đã hết hạn!");
+                    String displayOtp = (String) session.getAttribute("CUSTOMER_VIP_OTP_DISPLAY_" + customerId);
+                    if (displayOtp != null) {
+                        request.setAttribute("otp_display", displayOtp);
+                    }
+                    request.getRequestDispatcher("/admin/verify-2fa.jsp").forward(request, response);
+                }
+                return;
+            }
+
+            // 2. Initial Action Stage
+            if ("upgradeVip".equals(action) || "downgradeVip".equals(action)) {
+                // Generate OTP
+                String otp = String.format("%06d", new Random().nextInt(1000000));
+                session.setAttribute("CUSTOMER_VIP_OTP_" + customerId, otp);
+                session.setAttribute("CUSTOMER_VIP_OTP_EXPIRY_" + customerId, System.currentTimeMillis() + 5 * 60 * 1000);
+                session.setAttribute("PENDING_CUSTOMER_VIP_ACTION_" + customerId, action);
+                session.setAttribute("CUSTOMER_VIP_OTP_DISPLAY_" + customerId, otp);
+
+                // Send email to active admin
+                try {
+                    String actionText = "upgradeVip".equals(action) ? "nâng cấp hạng VIP" : "hạ cấp hạng VIP";
+                    String subject = "Xác thực 2FA thay đổi hạng thành viên - Mộc Trà Admin";
+                    String message = "Xin chào " + admin.getDisplayName() + ",\n\n"
+                            + "Hệ thống ghi nhận yêu cầu thay đổi hạng thành viên (" + actionText + ") của khách hàng ID: " + customerId + ".\n"
+                            + "Mã xác thực OTP 2FA của bạn là: " + otp + "\n"
+                            + "Mã OTP này có hiệu lực trong vòng 5 phút.\n\n"
+                            + "Vui lòng nhập mã này vào trang xác thực để hoàn tất quá trình.\n\n"
+                            + "Trân trọng,\n"
+                            + "Đội ngũ kỹ thuật Mộc Trà.";
+                    controller.utils.EmailService.sendEmail(admin.getEmail(), subject, message);
+                } catch (Exception e) {
+                    System.err.println("Lỗi gửi email OTP VIP: " + e.getMessage());
+                }
+
+                request.setAttribute("otp_display", otp);
+                request.getRequestDispatcher("/admin/verify-2fa.jsp").forward(request, response);
+                return;
 
             } else if ("assignVoucher".equals(action)) {
                 String voucherIdStr = request.getParameter("voucherId");

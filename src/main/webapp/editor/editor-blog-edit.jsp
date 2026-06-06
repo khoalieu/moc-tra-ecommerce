@@ -174,19 +174,24 @@
                                 </h3>
 
                                 <div class="form-group">
-                                    <label for="status">Trạng thái <span class="required">*</span></label>
-                                    <select id="status" name="status" class="form-control">
-                                        <option value="">-- Chọn trạng thái --</option>
-                                        <option value="draft" ${post.status.name() == 'DRAFT' ? 'selected' : ''}>Bản
-                                            nháp
-                                        </option>
-                                        <option value="published" ${post.status.name() == 'PUBLISHED' ? 'selected' : ''}>
-                                            Xuất bản ngay
-                                        </option>
-                                        <option value="archived" ${post.status.name() == 'ARCHIVED' ? 'selected' : ''}>
-                                            Lưu trữ
-                                        </option>
-                                    </select>
+                                    <label>Trạng thái</label>
+                                    <div class="status-display">
+                                        <c:choose>
+                                            <c:when test="${post.status.name() == 'PUBLISHED'}">
+                                                <span class="status-badge published">ĐÃ XUẤT BẢN</span>
+                                            </c:when>
+                                            <c:when test="${post.status.name() == 'PENDING'}">
+                                                <span class="status-badge status-pending" style="background: #fff3cd; color: #856404; border: 1px solid #ffeeba;">CHỜ DUYỆT</span>
+                                            </c:when>
+                                            <c:when test="${post.status.name() == 'DRAFT'}">
+                                                <span class="status-badge status-pending">BẢN NHÁP</span>
+                                            </c:when>
+                                            <c:otherwise>
+                                                <span class="status-badge status-cancelled">LƯU TRỮ</span>
+                                            </c:otherwise>
+                                        </c:choose>
+                                    </div>
+                                    <input type="hidden" id="status" name="status" value="${post.status.name().toLowerCase()}">
                                 </div>
 
                                 <div class="form-group">
@@ -299,15 +304,26 @@
                             Hủy bỏ
                         </a>
 
-                        <button type="submit" class="btn btn-success" name="action" value="preview">
-                            <i class="fas fa-eye"></i>
-                            Lưu & Xem
+                        <button type="button" class="btn btn-secondary" onclick="submitWithStatus('draft')">
+                            <i class="fas fa-save"></i>
+                            Lưu nháp
                         </button>
 
-                        <button type="submit" class="btn btn-primary">
+                        <button type="button" class="btn btn-warning" onclick="submitWithStatus('pending')">
                             <i class="fas fa-paper-plane"></i>
-                            Lưu thay đổi
+                            Gửi duyệt
                         </button>
+
+                        <c:if test="${sessionScope.user.hasPermission('blog.publish')}">
+                            <button type="button" class="btn btn-success" onclick="submitWithStatus('published')">
+                                <i class="fas fa-check-circle"></i>
+                                Duyệt & Xuất bản
+                            </button>
+                            <button type="button" class="btn btn-danger" onclick="submitWithStatus('archived')">
+                                <i class="fas fa-archive"></i>
+                                Lưu trữ
+                            </button>
+                        </c:if>
                     </div>
                 </div>
             </form>
@@ -375,6 +391,14 @@
             return;
         }
         window.open('${ctx}/chi-tiet-blog?slug=' + encodeURIComponent(slug), '_blank');
+    }
+
+    function submitWithStatus(statusVal) {
+        const statusInput = document.getElementById('status');
+        if (statusInput) {
+            statusInput.value = statusVal;
+        }
+        document.querySelector('.form-container').submit();
     }
 
 </script>
