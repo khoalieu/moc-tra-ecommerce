@@ -1060,4 +1060,39 @@ public class ProductDAO {
 
         return list;
     }
+    public void updateImageUrl(int productId, String imageUrl) {
+        String sql = "UPDATE products SET image_url = ? WHERE id = ?";
+
+        try (Connection conn = ds.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, imageUrl);
+            ps.setInt(2, productId);
+            ps.executeUpdate();
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public Product getProductByIdForMigration(int id) {
+        String sql = "SELECT * FROM products WHERE id = ?";
+
+        try (Connection conn = ds.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, id);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return mapRowToProduct(rs);
+                }
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return null;
+    }
 }
