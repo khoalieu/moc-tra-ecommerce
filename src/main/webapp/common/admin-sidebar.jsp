@@ -55,6 +55,15 @@
                 </a>
             </li>
 
+            <li class="nav-item ${param.activePage == 'notifications' ? 'active' : ''}">
+                <a href="${ctx}/admin/notifications" class="admin-notification-nav"
+                   data-summary-url="${ctx}/admin/notifications?action=summary">
+                    <i class="far fa-bell"></i>
+                    <span>Thông báo</span>
+                    <span class="badge admin-notification-badge" style="display:none;"></span>
+                </a>
+            </li>
+
             <li class="nav-item ${param.activePage == 'customers' ? 'active' : ''}">
                 <a href="${ctx}/admin/customers">
                     <i class="fas fa-users"></i>
@@ -87,6 +96,46 @@
                     <span>Nhật ký hệ thống</span>
                 </a>
             </li>
+            <c:if test="${sessionScope.user.hasPermission('role.manage')}">
+                <li class="nav-item ${param.activePage == 'roles' ? 'active' : ''}">
+                    <a href="${ctx}/admin/roles">
+                        <i class="fas fa-shield-alt"></i>
+                        <span>Phân quyền RBAC</span>
+                    </a>
+                </li>
+            </c:if>
         </ul>
     </nav>
 </aside>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const nav = document.querySelector(".admin-notification-nav");
+        if (!nav) {
+            return;
+        }
+
+        const badge = nav.querySelector(".admin-notification-badge");
+        const summaryUrl = nav.getAttribute("data-summary-url");
+        if (!badge || !summaryUrl) {
+            return;
+        }
+
+        fetch(summaryUrl)
+            .then(function (response) {
+                return response.json();
+            })
+            .then(function (data) {
+                const unreadCount = data && data.unreadCount ? data.unreadCount : 0;
+                if (unreadCount > 0) {
+                    badge.innerText = unreadCount;
+                    badge.style.display = "inline-block";
+                } else {
+                    badge.style.display = "none";
+                }
+            })
+            .catch(function () {
+                badge.style.display = "none";
+            });
+    });
+</script>

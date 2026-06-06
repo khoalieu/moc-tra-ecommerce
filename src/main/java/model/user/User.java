@@ -5,6 +5,9 @@ import model.enums.UserRole;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 
 public class User implements Serializable {
     private static final long serialVersionUID = 1L;
@@ -18,6 +21,8 @@ public class User implements Serializable {
     private String phone;
     private String avatar;
     private UserRole role;
+    private Integer roleId;
+    private Set<String> permissions = new HashSet<>();
     private LocalDateTime dateOfBirth;
     private UserGender gender;
     private Boolean isActive;
@@ -72,6 +77,17 @@ public class User implements Serializable {
 
     public UserRole getRole() { return role; }
     public void setRole(UserRole role) { this.role = role; }
+
+    public Integer getRoleId() { return roleId; }
+    public void setRoleId(Integer roleId) { this.roleId = roleId; }
+
+    public Set<String> getPermissions() { return Collections.unmodifiableSet(permissions); }
+    public void setPermissions(Set<String> permissions) { this.permissions = permissions != null ? new HashSet<>(permissions) : new HashSet<>(); }
+
+    public boolean hasPermission(String permissionName) {
+        if (permissionName == null || permissionName.isBlank()) return false;
+        return permissions.contains(permissionName);
+    }
 
     public LocalDateTime getDateOfBirth() { return dateOfBirth; }
     public void setDateOfBirth(LocalDateTime dateOfBirth) { this.dateOfBirth = dateOfBirth; }

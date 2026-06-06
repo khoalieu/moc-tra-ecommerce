@@ -27,45 +27,45 @@ public class UserDAO {
     }
 
     public User checkLogin(String username, String password) {
-        try {
-            String query = "SELECT * FROM users WHERE username = ? AND is_active = 1";
-            conn = ds.getConnection();
-            ps = conn.prepareStatement(query);
+        String query = "SELECT * FROM users WHERE username = ? AND is_active = 1";
+        try (Connection conn = ds.getConnection();
+             PreparedStatement ps = conn.prepareStatement(query)) {
             ps.setString(1, username);
-            rs = ps.executeQuery();
 
-            if (rs.next()) {
-                String storedHash = rs.getString("password_hash");
-                boolean isVerified = BCrypt.checkpw(password, storedHash);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    String storedHash = rs.getString("password_hash");
+                    boolean isVerified = BCrypt.checkpw(password, storedHash);
 
-                if (isVerified) {
-                    User user = new User();
-                    user.setId(rs.getInt("id"));
-                    user.setUsername(rs.getString("username"));
-                    user.setEmail(rs.getString("email"));
-                    user.setFirstName(rs.getString("first_name"));
-                    user.setLastName(rs.getString("last_name"));
-                    user.setPhone(rs.getString("phone"));
-                    user.setVip(rs.getBoolean("is_vip"));
-                    java.sql.Timestamp ts = rs.getTimestamp("dateOfBirth");
-                    if (ts != null) {
-                        user.setDateOfBirth(ts.toLocalDateTime());
-                    }
-                    String genderStr = rs.getString("gender");
-                    if (genderStr != null) {
-                        try {
-                            user.setGender(UserGender.valueOf(genderStr.toUpperCase()));
-                        } catch (IllegalArgumentException e) {
-                            user.setGender(UserGender.OTHER);
+                    if (isVerified) {
+                        User user = new User();
+                        user.setId(rs.getInt("id"));
+                        user.setUsername(rs.getString("username"));
+                        user.setEmail(rs.getString("email"));
+                        user.setFirstName(rs.getString("first_name"));
+                        user.setLastName(rs.getString("last_name"));
+                        user.setPhone(rs.getString("phone"));
+                        user.setVip(rs.getBoolean("is_vip"));
+                        java.sql.Timestamp ts = rs.getTimestamp("dateOfBirth");
+                        if (ts != null) {
+                            user.setDateOfBirth(ts.toLocalDateTime());
                         }
-                    }
-                    try {
-                        user.setRole(UserRole.valueOf(rs.getString("role").toUpperCase()));
-                    } catch (Exception e) {
-                        user.setRole(UserRole.CUSTOMER);
-                    }
+                        String genderStr = rs.getString("gender");
+                        if (genderStr != null) {
+                            try {
+                                user.setGender(UserGender.valueOf(genderStr.toUpperCase()));
+                            } catch (IllegalArgumentException e) {
+                                user.setGender(UserGender.OTHER);
+                            }
+                        }
+                        try {
+                            user.setRole(UserRole.valueOf(rs.getString("role").toUpperCase()));
+                        } catch (Exception e) {
+                            user.setRole(UserRole.CUSTOMER);
+                        }
 
-                    return user;
+                        return user;
+                    }
                 }
             }
         } catch (Exception e) {
@@ -75,14 +75,14 @@ public class UserDAO {
     }
 
     public boolean checkUserExist(String username, String email) {
-        try {
-            String query = "SELECT id FROM users WHERE username = ? OR email = ?";
-            conn = ds.getConnection();
-            ps = conn.prepareStatement(query);
+        String query = "SELECT id FROM users WHERE username = ? OR email = ?";
+        try (Connection conn = ds.getConnection();
+             PreparedStatement ps = conn.prepareStatement(query)) {
             ps.setString(1, username);
             ps.setString(2, email);
-            rs = ps.executeQuery();
-            if (rs.next()) return true;
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) return true;
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -495,6 +495,29 @@ public class UserDAO {
         }
         return 0;
     }
+
+    public List<Integer> getActiveCustomerIdsForNotifications(boolean vipOnly) {
+        List<Integer> ids = new ArrayList<>();
+        StringBuilder sql = new StringBuilder(
+                "SELECT id FROM users WHERE role = 'customer' AND is_active = 1"
+        );
+        if (vipOnly) {
+            sql.append(" AND is_vip = 1");
+        }
+
+        try (Connection conn = ds.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql.toString());
+             ResultSet rs = ps.executeQuery()) {
+
+            while (rs.next()) {
+                ids.add(rs.getInt("id"));
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return ids;
+    }
+
     public boolean updateStatusBulk(List<Integer> ids, boolean isActive) {
         String sql = "UPDATE users SET is_active = ? WHERE id = ?";
         Connection conn = null;
@@ -626,16 +649,21 @@ public class UserDAO {
         return -1;
     }
     public boolean updateUserByAdmin(User u) {
-        String sql = "UPDATE users SET first_name=?, last_name=?, phone=?, role=?, is_active=? WHERE id=?";
+        String sql = "UPDATE users SET first_name=?, last_name=?, phone=?, role=?, is_active=?, role_id=? WHERE id=?";
         try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setString(1, u.getFirstName());
             ps.setString(2, u.getLastName());
             ps.setString(3, u.getPhone());
-            ps.setString(4, u.getRole().name());
+            ps.setString(4, u.getRole() != null ? u.getRole().name() : null);
             ps.setBoolean(5, u.isActive());
-            ps.setInt(6, u.getId());
+            if (u.getRoleId() > 0) {
+                ps.setInt(6, u.getRoleId());
+            } else {
+                ps.setNull(6, java.sql.Types.INTEGER);
+            }
+            ps.setInt(7, u.getId());
 
             return ps.executeUpdate() > 0;
         } catch (Exception e) {
@@ -736,7 +764,10 @@ public class UserDAO {
         return null;
     }
     public User getUserForLogin(String loginKey) {
-        String query = "SELECT * FROM users WHERE (username = ? OR email = ? OR phone = ?) AND is_active = 1";
+        String query = "SELECT u.*, r.id AS role_id_val " +
+                       "FROM users u " +
+                       "LEFT JOIN roles r ON r.id = u.role_id " +
+                       "WHERE (u.username = ? OR u.email = ? OR u.phone = ?) AND u.is_active = 1";
         try (
                 Connection conn = ds.getConnection();
                 PreparedStatement ps = conn.prepareStatement(query);
@@ -772,6 +803,14 @@ public class UserDAO {
                             user.setRole(model.enums.UserRole.CUSTOMER);
                         }
                     }
+
+                    int roleIdVal = rs.getInt("role_id_val");
+                    if (!rs.wasNull()) {
+                        user.setRoleId(roleIdVal);
+                        PermissionDAO permDAO = new PermissionDAO(ds);
+                        user.setPermissions(permDAO.getPermissionNamesByUserId(user.getId()));
+                    }
+
                     return user;
                 }
             }
@@ -782,11 +821,28 @@ public class UserDAO {
         return null;
     }
 
+    public List<String> getActiveAdminEmails() {
+        List<String> emails = new ArrayList<>();
+        String sql = "SELECT email FROM users WHERE role = 'admin' AND is_active = 1 " +
+                "AND email IS NOT NULL AND email <> ''";
+
+        try (Connection conn = ds.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+
+            while (rs.next()) {
+                emails.add(rs.getString("email"));
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return emails;
+    }
+
     public void resetFailedAttempts(int userId) {
-        try {
-            String query = "UPDATE users SET failed_attempts = 0, lock_until = NULL WHERE id = ?";
-            conn = ds.getConnection();
-            ps = conn.prepareStatement(query);
+        String query = "UPDATE users SET failed_attempts = 0, lock_until = NULL WHERE id = ?";
+        try (Connection conn = ds.getConnection();
+             PreparedStatement ps = conn.prepareStatement(query)) {
             ps.setInt(1, userId);
             ps.executeUpdate();
         } catch (Exception e) {
@@ -799,16 +855,15 @@ public class UserDAO {
         boolean justLocked = false;
         String query;
 
-        try {
-            conn = ds.getConnection();
-            if (newAttempts >= 5) {
-                query = "UPDATE users SET failed_attempts = ?, lock_until = DATE_ADD(NOW(), INTERVAL 30 MINUTE) WHERE id = ?";
-                justLocked = true;
-            } else {
-                query = "UPDATE users SET failed_attempts = ? WHERE id = ?";
-            }
+        if (newAttempts >= 5) {
+            query = "UPDATE users SET failed_attempts = ?, lock_until = DATE_ADD(NOW(), INTERVAL 30 MINUTE) WHERE id = ?";
+            justLocked = true;
+        } else {
+            query = "UPDATE users SET failed_attempts = ? WHERE id = ?";
+        }
 
-            ps = conn.prepareStatement(query);
+        try (Connection conn = ds.getConnection();
+             PreparedStatement ps = conn.prepareStatement(query)) {
             ps.setInt(1, newAttempts);
             ps.setInt(2, userId);
             ps.executeUpdate();
@@ -1075,3 +1130,4 @@ public class UserDAO {
         }
     }
 }
+

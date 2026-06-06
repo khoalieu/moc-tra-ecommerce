@@ -60,14 +60,48 @@
                 </div>
             </div>
 
-            <form id="productFilterForm" action="admin/products" method="get" class="filters-section">                <div class="filters-grid">
+            <div class="admin-product-quick-filters">
+                <button type="button"
+                        class="admin-product-quick-btn ${currentStockFilter == 'need-reorder' ? 'active' : ''}"
+                        data-filter-field="stockFilter"
+                        data-filter-value="need-reorder">
+                    <i class="fas fa-box-open"></i> Cần nhập hàng
+                </button>
+                <button type="button"
+                        class="admin-product-quick-btn ${currentPromotionFilter == 'discounted' ? 'active' : ''}"
+                        data-filter-field="promotionFilter"
+                        data-filter-value="discounted">
+                    <i class="fas fa-percent"></i> Đang giảm giá
+                </button>
+                <button type="button"
+                        class="admin-product-quick-btn ${currentStockFilter == 'low-stock' ? 'active' : ''}"
+                        data-filter-field="stockFilter"
+                        data-filter-value="low-stock">
+                    <i class="fas fa-battery-quarter"></i> Sắp hết hàng
+                </button>
+                <button type="button"
+                        class="admin-product-quick-btn ${currentStockFilter == 'out-of-stock' ? 'active' : ''}"
+                        data-filter-field="stockFilter"
+                        data-filter-value="out-of-stock">
+                    <i class="fas fa-triangle-exclamation"></i> Hết hàng
+                </button>
+            </div>
+
+            <form id="productFilterForm" action="admin/products" method="get" class="filters-section">
+                <div class="filters-grid admin-product-filters-grid">
                     <div class="filter-group">
                         <label for="category-filter">Danh mục</label>
-                        <select name="categoryId" id="category-filter" class="form-select"
-                                onchange="this.form.submit()">
+                        <select name="categoryId" id="category-filter" class="form-select" onchange="this.form.submit()">
                             <option value="">Tất cả danh mục</option>
                             <c:forEach var="cat" items="${categoryList}">
-                                <option value="${cat.id}" ${currentCategoryId == cat.id ? 'selected' : ''}>${cat.name}</option>
+                                <c:if test="${cat.parentId == null}">
+                                    <option value="${cat.id}" ${currentCategoryId == cat.id ? 'selected' : ''}>${cat.name}</option>
+                                    <c:forEach var="child" items="${categoryList}">
+                                        <c:if test="${child.parentId == cat.id}">
+                                            <option value="${child.id}" ${currentCategoryId == child.id ? 'selected' : ''}>-- ${child.name}</option>
+                                        </c:if>
+                                    </c:forEach>
+                                </c:if>
                             </c:forEach>
                         </select>
                     </div>
@@ -78,38 +112,104 @@
                             <option value="">Tất cả trạng thái</option>
                             <option value="active" ${currentStatus == 'active' ? 'selected' : ''}>Đang bán</option>
                             <option value="inactive" ${currentStatus == 'inactive' ? 'selected' : ''}>Ngừng bán</option>
-                            <option value="out-of-stock" ${currentStatus == 'out-of-stock' ? 'selected' : ''}>Hết hàng
-                            </option>
+                            <option value="out-of-stock" ${currentStatus == 'out-of-stock' ? 'selected' : ''}>Hết hàng</option>
                         </select>
                     </div>
 
                     <div class="filter-group">
-                        <label for="price-filter">Khoảng giá</label>
-                        <select name="maxPrice" id="price-filter" class="form-select" onchange="this.form.submit()">
-                            <option value="">Tất cả giá</option>
-                            <option value="50000" ${currentMaxPrice == '50000' ? 'selected' : ''}>Dưới 50.000đ</option>
-                            <option value="100000" ${currentMaxPrice == '100000' ? 'selected' : ''}>Dưới 100.000đ
-                            </option>
-                            <option value="200000" ${currentMaxPrice == '200000' ? 'selected' : ''}>Dưới 200.000đ
-                            </option>
+                        <label for="stock-filter">Tồn kho</label>
+                        <select name="stockFilter" id="stock-filter" class="form-select" onchange="this.form.submit()">
+                            <option value="">Tất cả tồn kho</option>
+                            <option value="in-stock" ${currentStockFilter == 'in-stock' ? 'selected' : ''}>Còn hàng</option>
+                            <option value="need-reorder" ${currentStockFilter == 'need-reorder' ? 'selected' : ''}>Cần nhập hàng</option>
+                            <option value="low-stock" ${currentStockFilter == 'low-stock' ? 'selected' : ''}>Sắp hết hàng</option>
+                            <option value="out-of-stock" ${currentStockFilter == 'out-of-stock' ? 'selected' : ''}>Hết hàng</option>
                         </select>
+                    </div>
+
+                    <div class="filter-group">
+                        <label for="promotion-filter">Khuyến mãi</label>
+                        <select name="promotionFilter" id="promotion-filter" class="form-select" onchange="this.form.submit()">
+                            <option value="">Tất cả khuyến mãi</option>
+                            <option value="active" ${currentPromotionFilter == 'active' ? 'selected' : ''}>Đang khuyến mãi</option>
+                            <option value="discounted" ${currentPromotionFilter == 'discounted' ? 'selected' : ''}>Đang giảm giá</option>
+                            <option value="none" ${currentPromotionFilter == 'none' ? 'selected' : ''}>Không khuyến mãi</option>
+                            <c:forEach var="promo" items="${activePromos}">
+                                <c:set var="promoFilterValue" value="promo-${promo.id}" />
+                                <option value="${promoFilterValue}" ${currentPromotionFilter == promoFilterValue ? 'selected' : ''}>${promo.name}</option>
+                            </c:forEach>
+                        </select>
+                    </div>
+
+                    <div class="filter-group">
+                        <label>Khoảng giá</label>
+                        <div class="admin-product-range-row">
+                            <input type="number" name="minPrice" class="form-select" value="${currentMinPrice}" min="0" placeholder="Từ giá">
+                            <input type="number" name="maxPrice" class="form-select" value="${currentMaxPrice}" min="0" placeholder="Đến giá">
+                        </div>
+                    </div>
+
+                    <div class="filter-group">
+                        <label>Ngưỡng tồn kho</label>
+                        <div class="admin-product-range-row">
+                            <input type="number" name="reorderThreshold" class="form-select" value="${currentReorderThreshold}" min="1" title="Dưới ngưỡng này là cần nhập">
+                            <input type="number" name="lowStockThreshold" class="form-select" value="${currentLowStockThreshold}" min="1" title="Đến ngưỡng này là sắp hết">
+                        </div>
                     </div>
 
                     <div class="filter-group">
                         <label for="sort-filter">Sắp xếp</label>
                         <select name="sort" id="sort-filter" class="form-select" onchange="this.form.submit()">
                             <option value="newest" ${currentSort == 'newest' ? 'selected' : ''}>Mới nhất</option>
-                            <option value="price-asc" ${currentSort == 'price-asc' ? 'selected' : ''}>Giá thấp đến cao
-                            </option>
-                            <option value="price-desc" ${currentSort == 'price-desc' ? 'selected' : ''}>Giá cao đến
-                                thấp
-                            </option>
+                            <option value="oldest" ${currentSort == 'oldest' ? 'selected' : ''}>Cũ nhất</option>
+                            <option value="price-asc" ${currentSort == 'price-asc' ? 'selected' : ''}>Giá thấp đến cao</option>
+                            <option value="price-desc" ${currentSort == 'price-desc' ? 'selected' : ''}>Giá cao đến thấp</option>
+                            <option value="stock-asc" ${currentSort == 'stock-asc' ? 'selected' : ''}>Tồn kho thấp nhất</option>
                             <option value="name-asc" ${currentSort == 'name-asc' ? 'selected' : ''}>Tên A-Z</option>
                         </select>
                     </div>
 
+                    <div class="filter-group admin-product-filter-actions">
+                        <label>&nbsp;</label>
+                        <div class="admin-product-action-row">
+                            <button type="submit" class="admin-product-apply-btn"><i class="fas fa-filter"></i> Lọc</button>
+                            <a href="admin/products" class="admin-product-reset-btn"><i class="fas fa-rotate-left"></i> Xóa</a>
+                        </div>
+                    </div>
                 </div>
             </form>
+
+            <script>
+                function applyProductQuickFilter(fieldName, value) {
+                    var form = document.getElementById('productFilterForm');
+                    if (!form || !fieldName) return;
+
+                    var field = form.elements[fieldName];
+                    if (!field) return;
+
+                    var nextValue = field.value === value ? '' : value;
+                    field.value = nextValue;
+
+                    if (fieldName === 'stockFilter' && nextValue && form.elements['status']) {
+                        form.elements['status'].value = '';
+                    }
+
+                    if (form.requestSubmit) {
+                        form.requestSubmit();
+                    } else {
+                        form.submit();
+                    }
+                }
+
+                document.addEventListener('DOMContentLoaded', function () {
+                    var buttons = document.querySelectorAll('.admin-product-quick-btn');
+                    for (var i = 0; i < buttons.length; i++) {
+                        buttons[i].addEventListener('click', function () {
+                            applyProductQuickFilter(this.getAttribute('data-filter-field'), this.getAttribute('data-filter-value'));
+                        });
+                    }
+                });
+            </script>
 
             <div class="bulk-actions-bar full-width" id="bulkActionsBar">
                 <div style="display: flex; align-items: center; gap: 10px;">
@@ -210,10 +310,28 @@
                                     </c:if>
                                 </td>
                                 <td>
-                                    <span class="${p.stockQuantity > 10 ? 'product-stock-high' : 'product-stock-low'}"
-                                          style="font-weight: 600; color: ${p.stockQuantity > 10 ? '#28a745' : '#dc3545'}">
-                                            ${p.stockQuantity}
-                                    </span>
+                                    <div class="admin-product-stock-cell">
+                                        <span class="${p.stockQuantity > currentLowStockThreshold ? 'product-stock-high' : 'product-stock-low'}"
+                                              style="font-weight: 600; color: ${p.stockQuantity > currentLowStockThreshold ? '#28a745' : '#dc3545'}">
+                                                ${p.stockQuantity}
+                                        </span>
+                                        <c:choose>
+                                            <c:when test="${p.stockQuantity == 0}">
+                                                <span class="admin-stock-pill out">Hết hàng</span>
+                                            </c:when>
+                                            <c:when test="${p.stockQuantity > 0 && p.stockQuantity < currentReorderThreshold}">
+                                                <span class="admin-stock-pill reorder">Cần nhập</span>
+                                            </c:when>
+                                            <c:when test="${p.stockQuantity >= currentReorderThreshold && p.stockQuantity <= currentLowStockThreshold}">
+                                                <span class="admin-stock-pill low">Sắp hết</span>
+                                            </c:when>
+                                        </c:choose>
+                                        <c:if test="${p.lowStockVariantCount > 0}">
+                                            <span class="admin-stock-variant-note" title="${p.lowStockVariantSummary}">
+                                                ${p.lowStockVariantCount} biến thể cần nhập
+                                            </span>
+                                        </c:if>
+                                    </div>
                                 </td>
                                 <td>
                                     <span class="status-badge ${p.status == 'ACTIVE' ? 'status-confirmed' : 'status-cancelled'}"
@@ -275,21 +393,21 @@
 
                         <div class="pagination">
                             <!-- Lùi 6 trang -->
-                            <a href="admin/products?page=${prevPage < 1 ? 1 : prevPage}&categoryId=${currentCategoryId}&status=${currentStatus}&maxPrice=${currentMaxPrice}&sort=${currentSort}&keyword=${currentKeyword}"
+                            <a href="admin/products?page=${prevPage < 1 ? 1 : prevPage}${filterQuery}"
                                class="page-btn ${currentPage <= windowSize ? 'disabled' : ''}">
                                 &laquo;
                             </a>
 
                             <!-- Các trang trong block hiện tại -->
                             <c:forEach begin="${startPage}" end="${endPage}" var="i">
-                                <a href="admin/products?page=${i}&categoryId=${currentCategoryId}&status=${currentStatus}&maxPrice=${currentMaxPrice}&sort=${currentSort}&keyword=${currentKeyword}"
+                                <a href="admin/products?page=${i}${filterQuery}"
                                    class="page-btn ${currentPage == i ? 'active' : ''}">
                                         ${i}
                                 </a>
                             </c:forEach>
 
                             <!-- Tiến 6 trang -->
-                            <a href="admin/products?page=${nextPage > totalPages ? totalPages : nextPage}&categoryId=${currentCategoryId}&status=${currentStatus}&maxPrice=${currentMaxPrice}&sort=${currentSort}&keyword=${currentKeyword}"
+                            <a href="admin/products?page=${nextPage > totalPages ? totalPages : nextPage}${filterQuery}"
                                class="page-btn ${currentPage + windowSize > totalPages ? 'disabled' : ''}">
                                 &raquo;
                             </a>

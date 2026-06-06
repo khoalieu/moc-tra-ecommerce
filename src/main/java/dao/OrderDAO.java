@@ -6,6 +6,9 @@ import model.order.OrderItem;
 import model.product.Product;
 import model.enums.OrderStatus;
 import model.enums.PaymentStatus;
+import model.user.User;
+import service.EcommerceEmailService;
+import service.NotificationService;
 
 import javax.sql.DataSource;
 import java.sql.*;
@@ -479,24 +482,84 @@ public class OrderDAO {
     public boolean updateOrderStatus(int orderId, OrderStatus status) {
         Order oldOrder = getOrderById(orderId);
         String sql = "UPDATE orders SET status = ? WHERE id = ?";
-        try (Connection conn = ds.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+        boolean updated = false;
+        boolean deliveryFailedFromShipping = oldOrder != null
+                && oldOrder.getStatus() == OrderStatus.SHIPPING
+                && status == OrderStatus.DELIVERY_FAILED;
 
-            ps.setString(1, status.name().toLowerCase());
-            ps.setInt(2, orderId);
+        try (Connection conn = ds.getConnection()) {
+            conn.setAutoCommit(false);
+            try {
+                try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                    ps.setString(1, status.name().toLowerCase());
+                    ps.setInt(2, orderId);
+                    updated = ps.executeUpdate() > 0;
+                }
+                if (updated && shouldRestoreStockOnStatusChange(oldOrder, status)) {
+                    restoreOrderStock(conn, oldOrder);
+                }
+                conn.commit();
+            } catch (SQLException e) {
+                conn.rollback();
+                throw e;
+            }
 
-            boolean updated = ps.executeUpdate() > 0;
-            if (updated && oldOrder != null
-                    && oldOrder.getStatus() == OrderStatus.SHIPPING
-                    && status == OrderStatus.DELIVERY_FAILED) {
+            if (updated && oldOrder != null && oldOrder.getStatus() != status) {
+                new NotificationService().notifyOrderStatusChanged(oldOrder, status);
+                sendOrderStatusEmail(oldOrder, status);
+            }
+            if (updated && deliveryFailedFromShipping) {
                 oldOrder.setStatus(OrderStatus.DELIVERY_FAILED);
-                new RefundDAO(ds).createPendingInfoRefundForFailedDelivery(oldOrder, "Đơn giao không thành công");
+                NotificationService notificationService = new NotificationService();
+                notificationService.notifyAdminDeliveryFailed(oldOrder);
+                boolean refundCreated = new RefundDAO(ds)
+                        .createPendingInfoRefundForFailedDelivery(oldOrder, "Đơn giao không thành công");
+                if (refundCreated) {
+                    notificationService.notifyRefundPendingInfo(oldOrder);
+                }
             }
             return updated;
         } catch (SQLException e) {
             e.printStackTrace();
         }
         return false;
+    }
+
+    private boolean shouldRestoreStockOnStatusChange(Order oldOrder, OrderStatus newStatus) {
+        if (oldOrder == null || oldOrder.getStatus() == null || newStatus == null) {
+            return false;
+        }
+        OrderStatus oldStatus = oldOrder.getStatus();
+        boolean movingToReturnStockStatus = newStatus == OrderStatus.CANCELLED
+                || newStatus == OrderStatus.DELIVERY_FAILED;
+        boolean alreadyReturnedStock = oldStatus == OrderStatus.CANCELLED
+                || oldStatus == OrderStatus.DELIVERY_FAILED;
+
+        return movingToReturnStockStatus && !alreadyReturnedStock && oldStatus != newStatus;
+    }
+
+    private void restoreOrderStock(Connection conn, Order order) throws SQLException {
+        if (order == null || order.getItems() == null) {return;}
+
+        for (OrderItem item : order.getItems()) {
+            Integer variantId = item.getVariantId();
+
+            if (variantId != null && variantId > 0) {
+                String sqlUpdateVariant = "UPDATE product_variants SET stock_quantity = stock_quantity + ? WHERE id = ?";
+                try (PreparedStatement psStock = conn.prepareStatement(sqlUpdateVariant)) {
+                    psStock.setInt(1, item.getQuantity());
+                    psStock.setInt(2, variantId);
+                    psStock.executeUpdate();
+                }
+            } else {
+                String sqlUpdateStock = "UPDATE products SET stock_quantity = stock_quantity + ? WHERE id = ?";
+                try (PreparedStatement psStock = conn.prepareStatement(sqlUpdateStock)) {
+                    psStock.setInt(1, item.getQuantity());
+                    psStock.setInt(2, item.getProductId());
+                    psStock.executeUpdate();
+                }
+            }
+        }
     }
 
     private Order mapRowToOrder(ResultSet rs) throws SQLException {
@@ -695,6 +758,8 @@ public class OrderDAO {
             }
 
             conn.commit();
+            new NotificationService().notifyOrderStatusChanged(order, OrderStatus.CANCELLED);
+            sendOrderStatusEmail(order, OrderStatus.CANCELLED);
             return true;
         } catch (SQLException e) {
             if (conn != null) {
@@ -801,6 +866,7 @@ public class OrderDAO {
         return false;
     }
     public boolean shipperCompleteOrder(int orderId, int shipperId) {
+        Order order = getOrderById(orderId);
         String sql = "UPDATE orders " +
                 "SET status = 'completed', " +
                 "    payment_status = CASE WHEN payment_status = 'pending' THEN 'paid' ELSE payment_status END " +
@@ -812,7 +878,12 @@ public class OrderDAO {
             ps.setInt(1, orderId);
             ps.setInt(2, shipperId);
 
-            return ps.executeUpdate() > 0;
+            boolean updated = ps.executeUpdate() > 0;
+            if (updated && order != null) {
+                new NotificationService().notifyOrderStatusChanged(order, OrderStatus.COMPLETED);
+                sendOrderStatusEmail(order, OrderStatus.COMPLETED);
+            }
+            return updated;
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -857,12 +928,19 @@ public class OrderDAO {
             }
             conn.commit();
             if (order != null) {
+                NotificationService notificationService = new NotificationService();
+                notificationService.notifyOrderStatusChanged(order, OrderStatus.DELIVERY_FAILED);
+                notificationService.notifyAdminDeliveryFailed(order);
+                sendOrderStatusEmail(order, OrderStatus.DELIVERY_FAILED);
                 String refundReason = "Đơn giao không thành công";
                 if (reason != null && !reason.trim().isEmpty()) {
                     refundReason += ": " + reason.trim();
                 }
-                new RefundDAO(ds).createPendingInfoRefundForFailedDelivery(order,
+                boolean refundCreated = new RefundDAO(ds).createPendingInfoRefundForFailedDelivery(order,
                         refundReason);
+                if (refundCreated) {
+                    notificationService.notifyRefundPendingInfo(order);
+                }
             }
             return true;
 
@@ -888,6 +966,10 @@ public class OrderDAO {
             ps.setInt(4, orderId);
             ps.setInt(5, shipperId);
             int rowsAffected = ps.executeUpdate();
+            if (rowsAffected > 0 && "shipping".equalsIgnoreCase(status)) {
+                Order order = getOrderById(orderId);
+                new NotificationService().notifyOrderStatusChanged(order, OrderStatus.SHIPPING);
+            }
             return rowsAffected > 0;
         } catch (SQLException e) {
             e.printStackTrace();
@@ -1047,11 +1129,34 @@ public class OrderDAO {
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, ghnOrderCode);
             ps.setInt(2, orderId);
-            return ps.executeUpdate() > 0;
+            boolean updated = ps.executeUpdate() > 0;
+            if (updated) {
+                Order order = getOrderById(orderId);
+                new NotificationService().notifyOrderStatusChanged(order, OrderStatus.SHIPPING);
+            }
+            return updated;
         } catch (SQLException e) {
             e.printStackTrace();
         }
         return false;
+    }
+
+    private void sendOrderStatusEmail(Order order, OrderStatus status) {
+        if (order == null || status == null) {
+            return;
+        }
+
+        User user = new UserDAO(ds).getById(order.getUserId());
+        EcommerceEmailService emailService = new EcommerceEmailService();
+
+        if (status == OrderStatus.CANCELLED) {
+            emailService.sendOrderCancelledToUser(user, order);
+        } else if (status == OrderStatus.COMPLETED) {
+            emailService.sendOrderCompletedToUser(user, order);
+        } else if (status == OrderStatus.DELIVERY_FAILED) {
+            emailService.sendDeliveryFailedToUser(user, order);
+            emailService.sendDeliveryFailedToAdmin(order);
+        }
     }
 
 }

@@ -17,6 +17,8 @@ public class Banner implements Serializable {
     private String section;     // home, promotion, sidebar...
     private Integer sortOrder;
     private Boolean isActive;
+    private LocalDateTime startTime;
+    private LocalDateTime endTime;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -25,6 +27,7 @@ public class Banner implements Serializable {
     public Banner(Integer id, String title, String subtitle, String imageUrl,
                   String buttonText, String buttonLink, String section,
                   Integer sortOrder, Boolean isActive,
+                  LocalDateTime startTime, LocalDateTime endTime,
                   LocalDateTime createdAt, LocalDateTime updatedAt) {
         this.id = id;
         this.title = title;
@@ -35,6 +38,8 @@ public class Banner implements Serializable {
         this.section = section;
         this.sortOrder = sortOrder;
         this.isActive = isActive;
+        this.startTime = startTime;
+        this.endTime = endTime;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
     }
@@ -83,4 +88,9 @@ public class Banner implements Serializable {
         return Timestamp.valueOf(updatedAt);
     }
 
+    public LocalDateTime getStartTime() { return startTime; }
+    public void setStartTime(LocalDateTime startTime) { this.startTime = startTime; }
+
+    public LocalDateTime getEndTime() { return endTime; }
+    public void setEndTime(LocalDateTime endTime) { this.endTime = endTime; }
 }

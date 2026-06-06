@@ -16,6 +16,8 @@ import model.enums.PaymentStatus;
 import model.order.Order;
 import model.refund.RefundRequest;
 import model.user.User;
+import service.EcommerceEmailService;
+import service.NotificationService;
 
 import java.io.File;
 import java.io.IOException;
@@ -87,6 +89,14 @@ public class UserRefundRequestServlet extends HttpServlet {
             boolean success = completingPendingInfo
                     ? refundDAO.completePendingInfoRefund(refund)
                     : refundDAO.createRefundRequest(refund);
+            if (success) {
+                NotificationService notificationService = new NotificationService();
+                notificationService.notifyRefundRequested(order, completingPendingInfo);
+                notificationService.notifyAdminRefundRequested(order, completingPendingInfo);
+                EcommerceEmailService emailService = new EcommerceEmailService();
+                emailService.sendRefundRequestedToUser(user, order);
+                emailService.sendRefundRequestedToAdmin(order);
+            }
             setMessage(session,
                     success ? "Yêu cầu hoàn tiền đã được gửi. Shop sẽ xử lý thủ công trong thời gian sớm nhất."
                             : "Không thể gửi yêu cầu hoàn tiền. Vui lòng thử lại sau.",

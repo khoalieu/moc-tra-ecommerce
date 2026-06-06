@@ -191,6 +191,26 @@
                         </div>
                     </div>
                 </div>
+                <c:if test="${not empty sessionScope.user}">
+                    <div class="notification-header-bell"
+                         data-summary-url="${pageContext.request.contextPath}/thong-bao?action=summary">
+                        <a class="notification-bell-btn" href="${pageContext.request.contextPath}/thong-bao" aria-label="Thông báo">
+                            <i class="fa-regular fa-bell"></i>
+                            <span class="notification-badge" style="display:none;"></span>
+                        </a>
+
+                        <div class="notification-header-dropdown">
+                            <div class="notification-dropdown-head">
+                                <strong>Thông báo mới</strong>
+                                <a href="${pageContext.request.contextPath}/thong-bao">Xem tất cả</a>
+                            </div>
+
+                            <div class="notification-header-list">
+                                <div class="notification-mini-empty">Chưa có thông báo</div>
+                            </div>
+                        </div>
+                    </div>
+                </c:if>
                 <div class="user-account" style="display: flex; align-items: center; justify-content: center;">
                     <%-- Kiểm tra class an toàn hơn --%>
                     <c:choose>
@@ -289,6 +309,11 @@
         const searchInput = document.getElementById("headerSearchInput");
         const suggestionBox = document.getElementById("searchSuggestionBox");
         const contextPath = "${pageContext.request.contextPath}";
+        const notificationBell = document.querySelector(".notification-header-bell");
+
+        if (notificationBell) {
+            loadHeaderNotifications(notificationBell);
+        }
 
         if (!searchInput || !suggestionBox) {
             return;
@@ -407,6 +432,52 @@
                 .replace(/>/g, "&gt;")
                 .replace(/"/g, "&quot;")
                 .replace(/'/g, "&#039;");
+        }
+
+        function loadHeaderNotifications(bell) {
+            const summaryUrl = bell.getAttribute("data-summary-url");
+            const badge = bell.querySelector(".notification-badge");
+            const list = bell.querySelector(".notification-header-list");
+
+            if (!summaryUrl || !list) {
+                return;
+            }
+
+            fetch(summaryUrl)
+                .then(function (response) {
+                    return response.json();
+                })
+                .then(function (data) {
+                    const unreadCount = data && data.unreadCount ? data.unreadCount : 0;
+                    const notifications = data && data.notifications ? data.notifications : [];
+
+                    if (badge) {
+                        if (unreadCount > 0) {
+                            badge.innerText = unreadCount;
+                            badge.style.display = "inline-block";
+                        } else {
+                            badge.style.display = "none";
+                        }
+                    }
+
+                    if (notifications.length === 0) {
+                        list.innerHTML = '<div class="notification-mini-empty">Chưa có thông báo</div>';
+                        return;
+                    }
+
+                    let html = "";
+                    notifications.forEach(function (notification) {
+                        const unreadClass = notification.read ? "" : " unread";
+                        html += '<a class="notification-mini-item' + unreadClass + '" href="' + contextPath + '/thong-bao?action=read&id=' + notification.id + '">';
+                        html += '<span class="notification-dot"></span>';
+                        html += '<span>' + escapeHtml(notification.title) + '</span>';
+                        html += '</a>';
+                    });
+                    list.innerHTML = html;
+                })
+                .catch(function () {
+                    list.innerHTML = '<div class="notification-mini-empty">Chưa có thông báo</div>';
+                });
         }
     });
 </script>

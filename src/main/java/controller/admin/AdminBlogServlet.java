@@ -22,15 +22,8 @@ public class AdminBlogServlet extends HttpServlet {
             throws ServletException, IOException {
 
         HttpSession session = request.getSession(false);
-        if (session == null || session.getAttribute("user") == null) {
-            response.sendRedirect(request.getContextPath() + "/login");
-            return;
-        }
-        User user = (User) session.getAttribute("user");
-        if (!"ADMIN".equals(user.getRole().name())) {
-            response.sendError(HttpServletResponse.SC_FORBIDDEN);
-            return;
-        }
+        User user = (session != null) ? (User) session.getAttribute("user") : null;
+        if (user == null) { response.sendRedirect(request.getContextPath() + "/login"); return; }
 
         BlogPostDAO postDAO = DAOFactory.getInstance().getBlogPostDAO();
         BlogCategoryDAO catDAO = DAOFactory.getInstance().getBlogCategoryDAO();

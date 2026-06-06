@@ -4,7 +4,6 @@ import dao.CategoryDAO;
 import dao.DAOFactory;
 import model.product.Category;
 import model.user.User;
-import model.enums.UserRole;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.*;
@@ -21,8 +20,9 @@ public class AdminCategoryServlet extends HttpServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
-        User me = requireAdminOrEditor(request, response);
-        if (me == null) return;
+        HttpSession session = request.getSession(false);
+        User me = (session != null) ? (User) session.getAttribute("user") : null;
+        if (me == null) { response.sendRedirect(request.getContextPath() + "/login"); return; }
 
         String path = request.getServletPath();
         CategoryDAO dao = DAOFactory.getInstance().getCategoryDAO();
@@ -61,8 +61,9 @@ public class AdminCategoryServlet extends HttpServlet {
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
-        User me = requireAdminOrEditor(request, response);
-        if (me == null) return;
+        HttpSession session = request.getSession(false);
+        User me = (session != null) ? (User) session.getAttribute("user") : null;
+        if (me == null) { response.sendRedirect(request.getContextPath() + "/login"); return; }
 
         request.setCharacterEncoding("UTF-8");
 
@@ -211,17 +212,4 @@ public class AdminCategoryServlet extends HttpServlet {
         return s;
     }
 
-    private User requireAdminOrEditor(HttpServletRequest request, HttpServletResponse response) throws IOException {
-        HttpSession session = request.getSession(false);
-        if (session == null || !(session.getAttribute("user") instanceof User)) {
-            response.sendRedirect(request.getContextPath() + "/login");
-            return null;
-        }
-        User u = (User) session.getAttribute("user");
-        if (u.getRole() == null || !(u.getRole() == UserRole.ADMIN)) {
-            response.sendError(HttpServletResponse.SC_FORBIDDEN);
-            return null;
-        }
-        return u;
-    }
 }

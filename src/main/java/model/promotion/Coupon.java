@@ -18,6 +18,7 @@ public class Coupon {
     private LocalDateTime startDate;
     private LocalDateTime endDate;
     private boolean active;
+    private String approvalStatus; // PENDING, APPROVED, REJECTED
     private LocalDateTime createdAt;
 
     public Coupon() {
@@ -163,6 +164,14 @@ public class Coupon {
 
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public String getApprovalStatus() {
+        return approvalStatus;
+    }
+
+    public void setApprovalStatus(String approvalStatus) {
+        this.approvalStatus = approvalStatus;
     }
 
     public boolean isClaimOutOfStock() {

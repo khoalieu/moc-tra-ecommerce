@@ -943,6 +943,27 @@
 
 .user-dashboard-page .item-unit-price { font-size: 11px; color: #9ca3af; }
 
+.user-dashboard-page .item-original-price {
+    font-size: 11px;
+    color: #111827;
+    line-height: 1.35;
+}
+
+.user-dashboard-page .item-promo-discount {
+    font-size: 11px;
+    color: #d32f2f;
+    font-weight: 600;
+    line-height: 1.35;
+}
+
+.user-dashboard-page .item-final-price {
+    font-weight: 700;
+    font-size: 14px;
+    color: #2563eb;
+    white-space: nowrap;
+    margin-top: 2px;
+}
+
 .user-dashboard-page .item-total-price {
     font-weight: 700;
     font-size: 14px;
@@ -982,7 +1003,19 @@
     gap: 20px;
     flex-wrap: wrap;
     font-size: 13px;
-    color: #555;
+    color: #111827;
+}
+
+.user-dashboard-page .summary-amount-row .summary-normal {
+    color: #111827;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.user-dashboard-page .summary-amount-row .summary-discount {
+    color: #d32f2f;
+    font-size: 12px;
+    font-weight: 600;
 }
 
 .user-dashboard-page .summary-amount-row .highlight-total {
@@ -1080,6 +1113,31 @@
     background: #107e84;
     color: white;
     border-color: #107e84;
+}
+
+.user-dashboard-page .orders-scroll-pane {
+    max-height: 760px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding-right: 8px;
+}
+
+.user-dashboard-page .orders-scroll-pane::-webkit-scrollbar {
+    width: 7px;
+}
+
+.user-dashboard-page .orders-scroll-pane::-webkit-scrollbar-track {
+    background: #f3f4f6;
+    border-radius: 999px;
+}
+
+.user-dashboard-page .orders-scroll-pane::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 999px;
+}
+
+.user-dashboard-page .orders-scroll-pane::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
 }
 
 .user-dashboard-page .orders-list {

@@ -101,9 +101,11 @@
                         <div class="table-header__info">
                             <strong>Tổng cộng: ${promotionList.size()} chương trình</strong>
                         </div>
-                        <button type="button" class="btn btn-create-promotion" onclick="openCreatePromotionModal()">
-                            <i class="fas fa-plus"></i> Thêm khuyến mãi
-                        </button>
+                        <c:if test="${sessionScope.user != null && sessionScope.user.hasPermission('promotion.create')}">
+                            <button type="button" class="btn btn-create-promotion" onclick="openCreatePromotionModal()">
+                                <i class="fas fa-plus"></i> Thêm khuyến mãi
+                            </button>
+                        </c:if>
                     </div>
 
                     <div class="table-responsive">
@@ -115,6 +117,7 @@
                                 <th>Loại</th>
                                 <th>Giảm giá</th>
                                 <th>Thời gian</th>
+                                <th>Kiểm duyệt</th>
                                 <th>Trạng thái</th>
                                 <th class="actions-col">Hành động</th>
                             </tr>
@@ -165,6 +168,13 @@
                                         <div>Kết thúc: <span class="time-end">${fn:replace(promo.endDate, 'T', ' ')}</span></div>
                                     </td>
                                     <td>
+                                        <c:choose>
+                                            <c:when test="${promo.approvalStatus == 'APPROVED'}"><span class="badge badge-blue">Đã duyệt</span></c:when>
+                                            <c:when test="${promo.approvalStatus == 'REJECTED'}"><span class="badge badge-orange">Từ chối</span></c:when>
+                                            <c:otherwise><span class="badge">Chờ duyệt</span></c:otherwise>
+                                        </c:choose>
+                                    </td>
+                                    <td>
                                         <span class="status-badge ${promo.active ? 'status-active' : 'status-inactive'}">
                                                 ${promo.active ? 'Hoạt động' : 'Tắt'}
                                         </span>
@@ -182,6 +192,17 @@
                                                 data-imageurl="${promo.imageUrl}">
                                             <i class="fas fa-edit"></i>
                                         </button>
+
+                                        <c:if test="${sessionScope.user != null && sessionScope.user.hasPermission('promotion.approve') && promo.approvalStatus != 'APPROVED'}">
+                                            <form action="${pageContext.request.contextPath}/admin/promotions" method="post" class="inline-form"
+                                                  onsubmit="return confirm('Bạn muốn duyệt chương trình này?');">
+                                                <input type="hidden" name="action" value="approvePromotion">
+                                                <input type="hidden" name="id" value="${promo.id}">
+                                                <button type="submit" class="btn-action" title="Duyệt">
+                                                    <i class="fas fa-check-circle" style="color: green;"></i>
+                                                </button>
+                                            </form>
+                                        </c:if>
 
                                         <form action="${pageContext.request.contextPath}/admin/promotions" method="post" class="inline-form">
                                             <input type="hidden" name="action" value="togglePromotion">
@@ -207,7 +228,7 @@
 
                             <c:if test="${empty promotionList}">
                                 <tr>
-                                    <td colspan="7" class="empty-cell">
+                                    <td colspan="8" class="empty-cell">
                                         Chưa có chương trình khuyến mãi nào.
                                     </td>
                                 </tr>
@@ -323,9 +344,11 @@
                         <div class="table-header__info">
                             <strong>Tổng cộng: ${couponList.size()} mã giảm giá</strong>
                         </div>
-                        <button type="button" class="btn btn-create-coupon" onclick="openCreateCouponModal()">
-                            <i class="fas fa-plus"></i> Thêm mã giảm giá
-                        </button>
+                        <c:if test="${sessionScope.user != null && sessionScope.user.hasPermission('promotion.create')}">
+                            <button type="button" class="btn btn-create-coupon" onclick="openCreateCouponModal()">
+                                <i class="fas fa-plus"></i> Thêm mã giảm giá
+                            </button>
+                        </c:if>
                     </div>
 
                     <div class="table-responsive">
@@ -340,6 +363,7 @@
                                 <th>Lượt nhận</th>
                                 <th>Lượt dùng</th>
                                 <th>Thời gian</th>
+                                <th>Kiểm duyệt</th>
                                 <th>Trạng thái</th>
                                 <th class="actions-col">Hành động</th>
                             </tr>
@@ -427,6 +451,13 @@
                                     </td>
 
                                     <td>
+                                        <c:choose>
+                                            <c:when test="${coupon.approvalStatus == 'APPROVED'}"><span class="badge badge-blue">Đã duyệt</span></c:when>
+                                            <c:when test="${coupon.approvalStatus == 'REJECTED'}"><span class="badge badge-orange">Từ chối</span></c:when>
+                                            <c:otherwise><span class="badge">Chờ duyệt</span></c:otherwise>
+                                        </c:choose>
+                                    </td>
+                                    <td>
                         <span class="status-badge ${coupon.active ? 'status-active' : 'status-inactive'}">
                                 ${coupon.active ? 'Hoạt động' : 'Tắt'}
                         </span>
@@ -450,6 +481,17 @@
                                                 data-active="${coupon.active}">
                                             <i class="fas fa-edit"></i>
                                         </button>
+
+                                        <c:if test="${sessionScope.user != null && sessionScope.user.hasPermission('promotion.approve') && coupon.approvalStatus != 'APPROVED'}">
+                                            <form action="${pageContext.request.contextPath}/admin/promotions" method="post" class="inline-form"
+                                                  onsubmit="return confirm('Bạn muốn duyệt mã giảm giá này?');">
+                                                <input type="hidden" name="action" value="approveCoupon">
+                                                <input type="hidden" name="id" value="${coupon.id}">
+                                                <button type="submit" class="btn-action" title="Duyệt">
+                                                    <i class="fas fa-check-circle" style="color: green;"></i>
+                                                </button>
+                                            </form>
+                                        </c:if>
 
                                         <form action="${pageContext.request.contextPath}/admin/promotions" method="post" class="inline-form">
                                             <input type="hidden" name="action" value="toggleCoupon">
@@ -475,7 +517,7 @@
 
                             <c:if test="${empty couponList}">
                                 <tr>
-                                    <td colspan="10" class="empty-cell">
+                                    <td colspan="11" class="empty-cell">
                                         Chưa có mã giảm giá chung nào.
                                     </td>
                                 </tr>

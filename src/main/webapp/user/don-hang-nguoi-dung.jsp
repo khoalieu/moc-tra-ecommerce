@@ -39,9 +39,10 @@
             </div>
         </div>
 
-        <div class="orders-list">
-            <c:if test="${not empty orders}">
-                <c:forEach var="o" items="${orders}">
+        <div class="orders-scroll-pane">
+            <div class="orders-list">
+                <c:if test="${not empty orders}">
+                    <c:forEach var="o" items="${orders}">
                     <c:set var="statusStr" value="${o.status.toString()}" />
                     <c:set var="refund" value="${refundByOrderId[o.id]}" />
                     <c:set var="statusClass" value="status-pending" />
@@ -254,11 +255,23 @@
                                             <div class="item-info-qty">Số lượng: × ${item.quantity}</div>
                                         </div>
                                         <div class="item-price-col">
-                                            <div class="item-unit-price">
-                                                Đơn giá: <fmt:formatNumber value="${item.price}" type="currency" currencySymbol="đ" maxFractionDigits="0"/>
+                                            <div class="item-original-price">
+                                                Giá gốc:
+                                                <fmt:formatNumber value="${item.originalPrice}" pattern="#,###"/> đ
+                                                x ${item.quantity}
                                             </div>
-                                            <div class="item-total-price">
-                                                <fmt:formatNumber value="${item.price * item.quantity}" type="currency" currencySymbol="đ" maxFractionDigits="0"/>
+                                            <div class="item-promo-discount">
+                                                KM:
+                                                <c:choose>
+                                                    <c:when test="${item.discountAmount > 0}">
+                                                        -<fmt:formatNumber value="${item.discountAmount}" pattern="#,###"/> đ
+                                                        x ${item.quantity}
+                                                    </c:when>
+                                                    <c:otherwise>0 đ</c:otherwise>
+                                                </c:choose>
+                                            </div>
+                                            <div class="item-final-price">
+                                                <fmt:formatNumber value="${item.price * item.quantity}" pattern="#,###"/> đ
                                             </div>
                                         </div>
                                     </div>
@@ -272,9 +285,19 @@
 
                         <div class="order-summary-compact">
                             <div class="summary-amount-row">
-                                <span>Tạm tính: <fmt:formatNumber value="${o.totalAmount - o.shippingFee}" type="currency" currencySymbol="đ" maxFractionDigits="0"/></span>
-                                <span>Phí vận chuyển: <fmt:formatNumber value="${o.shippingFee}" type="currency" currencySymbol="đ" maxFractionDigits="0"/></span>
-                                <span class="highlight-total">Tổng: <fmt:formatNumber value="${o.totalAmount}" type="currency" currencySymbol="đ" maxFractionDigits="0"/></span>
+                                <span class="summary-normal">Tạm tính: <fmt:formatNumber value="${o.subtotalAmount}" pattern="#,###"/> đ</span>
+                                <span class="summary-normal">Phí vận chuyển: <fmt:formatNumber value="${o.shippingFee}" pattern="#,###"/> đ</span>
+                                <c:if test="${o.couponDiscountAmount > 0}">
+                                    <span class="summary-discount">
+                                        Giảm mã ưu đãi
+                                        <c:if test="${not empty o.couponCode}">(${o.couponCode})</c:if>:
+                                        -<fmt:formatNumber value="${o.couponDiscountAmount}" pattern="#,###"/> đ
+                                    </span>
+                                </c:if>
+                                <c:if test="${o.vipDiscountAmount > 0}">
+                                    <span class="summary-discount">Giảm voucher VIP: -<fmt:formatNumber value="${o.vipDiscountAmount}" pattern="#,###"/> đ</span>
+                                </c:if>
+                                <span class="highlight-total">Tổng: <fmt:formatNumber value="${o.totalAmount}" pattern="#,###"/> đ</span>
                             </div>
                             <button class="toggle-detail-btn" id="btn-${o.id}" onclick="toggleDetail(${o.id})">
                                 <i class="fa-solid fa-eye" style="font-size:12px;"></i>
@@ -331,8 +354,9 @@
                             </div>
                         </div>
                     </div>
-                </c:forEach>
-            </c:if>
+                    </c:forEach>
+                </c:if>
+            </div>
         </div>
 
         <div class="empty-state" style="display: ${empty orders ? 'flex' : 'none'}; flex-direction: column; align-items: center; padding: 40px; text-align: center;">

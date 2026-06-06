@@ -5,7 +5,7 @@ import dao.*;
 import model.blog.BlogCategory;
 import model.blog.BlogComment;
 import model.blog.BlogPost;
-import model.enums.UserRole;
+
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -22,8 +22,9 @@ public class AdminBlogDetailServlet extends HttpServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
-        User me = requireAdminOrEditor(request, response);
-        if (me == null) return;
+        HttpSession session = request.getSession(false);
+        User me = (session != null) ? (User) session.getAttribute("user") : null;
+        if (me == null) { response.sendRedirect(request.getContextPath() + "/login"); return; }
 
         int id;
         try { id = Integer.parseInt(request.getParameter("id")); }
@@ -58,8 +59,9 @@ public class AdminBlogDetailServlet extends HttpServlet {
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
-        User me = requireAdminOrEditor(request, response);
-        if (me == null) return;
+        HttpSession session = request.getSession(false);
+        User me = (session != null) ? (User) session.getAttribute("user") : null;
+        if (me == null) { response.sendRedirect(request.getContextPath() + "/login"); return; }
 
         request.setCharacterEncoding("UTF-8");
 
@@ -112,18 +114,4 @@ public class AdminBlogDetailServlet extends HttpServlet {
     }
 
     private String trimOrEmpty(String s) { return (s == null) ? "" : s.trim(); }
-
-    private User requireAdminOrEditor(HttpServletRequest request, HttpServletResponse response) throws IOException {
-        HttpSession session = request.getSession(false);
-        if (session == null || !(session.getAttribute("user") instanceof User)) {
-            response.sendRedirect(request.getContextPath() + "/login");
-            return null;
-        }
-        User u = (User) session.getAttribute("user");
-        if (u.getRole() == null || !(u.getRole() == UserRole.ADMIN || u.getRole() == UserRole.EDITOR)) {
-            response.sendError(HttpServletResponse.SC_FORBIDDEN);
-            return null;
-        }
-        return u;
-    }
-}
+}

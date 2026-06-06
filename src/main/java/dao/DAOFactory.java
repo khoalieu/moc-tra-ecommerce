@@ -126,6 +126,15 @@ public class DAOFactory {
         return new ReviewDAO(dataSource);
     }
 
+    // RBAC
+    public RoleDAO getRoleDAO() {
+        return new RoleDAO(dataSource);
+    }
+
+    public PermissionDAO getPermissionDAO() {
+        return new PermissionDAO(dataSource);
+    }
+
     // User
     public UserAddressDAO getUserAddressDAO() {
         return new UserAddressDAO(dataSource);
@@ -136,6 +145,9 @@ public class DAOFactory {
     }
     public PaymentTransactionDAO getPaymentTransactionDAO() {
         return new PaymentTransactionDAO(dataSource);
+    }
+    public NotificationDAO getNotificationDAO() {
+        return new NotificationDAO(dataSource);
     }
     public GHNShippingDAO getGHNShippingDAO() {
         return new GHNShippingDAO();

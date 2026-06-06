@@ -7,7 +7,6 @@ import dao.PromotionDAO;
 import model.Banner;
 import model.promotion.Promotion;
 import model.user.User;
-import model.enums.UserRole;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.MultipartConfig;
@@ -16,6 +15,9 @@ import jakarta.servlet.http.*;
 
 import java.io.IOException;
 import java.nio.file.*;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.*;
 
 @WebServlet(urlPatterns = {
@@ -35,8 +37,9 @@ public class AdminBannerServlet extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        User me = requireAdminOrEditor(request, response);
-        if (me == null) return;
+        HttpSession session = request.getSession(false);
+        User me = (session != null) ? (User) session.getAttribute("user") : null;
+        if (me == null) { response.sendRedirect(request.getContextPath() + "/login"); return; }
 
         String path = request.getServletPath();
         switch (path) {
@@ -56,8 +59,9 @@ public class AdminBannerServlet extends HttpServlet {
 
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        User me = requireAdminOrEditor(request, response);
-        if (me == null) return;
+        HttpSession session = request.getSession(false);
+        User me = (session != null) ? (User) session.getAttribute("user") : null;
+        if (me == null) { response.sendRedirect(request.getContextPath() + "/login"); return; }
 
         request.setCharacterEncoding("UTF-8");
 
@@ -127,6 +131,20 @@ public class AdminBannerServlet extends HttpServlet {
             catch (Exception e) { errors.put("sort_order", "Thứ tự không hợp lệ"); }
         }
 
+        LocalDateTime startTime = null;
+        String startStr = trim(request.getParameter("start_time"));
+        if (startStr != null && !startStr.isBlank()) {
+            try { startTime = LocalDateTime.parse(startStr); }
+            catch (DateTimeParseException e) { errors.put("start_time", "Thời gian bắt đầu không hợp lệ"); }
+        }
+
+        LocalDateTime endTime = null;
+        String endStr = trim(request.getParameter("end_time"));
+        if (endStr != null && !endStr.isBlank()) {
+            try { endTime = LocalDateTime.parse(endStr); }
+            catch (DateTimeParseException e) { errors.put("end_time", "Thời gian kết thúc không hợp lệ"); }
+        }
+
         if (title == null || title.isBlank()) errors.put("title", "Vui lòng nhập tiêu đề");
         Part imagePart = null;
         try { imagePart = request.getPart("image_url"); } catch (Exception ignored) {}
@@ -156,6 +174,8 @@ public class AdminBannerServlet extends HttpServlet {
             b.setSection(section);
             b.setSortOrder(sortOrder);
             b.setActive(isActive);
+            b.setStartTime(startTime);
+            b.setEndTime(endTime);
             b.setImageUrl(imageUrl);
 
             request.setAttribute("mode", mode);
@@ -175,6 +195,8 @@ public class AdminBannerServlet extends HttpServlet {
         b.setSection(section);
         b.setSortOrder(sortOrder);
         b.setActive(isActive);
+        b.setStartTime(startTime);
+        b.setEndTime(endTime);
 
         BannerDAO dao = DAOFactory.getInstance().getBannerDAO();
         try {
@@ -284,20 +306,6 @@ public class AdminBannerServlet extends HttpServlet {
         int[] ids = new int[list.size()];
         for (int i = 0; i < list.size(); i++) ids[i] = list.get(i);
         return ids;
-    }
-
-    private User requireAdminOrEditor(HttpServletRequest request, HttpServletResponse response) throws IOException {
-        HttpSession session = request.getSession(false);
-        if (session == null || !(session.getAttribute("user") instanceof User)) {
-            response.sendRedirect(request.getContextPath() + "/login");
-            return null;
-        }
-        User u = (User) session.getAttribute("user");
-        if (u.getRole() == null || !(u.getRole() == UserRole.ADMIN)) {
-            response.sendError(HttpServletResponse.SC_FORBIDDEN);
-            return null;
-        }
-        return u;
     }
 
     private static int parseInt(String s, int def) {

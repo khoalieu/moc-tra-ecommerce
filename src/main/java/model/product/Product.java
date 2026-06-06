@@ -28,6 +28,8 @@ public class Product implements Serializable {
     private int currentPromotionId;
     private String currentPromotionType;
     private Double currentPromotionValue;
+    private int lowStockVariantCount;
+    private String lowStockVariantSummary;
     private List<ProductVariant> variants;
     public Product() {}
 
@@ -87,6 +89,13 @@ public class Product implements Serializable {
 
     public Double getCurrentPromotionValue() { return currentPromotionValue; }
     public void setCurrentPromotionValue(Double currentPromotionValue) { this.currentPromotionValue = currentPromotionValue; }
+
+    public int getLowStockVariantCount() { return lowStockVariantCount; }
+    public void setLowStockVariantCount(int lowStockVariantCount) { this.lowStockVariantCount = lowStockVariantCount; }
+
+    public String getLowStockVariantSummary() { return lowStockVariantSummary; }
+    public void setLowStockVariantSummary(String lowStockVariantSummary) { this.lowStockVariantSummary = lowStockVariantSummary; }
+
     public List<ProductVariant> getVariants() {
         return variants;
     }
