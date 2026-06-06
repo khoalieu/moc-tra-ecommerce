@@ -93,12 +93,10 @@
                             <label for="status-filter">Trạng thái</label>
                             <select id="status-filter" class="form-select" name="status" onchange="this.form.submit()">
                                 <option value="">Tất cả trạng thái</option>
-                                <option value="published" ${currentStatus == 'published' ? 'selected' : ''}>Đã xuất
-                                    bản
-                                </option>
+                                <option value="published" ${currentStatus == 'published' ? 'selected' : ''}>Đã xuất bản</option>
+                                <option value="pending" ${currentStatus == 'pending' ? 'selected' : ''}>Chờ duyệt</option>
                                 <option value="draft" ${currentStatus == 'draft' ? 'selected' : ''}>Bản nháp</option>
-                                <option value="archived" ${currentStatus == 'archived' ? 'selected' : ''}>Đã lưu trữ
-                                </option>
+                                <option value="archived" ${currentStatus == 'archived' ? 'selected' : ''}>Đã lưu trữ</option>
                             </select>
                         </div>
 
@@ -204,6 +202,9 @@
                                         <c:when test="${post.status.name() == 'PUBLISHED'}">
                                             <span class="status-badge published">ĐÃ XUẤT BẢN</span>
                                         </c:when>
+                                        <c:when test="${post.status.name() == 'PENDING'}">
+                                            <span class="status-badge status-pending" style="background: #fff3cd; color: #856404; border: 1px solid #ffeeba;">CHỜ DUYỆT</span>
+                                        </c:when>
                                         <c:when test="${post.status.name() == 'DRAFT'}">
                                             <span class="status-badge status-pending">BẢN NHÁP</span>
                                         </c:when>
@@ -229,14 +230,18 @@
                                            href="${pageContext.request.contextPath}/editor/blog/detail?id=${post.id}">
                                             <i class="fas fa-eye"></i>
                                         </a>
-                                        <a class="btn-action" title="Chỉnh sửa"
-                                           href="${pageContext.request.contextPath}/editor/blog/edit?id=${post.id}">
-                                            <i class="fas fa-edit"></i>
-                                        </a>
-                                        <button class="btn-action danger" title="Xóa"
-                                                onclick="deleteSinglePost(${post.id})">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
+                                        <c:if test="${sessionScope.user.hasPermission('blog.edit') or sessionScope.user.hasPermission('blog.publish') or (sessionScope.user.hasPermission('blog.edit_own') and sessionScope.user.id == post.authorId)}">
+                                            <a class="btn-action" title="Chỉnh sửa"
+                                               href="${pageContext.request.contextPath}/editor/blog/edit?id=${post.id}">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                        </c:if>
+                                        <c:if test="${sessionScope.user.hasPermission('blog.delete_all') or (sessionScope.user.hasPermission('blog.delete_own') and sessionScope.user.id == post.authorId and (post.status.name() == 'DRAFT' or post.status.name() == 'PENDING'))}">
+                                            <button class="btn-action danger" title="Xóa"
+                                                    onclick="deleteSinglePost(${post.id})">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </c:if>
                                     </div>
                                 </td>
                             </tr>

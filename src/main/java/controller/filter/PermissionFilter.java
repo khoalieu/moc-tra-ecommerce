@@ -32,21 +32,29 @@ public class PermissionFilter implements Filter {
         PERMISSION_MAP.put("/admin/order-ghn",           "order.shipping");
         PERMISSION_MAP.put("/admin/refunds",             "order.refund");
         PERMISSION_MAP.put("/admin/customers",           "customer.view");
-        PERMISSION_MAP.put("/admin/customer-detail",     "customer.view");
-        PERMISSION_MAP.put("/admin/customer-edit",       "customer.edit");
-        PERMISSION_MAP.put("/admin/blogs",               "blog.view");
-        PERMISSION_MAP.put("/admin/blog-manage",         "blog.edit");
-        PERMISSION_MAP.put("/admin/blog-detail",         "blog.view");
-        PERMISSION_MAP.put("/admin/blog-categories",     "category.manage");
+        PERMISSION_MAP.put("/admin/customer/detail",     "customer.view");
+        PERMISSION_MAP.put("/admin/customer/edit",       "customer.edit");
+        PERMISSION_MAP.put("/admin/blog/add",            "blog.create");
+        PERMISSION_MAP.put("/admin/blog/edit",           "blog.edit_own");
+        PERMISSION_MAP.put("/admin/blog/delete",         "blog.delete_own");
+        PERMISSION_MAP.put("/admin/blog/status-update",  "blog.publish");
+        PERMISSION_MAP.put("/admin/blog/change-status",  "blog.publish");
+        PERMISSION_MAP.put("/admin/blog/detail",         "blog.view");
+        PERMISSION_MAP.put("/admin/blog-categories",     "blog.manage_category");
+        PERMISSION_MAP.put("/admin/blog",                "blog.view");
         PERMISSION_MAP.put("/admin/categories",          "category.manage");
         PERMISSION_MAP.put("/admin/banner",              "banner.manage");
         PERMISSION_MAP.put("/admin/promotions",          "promotion.manage");
         PERMISSION_MAP.put("/admin/roles",               "role.manage");
         PERMISSION_MAP.put("/admin/system-log",          "system.logs");
         PERMISSION_MAP.put("/editor/dashboard",          "dashboard.view");
-        PERMISSION_MAP.put("/editor/blogs",              "blog.view");
-        PERMISSION_MAP.put("/editor/blog-manage",        "blog.edit");
-        PERMISSION_MAP.put("/editor/blog-detail",        "blog.view");
+        PERMISSION_MAP.put("/editor/blog/add",           "blog.create");
+        PERMISSION_MAP.put("/editor/blog/edit",          "blog.edit_own");
+        PERMISSION_MAP.put("/editor/blog/delete",        "blog.delete_own");
+        PERMISSION_MAP.put("/editor/blog/status-update", "blog.publish");
+        PERMISSION_MAP.put("/editor/blog/change-status", "blog.publish");
+        PERMISSION_MAP.put("/editor/blog/detail",        "blog.view");
+        PERMISSION_MAP.put("/editor/blog",               "blog.view");
         PERMISSION_MAP.put("/shipper/dashboard",         "dashboard.view");
         PERMISSION_MAP.put("/shipper/orders",            "shipper.view");
     }
@@ -90,9 +98,11 @@ public class PermissionFilter implements Filter {
         if (PERMISSION_MAP.containsKey(path)) {
             return PERMISSION_MAP.get(path);
         }
-        for (Map.Entry<String, String> entry : PERMISSION_MAP.entrySet()) {
-            if (path.startsWith(entry.getKey())) {
-                return entry.getValue();
+        java.util.List<String> keys = new java.util.ArrayList<>(PERMISSION_MAP.keySet());
+        keys.sort((k1, k2) -> Integer.compare(k2.length(), k1.length()));
+        for (String key : keys) {
+            if (path.startsWith(key)) {
+                return PERMISSION_MAP.get(key);
             }
         }
         return null;
