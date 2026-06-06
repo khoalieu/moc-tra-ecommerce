@@ -10,6 +10,7 @@ import model.user.User;
 
 import java.text.DecimalFormat;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 public class EcommerceEmailService {
     private static final String SHOP_NAME = "Moc Tra";
@@ -136,11 +137,14 @@ public class EcommerceEmailService {
 
     private void send(String toEmail, String subject, String body) {
         if (toEmail == null || toEmail.trim().isEmpty()) {return;}
-        try {
-            EmailService.sendEmail(toEmail.trim(), subject, body);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        String recipient = toEmail.trim();
+        CompletableFuture.runAsync(() -> {
+            try {
+                EmailService.sendEmail(recipient, subject, body);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        });
     }
 
     private String displayCustomerName(User user) {
