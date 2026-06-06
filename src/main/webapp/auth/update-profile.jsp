@@ -25,6 +25,9 @@
 
 <div class="update-container">
     <div class="update-title">HOÀN THIỆN THÔNG TIN ĐẶT HÀNG</div>
+    <c:if test="${not empty errorMessage}">
+        <p class="error-message">${errorMessage}</p>
+    </c:if>
 
     <form action="${pageContext.request.contextPath}/auth/update-profile" method="POST">
         <input type="hidden" name="username" value="${sessionScope.pending_update_user}">
@@ -33,22 +36,32 @@
         <div class="grid-row">
             <div class="form-group">
                 <label>Họ và tên đệm *</label>
-                <input type="text" name="lastName" class="form-control" placeholder="Ví dụ: Trần Lê Công" required>
+                <input type="text" name="lastName" class="form-control" placeholder="Ví dụ: Trần Lê Công" value="${temp_lastName}" title="Họ và tên đệm là bắt buộc" required>
             </div>
             <div class="form-group">
                 <label>Tên *</label>
-                <input type="text" name="firstName" class="form-control" placeholder="Ví dụ: Hiếu" required>
+                <input type="text" name="firstName" class="form-control" placeholder="Ví dụ: Hiếu" value="${temp_firstName}" title="Tên là bắt buộc" required>
             </div>
         </div>
-        <div class="form-group">
-            <label>Email liên hệ *</label>
-            <input type="email" name="email" class="form-control" placeholder="abc@gmail.com" required>
-        </div>
+        <c:choose>
+            <c:when test="${sessionScope.is_google_login}">
+                <div class="form-group">
+                    <label>Số điện thoại liên hệ *</label>
+                    <input type="tel" name="phone" class="form-control" placeholder="Ví dụ: 0912345678" value="${temp_phone}" pattern="^(03|05|07|08|09|01[2|6|8|9])\d{8}$" title="Số điện thoại là bắt buộc (10 chữ số nhà mạng Việt Nam)" required>
+                </div>
+            </c:when>
+            <c:otherwise>
+                <div class="form-group">
+                    <label>Email liên hệ (Không bắt buộc)</label>
+                    <input type="email" name="email" class="form-control" placeholder="abc@gmail.com" value="${temp_email}" title="Email liên hệ (tùy chọn)">
+                </div>
+            </c:otherwise>
+        </c:choose>
         <div class="section-title">Địa chỉ nhận hàng mặc định</div>
 
         <div class="form-group">
             <label>Tỉnh / Thành phố *</label>
-            <select id="reg_province" name="province" class="form-control" required>
+            <select id="reg_province" name="province" class="form-control" title="Tỉnh / Thành phố là bắt buộc" required>
                 <option value="">-- Chọn Tỉnh / Thành phố --</option>
             </select>
         </div>
@@ -56,13 +69,13 @@
         <div class="grid-row">
             <div class="form-group">
                 <label>Quận / Huyện *</label>
-                <select id="reg_district" name="district" class="form-control" required>
+                <select id="reg_district" name="district" class="form-control" title="Quận / Huyện là bắt buộc" required>
                     <option value="">-- Chọn Quận / Huyện --</option>
                 </select>
             </div>
             <div class="form-group">
                 <label>Phường / Xã *</label>
-                <select id="reg_ward" name="ward" class="form-control" required>
+                <select id="reg_ward" name="ward" class="form-control" title="Phường / Xã là bắt buộc" required>
                     <option value="">-- Chọn Phường / Xã --</option>
                 </select>
             </div>
@@ -72,12 +85,12 @@
 
         <div class="form-group">
             <label>Địa chỉ cụ thể (Số nhà, tên đường...) *</label>
-            <input type="text" name="addressDetail" class="form-control" placeholder="Ví dụ: Số 23, Đường số 7" required>
+            <input type="text" name="addressDetail" class="form-control" placeholder="Ví dụ: Số 23, Đường số 7" value="${temp_addressDetail}" title="Địa chỉ cụ thể là bắt buộc" required>
         </div>
 
         <div class="form-group">
             <label>Gắn nhãn địa chỉ</label>
-            <input type="text" name="addressLabel" class="form-control" placeholder="Ví dụ: Nhà riêng, Văn phòng">
+            <input type="text" name="addressLabel" class="form-control" placeholder="Ví dụ: Nhà riêng, Văn phòng" value="${temp_addressLabel}">
         </div>
 
         <button type="submit" class="btn-update">XÁC NHẬN & ĐĂNG NHẬP</button>

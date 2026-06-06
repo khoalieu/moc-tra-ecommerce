@@ -1071,7 +1071,11 @@ public class UserDAO {
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, firstName);
             ps.setString(2, lastName);
-            ps.setString(3, email);
+            if (email == null || email.trim().isEmpty()) {
+                ps.setNull(3, java.sql.Types.VARCHAR);
+            } else {
+                ps.setString(3, email.trim());
+            }
             ps.setString(4, username);
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {
@@ -1111,6 +1115,19 @@ public class UserDAO {
         }
         return false;
     }
+    public boolean updateGoogleProfileInfo(String username, String firstName, String lastName, String phone) {
+        String sql = "UPDATE users SET first_name = ?, last_name = ?, phone = ? WHERE username = ?";
+        try (Connection conn = ds.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, firstName);
+            ps.setString(2, lastName);
+            ps.setString(3, phone);
+            ps.setString(4, username);
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
 }
-
 
