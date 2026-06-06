@@ -22,6 +22,7 @@ public class CouponDAO {
 
         String sql = "SELECT * FROM coupons " +
                 "WHERE is_active = 1 " +
+                "AND approval_status = 'APPROVED' " +
                 "AND start_date <= NOW() " +
                 "AND end_date >= NOW() " +
                 "ORDER BY created_at DESC";
@@ -87,6 +88,7 @@ public class CouponDAO {
             String getCouponSql = "SELECT * FROM coupons " +
                     "WHERE id = ? " +
                     "AND is_active = 1 " +
+                    "AND approval_status = 'APPROVED' " +
                     "AND start_date <= NOW() " +
                     "AND end_date >= NOW() " +
                     "FOR UPDATE";
@@ -204,6 +206,7 @@ public class CouponDAO {
         }
 
         c.setActive(rs.getBoolean("is_active"));
+        c.setApprovalStatus(rs.getString("approval_status"));
 
         Timestamp created = rs.getTimestamp("created_at");
         if (created != null) {
@@ -220,6 +223,7 @@ public class CouponDAO {
                 "WHERE uc.user_id = ? " +
                 "AND uc.used_at IS NULL " +
                 "AND c.is_active = 1 " +
+                "AND c.approval_status = 'APPROVED' " +
                 "AND c.start_date <= NOW() " +
                 "AND c.end_date >= NOW() " +
                 "AND c.min_order_amount <= ? " +
@@ -252,6 +256,7 @@ public class CouponDAO {
                 "AND uc.coupon_id = ? " +
                 "AND uc.used_at IS NULL " +
                 "AND c.is_active = 1 " +
+                "AND c.approval_status = 'APPROVED' " +
                 "AND c.start_date <= NOW() " +
                 "AND c.end_date >= NOW() " +
                 "AND c.min_order_amount <= ? " +
@@ -283,6 +288,7 @@ public class CouponDAO {
                 "LEFT JOIN user_coupons uc ON c.id = uc.coupon_id AND uc.user_id = ? " +
                 "WHERE c.code = ? " +
                 "AND c.is_active = 1 " +
+                "AND c.approval_status = 'APPROVED' " +
                 "AND c.start_date <= NOW() " +
                 "AND c.end_date >= NOW() " +
                 "AND c.min_order_amount <= ? " +
@@ -320,6 +326,7 @@ public class CouponDAO {
             String checkCouponSql = "SELECT id FROM coupons " +
                     "WHERE id = ? " +
                     "AND is_active = 1 " +
+                    "AND approval_status = 'APPROVED' " +
                     "AND start_date <= NOW() " +
                     "AND end_date >= NOW() " +
                     "AND (max_uses IS NULL OR current_uses < max_uses) " +
@@ -476,6 +483,7 @@ public class CouponDAO {
                 "WHERE uc.user_id = ? " +
                 "AND uc.used_at IS NULL " +
                 "AND c.is_active = 1 " +
+                "AND c.approval_status = 'APPROVED' " +
                 "AND c.start_date <= NOW() " +
                 "AND c.end_date >= NOW() " +
                 "AND (c.max_uses IS NULL OR c.current_uses < c.max_uses) " +
@@ -539,8 +547,8 @@ public class CouponDAO {
     public boolean insertCoupon(Coupon coupon) {
         String sql = "INSERT INTO coupons " +
                 "(code, title, description, discount_type, discount_value, max_discount_amount, min_order_amount, " +
-                "claim_limit, current_claims, max_uses, current_uses, start_date, end_date, is_active, created_at) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, ?, 0, ?, ?, 1, NOW())";
+                "claim_limit, current_claims, max_uses, current_uses, start_date, end_date, is_active, approval_status, created_at) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, ?, 0, ?, ?, 1, ?, NOW())";
 
         try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -573,6 +581,7 @@ public class CouponDAO {
 
             ps.setTimestamp(10, Timestamp.valueOf(coupon.getStartDate()));
             ps.setTimestamp(11, Timestamp.valueOf(coupon.getEndDate()));
+            ps.setString(12, coupon.getApprovalStatus() != null ? coupon.getApprovalStatus() : "PENDING");
 
             return ps.executeUpdate() > 0;
 
@@ -587,7 +596,7 @@ public class CouponDAO {
         String sql = "UPDATE coupons SET " +
                 "code = ?, title = ?, description = ?, discount_type = ?, discount_value = ?, " +
                 "max_discount_amount = ?, min_order_amount = ?, claim_limit = ?, max_uses = ?, " +
-                "start_date = ?, end_date = ?, is_active = ? " +
+                "start_date = ?, end_date = ?, is_active = ?, approval_status = ? " +
                 "WHERE id = ?";
 
         try (Connection conn = ds.getConnection();
@@ -622,7 +631,8 @@ public class CouponDAO {
             ps.setTimestamp(10, Timestamp.valueOf(coupon.getStartDate()));
             ps.setTimestamp(11, Timestamp.valueOf(coupon.getEndDate()));
             ps.setBoolean(12, coupon.isActive());
-            ps.setInt(13, coupon.getId());
+            ps.setString(13, coupon.getApprovalStatus());
+            ps.setInt(14, coupon.getId());
 
             return ps.executeUpdate() > 0;
 
@@ -641,6 +651,23 @@ public class CouponDAO {
 
             ps.setBoolean(1, active);
             ps.setInt(2, couponId);
+
+            return ps.executeUpdate() > 0;
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return false;
+    }
+
+    public boolean approveCoupon(int couponId) {
+        String sql = "UPDATE coupons SET approval_status = 'APPROVED' WHERE id = ?";
+
+        try (Connection conn = ds.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, couponId);
 
             return ps.executeUpdate() > 0;
 

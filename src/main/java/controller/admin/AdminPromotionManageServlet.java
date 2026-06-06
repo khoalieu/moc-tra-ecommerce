@@ -14,6 +14,8 @@ import jakarta.servlet.http.Part;
 import model.enums.DiscountType;
 import model.promotion.Coupon;
 import model.promotion.Promotion;
+import model.rbac.Role;
+import model.user.User;
 import service.NotificationService;
 
 import java.io.IOException;
@@ -77,12 +79,12 @@ public class AdminPromotionManageServlet extends HttpServlet {
             }
             switch (action) {
                 case "createPromotion":
-                    handleCreatePromotion(request);
+                    handleCreatePromotion(request, response);
                     redirectTab = "promotion";
                     break;
 
                 case "updatePromotion":
-                    handleUpdatePromotion(request);
+                    handleUpdatePromotion(request, response);
                     redirectTab = "promotion";
                     break;
                 case "togglePromotion":
@@ -91,6 +93,10 @@ public class AdminPromotionManageServlet extends HttpServlet {
                     break;
                 case "deletePromotion":
                     handleDeletePromotion(request);
+                    redirectTab = "promotion";
+                    break;
+                case "approvePromotion":
+                    handleApprovePromotion(request);
                     redirectTab = "promotion";
                     break;
 
@@ -108,12 +114,12 @@ public class AdminPromotionManageServlet extends HttpServlet {
                     break;
 
                 case "createCoupon":
-                    handleCreateCoupon(request);
+                    handleCreateCoupon(request, response);
                     redirectTab = "coupon";
                     break;
 
                 case "updateCoupon":
-                    handleUpdateCoupon(request);
+                    handleUpdateCoupon(request, response);
                     redirectTab = "coupon";
                     break;
 
@@ -127,6 +133,11 @@ public class AdminPromotionManageServlet extends HttpServlet {
                     redirectTab = "coupon";
                     break;
 
+                case "approveCoupon":
+                    handleApproveCoupon(request);
+                    redirectTab = "coupon";
+                    break;
+
                 default:
                     break;
             }
@@ -137,20 +148,39 @@ public class AdminPromotionManageServlet extends HttpServlet {
         response.sendRedirect(redirectPath + "?tab=" + redirectTab);
     }
 
-    private void handleCreatePromotion(HttpServletRequest request) {
+    private void handleCreatePromotion(HttpServletRequest request, HttpServletResponse response) {
         Promotion promotion = buildPromotionFromRequest(request, false);
         if (promotion != null) {
+            String errorMsg = validateDiscountLimit(request, promotion.getDiscountType(), promotion.getDiscountValue());
+            if (errorMsg != null) {
+                request.getSession().setAttribute("errorMsg", errorMsg);
+                return;
+            }
+
             boolean created = promotionDAO.insertPromotion(promotion);
             if (created) {
                 new NotificationService().notifyPromotionCreated(promotion);
+                request.getSession().setAttribute("successMsg", "Tạo chương trình khuyến mãi thành công. Đang chờ duyệt.");
+            } else {
+                request.getSession().setAttribute("errorMsg", "Lỗi khi tạo khuyến mãi.");
             }
         }
     }
 
-    private void handleUpdatePromotion(HttpServletRequest request) {
+    private void handleUpdatePromotion(HttpServletRequest request, HttpServletResponse response) {
         Promotion promotion = buildPromotionFromRequest(request, true);
         if (promotion != null) {
-            promotionDAO.updatePromotion(promotion);
+            String errorMsg = validateDiscountLimit(request, promotion.getDiscountType(), promotion.getDiscountValue());
+            if (errorMsg != null) {
+                request.getSession().setAttribute("errorMsg", errorMsg);
+                return;
+            }
+
+            if (promotionDAO.updatePromotion(promotion)) {
+                request.getSession().setAttribute("successMsg", "Cập nhật khuyến mãi thành công.");
+            } else {
+                request.getSession().setAttribute("errorMsg", "Lỗi cập nhật khuyến mãi.");
+            }
         }
     }
 
@@ -171,6 +201,24 @@ public class AdminPromotionManageServlet extends HttpServlet {
 
             int promoId = Integer.parseInt(idStr);
             promotionDAO.deletePromotion(promoId);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void handleApprovePromotion(HttpServletRequest request) {
+        try {
+            User user = (User) request.getSession().getAttribute("user");
+            if (user == null || !user.hasPermission("promotion.approve")) {
+                request.getSession().setAttribute("errorMsg", "Bạn không có quyền duyệt khuyến mãi.");
+                return;
+            }
+            int promoId = Integer.parseInt(request.getParameter("id"));
+            if (promotionDAO.approvePromotion(promoId)) {
+                request.getSession().setAttribute("successMsg", "Đã duyệt chương trình khuyến mãi!");
+            } else {
+                request.getSession().setAttribute("errorMsg", "Duyệt thất bại!");
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -303,19 +351,39 @@ public class AdminPromotionManageServlet extends HttpServlet {
         }
     }
 
-    private void handleCreateCoupon(HttpServletRequest request) {
+    private void handleCreateCoupon(HttpServletRequest request, HttpServletResponse response) {
         Coupon coupon = buildCouponFromRequest(request, false);
 
         if (coupon != null) {
-            couponDAO.insertCoupon(coupon);
+            String errorMsg = validateDiscountLimit(request, DiscountType.valueOf(coupon.getDiscountType()), coupon.getDiscountValue());
+            if (errorMsg != null) {
+                request.getSession().setAttribute("errorMsg", errorMsg);
+                return;
+            }
+
+            if (couponDAO.insertCoupon(coupon)) {
+                request.getSession().setAttribute("successMsg", "Tạo mã giảm giá thành công. Đang chờ duyệt.");
+            } else {
+                request.getSession().setAttribute("errorMsg", "Lỗi tạo mã giảm giá.");
+            }
         }
     }
 
-    private void handleUpdateCoupon(HttpServletRequest request) {
+    private void handleUpdateCoupon(HttpServletRequest request, HttpServletResponse response) {
         Coupon coupon = buildCouponFromRequest(request, true);
 
         if (coupon != null) {
-            couponDAO.updateCoupon(coupon);
+            String errorMsg = validateDiscountLimit(request, DiscountType.valueOf(coupon.getDiscountType()), coupon.getDiscountValue());
+            if (errorMsg != null) {
+                request.getSession().setAttribute("errorMsg", errorMsg);
+                return;
+            }
+
+            if (couponDAO.updateCoupon(coupon)) {
+                request.getSession().setAttribute("successMsg", "Cập nhật mã giảm giá thành công.");
+            } else {
+                request.getSession().setAttribute("errorMsg", "Lỗi cập nhật mã giảm giá.");
+            }
         }
     }
 
@@ -339,6 +407,24 @@ public class AdminPromotionManageServlet extends HttpServlet {
             int couponId = Integer.parseInt(idStr);
             couponDAO.deleteCoupon(couponId);
 
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void handleApproveCoupon(HttpServletRequest request) {
+        try {
+            User user = (User) request.getSession().getAttribute("user");
+            if (user == null || !user.hasPermission("promotion.approve")) {
+                request.getSession().setAttribute("errorMsg", "Bạn không có quyền duyệt Coupon.");
+                return;
+            }
+            int couponId = Integer.parseInt(request.getParameter("id"));
+            if (couponDAO.approveCoupon(couponId)) {
+                request.getSession().setAttribute("successMsg", "Đã duyệt Coupon!");
+            } else {
+                request.getSession().setAttribute("errorMsg", "Duyệt thất bại!");
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -483,5 +569,28 @@ public class AdminPromotionManageServlet extends HttpServlet {
                 notificationService.notifyAdminCouponLifecycle(coupon);
             }
         }
+    }
+
+    private String validateDiscountLimit(HttpServletRequest request, DiscountType type, double value) {
+        if (type != DiscountType.PERCENT) {
+            return null;
+        }
+
+        User me = (User) request.getSession().getAttribute("user");
+        if (me == null || me.getRoleId() == null) {
+            return "Chưa xác định vai trò người dùng.";
+        }
+
+        Role role = DAOFactory.getInstance().getRoleDAO().getRoleById(me.getRoleId());
+        if (role == null) {
+            return "Không tìm thấy thông tin Role.";
+        }
+
+        double maxAllowed = role.getMaxDiscountPercent() != null ? role.getMaxDiscountPercent() : 0.0;
+        if (value > maxAllowed) {
+            return String.format("Mức giảm giá vượt quá giới hạn cho phép của tài khoản (Max: %.0f%%)", maxAllowed);
+        }
+
+        return null;
     }
 }

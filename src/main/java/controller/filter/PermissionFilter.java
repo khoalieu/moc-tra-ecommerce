@@ -39,7 +39,7 @@ public class PermissionFilter implements Filter {
         PERMISSION_MAP.put("/admin/blog-detail",         "blog.view");
         PERMISSION_MAP.put("/admin/blog-categories",     "category.manage");
         PERMISSION_MAP.put("/admin/categories",          "category.manage");
-        PERMISSION_MAP.put("/admin/banners",             "banner.manage");
+        PERMISSION_MAP.put("/admin/banner",              "banner.manage");
         PERMISSION_MAP.put("/admin/promotions",          "promotion.manage");
         PERMISSION_MAP.put("/admin/roles",               "role.manage");
         PERMISSION_MAP.put("/admin/system-log",          "system.logs");

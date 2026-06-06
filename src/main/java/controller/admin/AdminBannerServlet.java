@@ -15,6 +15,9 @@ import jakarta.servlet.http.*;
 
 import java.io.IOException;
 import java.nio.file.*;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.*;
 
 @WebServlet(urlPatterns = {
@@ -128,6 +131,20 @@ public class AdminBannerServlet extends HttpServlet {
             catch (Exception e) { errors.put("sort_order", "Thứ tự không hợp lệ"); }
         }
 
+        LocalDateTime startTime = null;
+        String startStr = trim(request.getParameter("start_time"));
+        if (startStr != null && !startStr.isBlank()) {
+            try { startTime = LocalDateTime.parse(startStr); }
+            catch (DateTimeParseException e) { errors.put("start_time", "Thời gian bắt đầu không hợp lệ"); }
+        }
+
+        LocalDateTime endTime = null;
+        String endStr = trim(request.getParameter("end_time"));
+        if (endStr != null && !endStr.isBlank()) {
+            try { endTime = LocalDateTime.parse(endStr); }
+            catch (DateTimeParseException e) { errors.put("end_time", "Thời gian kết thúc không hợp lệ"); }
+        }
+
         if (title == null || title.isBlank()) errors.put("title", "Vui lòng nhập tiêu đề");
         Part imagePart = null;
         try { imagePart = request.getPart("image_url"); } catch (Exception ignored) {}
@@ -157,6 +174,8 @@ public class AdminBannerServlet extends HttpServlet {
             b.setSection(section);
             b.setSortOrder(sortOrder);
             b.setActive(isActive);
+            b.setStartTime(startTime);
+            b.setEndTime(endTime);
             b.setImageUrl(imageUrl);
 
             request.setAttribute("mode", mode);
@@ -176,6 +195,8 @@ public class AdminBannerServlet extends HttpServlet {
         b.setSection(section);
         b.setSortOrder(sortOrder);
         b.setActive(isActive);
+        b.setStartTime(startTime);
+        b.setEndTime(endTime);
 
         BannerDAO dao = DAOFactory.getInstance().getBannerDAO();
         try {
