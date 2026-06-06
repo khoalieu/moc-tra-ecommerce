@@ -2,13 +2,15 @@
 package controller.admin;
 
 import dao.DAOFactory;
+import dao.RoleDAO;
 import dao.UserDAO;
+import model.rbac.Role;
 import model.user.User;
-import model.enums.UserRole;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.*;
 import java.io.IOException;
+import java.util.List;
 
 @WebServlet("/admin/customer/edit")
 public class AdminCustomerEditServlet extends HttpServlet {
@@ -17,10 +19,7 @@ public class AdminCustomerEditServlet extends HttpServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         HttpSession session = request.getSession(false);
         User admin = (session != null) ? (User) session.getAttribute("user") : null;
-        if (admin == null || (admin.getRole() != UserRole.ADMIN && admin.getRole() != UserRole.EDITOR)) {
-            response.sendRedirect(request.getContextPath() + "/login");
-            return;
-        }
+        if (admin == null) { response.sendRedirect(request.getContextPath() + "/login"); return; }
 
         String idParam = request.getParameter("id");
         if (idParam == null) {
@@ -35,7 +34,9 @@ public class AdminCustomerEditServlet extends HttpServlet {
             return;
         }
 
+        List<Role> roles = DAOFactory.getInstance().getRoleDAO().getAllRoles();
         request.setAttribute("customer", customer);
+        request.setAttribute("roles", roles);
         request.getRequestDispatcher("/admin/admin-customer-edit.jsp").forward(request, response);
     }
 
@@ -48,8 +49,13 @@ public class AdminCustomerEditServlet extends HttpServlet {
             String firstName = request.getParameter("firstName");
             String lastName = request.getParameter("lastName");
             String phone = request.getParameter("phone");
-            String roleStr = request.getParameter("role");
             boolean isActive = request.getParameter("isActive") != null;
+
+            int roleId = 0;
+            String roleIdStr = request.getParameter("roleId");
+            if (roleIdStr != null && !roleIdStr.isBlank()) {
+                try { roleId = Integer.parseInt(roleIdStr); } catch (Exception ignored) {}
+            }
 
             UserDAO userDAO = DAOFactory.getInstance().getUserDAO();
             User user = userDAO.getUserDetailById(id);
@@ -57,16 +63,20 @@ public class AdminCustomerEditServlet extends HttpServlet {
             user.setFirstName(firstName);
             user.setLastName(lastName);
             user.setPhone(phone);
-            user.setRole(UserRole.valueOf(roleStr));
             user.setActive(isActive);
+            if (roleId > 0) {
+                user.setRoleId(roleId);
+            }
 
             boolean success = userDAO.updateUserByAdmin(user);
 
             if (success) {
                 response.sendRedirect(request.getContextPath() + "/admin/customer/detail?id=" + id + "&msg=success");
-            } else {
+                } else {
+                List<Role> roles = DAOFactory.getInstance().getRoleDAO().getAllRoles();
                 request.setAttribute("error", "Cập nhật thất bại!");
                 request.setAttribute("customer", user);
+                request.setAttribute("roles", roles);
                 request.getRequestDispatcher("/admin/admin-customer-edit.jsp").forward(request, response);
             }
 

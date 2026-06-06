@@ -649,16 +649,21 @@ public class UserDAO {
         return -1;
     }
     public boolean updateUserByAdmin(User u) {
-        String sql = "UPDATE users SET first_name=?, last_name=?, phone=?, role=?, is_active=? WHERE id=?";
+        String sql = "UPDATE users SET first_name=?, last_name=?, phone=?, role=?, is_active=?, role_id=? WHERE id=?";
         try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setString(1, u.getFirstName());
             ps.setString(2, u.getLastName());
             ps.setString(3, u.getPhone());
-            ps.setString(4, u.getRole().name());
+            ps.setString(4, u.getRole() != null ? u.getRole().name() : null);
             ps.setBoolean(5, u.isActive());
-            ps.setInt(6, u.getId());
+            if (u.getRoleId() > 0) {
+                ps.setInt(6, u.getRoleId());
+            } else {
+                ps.setNull(6, java.sql.Types.INTEGER);
+            }
+            ps.setInt(7, u.getId());
 
             return ps.executeUpdate() > 0;
         } catch (Exception e) {
@@ -759,7 +764,10 @@ public class UserDAO {
         return null;
     }
     public User getUserForLogin(String loginKey) {
-        String query = "SELECT * FROM users WHERE (username = ? OR email = ? OR phone = ?) AND is_active = 1";
+        String query = "SELECT u.*, r.id AS role_id_val " +
+                       "FROM users u " +
+                       "LEFT JOIN roles r ON r.id = u.role_id " +
+                       "WHERE (u.username = ? OR u.email = ? OR u.phone = ?) AND u.is_active = 1";
         try (
                 Connection conn = ds.getConnection();
                 PreparedStatement ps = conn.prepareStatement(query);
@@ -795,6 +803,14 @@ public class UserDAO {
                             user.setRole(model.enums.UserRole.CUSTOMER);
                         }
                     }
+
+                    int roleIdVal = rs.getInt("role_id_val");
+                    if (!rs.wasNull()) {
+                        user.setRoleId(roleIdVal);
+                        PermissionDAO permDAO = new PermissionDAO(ds);
+                        user.setPermissions(permDAO.getPermissionNamesByUserId(user.getId()));
+                    }
+
                     return user;
                 }
             }

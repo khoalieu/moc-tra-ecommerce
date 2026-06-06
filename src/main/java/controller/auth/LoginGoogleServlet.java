@@ -80,13 +80,21 @@ public class LoginGoogleServlet extends HttpServlet {
                 }
                 session.setAttribute("cart", userCartFromDB);
 
-                if (user.getRole() != null && user.getRole().name().equalsIgnoreCase("ADMIN")) {
-                    response.sendRedirect(request.getContextPath() + "/admin/dashboard");
-                    return;
+                if (user.hasPermission("dashboard.view") && user.getRole() != null &&
+                        !user.getRole().name().equalsIgnoreCase("CUSTOMER")) {
+                    if (user.hasPermission("role.manage") || user.hasPermission("product.create")) {
+                        response.sendRedirect(request.getContextPath() + "/admin/dashboard");
+                    } else if (user.hasPermission("blog.create")) {
+                        response.sendRedirect(request.getContextPath() + "/editor/dashboard");
+                    } else if (user.hasPermission("shipper.view")) {
+                        response.sendRedirect(request.getContextPath() + "/shipper/dashboard");
+                    } else {
+                        response.sendRedirect(request.getContextPath() + "/admin/dashboard");
+                    }
                 } else {
                     response.sendRedirect(request.getContextPath() + "/index");
-                    return;
                 }
+                return;
 
             } else {
                 request.setAttribute("errorMessage", "Tài khoản Email này chưa tồn tại trong hệ thống.");

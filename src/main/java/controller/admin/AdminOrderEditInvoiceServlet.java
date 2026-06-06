@@ -37,10 +37,6 @@ public class AdminOrderEditInvoiceServlet extends HttpServlet {
             response.sendRedirect(request.getContextPath() + "/login");
             return;
         }
-        if (!"ADMIN".equals(admin.getRole().name())) {
-            response.sendError(HttpServletResponse.SC_FORBIDDEN);
-            return;
-        }
         String idRaw = request.getParameter("id");
         if (idRaw == null || idRaw.isEmpty()) {
             response.sendRedirect(request.getContextPath() + "/admin/orders");
@@ -86,11 +82,6 @@ public class AdminOrderEditInvoiceServlet extends HttpServlet {
 
         if (admin == null) {
             response.sendRedirect(request.getContextPath() + "/login");
-            return;
-        }
-
-        if (!"ADMIN".equals(admin.getRole().name())) {
-            response.sendError(HttpServletResponse.SC_FORBIDDEN);
             return;
         }
 

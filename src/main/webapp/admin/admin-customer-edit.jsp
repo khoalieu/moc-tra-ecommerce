@@ -92,16 +92,13 @@
                     <div class="form-row">
                         <div class="form-group">
                             <label>Vai trò (Role)</label>
-                            <select name="role" class="form-control">
-                                <option value="CUSTOMER" ${customer.role == 'CUSTOMER' ? 'selected' : ''}>Khách hàng
-                                    (Customer)
-                                </option>
-                                <option value="EDITOR" ${customer.role == 'EDITOR' ? 'selected' : ''}>Biên tập viên
-                                    (Editor)
-                                </option>
-                                <option value="ADMIN" ${customer.role == 'ADMIN' ? 'selected' : ''}>Quản trị viên
-                                    (Admin)
-                                </option>
+                            <select name="roleId" class="form-control">
+                                <option value="">-- Chưa gán vai trò --</option>
+                                <c:forEach var="r" items="${roles}">
+                                    <option value="${r.id}" ${customer.roleId == r.id ? 'selected' : ''}>
+                                        ${r.displayName}
+                                    </option>
+                                </c:forEach>
                             </select>
                         </div>
 
