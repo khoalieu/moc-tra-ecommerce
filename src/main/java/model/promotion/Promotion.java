@@ -14,6 +14,7 @@ public class Promotion {
     private double discountValue;
     private String imageUrl;
     private boolean isActive;
+    private String approvalStatus; // PENDING, APPROVED, REJECTED
     private LocalDateTime createdAt;
     private String promotionType; // "ALL" hoặc "VIP"
 
@@ -51,4 +52,7 @@ public class Promotion {
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
     public String getPromotionType() { return promotionType; }
     public void setPromotionType(String promotionType) { this.promotionType = promotionType; }
+
+    public String getApprovalStatus() { return approvalStatus; }
+    public void setApprovalStatus(String approvalStatus) { this.approvalStatus = approvalStatus; }
 }
