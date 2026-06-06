@@ -22,7 +22,8 @@ public class LoginGoogleServlet extends HttpServlet {
             return;
         }
         try {
-            String accessToken = GoogleUtils.getToken(code);
+            String redirectUri = request.getScheme() + "://" + request.getServerName() + ":" + request.getServerPort() + request.getContextPath() + "/login-google";
+            String accessToken = GoogleUtils.getToken(code, redirectUri);
             GooglePojo googlePojo = GoogleUtils.getUserInfo(accessToken);
             UserDAO userDAO = DAOFactory.getInstance().getUserDAO();
             User user = userDAO.loginWithGoogle(googlePojo);
@@ -84,7 +85,14 @@ public class LoginGoogleServlet extends HttpServlet {
                     response.sendRedirect(request.getContextPath() + "/admin/dashboard");
                     return;
                 } else {
-                    response.sendRedirect(request.getContextPath() + "/index");
+                    if (user.getPhone() == null || user.getPhone().trim().isEmpty()) {
+                        session.setAttribute("pending_update_user", user.getUsername());
+                        session.setAttribute("registration_finished", true);
+                        session.setAttribute("is_google_login", true);
+                        response.sendRedirect(request.getContextPath() + "/auth/update-profile.jsp");
+                    } else {
+                        response.sendRedirect(request.getContextPath() + "/index");
+                    }
                     return;
                 }
 

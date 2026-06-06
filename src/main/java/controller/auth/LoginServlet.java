@@ -26,7 +26,8 @@ public class LoginServlet extends HttpServlet {
             response.sendRedirect(request.getContextPath() + "/index.jsp");
             return;
         }
-        String googleLoginUrl = controller.utils.GoogleUtils.getGoogleAuthUrl();
+        String redirectUri = request.getScheme() + "://" + request.getServerName() + ":" + request.getServerPort() + request.getContextPath() + "/login-google";
+        String googleLoginUrl = controller.utils.GoogleUtils.getGoogleAuthUrl(redirectUri);
         request.setAttribute("googleUrl", googleLoginUrl);
         request.getRequestDispatcher("/auth/login.jsp").forward(request, response);
     }
