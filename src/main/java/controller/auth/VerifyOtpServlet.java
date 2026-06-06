@@ -65,7 +65,7 @@ public class VerifyOtpServlet extends HttpServlet {
                 session.removeAttribute("otp_display");
                 session.removeAttribute("OTP_PURPOSE");
                 
-                response.sendRedirect(request.getContextPath() + "/auth/update-profile.jsp");
+                response.sendRedirect(request.getContextPath() + "/auth/update-profile");
                 return;
             } else if ("VERIFY_GOOGLE_PHONE".equals(purpose)) {
                 String username = (String) session.getAttribute("pending_update_user");

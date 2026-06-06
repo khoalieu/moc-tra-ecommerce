@@ -14,6 +14,16 @@ public class UpdateProfileServlet extends HttpServlet {
     private final UserDAO userDAO = DAOFactory.getInstance().getUserDAO();
 
     @Override
+    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        HttpSession session = request.getSession(false);
+        if (session == null || session.getAttribute("pending_update_user") == null) {
+            response.sendRedirect(request.getContextPath() + "/auth/login.jsp");
+            return;
+        }
+        request.getRequestDispatcher("/auth/update-profile.jsp").forward(request, response);
+    }
+
+    @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         request.setCharacterEncoding("UTF-8");
         HttpSession session = request.getSession();
@@ -36,7 +46,8 @@ public class UpdateProfileServlet extends HttpServlet {
         if (label == null || label.isEmpty()) {
             label = "Địa chỉ mặc định";
         }
-        String email = request.getParameter("email");
+        String emailParam = request.getParameter("email");
+        String email = (emailParam != null) ? emailParam.trim() : "";
         String province = request.getParameter("province");
         String district = request.getParameter("district");
         String ward = request.getParameter("ward");
@@ -145,11 +156,12 @@ public class UpdateProfileServlet extends HttpServlet {
         }
 
         if (email != null && !email.trim().isEmpty()) {
-            if (userDAO.isEmailExists(email)) {
+            String cleanEmail = email.trim();
+            if (userDAO.isEmailExists(cleanEmail)) {
                 request.setAttribute("errorMessage", "Lỗi: Email này đã được sử dụng...");
                 request.setAttribute("temp_firstName", firstName);
                 request.setAttribute("temp_lastName", lastName);
-                request.setAttribute("temp_email", email);
+                request.setAttribute("temp_email", cleanEmail);
                 request.setAttribute("temp_province", province);
                 request.setAttribute("temp_district", district);
                 request.setAttribute("temp_ward", ward);
@@ -172,12 +184,14 @@ public class UpdateProfileServlet extends HttpServlet {
                     + "Đội ngũ Mộc Trà Shop.";
 
             try {
-                EmailService.sendEmail(email, subject, emailContent);
+                // Sử dụng cleanEmail đã được đảm bảo không null và không rỗng
+                EmailService.sendEmail(cleanEmail, subject, emailContent);
+
                 session.setAttribute("OTP_CODE", emailOtp);
                 session.setAttribute("OTP_PURPOSE", "VERIFY_REGISTER_EMAIL");
                 session.setAttribute("OTP_CREATED_AT", now);
                 session.setAttribute("OTP_LAST_SENT_AT", now);
-                session.setAttribute("TEMP_EMAIL", email);
+                session.setAttribute("TEMP_EMAIL", cleanEmail);
                 session.setAttribute("TEMP_FIRSTNAME", firstName);
                 session.setAttribute("TEMP_LASTNAME", lastName);
                 session.setAttribute("TEMP_FULLNAME", fullName);
@@ -189,6 +203,7 @@ public class UpdateProfileServlet extends HttpServlet {
                 session.setAttribute("TEMP_ADDRESS", addressDetail);
                 session.setAttribute("TEMP_DISTRICT_ID", districtId);
                 session.setAttribute("TEMP_WARD_CODE", wardCode);
+
                 request.setAttribute("resendCooldown", 60);
                 request.getRequestDispatcher("/auth/verify-otp.jsp").forward(request, response);
             } catch (Exception e) {
@@ -196,7 +211,7 @@ public class UpdateProfileServlet extends HttpServlet {
                 request.setAttribute("errorMessage", "Hệ thống gửi mail gặp sự cố!");
                 request.setAttribute("temp_firstName", firstName);
                 request.setAttribute("temp_lastName", lastName);
-                request.setAttribute("temp_email", email);
+                request.setAttribute("temp_email", cleanEmail);
                 request.setAttribute("temp_province", province);
                 request.setAttribute("temp_district", district);
                 request.setAttribute("temp_ward", ward);
