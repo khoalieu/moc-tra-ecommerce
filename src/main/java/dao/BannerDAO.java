@@ -52,8 +52,8 @@ public class BannerDAO {
             clearSameSlot(b.getSection(), b.getSortOrder(), null);
         }
 
-        String sql = "INSERT INTO banners(title, subtitle, image_url, button_text, button_link, section, sort_order, is_active) " +
-                "VALUES(?,?,?,?,?,?,?,?)";
+        String sql = "INSERT INTO banners(title, subtitle, image_url, button_text, button_link, section, sort_order, is_active, start_time, end_time) " +
+                "VALUES(?,?,?,?,?,?,?,?,?,?)";
 
         try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -69,6 +69,13 @@ public class BannerDAO {
             else ps.setInt(7, b.getSortOrder());
 
             ps.setBoolean(8, Boolean.TRUE.equals(b.isActive()));
+
+            if (b.getStartTime() == null) ps.setNull(9, Types.TIMESTAMP);
+            else ps.setTimestamp(9, Timestamp.valueOf(b.getStartTime()));
+
+            if (b.getEndTime() == null) ps.setNull(10, Types.TIMESTAMP);
+            else ps.setTimestamp(10, Timestamp.valueOf(b.getEndTime()));
+
             ps.executeUpdate();
         }
     }
@@ -78,7 +85,7 @@ public class BannerDAO {
             clearSameSlot(b.getSection(), b.getSortOrder(), b.getId());
         }
 
-        String sql = "UPDATE banners SET title=?, subtitle=?, image_url=?, button_text=?, button_link=?, section=?, sort_order=?, is_active=? " +
+        String sql = "UPDATE banners SET title=?, subtitle=?, image_url=?, button_text=?, button_link=?, section=?, sort_order=?, is_active=?, start_time=?, end_time=? " +
                 "WHERE id=?";
 
         try (Connection conn = ds.getConnection();
@@ -95,7 +102,14 @@ public class BannerDAO {
             else ps.setInt(7, b.getSortOrder());
 
             ps.setBoolean(8, Boolean.TRUE.equals(b.isActive()));
-            ps.setInt(9, b.getId());
+
+            if (b.getStartTime() == null) ps.setNull(9, Types.TIMESTAMP);
+            else ps.setTimestamp(9, Timestamp.valueOf(b.getStartTime()));
+
+            if (b.getEndTime() == null) ps.setNull(10, Types.TIMESTAMP);
+            else ps.setTimestamp(10, Timestamp.valueOf(b.getEndTime()));
+
+            ps.setInt(11, b.getId());
 
             ps.executeUpdate();
         }
@@ -170,8 +184,12 @@ public class BannerDAO {
 
         Timestamp c = rs.getTimestamp("created_at");
         Timestamp u = rs.getTimestamp("updated_at");
+        Timestamp st = rs.getTimestamp("start_time");
+        Timestamp et = rs.getTimestamp("end_time");
         if (c != null) b.setCreatedAt(c.toLocalDateTime());
         if (u != null) b.setUpdatedAt(u.toLocalDateTime());
+        if (st != null) b.setStartTime(st.toLocalDateTime());
+        if (et != null) b.setEndTime(et.toLocalDateTime());
         return b;
     }
     public List<Banner> getHomeActive() {
@@ -179,6 +197,8 @@ public class BannerDAO {
         String sql =
                 "SELECT * FROM banners " +
                         "WHERE is_active = 1 AND section = 'home' " +
+                        "  AND (start_time IS NULL OR NOW() >= start_time) " +
+                        "  AND (end_time IS NULL OR NOW() <= end_time) " +
                         "ORDER BY " +
                         "  CASE WHEN sort_order IS NULL THEN 1 ELSE 0 END ASC, " +
                         "  sort_order ASC, " +
