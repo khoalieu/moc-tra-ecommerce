@@ -1,6 +1,5 @@
 package dao;
 
-import jakarta.servlet.Servlet;
 import model.user.CustomerDTO;
 import model.user.User;
 import model.user.UserAddress;
@@ -1001,77 +1000,15 @@ public class UserDAO {
         try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, targetEmail.trim());
+
             try (ResultSet rs = ps.executeQuery()) {
                 return rs.next();
             }
         } catch (SQLException e) {
+            // Log lỗi để dễ dàng debug
             System.err.println("Lỗi khi kiểm tra email tồn tại: " + e.getMessage());
             e.printStackTrace();
         }
         return false;
-    }
-    public boolean updateProfileInfo(String username, String firstName, String lastName, String email) {
-        String sql = "UPDATE users SET first_name = ?, last_name = ?, email = ? WHERE username = ?";
-        try (Connection conn = ds.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setString(1, firstName);
-            ps.setString(2, lastName);
-            if (email == null || email.trim().isEmpty()) {
-                ps.setNull(3, java.sql.Types.VARCHAR);
-            } else {
-                ps.setString(3, email.trim());
-            }
-            ps.setString(4, username);
-            return ps.executeUpdate() > 0;
-        } catch (SQLException e) {
-            e.printStackTrace();
-            return false;
-        }
-    }
-    public boolean saveUserAddress(String username, String fullName, String phone, String label, String province, String district, String ward, String addressDetail, int districtId, String wardCode) {
-        String getUserIdSql = "SELECT id FROM users WHERE username = ?";
-        String insertAddressSql = "INSERT INTO user_addresses (user_id, full_name, phone_number, label, " +
-                "province, district, ward, street_address, is_default, district_id, ward_code) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?)";
-        try (Connection conn = ds.getConnection()) {
-            int userId = -1;
-            try (PreparedStatement psGet = conn.prepareStatement(getUserIdSql)) {
-                psGet.setString(1, username);
-                ResultSet rs = psGet.executeQuery();
-                if (rs.next()) userId = rs.getInt("id");
-            }
-            if (userId != -1) {
-                try (PreparedStatement psInsert = conn.prepareStatement(insertAddressSql)) {
-                    psInsert.setInt(1, userId);
-                    psInsert.setString(2, fullName);
-                    psInsert.setString(3, phone);
-                    psInsert.setString(4, label);
-                    psInsert.setString(5, province);
-                    psInsert.setString(6, district);
-                    psInsert.setString(7, ward);
-                    psInsert.setString(8, addressDetail);
-                    psInsert.setInt(9, districtId);
-                    psInsert.setString(10, wardCode);
-                    return psInsert.executeUpdate() > 0;
-                }
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return false;
-    }
-    public boolean updateGoogleProfileInfo(String username, String firstName, String lastName, String phone) {
-        String sql = "UPDATE users SET first_name = ?, last_name = ?, phone = ? WHERE username = ?";
-        try (Connection conn = ds.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setString(1, firstName);
-            ps.setString(2, lastName);
-            ps.setString(3, phone);
-            ps.setString(4, username);
-            return ps.executeUpdate() > 0;
-        } catch (SQLException e) {
-            e.printStackTrace();
-            return false;
-        }
     }
 }

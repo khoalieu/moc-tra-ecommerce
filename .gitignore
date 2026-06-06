@@ -39,4 +39,3 @@ src/main/resources/database.properties
 Database/migrations/
 
 src/main/resources/ghn.properties
-src/main/resources/auth.properties
