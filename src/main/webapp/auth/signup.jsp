@@ -104,15 +104,6 @@
                             required>
                     <i class="fa-solid fa-eye toggle-password" toggle="#signup-confirmPassword"></i>
                 </div>
-
-                <div class="form-row avatar-row">
-                    <label class="avatar-text" for="avatarInput">Avatar</label>
-
-                    <div class="avatar-box" id="signup-avatarBox" role="button" aria-label="Chọn ảnh đại diện">
-                        <img id="signup-avatarPreview" src="${pageContext.request.contextPath}/assets/images/useravata.png" alt="Ảnh đại diện">
-                    </div>
-                    <input type="file" id="signup-avatarInput" name="avatar" accept="image/*" style="display:none;">
-                </div>
                 <div class="form-row" style="justify-content:center; margin-bottom: 15px;">
                     <div class="g-recaptcha" data-sitekey="${captchaSiteKey}"></div>
                 </div>

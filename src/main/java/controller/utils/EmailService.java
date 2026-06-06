@@ -39,6 +39,12 @@ public class EmailService {
         if (toAddress == null || toAddress.trim().isEmpty()) {
             throw new MessagingException("Địa chỉ email người nhận (toAddress) không được để trống!");
         }
+        if (EMAIL_USERNAME == null || EMAIL_USERNAME.trim().isEmpty()) {
+            throw new MessagingException("Cấu hình email server bị thiếu: email.username chưa được thiết lập trong email.properties!");
+        }
+        if (EMAIL_PASSWORD == null || EMAIL_PASSWORD.trim().isEmpty()) {
+            throw new MessagingException("Cấu hình email server bị thiếu: email.password chưa được thiết lập trong email.properties!");
+        }
         Properties properties = new Properties();
         properties.put("mail.smtp.host", SMTP_HOST);
         properties.put("mail.smtp.port", SMTP_PORT);

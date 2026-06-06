@@ -135,7 +135,7 @@
                                 <p style="font-size: 0.9em; color: #666; margin-bottom: 5px;">Sai số điện thoại?</p>
                                 <c:choose>
                                     <c:when test="${sessionScope.OTP_PURPOSE == 'VERIFY_GOOGLE_PHONE'}">
-                                        <a href="${pageContext.request.contextPath}/auth/update-profile.jsp" class="back-link" style="color: #dc3545;">
+                                        <a href="${pageContext.request.contextPath}/auth/update-profile" class="back-link" style="color: #dc3545;">
                                             <i class="fa-solid fa-pen-to-square"></i> Quay lại sửa SĐT
                                         </a>
                                     </c:when>
