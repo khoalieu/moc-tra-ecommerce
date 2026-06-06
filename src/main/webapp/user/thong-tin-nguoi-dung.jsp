@@ -40,6 +40,14 @@
                 <i class="fa-solid fa-heart"></i>
                 <span>Sản phẩm yêu thích</span>
             </a>
+            <a href="${pageContext.request.contextPath}/thong-bao" class="grid-card">
+                <i class="fa-regular fa-bell"></i>
+                <span>Thông báo</span>
+            </a>
+            <a href="${pageContext.request.contextPath}/ma-uu-dai-cua-toi" class="grid-card">
+                <i class="fa-solid fa-ticket"></i>
+                <span>Mã ưu đãi</span>
+            </a>
         </div>
     </main>
 
