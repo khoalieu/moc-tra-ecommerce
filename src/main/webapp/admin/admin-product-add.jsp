@@ -215,21 +215,31 @@
 
                             <div class="form-section">
                                 <h3><i class="fas fa-tags"></i> Phân loại sản phẩm (Tùy chọn)</h3>
-                                <p style="font-size: 13px; color: #666; margin-bottom: 15px;">Thêm các quy cách đóng gói (VD: Hộp 10 gói, Gói 100g...). Nếu bỏ trống, sản phẩm sẽ bán theo giá cơ bản.</p>
 
-                                <div id="variantsContainer">
-                                    <div class="variant-row" style="display: flex; gap: 8px; margin-bottom: 10px; align-items: center;">
-                                        <input type="text" name="variantNames" placeholder="Tên loại (VD: Hộp 10 gói)" class="form-control" style="flex: 2;">
-                                        <input type="number" name="variantPrices" placeholder="Giá gốc" class="form-control" style="flex: 1.5;">
-                                        <input type="number" name="variantSalePrices" placeholder="Giá Sale" class="form-control" style="flex: 1.5;">
-                                        <input type="number" name="variantStocks" placeholder="Kho" class="form-control" style="flex: 1;">
-                                        <button type="button" class="btn btn-danger btn-sm" onclick="removeVariantRow(this)" style="padding: 8px 12px;"><i class="fas fa-trash"></i></button>
+                                <div class="variant-manager">
+                                    <div class="variant-toolbar">
+                                        <button type="button" class="btn btn-success btn-sm variant-add-btn" onclick="openVariantEditor()">
+                                            <i class="fas fa-plus"></i> Thêm phân loại mới
+                                        </button>
+                                    </div>
+
+                                    <div class="variant-table-wrap">
+                                        <table class="variant-table">
+                                            <thead>
+                                            <tr>
+                                                <th>Tên phân loại</th>
+                                                <th>Giá gốc</th>
+                                                <th>Tồn kho</th>
+                                                <th>Thao tác</th>
+                                            </tr>
+                                            </thead>
+                                            <tbody id="variantsContainer"></tbody>
+                                        </table>
+                                        <div class="variant-empty" id="variantEmptyState">
+                                            Chưa có phân loại nào. Nếu bỏ trống, sản phẩm sẽ bán theo giá cơ bản.
+                                        </div>
                                     </div>
                                 </div>
-
-                                <button type="button" class="btn btn-success btn-sm mt-2" onclick="addVariantRow()">
-                                    <i class="fas fa-plus"></i> Thêm phân loại
-                                </button>
                             </div>
                             <div class="form-section">
                                 <h3><i class="fas fa-image"></i> Hình ảnh</h3>
@@ -258,6 +268,42 @@
     </main>
 </div>
 
+<div id="variantModal" class="variant-modal modal-hidden">
+    <div class="variant-modal-overlay" onclick="closeVariantEditor()"></div>
+    <div class="variant-modal-content">
+        <div class="variant-modal-header">
+            <h3 id="variantEditorTitle">Thêm phân loại mới</h3>
+            <button type="button" class="variant-modal-close" onclick="closeVariantEditor()">&times;</button>
+        </div>
+        <div class="variant-modal-body">
+            <p class="variant-modal-help">
+                Thêm các quy cách đóng gói (VD: Hộp 10 gói, Gói 100g...). Nếu bỏ trống, sản phẩm sẽ bán theo giá cơ bản.
+            </p>
+            <div class="variant-editor-grid">
+                <div class="form-group">
+                    <label>Tên phân loại</label>
+                    <input type="text" id="variantNameInput" class="form-control"
+                           placeholder="VD: Hộp 10 gói, Gói 100g">
+                </div>
+                <div class="form-group">
+                    <label>Giá gốc</label>
+                    <input type="number" id="variantPriceInput" class="form-control"
+                           placeholder="VD: 120000" min="0">
+                </div>
+                <div class="form-group">
+                    <label>Tồn kho</label>
+                    <input type="number" id="variantStockInput" class="form-control"
+                           placeholder="VD: 20" min="0">
+                </div>
+            </div>
+        </div>
+        <div class="variant-modal-footer">
+            <button type="button" class="btn btn-outline btn-sm" onclick="closeVariantEditor()">Hủy</button>
+            <button type="button" class="btn btn-primary btn-sm" onclick="saveVariant()">Lưu phân loại</button>
+        </div>
+    </div>
+</div>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Dropify/0.2.2/js/dropify.min.js"></script>
 <script src="https://unpkg.com/filepond-plugin-image-preview/dist/filepond-plugin-image-preview.js"></script>
@@ -280,22 +326,101 @@
         });
     });
 
-    function addVariantRow() {
-        const container = document.getElementById('variantsContainer');
-        const rowHTML = `
-            <div class="variant-row" style="display: flex; gap: 8px; margin-bottom: 10px; align-items: center;">
-                <input type="text" name="variantNames" placeholder="Tên loại (VD: Hộp 10 gói)" class="form-control" style="flex: 2;">
-                <input type="number" name="variantPrices" placeholder="Giá gốc" class="form-control" style="flex: 1.5;">
-                <input type="number" name="variantSalePrices" placeholder="Giá Sale" class="form-control" style="flex: 1.5;">
-                <input type="number" name="variantStocks" placeholder="Kho" class="form-control" style="flex: 1;">
-                <button type="button" class="btn btn-danger btn-sm" onclick="removeVariantRow(this)" style="padding: 8px 12px;"><i class="fas fa-trash"></i></button>
-            </div>
-        `;
-        container.insertAdjacentHTML('beforeend', rowHTML);
+    let editingVariantItem = null;
+
+    function openVariantEditor(item) {
+        editingVariantItem = item || null;
+        document.getElementById('variantEditorTitle').innerText = editingVariantItem ? 'Chỉnh sửa phân loại' : 'Thêm phân loại mới';
+
+        if (editingVariantItem) {
+            document.getElementById('variantNameInput').value = editingVariantItem.querySelector('input[name="variantNames"]').value;
+            document.getElementById('variantPriceInput').value = editingVariantItem.querySelector('input[name="variantPrices"]').value;
+            document.getElementById('variantStockInput').value = editingVariantItem.querySelector('input[name="variantStocks"]').value;
+        } else {
+            clearVariantEditor();
+        }
+
+        document.getElementById('variantModal').classList.remove('modal-hidden');
+        document.getElementById('variantNameInput').focus();
     }
 
-    function removeVariantRow(button) {
-        button.closest('.variant-row').remove();
+    function closeVariantEditor() {
+        document.getElementById('variantModal').classList.add('modal-hidden');
+        editingVariantItem = null;
+        clearVariantEditor();
+    }
+
+    function clearVariantEditor() {
+        document.getElementById('variantNameInput').value = '';
+        document.getElementById('variantPriceInput').value = '';
+        document.getElementById('variantStockInput').value = '';
+    }
+
+    function saveVariant() {
+        const name = document.getElementById('variantNameInput').value.trim();
+        const price = document.getElementById('variantPriceInput').value || '0';
+        const stock = document.getElementById('variantStockInput').value || '0';
+
+        if (!name) {
+            alert('Vui lòng nhập tên phân loại.');
+            document.getElementById('variantNameInput').focus();
+            return;
+        }
+
+        if (editingVariantItem) {
+            updateVariantItem(editingVariantItem, name, price, stock);
+        } else {
+            const item = document.createElement('tr');
+            item.className = 'variant-list-item';
+            document.getElementById('variantsContainer').appendChild(item);
+            updateVariantItem(item, name, price, stock);
+        }
+
+        updateVariantEmptyState();
+        closeVariantEditor();
+    }
+
+    function updateVariantItem(item, name, price, stock) {
+        item.innerHTML = `
+            <td class="variant-list-name"></td>
+            <td class="variant-price"></td>
+            <td class="variant-stock"></td>
+            <td>
+                <div class="variant-list-actions">
+                    <button type="button" class="variant-icon-btn" onclick="openVariantEditor(this.closest('.variant-list-item'))" title="Chỉnh sửa">
+                        <i class="fas fa-pen"></i>
+                    </button>
+                    <button type="button" class="variant-icon-btn danger" onclick="removeVariantItem(this)" title="Xóa">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+                <input type="hidden" name="variantNames">
+                <input type="hidden" name="variantPrices">
+                <input type="hidden" name="variantSalePrices">
+                <input type="hidden" name="variantStocks">
+            </td>
+        `;
+        item.querySelector('.variant-list-name').innerText = name;
+        item.querySelector('.variant-price').innerText = formatVariantMoney(price);
+        item.querySelector('.variant-stock').innerText = stock;
+        item.querySelector('input[name="variantNames"]').value = name;
+        item.querySelector('input[name="variantPrices"]').value = price;
+        item.querySelector('input[name="variantSalePrices"]').value = '0';
+        item.querySelector('input[name="variantStocks"]').value = stock;
+    }
+
+    function removeVariantItem(button) {
+        button.closest('.variant-list-item').remove();
+        updateVariantEmptyState();
+    }
+
+    function updateVariantEmptyState() {
+        const hasVariant = document.querySelectorAll('.variant-list-item').length > 0;
+        document.getElementById('variantEmptyState').style.display = hasVariant ? 'none' : 'block';
+    }
+
+    function formatVariantMoney(value) {
+        return Number(value || 0).toLocaleString('vi-VN') + ' đ';
     }
 </script>
 </body>
