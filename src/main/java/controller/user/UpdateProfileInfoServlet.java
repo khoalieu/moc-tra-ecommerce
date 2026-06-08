@@ -2,6 +2,7 @@ package controller.user;
 
 import dao.DAOFactory;
 import dao.UserDAO;
+import controller.utils.RedirectUtils;
 import jakarta.servlet.annotation.MultipartConfig;
 import jakarta.servlet.http.*;
 import model.user.User;
@@ -37,7 +38,7 @@ public class UpdateProfileInfoServlet extends HttpServlet {
         User user = (User) session.getAttribute("user");
 
         if (user == null) {
-            response.sendRedirect(request.getContextPath() + "/auth/login.jsp");
+            response.sendRedirect(RedirectUtils.toLoginWithRedirect(request, "/tai-khoan-cua-toi"));
             return;
         }
         request.getRequestDispatcher("/user/thong-tin-tai-khoan-nguoi-dung.jsp").forward(request, response);
@@ -51,7 +52,7 @@ public class UpdateProfileInfoServlet extends HttpServlet {
         User user = (User) session.getAttribute("user");
 
         if (user == null) {
-            response.sendRedirect(request.getContextPath() + "/auth/login.jsp");
+            response.sendRedirect(RedirectUtils.toLoginWithRedirect(request, "/tai-khoan-cua-toi"));
             return;
         }
 

@@ -20,6 +20,7 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import controller.utils.RedirectUtils;
 import controller.utils.PaymentUtils;
 import controller.utils.PaymentResult;
 import model.promotion.Coupon;
@@ -39,7 +40,7 @@ public class CheckoutServlet extends HttpServlet {
         Cart cart = (Cart) session.getAttribute("cart");
 
         if (user == null) {
-            response.sendRedirect(request.getContextPath() + "/auth/login.jsp");
+            response.sendRedirect(RedirectUtils.toLoginWithRedirect(request, "/thanh-toan"));
             return;
         }
         if (cart == null || cart.getTotalQuantity() == 0) {
@@ -162,7 +163,12 @@ public class CheckoutServlet extends HttpServlet {
         Cart cart = (Cart) session.getAttribute("cart");
         String[] selectedItemIds = (String[]) session.getAttribute("selectedItemIds");
 
-        if (user == null || cart == null || selectedItemIds == null || selectedItemIds.length == 0) {
+        if (user == null) {
+            response.sendRedirect(RedirectUtils.toLoginWithRedirect(request, "/thanh-toan"));
+            return;
+        }
+
+        if (cart == null || selectedItemIds == null || selectedItemIds.length == 0) {
             response.sendRedirect(request.getContextPath() + "/gio-hang");
             return;
         }

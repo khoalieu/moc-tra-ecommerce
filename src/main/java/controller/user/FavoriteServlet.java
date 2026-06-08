@@ -1,6 +1,7 @@
 package controller.user;
 
 import dao.CategoryDAO;
+import controller.utils.RedirectUtils;
 import dao.DAOFactory;
 import dao.FavoriteDAO;
 import jakarta.servlet.ServletException;
@@ -33,7 +34,7 @@ public class FavoriteServlet extends HttpServlet {
         User user = (User) session.getAttribute("user");
 
         if (user == null) {
-            response.sendRedirect(request.getContextPath() + "/auth/login.jsp");
+            response.sendRedirect(RedirectUtils.toLoginWithRedirect(request, RedirectUtils.getCurrentPath(request)));
             return;
         }
 
@@ -100,7 +101,11 @@ public class FavoriteServlet extends HttpServlet {
 
         if (user == null) {
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            response.getWriter().write("{\"success\":false,\"message\":\"Vui lòng đăng nhập\"}");
+            String redirect = RedirectUtils.getSafeRedirectOrDefault(request, "/san-pham");
+            String loginUrl = RedirectUtils.toLoginWithRedirect(request, redirect)
+                    .replace("\\", "\\\\")
+                    .replace("\"", "\\\"");
+            response.getWriter().write("{\"success\":false,\"status\":\"LOGIN_REQUIRED\",\"message\":\"Vui lòng đăng nhập\",\"loginUrl\":\"" + loginUrl + "\"}");
             return;
         }
 

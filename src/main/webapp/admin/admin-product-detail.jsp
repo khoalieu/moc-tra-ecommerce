@@ -30,7 +30,7 @@
         <nav class="admin-nav">
             <ul>
                 <li class="nav-item">
-                    <a href="admin-dashboard.jsp"><i class="fas fa-tachometer-alt"></i><span>Dashboard</span></a>
+                    <a href="admin/dashboard"><i class="fas fa-tachometer-alt"></i><span>Dashboard</span></a>
                 </li>
                 <li class="nav-item active">
                     <a href="${pageContext.request.contextPath}/admin/products"><i class="fas fa-box"></i><span>Tất cả Sản phẩm</span></a>
@@ -48,7 +48,7 @@
                     <a href="admin-customers.jsp"><i class="fas fa-users"></i><span>Khách hàng</span></a>
                 </li>
                 <li class="nav-item">
-                    <a href="admin-blog.jsp"><i class="fas fa-newspaper"></i><span>Tất cả Bài viết</span></a>
+                    <a href="admin/blog"><i class="fas fa-newspaper"></i><span>Tất cả Bài viết</span></a>
                 </li>
                 <li class="nav-item">
                     <a href="admin-blog-categories.jsp"><i class="fas fa-folder"></i><span>Danh mục Blog</span></a>

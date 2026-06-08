@@ -550,11 +550,16 @@
                     headers: {'Content-Type': 'application/x-www-form-urlencoded'},
                     body: new URLSearchParams({
                         action: 'toggle',
-                        productId: productId
+                        productId: productId,
+                        redirect: window.location.pathname + window.location.search
                     })
                 })
                     .then(res => res.json())
                     .then(data => {
+                        if (data.status === 'LOGIN_REQUIRED' && data.loginUrl) {
+                            window.location.href = data.loginUrl;
+                            return;
+                        }
                         if (data.success) {
                             this.dataset.favorited = data.favorited ? 'true' : 'false';
                             this.title = data.favorited ? 'Xóa khỏi yêu thích' : 'Thêm vào yêu thích';

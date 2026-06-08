@@ -3,6 +3,7 @@ package controller.user;
 import dao.DAOFactory;
 import dao.UserAddressDAO;
 import dao.UserDAO;
+import controller.utils.RedirectUtils;
 import model.user.User;
 import model.user.UserAddress;
 import jakarta.servlet.ServletException;
@@ -22,7 +23,7 @@ public class UserAddressServlet extends HttpServlet {
         HttpSession session = request.getSession();
         User user = (User) session.getAttribute("user");
         if (user == null) {
-            response.sendRedirect(request.getContextPath() + "/auth/login.jsp");
+            response.sendRedirect(RedirectUtils.toLoginWithRedirect(request, RedirectUtils.getCurrentPath(request)));
             return;
         }
         UserAddressDAO dao = DAOFactory.getInstance().getUserAddressDAO();
@@ -49,7 +50,7 @@ public class UserAddressServlet extends HttpServlet {
         UserDAO userDAO = DAOFactory.getInstance().getUserDAO();
 
         if (user == null) {
-            response.sendRedirect(request.getContextPath() + "/auth/login.jsp");
+            response.sendRedirect(RedirectUtils.toLoginWithRedirect(request, "/dia-chi-nguoi-dung"));
             return;
         }
 

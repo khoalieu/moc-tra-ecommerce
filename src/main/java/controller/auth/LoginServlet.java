@@ -22,11 +22,17 @@ public class LoginServlet extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        String redirect = RedirectUtils.getSafeRedirect(request);
         if (request.getSession().getAttribute("user") != null) {
-            response.sendRedirect(request.getContextPath() + "/index.jsp");
+            response.sendRedirect(request.getContextPath() + (redirect != null ? redirect : "/index"));
             return;
         }
-        String googleLoginUrl = controller.utils.GoogleUtils.getGoogleAuthUrl();
+        if (redirect != null) {
+            request.getSession().setAttribute("LOGIN_REDIRECT", redirect);
+        } else {
+            request.getSession().removeAttribute("LOGIN_REDIRECT");
+        }
+        String googleLoginUrl = controller.utils.GoogleUtils.getGoogleAuthUrl(redirect);
         request.setAttribute("googleUrl", googleLoginUrl);
         request.getRequestDispatcher("/auth/login.jsp").forward(request, response);
     }
@@ -117,6 +123,7 @@ public class LoginServlet extends HttpServlet {
             }
             session.setAttribute("cart", userCartFromDB);
             String redirect = RedirectUtils.getSafeRedirect(request);
+            session.removeAttribute("LOGIN_REDIRECT");
 
             if (user.hasPermission("dashboard.view") && user.getRole() != null &&
                     !user.getRole().name().equalsIgnoreCase("CUSTOMER")) {

@@ -31,7 +31,7 @@
         <header class="admin-header">
             <div class="header-left"><h1>Thêm sản phẩm mới</h1></div>
             <div class="header-right">
-                <a href="admin/admin-products.jsp" class="btn btn-outline"><i class="fas fa-arrow-left"></i> Quay
+                <a href="admin/products" class="btn btn-outline"><i class="fas fa-arrow-left"></i> Quay
                     lại</a>
             </div>
         </header>

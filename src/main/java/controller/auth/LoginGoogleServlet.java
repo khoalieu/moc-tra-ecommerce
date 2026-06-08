@@ -8,6 +8,7 @@ import model.cart.Cart;
 import model.cart.CartItem;
 import model.user.User;
 import controller.utils.GoogleUtils;
+import controller.utils.RedirectUtils;
 import jakarta.servlet.*;
 import jakarta.servlet.http.*;
 import jakarta.servlet.annotation.*;
@@ -17,6 +18,7 @@ import java.io.IOException;
 public class LoginGoogleServlet extends HttpServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         String code = request.getParameter("code");
+        String stateRedirect = RedirectUtils.getSafeRedirectOrDefault(request, request.getParameter("state"));
         if (code == null || code.isEmpty()) {
             request.getRequestDispatcher("/auth/login.jsp").forward(request, response);
             return;
@@ -79,6 +81,12 @@ public class LoginGoogleServlet extends HttpServlet {
                     }
                 }
                 session.setAttribute("cart", userCartFromDB);
+                String redirect = stateRedirect;
+                Object redirectObj = session.getAttribute("LOGIN_REDIRECT");
+                if (redirect == null && redirectObj instanceof String) {
+                    redirect = (String) redirectObj;
+                }
+                session.removeAttribute("LOGIN_REDIRECT");
 
                 if (user.hasPermission("dashboard.view") && user.getRole() != null &&
                         !user.getRole().name().equalsIgnoreCase("CUSTOMER")) {
@@ -92,7 +100,10 @@ public class LoginGoogleServlet extends HttpServlet {
                         response.sendRedirect(request.getContextPath() + "/admin/dashboard");
                     }
                 } else {
-                    response.sendRedirect(request.getContextPath() + "/index");
+                    String safeRedirect = redirect != null && RedirectUtils.getSafeRedirectOrDefault(request, redirect) != null
+                            ? redirect
+                            : null;
+                    response.sendRedirect(request.getContextPath() + (safeRedirect != null ? safeRedirect : "/index"));
                 }
                 return;
 

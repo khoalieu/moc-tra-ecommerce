@@ -107,7 +107,7 @@
                                     <div class="coupon-actions">
                                         <c:choose>
                                             <c:when test="${sessionScope.user == null}">
-                                                <a href="${pageContext.request.contextPath}/auth/login.jsp"
+                                                <a href="${pageContext.request.contextPath}/login?redirect=/khuyen-mai"
                                                    class="coupon-main-btn coupon-login-btn">
                                                     Đăng nhập để nhận
                                                 </a>
@@ -197,7 +197,7 @@
                                         <div class="coupon-modal-actions">
                                             <c:choose>
                                                 <c:when test="${sessionScope.user == null}">
-                                                    <a href="${pageContext.request.contextPath}/auth/login.jsp"
+                                                    <a href="${pageContext.request.contextPath}/login?redirect=/khuyen-mai"
                                                        class="coupon-main-btn coupon-login-btn">
                                                         Đăng nhập để nhận
                                                     </a>
@@ -694,6 +694,7 @@
                     "X-Requested-With": "XMLHttpRequest"
                 },
                 body: "couponId=" + encodeURIComponent(couponId)
+                    + "&redirect=" + encodeURIComponent(window.location.pathname + window.location.search)
             })
                 .then(function (response) {
                     if (!response.ok) {
@@ -721,6 +722,10 @@
                     }
 
                     if (data.status === "LOGIN_REQUIRED") {
+                        if (data.loginUrl) {
+                            window.location.href = data.loginUrl;
+                            return;
+                        }
                         showCouponMessage(data.message || "Vui lòng đăng nhập để nhận mã giảm giá.", "error");
                         btn.disabled = false;
                         btn.textContent = "Nhận mã";

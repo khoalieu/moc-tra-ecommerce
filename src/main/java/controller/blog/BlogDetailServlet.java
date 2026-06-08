@@ -103,7 +103,7 @@ BlogDetailServlet extends HttpServlet {
                     "/chi-tiet-blog?slug=" + slug + "&tab=comments",
                     java.nio.charset.StandardCharsets.UTF_8.toString()
             );
-            response.sendRedirect(request.getContextPath() + "/auth/login.jsp?redirect=" + redirect);
+            response.sendRedirect(request.getContextPath() + "/login?redirect=" + redirect);
             return;
         }
 

@@ -260,7 +260,7 @@
                                         </c:if>
                                     </div>                                </div>
                                 <c:if test="${sessionScope.user.role == 'ADMIN'}">
-                                    <a href="${pageContext.request.contextPath}/admin/admin-dashboard.jsp">Trang quản trị</a>
+                                    <a href="${pageContext.request.contextPath}/admin/dashboard">Trang quản trị</a>
                                 </c:if>
                                 <c:if test="${sessionScope.user.role == 'EDITOR'}">
                                     <a href="${pageContext.request.contextPath}/editor/dashboard">

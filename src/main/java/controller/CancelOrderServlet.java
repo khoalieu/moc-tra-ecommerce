@@ -1,5 +1,6 @@
 package controller;
 
+import controller.utils.RedirectUtils;
 import dao.DAOFactory;
 import dao.OrderDAO;
 import model.order.Order;
@@ -20,7 +21,7 @@ public class CancelOrderServlet extends HttpServlet {
         User user = (User) session.getAttribute("user");
 
         if (user == null) {
-            response.sendRedirect(request.getContextPath() + "/login");
+            response.sendRedirect(RedirectUtils.toLoginWithRedirect(request, "/don-hang"));
             return;
         }
 

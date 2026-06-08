@@ -1,6 +1,7 @@
 package controller;
 
 import com.google.gson.Gson;
+import controller.utils.RedirectUtils;
 import dao.CouponDAO;
 import dao.DAOFactory;
 import jakarta.servlet.ServletException;
@@ -36,6 +37,8 @@ public class ApplyCouponServlet extends HttpServlet {
 
         if (user == null) {
             data.put("success", false);
+            data.put("status", "LOGIN_REQUIRED");
+            data.put("loginUrl", RedirectUtils.toLoginWithRedirect(request, "/thanh-toan"));
             data.put("message", "Vui lòng đăng nhập để áp dụng mã giảm giá.");
             response.getWriter().write(gson.toJson(data));
             return;
