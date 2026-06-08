@@ -10,12 +10,29 @@ import com.google.gson.Gson;
 import model.GooglePojo;
 
 public class GoogleUtils {
-    public static final String GOOGLE_CLIENT_ID = "YOUR_CLIENT_ID_HERE"; //client id
-    public static final String GOOGLE_CLIENT_SECRET = "YOUR_CLIENT_SECRET_HERE"; //client secret
-    public static final String GOOGLE_REDIRECT_URI = "http://localhost:8080/the_tea_house_project_war_exploded/login-google";
     public static final String GOOGLE_LINK_GET_TOKEN = "https://accounts.google.com/o/oauth2/token";
     public static final String GOOGLE_LINK_GET_USER_INFO = "https://www.googleapis.com/oauth2/v1/userinfo?access_token=";
     public static final String GOOGLE_GRANT_TYPE = "authorization_code";
+
+    private static String GOOGLE_CLIENT_ID;
+    private static String GOOGLE_CLIENT_SECRET;
+    private static String GOOGLE_REDIRECT_URI;
+
+    static {
+        try (java.io.InputStream input = GoogleUtils.class.getClassLoader().getResourceAsStream("auth.properties")) {
+            java.util.Properties prop = new java.util.Properties();
+            if (input != null) {
+                prop.load(input);
+                GOOGLE_CLIENT_ID     = prop.getProperty("google.client.id");
+                GOOGLE_CLIENT_SECRET = prop.getProperty("google.client.secret");
+                GOOGLE_REDIRECT_URI  = prop.getProperty("google.redirect.uri");
+            } else {
+                System.err.println("====== [LỖI KHÔNG TÌM THẤY FILE AUTH.PROPERTIES] ======");
+            }
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
 
     public static String getToken(final String code) throws ClientProtocolException, IOException {
         String response = Request.Post(GOOGLE_LINK_GET_TOKEN)
@@ -35,6 +52,7 @@ public class GoogleUtils {
         GooglePojo googlePojo = new Gson().fromJson(response, GooglePojo.class);
         return googlePojo;
     }
+
     public static String getGoogleAuthUrl() {
         return getGoogleAuthUrl(null);
     }

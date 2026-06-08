@@ -81,6 +81,9 @@
                                 <c:when test="${p.status.name() == 'PUBLISHED'}">
                                     <span class="status-badge published">Đã xuất bản</span>
                                 </c:when>
+                                <c:when test="${p.status.name() == 'PENDING'}">
+                                    <span class="status-badge status-pending" style="background: #fff3cd; color: #856404; border: 1px solid #ffeeba;">Chờ duyệt</span>
+                                </c:when>
                                 <c:when test="${p.status.name() == 'DRAFT'}">
                                     <span class="status-badge status-pending">Bản nháp</span>
                                 </c:when>
@@ -97,17 +100,21 @@
                         <i class="fas fa-arrow-left"></i> Quay lại
                     </a>
 
-                    <a class="btn btn-success" href="${ctx}/admin/blog/edit?id=${p.id}">
-                        <i class="fas fa-edit"></i> Chỉnh sửa
-                    </a>
+                    <c:if test="${sessionScope.user.hasPermission('blog.edit') or sessionScope.user.hasPermission('blog.publish') or (sessionScope.user.hasPermission('blog.edit_own') and sessionScope.user.id == p.authorId)}">
+                        <a class="btn btn-success" href="${ctx}/admin/blog/edit?id=${p.id}">
+                            <i class="fas fa-edit"></i> Chỉnh sửa
+                        </a>
+                    </c:if>
 
-                    <form method="post" action="${ctx}/admin/blog/delete" style="display:inline;"
-                          onsubmit="return confirm('CẢNH BÁO: Bạn có chắc muốn xóa bài viết này?');">
-                        <input type="hidden" name="ids" value="${p.id}">
-                        <button class="btn btn-danger" type="submit">
-                            <i class="fas fa-trash"></i> Xóa
-                        </button>
-                    </form>
+                    <c:if test="${sessionScope.user.hasPermission('blog.delete_all') or (sessionScope.user.hasPermission('blog.delete_own') and sessionScope.user.id == p.authorId and (p.status.name() == 'DRAFT' or p.status.name() == 'PENDING'))}">
+                        <form method="post" action="${ctx}/admin/blog/delete" style="display:inline;"
+                              onsubmit="return confirm('CẢNH BÁO: Bạn có chắc muốn xóa bài viết này?');">
+                            <input type="hidden" name="ids" value="${p.id}">
+                            <button class="btn btn-danger" type="submit">
+                                <i class="fas fa-trash"></i> Xóa
+                            </button>
+                        </form>
+                    </c:if>
                 </div>
             </div>
 
@@ -196,6 +203,9 @@
                                 <c:choose>
                                     <c:when test="${p.status.name() == 'PUBLISHED'}">
                                         <span class="status-badge published">Đã xuất bản</span>
+                                    </c:when>
+                                    <c:when test="${p.status.name() == 'PENDING'}">
+                                        <span class="status-badge status-pending" style="background: #fff3cd; color: #856404; border: 1px solid #ffeeba;">Chờ duyệt</span>
                                     </c:when>
                                     <c:when test="${p.status.name() == 'DRAFT'}">
                                         <span class="status-badge status-pending">Bản nháp</span>

@@ -37,8 +37,16 @@ public class LoginGoogleServlet extends HttpServlet {
                 }
 
                 HttpSession session = request.getSession();
-                session.setAttribute("user", user);
 
+                if (user.getPhone() == null || user.getPhone().trim().isEmpty()) {
+                    session.setAttribute("pending_update_user", user.getUsername());
+                    session.setAttribute("registration_finished", true);
+                    session.setAttribute("is_google_login", true);
+                    response.sendRedirect(request.getContextPath() + "/auth/update-profile");
+                    return;
+                }
+
+                session.setAttribute("user", user);
                 userDAO.resetFailedAttempts(user.getId());
 
                 CartDAO cartDAO = DAOFactory.getInstance().getCartDAO();

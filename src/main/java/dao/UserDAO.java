@@ -27,7 +27,7 @@ public class UserDAO {
     }
 
     public User checkLogin(String username, String password) {
-        String query = "SELECT * FROM users WHERE username = ? AND is_active = 1";
+        String query = "SELECT u.*, r.name AS role_name FROM users u LEFT JOIN roles r ON r.id = u.role_id WHERE u.username = ? AND u.is_active = 1";
         try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(query)) {
             ps.setString(1, username);
@@ -46,7 +46,7 @@ public class UserDAO {
                         user.setLastName(rs.getString("last_name"));
                         user.setPhone(rs.getString("phone"));
                         user.setVip(rs.getBoolean("is_vip"));
-                        java.sql.Timestamp ts = rs.getTimestamp("dateOfBirth");
+                        java.sql.Timestamp ts = rs.getTimestamp("date_of_birth");
                         if (ts != null) {
                             user.setDateOfBirth(ts.toLocalDateTime());
                         }
@@ -59,7 +59,12 @@ public class UserDAO {
                             }
                         }
                         try {
-                            user.setRole(UserRole.valueOf(rs.getString("role").toUpperCase()));
+                            String roleName = rs.getString("role_name");
+                            if (roleName != null) {
+                                user.setRole(UserRole.valueOf(roleName.toUpperCase()));
+                            } else {
+                                user.setRole(UserRole.CUSTOMER);
+                            }
                         } catch (Exception e) {
                             user.setRole(UserRole.CUSTOMER);
                         }
@@ -95,7 +100,7 @@ public class UserDAO {
         try {
             String hashedPassword = BCrypt.hashpw(password, BCrypt.gensalt(12));
 
-            String query = "INSERT INTO users (username, password_hash, phone, email, role, is_active, created_at) VALUES (?, ?, ?, ?, 'customer', 1, NOW())";
+            String query = "INSERT INTO users (username, password_hash, phone, email, is_active, created_at, role_id) VALUES (?, ?, ?, ?, 1, NOW(), 2)";
             conn = ds.getConnection();
             ps = conn.prepareStatement(query);
             ps.setString(1, username);
@@ -145,7 +150,7 @@ public class UserDAO {
     }
 
     public boolean updateProfile(String firstname, String lastname, String phone, String dob, String gender, int userId) throws SQLException {
-        String query = "UPDATE users SET first_name = ?, last_name = ?, phone = ?, dateOfBirth = ?, gender = ? WHERE id = ?";
+        String query = "UPDATE users SET first_name = ?, last_name = ?, phone = ?, date_of_birth = ?, gender = ? WHERE id = ?";
 
         try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(query)) {
@@ -211,10 +216,11 @@ public class UserDAO {
     public List<User> getAllAdminUsers() {
         List<User> list = new ArrayList<>();
         String sql =
-                "SELECT id, username, first_name, last_name , email " +
-                        "FROM users " +
-                        "WHERE role IN ('admin','editor') " +
-                        "ORDER BY username";
+                "SELECT u.id, u.username, u.first_name, u.last_name , u.email " +
+                        "FROM users u " +
+                        "LEFT JOIN roles r ON u.role_id = r.id " +
+                        "WHERE r.name IN ('ADMIN','EDITOR') " +
+                        "ORDER BY u.username";
 
         try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql);
@@ -236,7 +242,10 @@ public class UserDAO {
     }
 
     public User getById(int id) {
-        String sql = "SELECT id, username, email, first_name, last_name, avatar, role FROM users WHERE id=? LIMIT 1";
+        String sql = "SELECT u.id, u.username, u.email, u.first_name, u.last_name, u.avatar, u.is_vip, r.name AS role_name " +
+                     "FROM users u " +
+                     "LEFT JOIN roles r ON r.id = u.role_id " +
+                     "WHERE u.id=? LIMIT 1";
         try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, id);
@@ -256,7 +265,10 @@ public class UserDAO {
         StringJoiner sj = new StringJoiner(",", "(", ")");
         for (int i = 0; i < ids.size(); i++) sj.add("?");
 
-        String sql = "SELECT id, username, email, first_name, last_name, avatar, role FROM users WHERE id IN " + sj;
+        String sql = "SELECT u.id, u.username, u.email, u.first_name, u.last_name, u.avatar, u.is_vip, r.name AS role_name " +
+                     "FROM users u " +
+                     "LEFT JOIN roles r ON r.id = u.role_id " +
+                     "WHERE u.id IN " + sj;
         try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
@@ -283,10 +295,27 @@ public class UserDAO {
         u.setFirstName(rs.getString("first_name"));
         u.setLastName(rs.getString("last_name"));
         u.setAvatar(rs.getString("avatar"));
-        u.setVip(rs.getBoolean("is_vip"));
+        
+        try {
+            u.setVip(rs.getBoolean("is_vip"));
+        } catch (Exception ignored) {}
 
-        String role = rs.getString("role");
-        if (role != null) u.setRole(UserRole.valueOf(role.trim().toUpperCase()));
+        String role = null;
+        try {
+            role = rs.getString("role_name");
+        } catch (Exception ignored) {}
+
+        if (role == null) {
+            try {
+                role = rs.getString("role");
+            } catch (Exception ignored) {}
+        }
+
+        if (role != null) {
+            u.setRole(UserRole.valueOf(role.trim().toUpperCase()));
+        } else {
+            u.setRole(UserRole.CUSTOMER);
+        }
 
         return u;
     }
@@ -305,7 +334,7 @@ public class UserDAO {
     }
 
     public User getUserDetailById(int id) {
-        String sql = "SELECT * FROM users WHERE id = ?";
+        String sql = "SELECT u.*, r.name AS role_name FROM users u LEFT JOIN roles r ON r.id = u.role_id WHERE u.id = ?";
         try (Connection conn =ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
@@ -323,22 +352,32 @@ public class UserDAO {
                     u.setVip(rs.getBoolean("is_vip"));
 
                     try {
-                        String roleStr = rs.getString("role");
-                        if(roleStr != null) u.setRole(UserRole.valueOf(roleStr.toUpperCase()));
-                    } catch (Exception e) { u.setRole(UserRole.CUSTOMER); }
+                        String roleName = rs.getString("role_name");
+                        if (roleName != null) {
+                            u.setRole(UserRole.valueOf(roleName.toUpperCase()));
+                        } else {
+                            u.setRole(UserRole.CUSTOMER);
+                        }
+                    } catch (Exception e) { 
+                        u.setRole(UserRole.CUSTOMER); 
+                    }
 
                     try {
                         String genderStr = rs.getString("gender");
                         if(genderStr != null) u.setGender(UserGender.valueOf(genderStr.toUpperCase()));
                     } catch (Exception e) { u.setGender(UserGender.OTHER); }
 
-                    if (rs.getTimestamp("dateOfBirth") != null)
-                        u.setDateOfBirth(rs.getTimestamp("dateOfBirth").toLocalDateTime());
+                    if (rs.getTimestamp("date_of_birth") != null)
+                        u.setDateOfBirth(rs.getTimestamp("date_of_birth").toLocalDateTime());
 
                     if (rs.getTimestamp("created_at") != null)
                         u.setCreatedAt(rs.getTimestamp("created_at").toLocalDateTime());
 
                     u.setActive(rs.getBoolean("is_active"));
+                    int roleIdVal = rs.getInt("role_id");
+                    if (!rs.wasNull()) {
+                        u.setRoleId(roleIdVal);
+                    }
                     return u;
                 }
             }
@@ -360,7 +399,7 @@ public class UserDAO {
                         "FROM users u " +
                         "LEFT JOIN user_addresses ua ON u.id = ua.user_id AND ua.is_default = 1 " +
                         "LEFT JOIN orders o ON u.id = o.user_id " +
-                        "WHERE u.role = 'customer' "
+                        "WHERE u.role_id = 2 "
         );
 
         if (search != null && !search.trim().isEmpty()) {
@@ -476,7 +515,7 @@ public class UserDAO {
         return list;
     }
     public int countCustomers(String search, String status) {
-        StringBuilder sql = new StringBuilder("SELECT COUNT(*) FROM users u WHERE u.role = 'customer'");
+        StringBuilder sql = new StringBuilder("SELECT COUNT(*) FROM users u WHERE u.role_id = 2");
         if (search != null && !search.isEmpty()) {
             sql.append(" AND (u.email LIKE ? OR u.phone LIKE ? OR CONCAT(u.last_name, ' ', u.first_name) LIKE ?) ");
         }
@@ -499,7 +538,7 @@ public class UserDAO {
     public List<Integer> getActiveCustomerIdsForNotifications(boolean vipOnly) {
         List<Integer> ids = new ArrayList<>();
         StringBuilder sql = new StringBuilder(
-                "SELECT id FROM users WHERE role = 'customer' AND is_active = 1"
+                "SELECT id FROM users WHERE role_id = 2 AND is_active = 1"
         );
         if (vipOnly) {
             sql.append(" AND is_vip = 1");
@@ -558,7 +597,7 @@ public class UserDAO {
                         "COALESCE(SUM(CASE WHEN o.status = 'completed' THEN o.total_amount ELSE 0 END), 0) AS total_spent " +
                         "FROM users u " +
                         "LEFT JOIN orders o ON u.id = o.user_id " +
-                        "WHERE u.role = 'customer' "
+                        "WHERE u.role_id = 2 "
         );
 
         if (search != null && !search.trim().isEmpty()) {
@@ -649,21 +688,20 @@ public class UserDAO {
         return -1;
     }
     public boolean updateUserByAdmin(User u) {
-        String sql = "UPDATE users SET first_name=?, last_name=?, phone=?, role=?, is_active=?, role_id=? WHERE id=?";
+        String sql = "UPDATE users SET first_name=?, last_name=?, phone=?, is_active=?, role_id=? WHERE id=?";
         try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setString(1, u.getFirstName());
             ps.setString(2, u.getLastName());
             ps.setString(3, u.getPhone());
-            ps.setString(4, u.getRole() != null ? u.getRole().name() : null);
-            ps.setBoolean(5, u.isActive());
+            ps.setBoolean(4, u.isActive());
             if (u.getRoleId() > 0) {
-                ps.setInt(6, u.getRoleId());
+                ps.setInt(5, u.getRoleId());
             } else {
-                ps.setNull(6, java.sql.Types.INTEGER);
+                ps.setNull(5, java.sql.Types.INTEGER);
             }
-            ps.setInt(7, u.getId());
+            ps.setInt(6, u.getId());
 
             return ps.executeUpdate() > 0;
         } catch (Exception e) {
@@ -672,7 +710,7 @@ public class UserDAO {
         return false;
     }
     public User loginWithGoogle(GooglePojo googleData) {
-        String queryFind = "SELECT * FROM users WHERE email = ?";
+        String queryFind = "SELECT u.*, r.name AS role_name FROM users u LEFT JOIN roles r ON r.id = u.role_id WHERE u.email = ?";
         try {
             conn = ds.getConnection();
             ps = conn.prepareStatement(queryFind);
@@ -684,12 +722,18 @@ public class UserDAO {
                 user.setId(rs.getInt("id"));
                 user.setUsername(rs.getString("username"));
                 user.setEmail(rs.getString("email"));
+                user.setPhone(rs.getString("phone"));
                 user.setFirstName(rs.getString("first_name"));
                 user.setLastName(rs.getString("last_name"));
                 user.setAvatar(rs.getString("avatar"));
                 user.setVip(rs.getBoolean("is_vip"));
                 try {
-                    user.setRole(UserRole.valueOf(rs.getString("role").toUpperCase()));
+                    String roleName = rs.getString("role_name");
+                    if (roleName != null) {
+                        user.setRole(UserRole.valueOf(roleName.toUpperCase()));
+                    } else {
+                        user.setRole(UserRole.CUSTOMER);
+                    }
                 } catch (Exception e) {
                     user.setRole(UserRole.CUSTOMER);
                 }
@@ -706,7 +750,7 @@ public class UserDAO {
                     newUsername += "_" + (int)(Math.random() * 1000);
                 }
 
-                String queryInsert = "INSERT INTO users (username, email, password_hash, first_name, last_name, avatar, role, is_active, created_at) VALUES (?, ?, ?, ?, ?, ?, 'customer', 1, NOW())";
+                String queryInsert = "INSERT INTO users (username, email, password_hash, first_name, last_name, avatar, is_active, created_at, role_id) VALUES (?, ?, ?, ?, ?, ?, 1, NOW(), 2)";
 
                 ps = conn.prepareStatement(queryInsert, Statement.RETURN_GENERATED_KEYS);
                 ps.setString(1, newUsername);
@@ -764,7 +808,7 @@ public class UserDAO {
         return null;
     }
     public User getUserForLogin(String loginKey) {
-        String query = "SELECT u.*, r.id AS role_id_val " +
+        String query = "SELECT u.*, r.id AS role_id_val, r.name AS role_name " +
                        "FROM users u " +
                        "LEFT JOIN roles r ON r.id = u.role_id " +
                        "WHERE (u.username = ? OR u.email = ? OR u.phone = ?) AND u.is_active = 1";
@@ -775,9 +819,7 @@ public class UserDAO {
             ps.setString(1, loginKey);
             ps.setString(2, loginKey);
             ps.setString(3, loginKey);
-            try (
-                    ResultSet rs = ps.executeQuery();
-                    ){
+            try (ResultSet rs = ps.executeQuery()){
                 if (rs.next()){
                     User user = new User();
                     user.setId(rs.getInt("id"));
@@ -795,7 +837,7 @@ public class UserDAO {
                     user.setAvatar(rs.getString("avatar"));
                     user.setVip(rs.getBoolean("is_vip"));
 
-                    String roleStr = rs.getString("role");
+                    String roleStr = rs.getString("role_name");
                     if (roleStr != null){
                         try {
                             user.setRole(model.enums.UserRole.valueOf(roleStr.toUpperCase()));
@@ -823,7 +865,7 @@ public class UserDAO {
 
     public List<String> getActiveAdminEmails() {
         List<String> emails = new ArrayList<>();
-        String sql = "SELECT email FROM users WHERE role = 'admin' AND is_active = 1 " +
+        String sql = "SELECT email FROM users WHERE role_id = 1 AND is_active = 1 " +
                 "AND email IS NOT NULL AND email <> ''";
 
         try (Connection conn = ds.getConnection();
@@ -978,10 +1020,10 @@ public class UserDAO {
                         "AND o.status = 'COMPLETED' " +
                         "AND o.created_at >= ? " +
                         "AND o.created_at < ? " +
-                        "WHERE u.role = 'customer' " +
+                        "WHERE u.role_id = 2 " +
                         "GROUP BY u.id, u.is_vip";
 
-        String updateSql = "UPDATE users SET is_vip = ? WHERE id = ? AND role = 'customer'";
+        String updateSql = "UPDATE users SET is_vip = ? WHERE id = ? AND role_id = 2";
 
         int upgradedCount = 0;
         int downgradedCount = 0;
@@ -1071,7 +1113,11 @@ public class UserDAO {
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, firstName);
             ps.setString(2, lastName);
-            ps.setString(3, email);
+            if (email == null || email.trim().isEmpty()) {
+                ps.setNull(3, java.sql.Types.VARCHAR);
+            } else {
+                ps.setString(3, email.trim());
+            }
             ps.setString(4, username);
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {
@@ -1111,6 +1157,19 @@ public class UserDAO {
         }
         return false;
     }
+    public boolean updateGoogleProfileInfo(String username, String firstName, String lastName, String phone) {
+        String sql = "UPDATE users SET first_name = ?, last_name = ?, phone = ? WHERE username = ?";
+        try (Connection conn = ds.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, firstName);
+            ps.setString(2, lastName);
+            ps.setString(3, phone);
+            ps.setString(4, username);
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
 }
-
 

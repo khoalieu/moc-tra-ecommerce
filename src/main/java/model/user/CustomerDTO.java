@@ -52,6 +52,15 @@ public class CustomerDTO implements Serializable {
     public void setFullName(String fullName) { this.fullName = fullName; }
     public String getEmail() { return email; }
     public void setEmail(String email) { this.email = email; }
+
+    public String getMaskedEmail() {
+        if (email == null || !email.contains("@")) return email;
+        int atIndex = email.indexOf("@");
+        String mailbox = email.substring(0, atIndex);
+        String domain = email.substring(atIndex);
+        if (mailbox.length() <= 1) return mailbox + "***" + domain;
+        return mailbox.charAt(0) + "***" + domain;
+    }
     public String getPhone() { return phone; }
     public void setPhone(String phone) { this.phone = phone; }
     public String getProvince() { return province; }

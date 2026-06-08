@@ -33,9 +33,19 @@ public class VerifyOtpServlet extends HttpServlet {
                 request.setAttribute("resendCooldown", remainingSeconds);
                 request.getRequestDispatcher("/auth/verify-otp.jsp").forward(request, response);
                 return;
-            }else {
+            } else {
                 if ("REGISTER".equals(purpose)) {
                     response.sendRedirect(request.getContextPath() + "/signup?action=resend");
+                } else if ("VERIFY_GOOGLE_PHONE".equals(purpose)) {
+                    java.util.Random rnd = new java.util.Random();
+                    String phoneOtp = String.format("%06d", rnd.nextInt(999999));
+                    session.setAttribute("OTP_CODE", phoneOtp);
+                    session.setAttribute("OTP_LAST_SENT_AT", now);
+                    System.out.println(">>> MÃ OTP XÁC THỰC SĐT GOOGLE CỦA BẠN (GỬI LẠI) LÀ: " + phoneOtp);
+                    request.setAttribute("otp_display", phoneOtp);
+                    request.setAttribute("message", "Đã gửi lại mã OTP mới!");
+                    request.setAttribute("resendCooldown", 60);
+                    request.getRequestDispatcher("/auth/verify-otp.jsp").forward(request, response);
                 } else {
                     response.sendRedirect(request.getContextPath() + "/change-email?action=resend_otp");
                 }
@@ -48,14 +58,55 @@ public class VerifyOtpServlet extends HttpServlet {
 
             if ("REGISTER".equals(purpose)) {
                 String username = (String) session.getAttribute("temp_username");
-                String password = (String) session.getAttribute("temp_password");
-                String phone = (String) session.getAttribute("temp_phone");
-                String email = (String) session.getAttribute("temp_email");
-                dao.register(username, password, phone, email);
                 session.setAttribute("pending_update_user", username);
                 session.setAttribute("registration_finished", true);
-                clearRegisterSession(session);
-                response.sendRedirect(request.getContextPath() + "/auth/update-profile.jsp");
+                
+                session.removeAttribute("OTP_CODE");
+                session.removeAttribute("otp_display");
+                session.removeAttribute("OTP_PURPOSE");
+                
+                response.sendRedirect(request.getContextPath() + "/auth/update-profile");
+                return;
+            } else if ("VERIFY_GOOGLE_PHONE".equals(purpose)) {
+                String username = (String) session.getAttribute("pending_update_user");
+                String fName = (String) session.getAttribute("TEMP_FIRSTNAME");
+                String lName = (String) session.getAttribute("TEMP_LASTNAME");
+                String fullName = (String) session.getAttribute("TEMP_FULLNAME");
+                String phone = (String) session.getAttribute("TEMP_PHONE_ADDR");
+                String label = (String) session.getAttribute("TEMP_LABEL");
+                String prov = (String) session.getAttribute("TEMP_PROVINCE");
+                String dist = (String) session.getAttribute("TEMP_DISTRICT");
+                String ward = (String) session.getAttribute("TEMP_WARD");
+                String addr = (String) session.getAttribute("TEMP_ADDRESS");
+                String dIdStr = (String) session.getAttribute("TEMP_DISTRICT_ID");
+                String wCode = (String) session.getAttribute("TEMP_WARD_CODE");
+
+                int districtId = (dIdStr != null && !dIdStr.isEmpty()) ? Integer.parseInt(dIdStr) : 0;
+                dao.updateGoogleProfileInfo(username, fName, lName, phone);
+                dao.saveUserAddress(username, fullName, phone, label, prov, dist, ward, addr, districtId, wCode);
+
+                User updatedUser = dao.getUserForLogin(username);
+                session.setAttribute("user", updatedUser);
+                session.removeAttribute("pending_update_user");
+                session.removeAttribute("registration_finished");
+                session.removeAttribute("is_google_login");
+                session.removeAttribute("OTP_CODE");
+                session.removeAttribute("OTP_PURPOSE");
+                session.removeAttribute("OTP_CREATED_AT");
+                session.removeAttribute("OTP_LAST_SENT_AT");
+                session.removeAttribute("TEMP_FIRSTNAME");
+                session.removeAttribute("TEMP_LASTNAME");
+                session.removeAttribute("TEMP_FULLNAME");
+                session.removeAttribute("TEMP_PHONE_ADDR");
+                session.removeAttribute("TEMP_LABEL");
+                session.removeAttribute("TEMP_PROVINCE");
+                session.removeAttribute("TEMP_DISTRICT");
+                session.removeAttribute("TEMP_WARD");
+                session.removeAttribute("TEMP_ADDRESS");
+                session.removeAttribute("TEMP_DISTRICT_ID");
+                session.removeAttribute("TEMP_WARD_CODE");
+
+                response.sendRedirect(request.getContextPath() + "/index");
                 return;
             } else if ("CHANGE_EMAIL".equals(purpose)) {
                 User currentUser = (User) session.getAttribute("user");
@@ -78,14 +129,6 @@ public class VerifyOtpServlet extends HttpServlet {
             request.setAttribute("message", "Mã OTP không chính xác!");
             request.getRequestDispatcher("/auth/verify-otp.jsp").forward(request, response);
         }
-    }
-    private void clearRegisterSession(HttpSession session) {
-        session.removeAttribute("temp_username");
-        session.removeAttribute("temp_password");
-        session.removeAttribute("temp_email");
-        session.removeAttribute("OTP_CODE");
-        session.removeAttribute("otp_display");
-        session.removeAttribute("OTP_PURPOSE");
     }
 
     private void clearEmailSession(HttpSession session) {

@@ -70,11 +70,15 @@ public class VerifyChangeEmailOtpServlet extends HttpServlet {
             }
             else if ("VERIFY_REGISTER_EMAIL".equals(purpose)) {
                 String username = (String) session.getAttribute("pending_update_user");
+                String password = (String) session.getAttribute("temp_password");
                 String email = (String) session.getAttribute("TEMP_EMAIL");
                 String fName = (String) session.getAttribute("TEMP_FIRSTNAME");
                 String lName = (String) session.getAttribute("TEMP_LASTNAME");
                 String fullName = (String) session.getAttribute("TEMP_FULLNAME");
                 String phoneAddr = (String) session.getAttribute("TEMP_PHONE_ADDR");
+                if (phoneAddr == null || phoneAddr.trim().isEmpty()) {
+                    phoneAddr = (String) session.getAttribute("temp_phone");
+                }
                 String label = (String) session.getAttribute("TEMP_LABEL");
                 String prov = (String) session.getAttribute("TEMP_PROVINCE");
                 String dist = (String) session.getAttribute("TEMP_DISTRICT");
@@ -83,6 +87,7 @@ public class VerifyChangeEmailOtpServlet extends HttpServlet {
                 String dIdStr = (String) session.getAttribute("TEMP_DISTRICT_ID");
                 String wCode = (String) session.getAttribute("TEMP_WARD_CODE");
                 int districtId = (dIdStr != null && !dIdStr.isEmpty()) ? Integer.parseInt(dIdStr) : 0;
+                userDAO.register(username, password, phoneAddr, email);
                 boolean isUserUpdated = userDAO.updateProfileInfo(username, fName, lName, email);
                 boolean isAddressSaved = userDAO.saveUserAddress(
                         username, fullName, phoneAddr, label,
@@ -94,6 +99,10 @@ public class VerifyChangeEmailOtpServlet extends HttpServlet {
                     clearEmailSession(session);
                     session.removeAttribute("pending_update_user");
                     session.removeAttribute("registration_finished");
+                    session.removeAttribute("temp_username");
+                    session.removeAttribute("temp_password");
+                    session.removeAttribute("temp_phone");
+                    session.removeAttribute("temp_email");
                     session.removeAttribute("TEMP_EMAIL");
                     session.removeAttribute("TEMP_FIRSTNAME");
                     session.removeAttribute("TEMP_LASTNAME");

@@ -43,7 +43,7 @@ public class DashboardDAO {
     public List<MonthlyUserDTO> getNewUsersByMonth() {
         List<MonthlyUserDTO> list = new ArrayList<>();
 
-        String sql = " SELECT DATE_FORMAT(created_at, '%Y-%m') AS month, COUNT(*) AS total_users FROM users WHERE role = 'customer' GROUP BY DATE_FORMAT(created_at, '%Y-%m') ORDER BY month ASC ";
+        String sql = " SELECT DATE_FORMAT(created_at, '%Y-%m') AS month, COUNT(*) AS total_users FROM users WHERE role_id = 2 GROUP BY DATE_FORMAT(created_at, '%Y-%m') ORDER BY month ASC ";
 
         try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql);

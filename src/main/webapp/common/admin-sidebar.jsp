@@ -71,19 +71,23 @@
                 </a>
             </li>
 
-            <li class="nav-item ${param.activePage == 'blog' ? 'active' : ''}">
-                <a href="${ctx}/admin/blog">
-                    <i class="fas fa-newspaper"></i>
-                    <span>Tất cả Bài viết</span>
-                </a>
-            </li>
+            <c:if test="${sessionScope.user.hasPermission('blog.view')}">
+                <li class="nav-item ${param.activePage == 'blog' ? 'active' : ''}">
+                    <a href="${ctx}/admin/blog">
+                        <i class="fas fa-newspaper"></i>
+                        <span>Tất cả Bài viết</span>
+                    </a>
+                </li>
+            </c:if>
 
-            <li class="nav-item ${param.activePage == 'blog-categories' ? 'active' : ''}">
-                <a href="${ctx}/admin/blog-categories">
-                    <i class="fas fa-folder"></i>
-                    <span>Danh mục Blog</span>
-                </a>
-            </li>
+            <c:if test="${sessionScope.user.hasPermission('blog.manage_category')}">
+                <li class="nav-item ${param.activePage == 'blog-categories' ? 'active' : ''}">
+                    <a href="${ctx}/admin/blog-categories">
+                        <i class="fas fa-folder"></i>
+                        <span>Danh mục Blog</span>
+                    </a>
+                </li>
+            </c:if>
             <li class="nav-item ${param.activePage == 'promotions' ? 'active' : ''}">
                 <a href="${ctx}/admin/promotions">
                     <i class="fa-solid fa-percent"></i>

@@ -168,18 +168,11 @@
                                 </h3>
 
                                 <div class="form-group">
-                                    <label for="status">Trạng thái <span class="">*</span></label>
-                                    <select id="status" name="status" class="form-control">
-                                        <option value="">-- Chọn trạng thái --</option>
-                                        <option value="draft" ${param.status == 'draft' ? 'selected' : ''}>Bản nháp
-                                        </option>
-                                        <option value="published" ${param.status == 'published' ? 'selected' : ''}>Xuất
-                                            bản ngay
-                                        </option>
-                                        <option value="archived" ${param.status == 'archived' ? 'selected' : ''}>Lưu
-                                            trữ
-                                        </option>
-                                    </select>
+                                    <label>Trạng thái</label>
+                                    <div class="status-display">
+                                        <span class="status-badge status-pending">BẢN NHÁP (Mới)</span>
+                                    </div>
+                                    <input type="hidden" id="status" name="status" value="${not empty param.status ? param.status : 'draft'}">
                                 </div>
 
                                 <div class="form-group">
@@ -282,15 +275,26 @@
                             Hủy bỏ
                         </a>
 
-                        <button type="submit" class="btn btn-success" name="action" value="preview">
-                            <i class="fas fa-eye"></i>
-                            Lưu & Xem
+                        <button type="button" class="btn btn-secondary" onclick="submitWithStatus('draft')">
+                            <i class="fas fa-save"></i>
+                            Lưu nháp
                         </button>
 
-                        <button type="submit" class="btn btn-primary">
+                        <button type="button" class="btn btn-warning" onclick="submitWithStatus('pending')">
                             <i class="fas fa-paper-plane"></i>
-                            Xuất bản
+                            Gửi duyệt
                         </button>
+
+                        <c:if test="${sessionScope.user.hasPermission('blog.publish')}">
+                            <button type="button" class="btn btn-success" onclick="submitWithStatus('published')">
+                                <i class="fas fa-check-circle"></i>
+                                Duyệt & Xuất bản
+                            </button>
+                            <button type="button" class="btn btn-danger" onclick="submitWithStatus('archived')">
+                                <i class="fas fa-archive"></i>
+                                Lưu trữ
+                            </button>
+                        </c:if>
                     </div>
                 </div>
             </form>
@@ -339,6 +343,14 @@
             if (p) p.textContent = 'Đã chọn ảnh. Nhấp để đổi ảnh';
         });
     })();
+
+    function submitWithStatus(statusVal) {
+        const statusInput = document.getElementById('status');
+        if (statusInput) {
+            statusInput.value = statusVal;
+        }
+        document.querySelector('.form-container').submit();
+    }
 </script>
 
 </html>

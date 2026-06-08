@@ -25,12 +25,11 @@
         <div class="login-box">
             <div class="login-header">
                 <div class="login-icon-circle">
-                    <%-- Icon tự đổi: Điện thoại cho Register, Chìa khóa cho các luồng khác --%>
-                        <i class="fa-solid ${(sessionScope.OTP_PURPOSE == 'CHANGE_EMAIL' or sessionScope.OTP_PURPOSE == 'VERIFY_REGISTER_EMAIL') ? 'fa-envelope-open-text' : (sessionScope.OTP_PURPOSE == 'REGISTER' ? 'fa-mobile-screen-button' : 'fa-key')}"></i>
+                        <i class="fa-solid ${(sessionScope.OTP_PURPOSE == 'CHANGE_EMAIL' or sessionScope.OTP_PURPOSE == 'VERIFY_REGISTER_EMAIL') ? 'fa-envelope-open-text' : ((sessionScope.OTP_PURPOSE == 'REGISTER' or sessionScope.OTP_PURPOSE == 'VERIFY_GOOGLE_PHONE') ? 'fa-mobile-screen-button' : 'fa-key')}"></i>
                 </div>
                 <h2 class="login-title">
                     <c:choose>
-                        <c:when test="${sessionScope.OTP_PURPOSE == 'REGISTER'}">Xác minh Số điện thoại</c:when>
+                        <c:when test="${sessionScope.OTP_PURPOSE == 'REGISTER' or sessionScope.OTP_PURPOSE == 'VERIFY_GOOGLE_PHONE'}">Xác minh Số điện thoại</c:when>
                         <c:when test="${sessionScope.OTP_PURPOSE == 'VERIFY_REGISTER_EMAIL' or sessionScope.OTP_PURPOSE == 'CHANGE_EMAIL'}">Xác nhận Email mới</c:when>
                         <c:otherwise>Xác nhận mã OTP</c:otherwise>
                     </c:choose>
@@ -39,15 +38,16 @@
                     Nhập mã OTP đã được gửi tới
                     <strong>
                         <c:choose>
-                            <c:when test="${sessionScope.OTP_PURPOSE == 'REGISTER'}">số điện thoại</c:when>
+                            <c:when test="${sessionScope.OTP_PURPOSE == 'REGISTER' or sessionScope.OTP_PURPOSE == 'VERIFY_GOOGLE_PHONE'}">số điện thoại</c:when>
                             <c:otherwise>địa chỉ email</c:otherwise>
                         </c:choose>
                     </strong> của bạn.
                 </p>
                 <div style="margin-top: 10px; font-weight: 600; color: #333; background: #f0f2f5; padding: 5px 15px; border-radius: 20px; display: inline-block;">
                     <c:choose>
-                        <c:when test="${sessionScope.OTP_PURPOSE == 'REGISTER'}">
-                            <c:out value="${sessionScope.temp_phone.replaceAll('([0-9]{3})[0-9]{4}([0-9]{3})', '$1****$2')}" />
+                        <c:when test="${sessionScope.OTP_PURPOSE == 'REGISTER' or sessionScope.OTP_PURPOSE == 'VERIFY_GOOGLE_PHONE'}">
+                            <c:set var="phoneTarget" value="${not empty sessionScope.temp_phone ? sessionScope.temp_phone : sessionScope.TEMP_PHONE_ADDR}" />
+                            <c:out value="${phoneTarget.replaceAll('([0-9]{3})[0-9]{4}([0-9]{3})', '$1****$2')}" />
                         </c:when>
                         <c:when test="${sessionScope.OTP_PURPOSE == 'VERIFY_REGISTER_EMAIL' or sessionScope.OTP_PURPOSE == 'CHANGE_EMAIL'}">
                             <c:set var="mailTarget" value="${not empty sessionScope.TEMP_EMAIL ? sessionScope.TEMP_EMAIL : sessionScope.NEW_EMAIL}" />
@@ -63,7 +63,7 @@
             </div>
 
             <div class="login-content">
-                <c:if test="${not empty sessionScope.OTP_CODE and sessionScope.OTP_PURPOSE == 'REGISTER'}">
+                <c:if test="${not empty sessionScope.OTP_CODE and (sessionScope.OTP_PURPOSE == 'REGISTER' or sessionScope.OTP_PURPOSE == 'VERIFY_GOOGLE_PHONE')}">
                     <div id="otp-auto-fill" class="otp-demo-container animate-pulse"
                          style="cursor:pointer; background:#fff3cd; padding:10px; border-radius:8px; margin-bottom:15px; border:1px dashed #856404;">
                         <p style="margin: 0; color: #856404; font-size:0.9rem;">Mã xác thực mẫu (chỉ hiện khi test SĐT):</p>
@@ -108,22 +108,43 @@
                             </form>
                             <a href="${pageContext.request.contextPath}/tai-khoan-cua-toi" class="back-link">Hủy đổi email</a>
                         </c:when>
-                        <c:when test="${sessionScope.OTP_PURPOSE == 'REGISTER'}">
+                        <c:when test="${sessionScope.OTP_PURPOSE == 'REGISTER' or sessionScope.OTP_PURPOSE == 'VERIFY_GOOGLE_PHONE'}">
                             <div class="resend-section">
                                 <p style="font-size: 0.9em; color: #666; margin-bottom: 5px;">Bạn chưa nhận được mã?</p>
-                                <form action="${pageContext.request.contextPath}/signup" method="post" style="display:inline;">
-                                    <input type="hidden" name="action" value="resend">
-                                    <button type="submit" id="resendOtpBtn" class="link-button">
-                                        <i class="fa-solid fa-rotate-right"></i> Gửi lại mã qua SĐT
-                                    </button>
-                                </form>
+                                <c:choose>
+                                    <c:when test="${sessionScope.OTP_PURPOSE == 'VERIFY_GOOGLE_PHONE'}">
+                                        <form action="${pageContext.request.contextPath}/verify-register-otp" method="post" style="display:inline;">
+                                            <input type="hidden" name="action" value="resend">
+                                            <button type="submit" id="resendOtpBtn" class="link-button">
+                                                <i class="fa-solid fa-rotate-right"></i> Gửi lại mã qua SĐT
+                                            </button>
+                                        </form>
+                                    </c:when>
+                                    <c:otherwise>
+                                        <form action="${pageContext.request.contextPath}/signup" method="post" style="display:inline;">
+                                            <input type="hidden" name="action" value="resend">
+                                            <button type="submit" id="resendOtpBtn" class="link-button">
+                                                <i class="fa-solid fa-rotate-right"></i> Gửi lại mã qua SĐT
+                                            </button>
+                                        </form>
+                                    </c:otherwise>
+                                </c:choose>
                             </div>
                             <hr style="border: 0; border-top: 1px solid #eee; margin: 15px 0;">
                             <div class="change-info-section">
                                 <p style="font-size: 0.9em; color: #666; margin-bottom: 5px;">Sai số điện thoại?</p>
-                                <a href="${pageContext.request.contextPath}/signup" class="back-link" style="color: #dc3545;">
-                                    <i class="fa-solid fa-pen-to-square"></i> Quay lại sửa SĐT
-                                </a>
+                                <c:choose>
+                                    <c:when test="${sessionScope.OTP_PURPOSE == 'VERIFY_GOOGLE_PHONE'}">
+                                        <a href="${pageContext.request.contextPath}/auth/update-profile" class="back-link" style="color: #dc3545;">
+                                            <i class="fa-solid fa-pen-to-square"></i> Quay lại sửa SĐT
+                                        </a>
+                                    </c:when>
+                                    <c:otherwise>
+                                        <a href="${pageContext.request.contextPath}/signup" class="back-link" style="color: #dc3545;">
+                                            <i class="fa-solid fa-pen-to-square"></i> Quay lại sửa SĐT
+                                        </a>
+                                    </c:otherwise>
+                                </c:choose>
                             </div>
                         </c:when>
                         <c:otherwise>

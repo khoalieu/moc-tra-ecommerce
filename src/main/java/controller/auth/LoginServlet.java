@@ -127,7 +127,7 @@ public class LoginServlet extends HttpServlet {
 
             if (user.hasPermission("dashboard.view") && user.getRole() != null &&
                     !user.getRole().name().equalsIgnoreCase("CUSTOMER")) {
-                if (user.hasPermission("role.manage") || user.hasPermission("product.create")) {
+                if (user.hasPermission("role.manage") || user.hasPermission("product.create") || user.hasPermission("blog.publish") || user.hasPermission("blog.manage_category")) {
                     response.sendRedirect(request.getContextPath() + "/admin/dashboard");
                 } else if (user.hasPermission("blog.create")) {
                     response.sendRedirect(request.getContextPath() + "/editor/dashboard");
