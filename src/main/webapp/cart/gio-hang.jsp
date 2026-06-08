@@ -10,10 +10,10 @@
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/main.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
-<body>
+<body class="cart-page">
 <jsp:include page="/common/header.jsp"></jsp:include>
 <main class="main-content">
-    <section class="checkout-page">
+    <section class="checkout-page cart-page-section">
         <div class="container">
             <h1 class="checkout-title">Giỏ hàng của bạn</h1>
             <c:if test="${not empty sessionScope.successMsg}">
@@ -33,6 +33,7 @@
                 <form id="checkoutForm" action="${pageContext.request.contextPath}/thanh-toan" method="GET">
                     <div class="checkout-left">
                         <div class="checkout-card">
+                            <div class="cart-table-scroll">
                             <table class="cart-table">
                                 <thead>
                                 <tr>
@@ -81,17 +82,17 @@
                                         </td>
 
                                         <td>
-                                            <fmt:formatNumber value="${item.originalUnitPrice}" type="currency" currencySymbol="đ" maxFractionDigits="0"/>
+                                            <fmt:formatNumber value="${item.originalUnitPrice}" pattern="#,###"/>&nbsp;đ
                                         </td>
 
                                         <td style="color: #2e7d32; font-weight: bold;">
                                             <c:choose>
                                                 <c:when test="${item.discountPerItem > 0}">
                                                     -
-                                                    <fmt:formatNumber value="${item.totalDiscount}" type="currency" currencySymbol="đ" maxFractionDigits="0"/>
+                                                    <fmt:formatNumber value="${item.totalDiscount}" pattern="#,###"/>&nbsp;đ
                                                 </c:when>
                                                 <c:otherwise>
-                                                    0đ
+                                                    0&nbsp;đ
                                                 </c:otherwise>
                                             </c:choose>
                                         </td>
@@ -104,7 +105,7 @@
                                         </td>
 
                                         <td style="color: #d9534f; font-weight: bold;">
-                                            <fmt:formatNumber value="${item.totalPrice}" type="currency" currencySymbol="đ" maxFractionDigits="0"/>
+                                            <fmt:formatNumber value="${item.totalPrice}" pattern="#,###"/>&nbsp;đ
                                         </td>
                                         <td>
                                             <a href="javascript:void(0);" onclick="removeItem(${item.variantId})" class="cart-item-remove" title="Xóa sản phẩm"
@@ -116,6 +117,7 @@
                                 </c:forEach>
                                 </tbody>
                             </table>
+                            </div>
                         </div>
                     </div>
 
@@ -160,7 +162,7 @@
         const totalDisplay = document.getElementById('total-selected-price');
         const checkoutBtn = document.getElementById('btn-checkout');
         const formatCurrency = (amount) => {
-            return new Intl.NumberFormat('vi-VN').format(amount) + 'đ';
+            return new Intl.NumberFormat('vi-VN').format(amount) + '\u00A0đ';
         };
         const calculateTotal = () => {
             let total = 0;
