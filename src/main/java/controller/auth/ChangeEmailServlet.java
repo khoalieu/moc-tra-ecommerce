@@ -1,6 +1,7 @@
 package controller.auth;
 
 import controller.utils.EmailService;
+import controller.utils.RedirectUtils;
 import dao.DAOFactory;
 import dao.UserDAO;
 import model.user.User;
@@ -30,7 +31,7 @@ public class ChangeEmailServlet extends HttpServlet {
         HttpSession session = request.getSession();
         User user = (User) session.getAttribute("user");
         if (user == null) {
-            response.sendRedirect(request.getContextPath() + "/login");
+            response.sendRedirect(RedirectUtils.toLoginWithRedirect(request, "/tai-khoan-cua-toi"));
             return;
         }
         String action = request.getParameter("action");

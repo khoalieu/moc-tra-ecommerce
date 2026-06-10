@@ -41,7 +41,7 @@
             </div>
 
             <div class="header-right">
-                <a href="admin-blog.jsp" class="btn btn-outline">
+                <a href="${ctx}/admin/blog" class="btn btn-outline">
                     <i class="fas fa-arrow-left"></i>
                     <span>Quay lại danh sách</span>
                 </a>

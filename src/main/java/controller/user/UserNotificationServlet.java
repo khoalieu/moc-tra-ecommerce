@@ -30,7 +30,7 @@ public class UserNotificationServlet extends HttpServlet {
         }
 
         if (user == null) {
-            response.sendRedirect(request.getContextPath() + "/auth/login.jsp?redirect=/thong-bao");
+            response.sendRedirect(request.getContextPath() + "/login?redirect=/thong-bao");
             return;
         }
 

@@ -36,7 +36,7 @@ public class SubmitReviewServlet extends HttpServlet {
             );
 
             response.sendRedirect(request.getContextPath()
-                    + "/auth/login.jsp?redirect=" + redirect);
+                    + "/login?redirect=" + redirect);
             return;
         }
 

@@ -3,6 +3,7 @@ package controller.user;
 import dao.DAOFactory;
 import dao.OrderDAO;
 import dao.RefundDAO;
+import controller.utils.RedirectUtils;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.annotation.MultipartConfig;
@@ -36,7 +37,7 @@ public class UserRefundRequestServlet extends HttpServlet {
         HttpSession session = request.getSession();
         User user = (User) session.getAttribute("user");
         if (user == null) {
-            response.sendRedirect(request.getContextPath() + "/auth/login.jsp");
+            response.sendRedirect(RedirectUtils.toLoginWithRedirect(request, "/don-hang"));
             return;
         }
 

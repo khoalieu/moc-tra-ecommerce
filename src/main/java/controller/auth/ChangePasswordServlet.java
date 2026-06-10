@@ -1,5 +1,6 @@
 package controller.auth;
 
+import controller.utils.RedirectUtils;
 import dao.DAOFactory;
 import dao.UserDAO;
 import model.user.User;
@@ -23,7 +24,7 @@ public class ChangePasswordServlet extends HttpServlet {
         User user = (User) session.getAttribute("user");
 
         if (user == null) {
-            response.sendRedirect(request.getContextPath() + "/auth/login.jsp");
+            response.sendRedirect(RedirectUtils.toLoginWithRedirect(request, "/tai-khoan-cua-toi"));
             return;
         }
 

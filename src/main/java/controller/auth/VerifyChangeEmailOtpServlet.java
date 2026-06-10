@@ -117,7 +117,7 @@ public class VerifyChangeEmailOtpServlet extends HttpServlet {
                     session.removeAttribute("TEMP_WARD_CODE");
                     session.setAttribute("msg", "Đăng ký và xác thực Email thành công! Mời bạn đăng nhập.");
                     session.setAttribute("msgType", "success");
-                    response.sendRedirect(request.getContextPath() + "/auth/login.jsp");
+                    response.sendRedirect(request.getContextPath() + "/login");
                 } else {
                     request.setAttribute("message", "Lỗi hệ thống khi lưu thông tin. Vui lòng thử lại!");
                     request.getRequestDispatcher("/auth/verify-otp.jsp").forward(request, response);

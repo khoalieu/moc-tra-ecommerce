@@ -23,7 +23,7 @@
 
         <div class="dashboard-grid">
 
-            <a href="${pageContext.request.contextPath}/thong-tin-nguoi-dung" class="grid-card">
+            <a href="${pageContext.request.contextPath}/tai-khoan-cua-toi" class="grid-card">
                 <i class="fa-regular fa-user"></i>
                 <span>Tài khoản của tôi</span>
             </a>
@@ -32,7 +32,7 @@
                 <span>Địa chỉ</span>
             </a>
 
-            <a href="${pageContext.request.contextPath}/don-hang-nguoi-dung" class="grid-card">
+            <a href="${pageContext.request.contextPath}/don-hang" class="grid-card">
                 <i class="fa-solid fa-cart-shopping"></i>
                 <span>Đơn hàng của tôi</span>
             </a>

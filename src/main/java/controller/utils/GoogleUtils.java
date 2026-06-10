@@ -1,6 +1,8 @@
 package controller.utils;
 
 import java.io.IOException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.fluent.Form;
 import org.apache.http.client.fluent.Request;
@@ -52,6 +54,10 @@ public class GoogleUtils {
     }
 
     public static String getGoogleAuthUrl() {
+        return getGoogleAuthUrl(null);
+    }
+
+    public static String getGoogleAuthUrl(String state) {
         StringBuilder url = new StringBuilder();
         url.append("https://accounts.google.com/o/oauth2/auth");
         url.append("?scope=email profile");
@@ -59,6 +65,9 @@ public class GoogleUtils {
         url.append("&response_type=code");
         url.append("&client_id=").append(GOOGLE_CLIENT_ID);
         url.append("&approval_prompt=force");
+        if (state != null && !state.isBlank()) {
+            url.append("&state=").append(URLEncoder.encode(state, StandardCharsets.UTF_8));
+        }
         return url.toString();
     }
-}
+}

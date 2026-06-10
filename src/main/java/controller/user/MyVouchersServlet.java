@@ -2,6 +2,7 @@ package controller.user;
 import dao.CouponDAO;
 import dao.DAOFactory;
 import dao.VipVoucherDAO;
+import controller.utils.RedirectUtils;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.*;
@@ -24,7 +25,7 @@ public class MyVouchersServlet extends HttpServlet {
         User user = (User) session.getAttribute("user");
 
         if (user == null) {
-            response.sendRedirect(request.getContextPath() + "/auth/login.jsp");
+            response.sendRedirect(RedirectUtils.toLoginWithRedirect(request, "/ma-uu-dai-cua-toi"));
             return;
         }
 

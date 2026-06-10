@@ -3,6 +3,7 @@ package controller.user;
 import dao.DAOFactory;
 import dao.OrderDAO;
 import dao.ProductDAO;
+import controller.utils.RedirectUtils;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.*;
@@ -33,13 +34,13 @@ public class UserEditOrderServlet extends HttpServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         User user = (User) request.getSession().getAttribute("user");
         if (user == null) {
-            response.sendRedirect(request.getContextPath() + "/login");
+            response.sendRedirect(RedirectUtils.toLoginWithRedirect(request, RedirectUtils.getCurrentPath(request)));
             return;
         }
 
         String idRaw = request.getParameter("id");
         if (idRaw == null || idRaw.isEmpty()) {
-            response.sendRedirect(request.getContextPath() + "/user/orders");
+            response.sendRedirect(request.getContextPath() + "/don-hang");
             return;
         }
 
@@ -48,7 +49,7 @@ public class UserEditOrderServlet extends HttpServlet {
             Order order = orderDAO.getOrderById(orderId);
 
             if (order == null || order.getUserId() != user.getId() || order.getStatus() != OrderStatus.PENDING) {
-                response.sendRedirect(request.getContextPath() + "/user/orders");
+                response.sendRedirect(request.getContextPath() + "/don-hang");
                 return;
             }
 
@@ -57,7 +58,7 @@ public class UserEditOrderServlet extends HttpServlet {
             request.getRequestDispatcher("/user/edit-user-order.jsp").forward(request, response);
 
         } catch (NumberFormatException e) {
-            response.sendRedirect(request.getContextPath() + "/user/orders");
+            response.sendRedirect(request.getContextPath() + "/don-hang");
         }
     }
 
@@ -67,13 +68,17 @@ public class UserEditOrderServlet extends HttpServlet {
 
         User user = (User) request.getSession().getAttribute("user");
         if (user == null) {
-            response.sendRedirect(request.getContextPath() + "/login");
+            String orderIdRaw = request.getParameter("orderId");
+            String redirect = (orderIdRaw != null && orderIdRaw.trim().matches("\\d+"))
+                    ? "/edit-user-order?id=" + orderIdRaw.trim()
+                    : "/don-hang";
+            response.sendRedirect(RedirectUtils.toLoginWithRedirect(request, redirect));
             return;
         }
 
         String orderIdRaw = request.getParameter("orderId");
         if (orderIdRaw == null || orderIdRaw.isEmpty()) {
-            response.sendRedirect(request.getContextPath() + "/user/orders");
+            response.sendRedirect(request.getContextPath() + "/don-hang");
             return;
         }
 

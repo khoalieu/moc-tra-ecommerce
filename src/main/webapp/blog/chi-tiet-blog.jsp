@@ -63,7 +63,7 @@
 
                     <c:choose>
                         <c:when test="${empty sessionScope.user}">
-                            <c:url var="loginUrl" value="/auth/login.jsp">
+                            <c:url var="loginUrl" value="/login">
                                 <c:param name="redirect" value="/chi-tiet-blog?slug=${post.slug}&tab=comments" />
                             </c:url>
 

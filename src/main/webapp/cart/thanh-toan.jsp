@@ -587,6 +587,11 @@
                     return response.json();
                 })
                 .then(function (data) {
+                    if (data.status === "LOGIN_REQUIRED" && data.loginUrl) {
+                        window.location.href = data.loginUrl;
+                        return;
+                    }
+
                     if (!data.success) {
                         clearCoupon();
                         showCouponCheckoutMessage(data.message || "Mã giảm giá không hợp lệ.", "error");

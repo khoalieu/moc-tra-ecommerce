@@ -3,6 +3,7 @@ package controller.user;
 import dao.DAOFactory;
 import dao.OrderDAO;
 import dao.RefundDAO;
+import controller.utils.RedirectUtils;
 import model.order.Order;
 import model.refund.RefundRequest;
 import model.user.User;
@@ -25,7 +26,7 @@ public class UserOrderServlet extends HttpServlet {
         HttpSession session = request.getSession();
         User user = (User) session.getAttribute("user");
         if (user == null) {
-            response.sendRedirect(request.getContextPath() + "/auth/login.jsp");
+            response.sendRedirect(RedirectUtils.toLoginWithRedirect(request, "/don-hang"));
             return;
         }
         OrderDAO orderDAO = DAOFactory.getInstance().getOrderDAO();

@@ -1,5 +1,6 @@
 package controller.user;
 
+import controller.utils.RedirectUtils;
 import model.user.User;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -16,7 +17,7 @@ public class UserDashboardServlet extends HttpServlet {
         HttpSession session = request.getSession();
         User user = (User) session.getAttribute("user");
         if (user == null) {
-            response.sendRedirect(request.getContextPath() + "/auth/login.jsp");
+            response.sendRedirect(RedirectUtils.toLoginWithRedirect(request, "/user-dashboard"));
             return;
         }
         request.getRequestDispatcher("/user/thong-tin-nguoi-dung.jsp").forward(request, response);
