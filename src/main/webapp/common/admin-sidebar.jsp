@@ -27,6 +27,13 @@
                 </a>
             </li>
 
+            <li class="nav-item ${param.activePage == 'inventory' ? 'active' : ''}">
+                <a href="${ctx}/admin/inventory">
+                    <i class="fas fa-boxes-stacked"></i>
+                    <span>Quản lý tồn kho</span>
+                </a>
+            </li>
+
             <li class="nav-item ${param.activePage == 'banners' ? 'active' : ''}">
                 <a href="${ctx}/admin/banner">
                     <i class="fas fa-images"></i>

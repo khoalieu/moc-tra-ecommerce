@@ -149,9 +149,11 @@ public class AdminProductServlet extends HttpServlet {
 
             if (newProductId > 0) {
                 String[] variantNames = request.getParameterValues("variantNames");
+                String[] variantSkus = request.getParameterValues("variantSkus");
                 String[] variantPrices = request.getParameterValues("variantPrices");
                 String[] variantSalePrices = request.getParameterValues("variantSalePrices");
                 String[] variantStocks = request.getParameterValues("variantStocks");
+                boolean hasVariant = false;
 
                 if (variantNames != null && variantNames.length > 0) {
                     for (int i = 0; i < variantNames.length; i++) {
@@ -160,12 +162,24 @@ public class AdminProductServlet extends HttpServlet {
                             ProductVariant variant = new ProductVariant();
                             variant.setProductId(newProductId);
                             variant.setVariantName(vName.trim());
+                            variant.setSku(normalizeVariantSku(variantSkus != null && variantSkus.length > i ? variantSkus[i] : null, sku, newProductId, i + 1));
                             variant.setPrice(parseDoubleSafe(variantPrices != null && variantPrices.length > i ? variantPrices[i] : "0"));
                             variant.setSalePrice(parseDoubleSafe(variantSalePrices != null && variantSalePrices.length > i ? variantSalePrices[i] : "0"));
                             variant.setStockQuantity(parseIntSafe(variantStocks != null && variantStocks.length > i ? variantStocks[i] : "0"));
                             variantDAO.addVariant(variant);
+                            hasVariant = true;
                         }
                     }
+                }
+                if (!hasVariant) {
+                    ProductVariant defaultVariant = new ProductVariant();
+                    defaultVariant.setProductId(newProductId);
+                    defaultVariant.setVariantName("Mặc định");
+                    defaultVariant.setSku(normalizeVariantSku(null, sku, newProductId, 0));
+                    defaultVariant.setPrice(price);
+                    defaultVariant.setSalePrice(salePrice);
+                    defaultVariant.setStockQuantity(stock);
+                    variantDAO.addVariant(defaultVariant);
                 }
 
                 Collection<Part> parts = request.getParts();
@@ -211,6 +225,14 @@ public class AdminProductServlet extends HttpServlet {
     private int parseIntSafe(String value) {
         if (value == null || value.trim().isEmpty()) return 0;
         try { return Integer.parseInt(value); } catch (NumberFormatException e) { return 0; }
+    }
+
+    private String normalizeVariantSku(String value, String productSku, int productId, int index) {
+        if (value != null && !value.trim().isEmpty()) {
+            return value.trim();
+        }
+        String baseSku = productSku != null && !productSku.trim().isEmpty() ? productSku.trim() : "P" + productId;
+        return index <= 0 ? baseSku + "-MD" : baseSku + "-V" + index;
     }
 
     private void deleteProduct(HttpServletRequest request, HttpServletResponse response) throws IOException {

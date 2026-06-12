@@ -11,6 +11,20 @@ import java.util.List;
 
 public class PromotionDAO {
     private final DataSource ds;
+    private static final String VARIANT_SUMMARY_SELECT =
+            ", (SELECT COALESCE(SUM(v.stock_quantity), 0) FROM product_variants v " +
+                    "WHERE v.product_id = p.id AND v.is_active = 1) AS variant_total_stock " +
+            ", (SELECT COUNT(*) FROM product_variants v " +
+                    "WHERE v.product_id = p.id AND v.is_active = 1) AS variant_count " +
+            ", (SELECT MIN(v.price) FROM product_variants v " +
+                    "WHERE v.product_id = p.id AND v.is_active = 1) AS min_variant_price " +
+            ", (SELECT MAX(v.price) FROM product_variants v " +
+                    "WHERE v.product_id = p.id AND v.is_active = 1) AS max_variant_price " +
+            ", (SELECT MIN(CASE WHEN v.sale_price > 0 AND v.sale_price < v.price THEN v.sale_price ELSE v.price END) " +
+                    "FROM product_variants v WHERE v.product_id = p.id AND v.is_active = 1) AS min_variant_effective_price " +
+            ", (SELECT MAX(CASE WHEN v.sale_price > 0 AND v.sale_price < v.price THEN v.sale_price ELSE v.price END) " +
+                    "FROM product_variants v WHERE v.product_id = p.id AND v.is_active = 1) AS max_variant_effective_price ";
+
     public PromotionDAO(DataSource ds) {
         this.ds = ds;
     }
@@ -46,6 +60,7 @@ public class PromotionDAO {
         List<Product> list = new ArrayList<>();
 
         String sql = "SELECT p.*, pi.promotion_id AS current_promo_id, pr.discount_type, pr.discount_value " +
+                VARIANT_SUMMARY_SELECT +
                 "FROM products p " +
                 "JOIN promotion_items pi ON p.id = pi.product_id " +
                 "JOIN promotions pr ON pr.id = pi.promotion_id " +
@@ -66,6 +81,7 @@ public class PromotionDAO {
                 p.setSlug(rs.getString("slug"));
                 p.setPrice(rs.getDouble("price"));
                 p.setSalePrice(rs.getDouble("sale_price"));
+                mapVariantSummary(p, rs);
                 p.setImageUrl(rs.getString("image_url"));
                 p.setShortDescription(rs.getString("short_description"));
 
@@ -100,7 +116,7 @@ public class PromotionDAO {
 
     public void addProductsToPromotion(int promoId, String[] productIds) {
         String getPromoSql =
-                "SELECT discount_type, discount_value, is_active, start_date, end_date " +
+                "SELECT discount_type, discount_value, is_active, approval_status, start_date, end_date " +
                         "FROM promotions WHERE id = ?";
 
         String deleteOldSql = "DELETE FROM promotion_items WHERE product_id = ?";
@@ -433,6 +449,7 @@ public class PromotionDAO {
     public List<Product> getProductsByPromotionAndType(int promoId, String type, int limit) {
         List<Product> list = new ArrayList<>();
         String sql = "SELECT p.*, pi.promotion_id AS current_promo_id, pr.discount_type, pr.discount_value " +
+                VARIANT_SUMMARY_SELECT +
                 "FROM products p " +
                 "JOIN promotion_items pi ON p.id = pi.product_id " +
                 "JOIN promotions pr ON pr.id = pi.promotion_id " +
@@ -452,6 +469,7 @@ public class PromotionDAO {
                 p.setName(rs.getString("name"));
                 p.setPrice(rs.getDouble("price"));
                 p.setSalePrice(rs.getDouble("sale_price"));
+                mapVariantSummary(p, rs);
                 p.setImageUrl(rs.getString("image_url"));
                 p.setCurrentPromotionId(rs.getInt("current_promo_id"));
                 p.setCurrentPromotionType(rs.getString("discount_type"));
@@ -463,6 +481,24 @@ public class PromotionDAO {
         }
         return list;
     }
+
+    private void mapVariantSummary(Product p, ResultSet rs) throws SQLException {
+        p.setTotalStockQuantity(rs.getInt("variant_total_stock"));
+        p.setVariantCount(rs.getInt("variant_count"));
+
+        double minVariantPrice = rs.getDouble("min_variant_price");
+        p.setMinVariantPrice(rs.wasNull() ? 0 : minVariantPrice);
+
+        double maxVariantPrice = rs.getDouble("max_variant_price");
+        p.setMaxVariantPrice(rs.wasNull() ? 0 : maxVariantPrice);
+
+        double minEffectivePrice = rs.getDouble("min_variant_effective_price");
+        p.setMinVariantEffectivePrice(rs.wasNull() ? 0 : minEffectivePrice);
+
+        double maxEffectivePrice = rs.getDouble("max_variant_effective_price");
+        p.setMaxVariantEffectivePrice(rs.wasNull() ? 0 : maxEffectivePrice);
+    }
+
     public boolean deletePromotion(int promoId) {
         String resetPriceSql = "UPDATE products p " +
                 "JOIN promotion_items pi ON p.id = pi.product_id " +

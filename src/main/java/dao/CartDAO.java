@@ -21,7 +21,7 @@ public class CartDAO {
         
         String sql = "SELECT c.product_id, c.variant_id, c.quantity, " +
                 "p.name, p.image_url, p.price as p_price, p.sale_price as p_sale_price, p.slug, " +
-                "v.variant_name, v.price as v_price, v.sale_price as v_sale_price " +
+                "v.variant_name, v.sku as v_sku, v.price as v_price, v.sale_price as v_sale_price, v.stock_quantity as v_stock_quantity " +
                 "FROM cart c " +
                 "JOIN products p ON c.product_id = p.id " +
                 "LEFT JOIN product_variants v ON c.variant_id = v.id " +
@@ -48,8 +48,10 @@ public class CartDAO {
                         v.setId(variantId);
                         v.setProductId(p.getId());
                         v.setVariantName(rs.getString("variant_name"));
+                        v.setSku(rs.getString("v_sku"));
                         v.setPrice(rs.getDouble("v_price"));
                         v.setSalePrice(rs.getDouble("v_sale_price"));
+                        v.setStockQuantity(rs.getInt("v_stock_quantity"));
                     }
 
                     int quantity = rs.getInt("quantity");

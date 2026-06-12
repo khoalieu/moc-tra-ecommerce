@@ -30,6 +30,13 @@ public class Product implements Serializable {
     private Double currentPromotionValue;
     private int lowStockVariantCount;
     private String lowStockVariantSummary;
+    private String variantInventorySummary;
+    private int totalStockQuantity;
+    private int variantCount;
+    private double minVariantPrice;
+    private double maxVariantPrice;
+    private double minVariantEffectivePrice;
+    private double maxVariantEffectivePrice;
     private List<ProductVariant> variants;
     public Product() {}
 
@@ -95,6 +102,57 @@ public class Product implements Serializable {
 
     public String getLowStockVariantSummary() { return lowStockVariantSummary; }
     public void setLowStockVariantSummary(String lowStockVariantSummary) { this.lowStockVariantSummary = lowStockVariantSummary; }
+
+    public String getVariantInventorySummary() { return variantInventorySummary; }
+    public void setVariantInventorySummary(String variantInventorySummary) { this.variantInventorySummary = variantInventorySummary; }
+
+    public int getTotalStockQuantity() { return totalStockQuantity; }
+    public void setTotalStockQuantity(int totalStockQuantity) { this.totalStockQuantity = totalStockQuantity; }
+
+    public int getVariantCount() { return variantCount; }
+    public void setVariantCount(int variantCount) { this.variantCount = variantCount; }
+
+    public double getMinVariantPrice() { return minVariantPrice; }
+    public void setMinVariantPrice(double minVariantPrice) { this.minVariantPrice = minVariantPrice; }
+
+    public double getMaxVariantPrice() { return maxVariantPrice; }
+    public void setMaxVariantPrice(double maxVariantPrice) { this.maxVariantPrice = maxVariantPrice; }
+
+    public double getMinVariantEffectivePrice() { return minVariantEffectivePrice; }
+    public void setMinVariantEffectivePrice(double minVariantEffectivePrice) { this.minVariantEffectivePrice = minVariantEffectivePrice; }
+
+    public double getMaxVariantEffectivePrice() { return maxVariantEffectivePrice; }
+    public void setMaxVariantEffectivePrice(double maxVariantEffectivePrice) { this.maxVariantEffectivePrice = maxVariantEffectivePrice; }
+
+    public double getDisplayMinPrice() {
+        if (minVariantEffectivePrice > 0) {
+            return minVariantEffectivePrice;
+        }
+        return salePrice > 0 && salePrice < price ? salePrice : price;
+    }
+
+    public double getDisplayMaxPrice() {
+        if (maxVariantEffectivePrice > 0) {
+            return maxVariantEffectivePrice;
+        }
+        return salePrice > 0 && salePrice < price ? salePrice : price;
+    }
+
+    public double getOriginalMinPrice() {
+        return minVariantPrice > 0 ? minVariantPrice : price;
+    }
+
+    public double getOriginalMaxPrice() {
+        return maxVariantPrice > 0 ? maxVariantPrice : price;
+    }
+
+    public boolean isDisplayPriceRange() {
+        return Math.abs(getDisplayMinPrice() - getDisplayMaxPrice()) > 0.001;
+    }
+
+    public boolean isDisplayOnSale() {
+        return getDisplayMinPrice() < getOriginalMinPrice() || getDisplayMaxPrice() < getOriginalMaxPrice();
+    }
 
     public List<ProductVariant> getVariants() {
         return variants;
