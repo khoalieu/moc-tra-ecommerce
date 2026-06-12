@@ -248,7 +248,11 @@
                                 currentUrl.searchParams.set('price', maxRange.value);
                                 currentUrl.searchParams.set('page', '1');
 
-                                window.location.href = currentUrl.toString();
+                                if (typeof loadProducts === 'function') {
+                                    loadProducts(currentUrl.toString());
+                                } else {
+                                    window.location.href = currentUrl.toString();
+                                }
                             }
 
                             minRange.addEventListener('input', function () {
@@ -260,6 +264,7 @@
                             minRange.addEventListener('change', applyPriceRange);
                             maxRange.addEventListener('change', applyPriceRange);
                             syncPriceRange();
+                            window.syncPriceRange = syncPriceRange;
                         })();
                     </script>
                 </div>
@@ -331,208 +336,17 @@
                             }
 
                             currentUrl.searchParams.set('page', '1');
-                            window.location.href = currentUrl.toString();
+                            if (typeof loadProducts === 'function') {
+                                loadProducts(currentUrl.toString());
+                            } else {
+                                window.location.href = currentUrl.toString();
+                            }
                         }
                     </script>
                 </div>
 
-                <section class="product-group">
-
-                    <h2 class="group-title">${categoryName}</h2>
-
-                    <div class="product-grid">
-
-                        <c:if test="${products.size() == 0}">
-                            <p style="text-align: center; width: 100%; col-span: 3;">
-                                Không tìm thấy sản phẩm nào phù hợp!
-                            </p>
-                        </c:if>
-
-                        <c:forEach var="p" items="${products}">
-                            <div class="product-card">
-                                <div class="product-image-wrapper">
-                                    <img src="${p.imageUrl}" alt="${p.name}">
-                                    <c:if test="${p.displayOnSale}">
-                                        <span class="sale-tag">
-                                            <c:choose>
-                                                <c:when test="${not empty p.currentPromotionType and p.currentPromotionType eq 'PERCENT'}">
-                                                    -<fmt:formatNumber value="${p.currentPromotionValue}" maxFractionDigits="0"/>%
-                                                </c:when>
-                                                <c:when test="${not empty p.currentPromotionValue}">
-                                                    -<fmt:formatNumber value="${p.currentPromotionValue}" pattern="#,###"/>đ
-                                                </c:when>
-                                            </c:choose>
-                                        </span>
-                                    </c:if>
-                                </div>
-
-                                <h3>${p.name}</h3>
-
-                                <p class="price">
-                                    <fmt:setLocale value="vi_VN"/>
-
-                                    <c:choose>
-                                        <%-- Case 1: Product is on sale --%>
-                                        <c:when test="${p.displayOnSale}">
-                                            <span class="new-price" style="display: block; margin-bottom: 4px;">
-                                                <c:choose>
-                                                    <c:when test="${p.displayPriceRange}">
-                                                        <fmt:formatNumber value="${p.displayMinPrice}" type="currency" currencySymbol=""/>đ
-                                                        -
-                                                        <fmt:formatNumber value="${p.displayMaxPrice}" type="currency" currencySymbol=""/>đ
-                                                    </c:when>
-                                                    <c:otherwise>
-                                                        <fmt:formatNumber value="${p.displayMinPrice}" type="currency" currencySymbol=""/>đ
-                                                    </c:otherwise>
-                                                </c:choose>
-                                            </span>
-                                            <span class="old-price" style="display: block;">
-                                                <c:choose>
-                                                    <c:when test="${p.originalMinPrice != p.originalMaxPrice}">
-                                                        <fmt:formatNumber value="${p.originalMinPrice}" type="currency" currencySymbol=""/>đ
-                                                        -
-                                                        <fmt:formatNumber value="${p.originalMaxPrice}" type="currency" currencySymbol=""/>đ
-                                                    </c:when>
-                                                    <c:otherwise>
-                                                        <fmt:formatNumber value="${p.originalMinPrice}" type="currency" currencySymbol=""/>đ
-                                                    </c:otherwise>
-                                                </c:choose>
-                                            </span>
-                                        </c:when>
-
-                                        <%-- Case 2: No sale, standard price --%>
-                                        <c:otherwise>
-                                            <span class="normal-price">
-                                                <c:choose>
-                                                    <c:when test="${p.displayPriceRange}">
-                                                        <fmt:formatNumber value="${p.displayMinPrice}" type="currency" currencySymbol=""/>đ
-                                                        -
-                                                        <fmt:formatNumber value="${p.displayMaxPrice}" type="currency" currencySymbol=""/>đ
-                                                    </c:when>
-                                                    <c:otherwise>
-                                                        <fmt:formatNumber value="${p.displayMinPrice}" type="currency" currencySymbol=""/>đ
-                                                    </c:otherwise>
-                                                </c:choose>
-                                            </span>
-                                        </c:otherwise>
-                                    </c:choose>
-                                </p>
-
-                                <div class="product-card-actions">
-                                    <a href="${pageContext.request.contextPath}/chi-tiet-san-pham?id=${p.id}" class="cta-button">Xem Chi Tiết</a>
-
-                                    <c:if test="${not empty sessionScope.user}">
-                                        <button type="button"
-                                                class="favorite-btn ${favoriteProductIds != null && favoriteProductIds.contains(p.id) ? 'active' : ''}"
-                                                data-product-id="${p.id}"
-                                                data-favorited="${favoriteProductIds != null && favoriteProductIds.contains(p.id) ? 'true' : 'false'}"
-                                                title="${favoriteProductIds != null && favoriteProductIds.contains(p.id) ? 'Xóa khỏi yêu thích' : 'Thêm vào yêu thích'}">
-                                            <i class="fa-solid fa-heart"></i>
-                                        </button>
-                                    </c:if>
-                                </div>                            </div>
-                        </c:forEach>
-
-                    </div>
-                </section>
-
-                <div class="pagination">
-                    <c:if test="${totalPages > 1}">
-                        <c:set var="windowSize" value="6" />
-                        <c:set var="currentBlock" value="${(currentPage - 1) div windowSize}" />
-                        <c:set var="startPage" value="${currentBlock * windowSize + 1}" />
-                        <c:set var="endPage" value="${startPage + windowSize - 1}" />
-
-                        <c:if test="${endPage > totalPages}">
-                            <c:set var="endPage" value="${totalPages}" />
-                        </c:if>
-
-                        <!-- lùi / tiến  6 trang theo currentPage -->
-                        <c:set var="prevPage" value="${currentPage - windowSize}" />
-                        <c:set var="nextPage" value="${currentPage + windowSize}" />
-
-                        <div class="pagination">
-                            <!--  lùi 6  -->
-                            <c:url var="prevPageUrl" value="/san-pham">
-                                <c:param name="page" value="${prevPage < 1 ? 1 : prevPage}"/>
-                                <c:if test="${currentCategory != null}">
-                                    <c:param name="category" value="${currentCategory}"/>
-                                </c:if>
-                                <c:if test="${not empty currentSort && currentSort != 'default'}">
-                                    <c:param name="sort" value="${currentSort}"/>
-                                </c:if>
-                                <c:if test="${currentPrice != null}">
-                                    <c:param name="price" value="${currentPrice}"/>
-                                </c:if>
-                                <c:if test="${currentMinPrice != null}">
-                                    <c:param name="minPrice" value="${currentMinPrice}"/>
-                                </c:if>
-                                <c:if test="${not empty currentPromotionParam}">
-                                    <c:param name="promotionId" value="${currentPromotionParam}"/>
-                                </c:if>
-                                <c:if test="${not empty currentSearch}">
-                                    <c:param name="search" value="${currentSearch}"/>
-                                </c:if>
-                            </c:url>
-                            <a href="${prevPageUrl}" class="${currentPage <= windowSize ? 'disabled' : ''}">
-                                &laquo;
-                            </a>
-
-                            <!-- block -->
-                            <c:forEach begin="${startPage}" end="${endPage}" var="i">
-                                <c:url var="pageUrl" value="/san-pham">
-                                    <c:param name="page" value="${i}"/>
-                                    <c:if test="${currentCategory != null}">
-                                        <c:param name="category" value="${currentCategory}"/>
-                                    </c:if>
-                                    <c:if test="${not empty currentSort && currentSort != 'default'}">
-                                        <c:param name="sort" value="${currentSort}"/>
-                                    </c:if>
-                                    <c:if test="${currentPrice != null}">
-                                        <c:param name="price" value="${currentPrice}"/>
-                                    </c:if>
-                                    <c:if test="${currentMinPrice != null}">
-                                        <c:param name="minPrice" value="${currentMinPrice}"/>
-                                    </c:if>
-                                    <c:if test="${not empty currentPromotionParam}">
-                                        <c:param name="promotionId" value="${currentPromotionParam}"/>
-                                    </c:if>
-                                    <c:if test="${not empty currentSearch}">
-                                        <c:param name="search" value="${currentSearch}"/>
-                                    </c:if>
-                                </c:url>
-                                <a href="${pageUrl}" class="${currentPage == i ? 'active' : ''}">
-                                        ${i}
-                                </a>
-                            </c:forEach>
-
-                            <!--  tiến 6 page -->
-                            <c:url var="nextPageUrl" value="/san-pham">
-                                <c:param name="page" value="${nextPage > totalPages ? totalPages : nextPage}"/>
-                                <c:if test="${currentCategory != null}">
-                                    <c:param name="category" value="${currentCategory}"/>
-                                </c:if>
-                                <c:if test="${not empty currentSort && currentSort != 'default'}">
-                                    <c:param name="sort" value="${currentSort}"/>
-                                </c:if>
-                                <c:if test="${currentPrice != null}">
-                                    <c:param name="price" value="${currentPrice}"/>
-                                </c:if>
-                                <c:if test="${currentMinPrice != null}">
-                                    <c:param name="minPrice" value="${currentMinPrice}"/>
-                                </c:if>
-                                <c:if test="${not empty currentPromotionParam}">
-                                    <c:param name="promotionId" value="${currentPromotionParam}"/>
-                                </c:if>
-                                <c:if test="${not empty currentSearch}">
-                                    <c:param name="search" value="${currentSearch}"/>
-                                </c:if>
-                            </c:url>
-                            <a href="${nextPageUrl}" class="${currentPage + windowSize > totalPages ? 'disabled' : ''}">
-                                &raquo;
-                            </a>
-                        </div>
-                    </c:if>
+                <div id="product-list-container" style="transition: opacity 0.2s ease-in-out;">
+                    <jsp:include page="product-grid-partial.jsp" />
                 </div>
             </div>
         </div>
@@ -609,7 +423,172 @@
         });
     }
 
-    document.addEventListener('DOMContentLoaded', bindFavoriteButtons);
+    function loadProducts(url, pushState = true) {
+        const container = document.getElementById('product-list-container');
+        if (!container) return;
+
+        container.style.opacity = '0.5';
+
+        fetch(url, {
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(res => {
+            if (!res.ok) throw new Error('Network response was not ok');
+            return res.text();
+        })
+        .then(html => {
+            container.innerHTML = html;
+            bindFavoriteButtons();
+            if (pushState) {
+                history.pushState(null, '', url);
+            }
+            updateSidebarActiveState(url);
+        })
+        .catch(err => {
+            console.error('Error loading products via AJAX:', err);
+            showFavoriteToast('Không thể tải danh sách sản phẩm', 'error');
+        })
+        .finally(() => {
+            container.style.opacity = '1';
+        });
+    }
+
+    function updateSidebarActiveState(urlStr) {
+        const url = new URL(urlStr, window.location.origin);
+        const category = url.searchParams.get('category');
+        const promotionId = url.searchParams.get('promotionId');
+        const search = url.searchParams.get('search');
+        const minPrice = url.searchParams.get('minPrice');
+        const maxPrice = url.searchParams.get('price');
+
+        // 1. "Tất Cả Sản Phẩm"
+        const allProductsLi = document.querySelector('.category-parent a[href$="/san-pham"], .category-parent a[href$="/san-pham/"]');
+        const isAllProductsActive = !category && !promotionId && !search && !minPrice && !maxPrice;
+        if (allProductsLi) {
+            const parentLi = allProductsLi.parentElement;
+            if (isAllProductsActive) {
+                parentLi.classList.add('active');
+            } else {
+                parentLi.classList.remove('active');
+            }
+        }
+
+        // 2 & 3. Categories
+        // Reset all category list items
+        document.querySelectorAll('.shop-sidebar .category-filter-list li').forEach(li => {
+            li.classList.remove('active', 'active-child');
+        });
+
+        if (category) {
+            // Find child link first
+            const childLink = document.querySelector(`.category-child-list a[href*="category=${category}"]`);
+            if (childLink) {
+                const childLi = childLink.parentElement;
+                childLi.classList.add('active-child');
+                // Parent li of child list should be active
+                const parentLi = childLi.closest('.category-parent');
+                if (parentLi) {
+                    parentLi.classList.add('active');
+                }
+            } else {
+                // Check if it's a parent category link
+                const parentLink = document.querySelector(`.category-filter-list > li > a[href*="category=${category}"]`);
+                if (parentLink) {
+                    parentLink.parentElement.classList.add('active');
+                }
+            }
+        }
+
+        // 4 & 5. Promotions
+        if (promotionId === 'all') {
+            const promoAllLink = document.querySelector('.category-filter-list a[href*="promotionId=all"]');
+            if (promoAllLink) {
+                promoAllLink.parentElement.classList.add('active');
+            }
+        } else if (promotionId) {
+            const promoChildLink = document.querySelector(`.category-child-list a[href*="promotionId=${promotionId}"]`);
+            if (promoChildLink) {
+                const childLi = promoChildLink.parentElement;
+                childLi.classList.add('active-child');
+                const parentLi = childLi.closest('.category-parent');
+                if (parentLi) {
+                    parentLi.classList.add('active');
+                }
+            }
+        }
+
+        // Sync inputs & controls
+        const searchInput = document.querySelector('input[name="search"]');
+        if (searchInput) {
+            searchInput.value = search || '';
+        }
+
+        const sortSelect = document.getElementById('sort-by');
+        if (sortSelect) {
+            sortSelect.value = url.searchParams.get('sort') || 'default';
+        }
+
+        const minRange = document.getElementById('minPriceRange');
+        const maxRange = document.getElementById('maxPriceRange');
+        if (minRange && maxRange) {
+            if (minPrice !== null) {
+                minRange.value = minPrice;
+            } else {
+                minRange.value = minRange.min;
+            }
+            if (maxPrice !== null) {
+                maxRange.value = maxPrice;
+            } else {
+                maxRange.value = maxRange.max;
+            }
+            if (typeof window.syncPriceRange === 'function') {
+                window.syncPriceRange();
+            }
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        bindFavoriteButtons();
+
+        // Delegate clicks on product/catalog-related links
+        document.addEventListener('click', e => {
+            const link = e.target.closest('a');
+            if (!link) return;
+
+            const href = link.getAttribute('href');
+            if (!href || href.startsWith('#') || href.startsWith('javascript:')) return;
+
+            // We only intercept URLs pointing to /san-pham catalog page, ignoring other links (e.g. details, favorites page)
+            try {
+                const url = new URL(link.href, window.location.origin);
+                if (url.pathname.endsWith('/san-pham') || url.pathname.endsWith('/san-pham/')) {
+                    e.preventDefault();
+                    loadProducts(link.href);
+                }
+            } catch (err) {
+                // Ignore invalid URLs
+            }
+        });
+
+        // Intercept search form submission
+        const searchForm = document.querySelector('.sort-bar form');
+        if (searchForm) {
+            searchForm.addEventListener('submit', function (e) {
+                e.preventDefault();
+                const formData = new FormData(this);
+                const params = new URLSearchParams(formData);
+                const actionUrl = this.getAttribute('action') || window.location.pathname;
+                const url = actionUrl + '?' + params.toString();
+                loadProducts(url);
+            });
+        }
+    });
+
+    window.addEventListener('popstate', () => {
+        loadProducts(window.location.href, false);
+    });
 </script>
 </body>
 </html>
