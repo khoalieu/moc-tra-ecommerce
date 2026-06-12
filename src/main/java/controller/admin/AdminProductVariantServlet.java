@@ -27,12 +27,14 @@ public class AdminProductVariantServlet extends HttpServlet {
         int productId = Integer.parseInt(request.getParameter("id"));
         String[] variantIds = request.getParameterValues("variantIds");
         String[] variantNames = request.getParameterValues("variantNames");
+        String[] variantSkus = request.getParameterValues("variantSkus");
         String[] variantPrices = request.getParameterValues("variantPrices");
         String[] variantSalePrices = request.getParameterValues("variantSalePrices");
         String[] variantStocks = request.getParameterValues("variantStocks");
         List<ProductVariant> oldVariants = variantDAO.getVariantsByProductId(productId);
 
         List<Integer> keptIds = new ArrayList<>();
+        int savedVariantCount = 0;
 
         if (variantNames != null) {
             for (int i = 0; i < variantNames.length; i++) {
@@ -41,6 +43,7 @@ public class AdminProductVariantServlet extends HttpServlet {
                 ProductVariant v = new ProductVariant();
                 v.setProductId(productId);
                 v.setVariantName(variantNames[i].trim());
+                v.setSku(variantSkus != null && variantSkus.length > i ? normalizeSku(variantSkus[i]) : null);
                 double price = parseDouble(variantPrices[i]);
                 double salePrice = parseDouble(variantSalePrices[i]);
                 if (salePrice > price) {
@@ -59,6 +62,25 @@ public class AdminProductVariantServlet extends HttpServlet {
                 } else {
                     variantDAO.addVariant(v);
                 }
+                savedVariantCount++;
+            }
+        }
+        if (savedVariantCount == 0) {
+            ProductVariant v = new ProductVariant();
+            v.setProductId(productId);
+            v.setVariantName("Mặc định");
+            v.setSku(oldVariants.isEmpty() || oldVariants.get(0).getSku() == null
+                    ? "P" + productId + "-MD"
+                    : oldVariants.get(0).getSku());
+            v.setPrice(parseDouble(request.getParameter("price")));
+            v.setSalePrice(parseDouble(request.getParameter("sale_price")));
+            v.setStockQuantity(parseInt(request.getParameter("stock_quantity")));
+            if (oldVariants.isEmpty()) {
+                variantDAO.addVariant(v);
+            } else {
+                v.setId(oldVariants.get(0).getId());
+                variantDAO.updateVariant(v);
+                keptIds.add(v.getId());
             }
         }
         for (ProductVariant oldV : oldVariants) {
@@ -66,6 +88,10 @@ public class AdminProductVariantServlet extends HttpServlet {
                 variantDAO.deactivateVariant(oldV.getId());
             }
         }
+    }
+
+    private String normalizeSku(String s) {
+        return s == null || s.trim().isEmpty() ? null : s.trim();
     }
 
     private double parseDouble(String s) {

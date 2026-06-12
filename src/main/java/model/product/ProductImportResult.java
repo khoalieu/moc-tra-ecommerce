@@ -41,4 +41,7 @@ public class ProductImportResult {
     public String getSummary() {
         return "Đã thêm " + addedCount + " sản phẩm, cập nhật " + updatedCount + " sản phẩm, lỗi " + errorCount + " dòng.";
     }
+    public String getInventorySummary() {
+        return "Da cap nhat ton kho cho " + updatedCount + " bien the, loi " + errorCount + " dong.";
+    }
 }

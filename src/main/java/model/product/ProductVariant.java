@@ -12,6 +12,9 @@ public class ProductVariant implements Serializable {
     private double price;
     private double salePrice;
     private int stockQuantity;
+    private String productName;
+    private String productSku;
+    private String categoryName;
 
     public ProductVariant(int id, int productId, String variantName, String sku, double price, double salePrice, int stockQuantity) {
         this.id = id;
@@ -80,6 +83,30 @@ public class ProductVariant implements Serializable {
 
     public void setStockQuantity(int stockQuantity) {
         this.stockQuantity = stockQuantity;
+    }
+
+    public String getProductName() {
+        return productName;
+    }
+
+    public void setProductName(String productName) {
+        this.productName = productName;
+    }
+
+    public String getProductSku() {
+        return productSku;
+    }
+
+    public void setProductSku(String productSku) {
+        this.productSku = productSku;
+    }
+
+    public String getCategoryName() {
+        return categoryName;
+    }
+
+    public void setCategoryName(String categoryName) {
+        this.categoryName = categoryName;
     }
 }
 

@@ -30,6 +30,7 @@ public class Product implements Serializable {
     private Double currentPromotionValue;
     private int lowStockVariantCount;
     private String lowStockVariantSummary;
+    private String variantInventorySummary;
     private int totalStockQuantity;
     private int variantCount;
     private double minVariantPrice;
@@ -101,6 +102,9 @@ public class Product implements Serializable {
 
     public String getLowStockVariantSummary() { return lowStockVariantSummary; }
     public void setLowStockVariantSummary(String lowStockVariantSummary) { this.lowStockVariantSummary = lowStockVariantSummary; }
+
+    public String getVariantInventorySummary() { return variantInventorySummary; }
+    public void setVariantInventorySummary(String variantInventorySummary) { this.variantInventorySummary = variantInventorySummary; }
 
     public int getTotalStockQuantity() { return totalStockQuantity; }
     public void setTotalStockQuantity(int totalStockQuantity) { this.totalStockQuantity = totalStockQuantity; }

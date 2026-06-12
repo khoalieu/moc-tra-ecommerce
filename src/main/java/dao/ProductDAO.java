@@ -28,6 +28,8 @@ public class ProductDAO {
             "(CASE WHEN v.sale_price > 0 AND v.sale_price < v.price THEN v.sale_price ELSE v.price END)";
     private static final String MIN_VARIANT_EFFECTIVE_PRICE =
             "(SELECT MIN(" + VARIANT_EFFECTIVE_PRICE + ") FROM product_variants v WHERE v.product_id = p.id AND v.is_active = 1)";
+    private static final String TOTAL_VARIANT_STOCK =
+            "(SELECT COALESCE(SUM(v.stock_quantity), 0) FROM product_variants v WHERE v.product_id = p.id AND v.is_active = 1)";
 
     public ProductDAO(DataSource ds) {
         this.ds = ds;
@@ -427,6 +429,9 @@ public class ProductDAO {
                         "(SELECT GROUP_CONCAT(CONCAT(v.variant_name, ' còn ', v.stock_quantity) ORDER BY v.stock_quantity ASC SEPARATOR ', ') " +
                         "   FROM product_variants v WHERE v.product_id = p.id AND v.is_active = 1 " +
                         "   AND v.stock_quantity > 0 AND v.stock_quantity < ?) AS low_stock_variant_summary " +
+                        ", (SELECT GROUP_CONCAT(CONCAT(v.variant_name, '|', v.price, '|', v.stock_quantity) " +
+                        "   ORDER BY v.stock_quantity ASC SEPARATOR ';;') " +
+                        "   FROM product_variants v WHERE v.product_id = p.id AND v.is_active = 1) AS variant_inventory_summary " +
                         VARIANT_SUMMARY_SELECT +
                         "FROM products p " +
                         "LEFT JOIN categories c ON c.id = p.category_id " +
@@ -476,6 +481,7 @@ public class ProductDAO {
 
                 p.setLowStockVariantCount(rs.getInt("low_stock_variant_count"));
                 p.setLowStockVariantSummary(rs.getString("low_stock_variant_summary"));
+                p.setVariantInventorySummary(rs.getString("variant_inventory_summary"));
 
                 String statusStr = rs.getString("status");
                 if (statusStr != null) {
@@ -655,12 +661,14 @@ public class ProductDAO {
         }
 
         if (minPrice != null) {
-            sql.append(" AND (CASE WHEN p.sale_price > 0 THEN p.sale_price ELSE p.price END) >= ? ");
+            sql.append(" AND EXISTS (SELECT 1 FROM product_variants v WHERE v.product_id = p.id AND v.is_active = 1 ");
+            sql.append("AND ").append(VARIANT_EFFECTIVE_PRICE).append(" >= ?) ");
             params.add(minPrice);
         }
 
         if (maxPrice != null) {
-            sql.append(" AND (CASE WHEN p.sale_price > 0 THEN p.sale_price ELSE p.price END) <= ? ");
+            sql.append(" AND EXISTS (SELECT 1 FROM product_variants v WHERE v.product_id = p.id AND v.is_active = 1 ");
+            sql.append("AND ").append(VARIANT_EFFECTIVE_PRICE).append(" <= ?) ");
             params.add(maxPrice);
         }
 
@@ -705,27 +713,23 @@ public class ProductDAO {
             } else if ("inactive".equals(status)) {
                 sql.append(" AND p.status = 'inactive' ");
             } else if ("out-of-stock".equals(status)) {
-                sql.append(" AND (p.status = 'out_of_stock' OR p.stock_quantity = 0 ");
-                sql.append("OR EXISTS (SELECT 1 FROM product_variants v WHERE v.product_id = p.id AND v.is_active = 1 AND v.stock_quantity = 0)) ");
+                sql.append(" AND (p.status = 'out_of_stock' OR ").append(TOTAL_VARIANT_STOCK).append(" = 0) ");
             }
         }
 
         if ("in-stock".equals(stockFilter)) {
-            sql.append(" AND (p.stock_quantity > 0 OR EXISTS (SELECT 1 FROM product_variants v WHERE v.product_id = p.id AND v.is_active = 1 AND v.stock_quantity > 0)) ");
+            sql.append(" AND ").append(TOTAL_VARIANT_STOCK).append(" > 0 ");
         } else if ("need-reorder".equals(stockFilter)) {
-            sql.append(" AND ((p.stock_quantity > 0 AND p.stock_quantity < ?) ");
-            sql.append("OR EXISTS (SELECT 1 FROM product_variants v WHERE v.product_id = p.id AND v.is_active = 1 AND v.stock_quantity > 0 AND v.stock_quantity < ?)) ");
-            params.add(reorderThreshold);
+            sql.append(" AND (").append(TOTAL_VARIANT_STOCK).append(" > 0 AND ");
+            sql.append(TOTAL_VARIANT_STOCK).append(" < ?) ");
             params.add(reorderThreshold);
         } else if ("low-stock".equals(stockFilter)) {
-            sql.append(" AND ((p.stock_quantity >= ? AND p.stock_quantity <= ?) ");
-            sql.append("OR EXISTS (SELECT 1 FROM product_variants v WHERE v.product_id = p.id AND v.is_active = 1 AND v.stock_quantity >= ? AND v.stock_quantity <= ?)) ");
-            params.add(reorderThreshold);
-            params.add(lowStockThreshold);
+            sql.append(" AND (").append(TOTAL_VARIANT_STOCK).append(" >= ? AND ");
+            sql.append(TOTAL_VARIANT_STOCK).append(" <= ?) ");
             params.add(reorderThreshold);
             params.add(lowStockThreshold);
         } else if ("out-of-stock".equals(stockFilter)) {
-            sql.append(" AND (p.stock_quantity = 0 OR EXISTS (SELECT 1 FROM product_variants v WHERE v.product_id = p.id AND v.is_active = 1 AND v.stock_quantity = 0)) ");
+            sql.append(" AND ").append(TOTAL_VARIANT_STOCK).append(" = 0 ");
         }
     }
 
@@ -777,11 +781,11 @@ public class ProductDAO {
         if ("oldest".equals(sort)) {
             sql.append("p.created_at ASC ");
         } else if ("price-asc".equals(sort)) {
-            sql.append("(CASE WHEN p.sale_price > 0 THEN p.sale_price ELSE p.price END) ASC ");
+            sql.append(MIN_VARIANT_EFFECTIVE_PRICE).append(" ASC ");
         } else if ("price-desc".equals(sort)) {
-            sql.append("(CASE WHEN p.sale_price > 0 THEN p.sale_price ELSE p.price END) DESC ");
+            sql.append(MIN_VARIANT_EFFECTIVE_PRICE).append(" DESC ");
         } else if ("stock-asc".equals(sort)) {
-            sql.append("p.stock_quantity ASC ");
+            sql.append(TOTAL_VARIANT_STOCK).append(" ASC ");
         } else if ("name-asc".equals(sort)) {
             sql.append("p.name ASC ");
         } else {
@@ -1371,6 +1375,24 @@ public class ProductDAO {
         try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, name);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                return mapRowToProduct(rs);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public Product getProductBySku(String sku) {
+        if (sku == null || sku.trim().isEmpty()) {
+            return null;
+        }
+        String sql = "SELECT * FROM products WHERE sku = ? LIMIT 1";
+        try (Connection conn = ds.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, sku.trim());
             ResultSet rs = ps.executeQuery();
             if (rs.next()) {
                 return mapRowToProduct(rs);

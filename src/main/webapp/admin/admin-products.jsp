@@ -1,6 +1,7 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %>
+<%@ taglib prefix="fn" uri="jakarta.tags.functions" %>
 
 <!DOCTYPE html>
 <html lang="vi">
@@ -48,6 +49,13 @@
         </header>
 
         <div class="admin-content">
+            <c:if test="${not empty sessionScope.importMessage}">
+                <div class="import-message">
+                        ${sessionScope.importMessage}
+                </div>
+                <c:remove var="importMessage" scope="session"/>
+            </c:if>
+
             <div class="page-header">
                 <div class="page-title">
                     <h2>Danh sách sản phẩm</h2>
@@ -298,31 +306,64 @@
                                     </c:forEach>
                                 </td>
                                 <td>
-                                    <div class="product-price-main" style="color: #107e84; font-weight: 600;">
-                                        <fmt:formatNumber value="${p.salePrice > 0 ? p.salePrice : p.price}"
-                                                          pattern="#,###"/>đ
-                                    </div>
-                                    <c:if test="${p.salePrice > 0 && p.salePrice < p.price}">
-                                        <div class="product-price-original"
-                                             style="text-decoration: line-through; color: #999; font-size: 12px;">
-                                            <fmt:formatNumber value="${p.price}" pattern="#,###"/>đ
+                                    <div class="admin-product-price-cell">
+                                        <div class="product-price-main">
+                                            <fmt:formatNumber value="${p.displayMinPrice}" pattern="#,###"/>đ
+                                            <c:if test="${p.displayPriceRange}">
+                                                - <fmt:formatNumber value="${p.displayMaxPrice}" pattern="#,###"/>đ
+                                            </c:if>
                                         </div>
-                                    </c:if>
+                                        <c:if test="${p.displayOnSale}">
+                                            <div class="product-price-original">
+                                                <fmt:formatNumber value="${p.originalMinPrice}" pattern="#,###"/>đ
+                                                <c:if test="${p.originalMinPrice != p.originalMaxPrice}">
+                                                    - <fmt:formatNumber value="${p.originalMaxPrice}" pattern="#,###"/>đ
+                                                </c:if>
+                                            </div>
+                                        </c:if>
+                                        <c:if test="${p.variantCount > 0}">
+                                            <span class="admin-variant-count-pill">
+                                                ${p.variantCount} biến thể
+                                            </span>
+                                        </c:if>
+                                    </div>
                                 </td>
                                 <td>
                                     <div class="admin-product-stock-cell">
-                                        <span class="${p.stockQuantity > currentLowStockThreshold ? 'product-stock-high' : 'product-stock-low'}"
-                                              style="font-weight: 600; color: ${p.stockQuantity > currentLowStockThreshold ? '#28a745' : '#dc3545'}">
-                                                ${p.stockQuantity}
+                                        <span class="admin-stock-total-wrap">
+                                            <span class="${p.totalStockQuantity > currentLowStockThreshold ? 'product-stock-high' : 'product-stock-low'}"
+                                                  style="font-weight: 600; color: ${p.totalStockQuantity > currentLowStockThreshold ? '#28a745' : '#dc3545'}">
+                                                    Tổng: ${p.totalStockQuantity}
+                                            </span>
+                                            <c:if test="${not empty p.variantInventorySummary}">
+                                                <span class="admin-variant-popover">
+                                                    <span class="admin-variant-popover-title">Tồn kho biến thể</span>
+                                                    <span class="admin-variant-popover-table">
+                                                        <span class="admin-variant-popover-row head">
+                                                            <span>Biến thể</span>
+                                                            <span>Giá</span>
+                                                            <span>Tồn</span>
+                                                        </span>
+                                                        <c:forEach var="variantLine" items="${fn:split(p.variantInventorySummary, ';;')}">
+                                                            <c:set var="variantParts" value="${fn:split(variantLine, '|')}" />
+                                                            <span class="admin-variant-popover-row">
+                                                                <span>${variantParts[0]}</span>
+                                                                <span><fmt:formatNumber value="${variantParts[1]}" pattern="#,###"/>đ</span>
+                                                                <span>${variantParts[2]}</span>
+                                                            </span>
+                                                        </c:forEach>
+                                                    </span>
+                                                </span>
+                                            </c:if>
                                         </span>
                                         <c:choose>
-                                            <c:when test="${p.stockQuantity == 0}">
+                                            <c:when test="${p.totalStockQuantity == 0}">
                                                 <span class="admin-stock-pill out">Hết hàng</span>
                                             </c:when>
-                                            <c:when test="${p.stockQuantity > 0 && p.stockQuantity < currentReorderThreshold}">
+                                            <c:when test="${p.totalStockQuantity > 0 && p.totalStockQuantity < currentReorderThreshold}">
                                                 <span class="admin-stock-pill reorder">Cần nhập</span>
                                             </c:when>
-                                            <c:when test="${p.stockQuantity >= currentReorderThreshold && p.stockQuantity <= currentLowStockThreshold}">
+                                            <c:when test="${p.totalStockQuantity >= currentReorderThreshold && p.totalStockQuantity <= currentLowStockThreshold}">
                                                 <span class="admin-stock-pill low">Sắp hết</span>
                                             </c:when>
                                         </c:choose>

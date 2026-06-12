@@ -88,6 +88,7 @@
                             Import
                         </button>
                     </form>
+
                 </div>
 
                 <c:if test="${not empty sessionScope.importMessage}">
@@ -188,8 +189,8 @@
                                 </div>
                             </div>
 
-                            <div class="form-section">
-                                <h3><i class="fas fa-dollar-sign"></i> Giá & Kho</h3>
+                            <div class="form-section" id="defaultPriceStockSection">
+                                <h3><i class="fas fa-dollar-sign"></i> Giá & Kho mặc định</h3>
                                 <div class="form-group">
                                     <label>Giá bán</label>
                                     <input type="number" name="price" class="form-control" required
@@ -228,6 +229,7 @@
                                             <thead>
                                             <tr>
                                                 <th>Tên phân loại</th>
+                                                <th>SKU</th>
                                                 <th>Giá gốc</th>
                                                 <th>Tồn kho</th>
                                                 <th>Thao tác</th>
@@ -286,6 +288,11 @@
                            placeholder="VD: Hộp 10 gói, Gói 100g">
                 </div>
                 <div class="form-group">
+                    <label>SKU phân loại</label>
+                    <input type="text" id="variantSkuInput" class="form-control"
+                           placeholder="VD: TRA001-H10">
+                </div>
+                <div class="form-group">
                     <label>Giá gốc</label>
                     <input type="number" id="variantPriceInput" class="form-control"
                            placeholder="VD: 120000" min="0">
@@ -327,6 +334,7 @@
     });
 
     let editingVariantItem = null;
+    document.addEventListener('DOMContentLoaded', updateVariantEmptyState);
 
     function openVariantEditor(item) {
         editingVariantItem = item || null;
@@ -334,6 +342,7 @@
 
         if (editingVariantItem) {
             document.getElementById('variantNameInput').value = editingVariantItem.querySelector('input[name="variantNames"]').value;
+            document.getElementById('variantSkuInput').value = editingVariantItem.querySelector('input[name="variantSkus"]').value;
             document.getElementById('variantPriceInput').value = editingVariantItem.querySelector('input[name="variantPrices"]').value;
             document.getElementById('variantStockInput').value = editingVariantItem.querySelector('input[name="variantStocks"]').value;
         } else {
@@ -352,12 +361,14 @@
 
     function clearVariantEditor() {
         document.getElementById('variantNameInput').value = '';
+        document.getElementById('variantSkuInput').value = '';
         document.getElementById('variantPriceInput').value = '';
         document.getElementById('variantStockInput').value = '';
     }
 
     function saveVariant() {
         const name = document.getElementById('variantNameInput').value.trim();
+        const sku = document.getElementById('variantSkuInput').value.trim();
         const price = document.getElementById('variantPriceInput').value || '0';
         const stock = document.getElementById('variantStockInput').value || '0';
 
@@ -368,21 +379,22 @@
         }
 
         if (editingVariantItem) {
-            updateVariantItem(editingVariantItem, name, price, stock);
+            updateVariantItem(editingVariantItem, name, sku, price, stock);
         } else {
             const item = document.createElement('tr');
             item.className = 'variant-list-item';
             document.getElementById('variantsContainer').appendChild(item);
-            updateVariantItem(item, name, price, stock);
+            updateVariantItem(item, name, sku, price, stock);
         }
 
         updateVariantEmptyState();
         closeVariantEditor();
     }
 
-    function updateVariantItem(item, name, price, stock) {
+    function updateVariantItem(item, name, sku, price, stock) {
         item.innerHTML = `
             <td class="variant-list-name"></td>
+            <td class="variant-sku"></td>
             <td class="variant-price"></td>
             <td class="variant-stock"></td>
             <td>
@@ -395,15 +407,18 @@
                     </button>
                 </div>
                 <input type="hidden" name="variantNames">
+                <input type="hidden" name="variantSkus">
                 <input type="hidden" name="variantPrices">
                 <input type="hidden" name="variantSalePrices">
                 <input type="hidden" name="variantStocks">
             </td>
         `;
         item.querySelector('.variant-list-name').innerText = name;
+        item.querySelector('.variant-sku').innerText = sku || 'Tự động';
         item.querySelector('.variant-price').innerText = formatVariantMoney(price);
         item.querySelector('.variant-stock').innerText = stock;
         item.querySelector('input[name="variantNames"]').value = name;
+        item.querySelector('input[name="variantSkus"]').value = sku;
         item.querySelector('input[name="variantPrices"]').value = price;
         item.querySelector('input[name="variantSalePrices"]').value = '0';
         item.querySelector('input[name="variantStocks"]').value = stock;
@@ -417,6 +432,10 @@
     function updateVariantEmptyState() {
         const hasVariant = document.querySelectorAll('.variant-list-item').length > 0;
         document.getElementById('variantEmptyState').style.display = hasVariant ? 'none' : 'block';
+        const defaultSection = document.getElementById('defaultPriceStockSection');
+        if (defaultSection) {
+            defaultSection.classList.toggle('default-price-stock-collapsed', hasVariant);
+        }
     }
 
     function formatVariantMoney(value) {

@@ -4,16 +4,19 @@ import dao.CategoryDAO;
 import dao.DAOFactory;
 import dao.ProductDAO;
 import dao.ProductVariantDAO;
-import model.product.ProductVariant;
-import service.SystemLogService;
 import model.enums.ProductStatus;
 import model.product.Product;
 import model.product.ProductImportResult;
-
-import org.apache.poi.ss.usermodel.*;
+import model.product.ProductVariant;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import service.SystemLogService;
 
 import java.io.InputStream;
+import java.time.LocalDateTime;
 
 public class ProductImportService {
 
@@ -21,148 +24,186 @@ public class ProductImportService {
     private final ProductVariantDAO variantDAO = DAOFactory.getInstance().getProductVariantDAO();
     private final CategoryDAO categoryDAO = DAOFactory.getInstance().getCategoryDAO();
     private final SystemLogService logService = new SystemLogService();
+
     public ProductImportResult importProducts(InputStream inputStream, Integer adminId) {
         ProductImportResult result = new ProductImportResult();
-        try {
-            Workbook workbook = new XSSFWorkbook(inputStream);
+
+        try (Workbook workbook = new XSSFWorkbook(inputStream)) {
             Sheet sheet = workbook.getSheetAt(0);
+
             for (int i = 1; i <= sheet.getLastRowNum(); i++) {
                 Row row = sheet.getRow(i);
-                if (row == null) {
+                if (row == null || isBlankRow(row)) {
                     continue;
                 }
+
                 try {
-                    String productName = getCellString(row.getCell(0));
-                    double price = row.getCell(1).getNumericCellValue();
-                    double salePrice = row.getCell(2).getNumericCellValue();
-                    int stock = (int) row.getCell(3).getNumericCellValue();
-                    String categoryName = getCellString(row.getCell(4));
-                    String status = getCellString(row.getCell(5));
-                    String bestseller = getCellString(row.getCell(6));
-                    String shortDescription = getCellString(row.getCell(7));
-                    String description = getCellString(row.getCell(8));
-                    String imageFile = getCellString(row.getCell(9));
+                    String productSku = getCellString(row.getCell(0));
+                    String productName = getCellString(row.getCell(1));
+                    String categoryName = getCellString(row.getCell(2));
+                    String status = getCellString(row.getCell(3));
+                    String bestseller = getCellString(row.getCell(4));
+                    String shortDescription = getCellString(row.getCell(5));
+                    String description = getCellString(row.getCell(6));
+                    String imageFile = getCellString(row.getCell(7));
+                    String variantSku = getCellString(row.getCell(8));
+                    String variantName = getCellString(row.getCell(9));
+                    double variantPrice = getCellDouble(row.getCell(10));
+                    double variantSalePrice = getCellDouble(row.getCell(11));
+                    int variantStock = (int) getCellDouble(row.getCell(12));
 
-                    if (categoryName == null || categoryName.isBlank()) {
-                        result.addError("Dòng " + (i + 1) + ": Danh mục trống");
-                        continue;
-                    }
-
-                    if (productName == null || productName.isBlank() || price <= 0 || stock < 0 || status == null || status.isBlank()) {
+                    if (productSku.isBlank() || productName.isBlank() || categoryName.isBlank()
+                            || variantPrice <= 0 || variantStock < 0) {
                         result.addError("Dòng " + (i + 1) + ": Thiếu hoặc sai dữ liệu bắt buộc");
                         continue;
                     }
+
+                    if (variantName.isBlank()) {
+                        variantName = "Mặc định";
+                    }
+                    if (variantSku.isBlank()) {
+                        variantSku = productSku + ("Mặc định".equals(variantName) ? "-MD" : "-" + normalizeSkuPart(variantName));
+                    }
+
                     Integer categoryId = categoryDAO.getCategoryIdByName(categoryName);
                     if (categoryId == null) {
                         result.addError("Dòng " + (i + 1) + ": Danh mục không tồn tại - " + categoryName);
                         continue;
                     }
-                    Product existingProduct = productDAO.getProductByName(productName);
 
-                    if (existingProduct == null) {
-                        Product product = new Product();
-                        product.setCategoryId(categoryId);
-                        product.setName(productName);
-                        product.setSlug(productName.toLowerCase().replace(" ", "-") + "-" + System.currentTimeMillis());
-                        product.setPrice(price);
-                        product.setSalePrice(salePrice);
-                        product.setStockQuantity(stock);
-                        product.setShortDescription(shortDescription);
-                        product.setDescription(description);
-                        product.setSku("SKU-" + System.nanoTime());
-                        if (imageFile == null || imageFile.isBlank()) {
-                            product.setImageUrl("assets/images/default-product.png");
-                        } else {
-                            product.setImageUrl("assets/images/products/import/" + imageFile);
-                        }
-                        product.setBestseller(bestseller.equalsIgnoreCase("true"));
-                        product.setIngredients("");
-                        product.setUsageInstructions("");
-                        product.setCreatedAt(java.time.LocalDateTime.now());
-
-                        if (status.equalsIgnoreCase("ACTIVE")) {
-                            product.setStatus(ProductStatus.ACTIVE);
-                        } else {
-                            product.setStatus(ProductStatus.INACTIVE);
-                        }
-
-                        int newId = productDAO.insertProduct(product);
-
-                        if (newId > 0) {
-                            ProductVariant v = new ProductVariant();
-                            v.setProductId(newId);
-                            v.setVariantName("Mặc định");
-                            v.setPrice(price);
-                            v.setStockQuantity(stock);
-                            v.setSku("VAR-" + System.nanoTime());
-
-                            variantDAO.addVariant(v);
-                            result.increaseAdded();
-                        } else {
-                            result.addError("Dòng " + (i + 1) + ": Thêm sản phẩm thất bại");
-                        }
-                    } else {
-
-                        existingProduct.setPrice(price);
-                        existingProduct.setSalePrice(salePrice);
-                        existingProduct.setStockQuantity(stock);
-                        existingProduct.setCategoryId(categoryId);
-                        boolean updated = productDAO.updateProduct(existingProduct);
-                        if (updated) {
-                            variantDAO.updateStockByProductId(existingProduct.getId(), stock);
-                            result.increaseUpdated();
-                        } else {
-                            result.addError("Dòng " + (i + 1) + ": Cập nhật sản phẩm thất bại");
-                        }
+                    Product product = productDAO.getProductBySku(productSku);
+                    boolean newProduct = product == null;
+                    if (newProduct) {
+                        product = new Product();
+                        product.setSku(productSku);
+                        product.setSlug(productName.toLowerCase().replaceAll("[^a-z0-9]+", "-")
+                                .replaceAll("^-|-$", "") + "-" + System.currentTimeMillis());
+                        product.setCreatedAt(LocalDateTime.now());
                     }
 
+                    product.setName(productName);
+                    product.setCategoryId(categoryId);
+                    product.setShortDescription(shortDescription);
+                    product.setDescription(description);
+                    product.setPrice(variantPrice);
+                    product.setSalePrice(variantSalePrice);
+                    product.setStockQuantity(variantStock);
+                    product.setImageUrl(imageFile.isBlank()
+                            ? (product.getImageUrl() != null ? product.getImageUrl() : "assets/images/default-product.png")
+                            : "assets/images/products/import/" + imageFile);
+                    product.setBestseller("true".equalsIgnoreCase(bestseller) || "1".equals(bestseller));
+                    product.setIngredients(product.getIngredients() != null ? product.getIngredients() : "");
+                    product.setUsageInstructions(product.getUsageInstructions() != null ? product.getUsageInstructions() : "");
+                    product.setStatus(parseStatus(status));
+
+                    int productId;
+                    if (newProduct) {
+                        productId = productDAO.insertProduct(product);
+                        if (productId <= 0) {
+                            result.addError("Dòng " + (i + 1) + ": Thêm sản phẩm thất bại");
+                            continue;
+                        }
+                        product.setId(productId);
+                        result.increaseAdded();
+                    } else {
+                        productDAO.updateProduct(product);
+                        productId = product.getId();
+                        result.increaseUpdated();
+                    }
+
+                    ProductVariant variant = variantDAO.getVariantBySku(variantSku);
+                    if (variant == null) {
+                        variant = variantDAO.getVariantByProductAndName(productId, variantName);
+                    }
+
+                    if (variant == null) {
+                        variant = new ProductVariant();
+                        variant.setProductId(productId);
+                        variant.setVariantName(variantName);
+                        variant.setSku(variantSku);
+                        variant.setPrice(variantPrice);
+                        variant.setSalePrice(Math.min(variantSalePrice, variantPrice));
+                        variant.setStockQuantity(variantStock);
+                        variantDAO.addVariant(variant);
+                    } else {
+                        variant.setProductId(productId);
+                        variant.setVariantName(variantName);
+                        variant.setSku(variantSku);
+                        variant.setPrice(variantPrice);
+                        variant.setSalePrice(Math.min(variantSalePrice, variantPrice));
+                        variant.setStockQuantity(variantStock);
+                        variantDAO.updateVariant(variant);
+                    }
                 } catch (Exception e) {
                     e.printStackTrace();
                     result.addError("Lỗi dòng " + (i + 1) + ": " + e.getMessage());
                 }
             }
-
-            workbook.close();
-
         } catch (Exception e) {
-            System.out.println("===== READ EXCEL ERROR =====");
             e.printStackTrace();
             result.addError("Không thể đọc file Excel: " + e.getMessage());
         }
 
-        for (String err : result.getErrorMessages()) {
-            System.out.println(err);
-        }
-
-        String action;
-        if (result.getAddedCount() > 0 && result.getUpdatedCount() > 0) {
-            action = "Import Excel: thêm " + result.getAddedCount() + " sản phẩm, cập nhật " + result.getUpdatedCount() + " sản phẩm";
-        } else if (result.getAddedCount() > 0) {
-            action = "Import Excel: thêm " + result.getAddedCount() + " sản phẩm mới";
-        } else if (result.getUpdatedCount() > 0) {
-            action = "Import Excel: cập nhật " + result.getUpdatedCount() + " sản phẩm";
-        } else {
-            if (result.getErrorMessages().isEmpty()) {
-                action = "Import Excel sản phẩm thất bại";
-            } else {
-                action = "Import Excel thất bại: " + result.getErrorMessages().get(0);
-            }
-        }
+        String action = "Import sản phẩm/biến thể: thêm " + result.getAddedCount()
+                + ", cập nhật " + result.getUpdatedCount()
+                + ", lỗi " + result.getErrorCount();
         logService.log(adminId, action, "Product", null);
         return result;
     }
 
-    private String getCellString(Cell cell) {
+    private boolean isBlankRow(Row row) {
+        for (int i = 0; i <= 12; i++) {
+            if (!getCellString(row.getCell(i)).isBlank()) {
+                return false;
+            }
+        }
+        return true;
+    }
 
+    private ProductStatus parseStatus(String status) {
+        if (status == null || status.isBlank()) {
+            return ProductStatus.ACTIVE;
+        }
+        try {
+            return ProductStatus.valueOf(status.trim().toUpperCase());
+        } catch (Exception e) {
+            return ProductStatus.ACTIVE;
+        }
+    }
+
+    private String getCellString(Cell cell) {
         if (cell == null) {
             return "";
         }
-
         return switch (cell.getCellType()) {
             case STRING -> cell.getStringCellValue().trim();
-            case NUMERIC -> String.valueOf((int) cell.getNumericCellValue());
+            case NUMERIC -> String.valueOf((long) cell.getNumericCellValue());
             case BOOLEAN -> String.valueOf(cell.getBooleanCellValue());
             default -> "";
         };
+    }
+
+    private double getCellDouble(Cell cell) {
+        if (cell == null) {
+            return 0;
+        }
+        try {
+            return switch (cell.getCellType()) {
+                case NUMERIC -> cell.getNumericCellValue();
+                case STRING -> cell.getStringCellValue().trim().isEmpty()
+                        ? 0
+                        : Double.parseDouble(cell.getStringCellValue().trim());
+                default -> 0;
+            };
+        } catch (Exception e) {
+            return 0;
+        }
+    }
+
+    private String normalizeSkuPart(String value) {
+        String normalized = value == null ? "" : value.trim().toUpperCase()
+                .replaceAll("[^A-Z0-9]+", "-")
+                .replaceAll("^-|-$", "");
+        return normalized.isBlank() ? "MD" : normalized;
     }
 }
