@@ -1,4 +1,5 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -31,6 +32,20 @@
             font-size: 0.7rem;
             color: #888;
         }
+        .field-error-text {
+            color: #dc3545;
+            font-size: 0.75rem;
+            display: block;
+            margin-top: 4px;
+            margin-bottom: 10px;
+            margin-left: 2px;
+            font-weight: 500;
+            font-style: italic;
+        }
+        .input-error-border {
+            border: 1.5px solid #dc3545 !important;
+            background-color: #fff8f8 !important;
+        }
     </style>
 </head>
 <body>
@@ -56,7 +71,7 @@
                 <div class="form-row">
                     <input
                             id="signup-username"
-                            class="input-username"
+                            class="input-username ${not empty usernameError ? 'input-error-border' : ''}"
                             type="text"
                             name="username"
                             title="Tên đăng nhập phải ít nhất 6 ký tự, chỉ gồm chữ cái và số, không có khoảng trắng."
@@ -66,12 +81,15 @@
                             value="${param.username}"
                             required>
                 </div>
+                <c:if test="${not empty usernameError}">
+                    <span class="field-error-text">${usernameError}</span>
+                </c:if>
 
                 <span class="input-guide"><i class="fa-solid fa-circle-info"></i> Số điện thoại: Phải đủ 10 chữ số nhà mạng VN.</span>
                 <div class="form-row">
                     <input
                             id="signup-phone"
-                            class="input-phone"
+                            class="input-phone ${not empty phoneError ? 'input-error-border' : ''}"
                             type="tel"
                             name="phone"
                             placeholder="Số điện thoại"
@@ -79,12 +97,15 @@
                             value="${param.phone}"
                             required>
                 </div>
+                <c:if test="${not empty phoneError}">
+                    <span class="field-error-text">${phoneError}</span>
+                </c:if>
 
                 <span class="input-guide"><i class="fa-solid fa-circle-info"></i> Mật khẩu: Ít nhất 8 ký tự, gồm cả chữ thường, chữ HOA và số.</span>
                 <div class="form-row password-field">
                     <input
                             id="signup-password"
-                            class="input-password"
+                            class="input-password ${not empty passwordError ? 'input-error-border' : ''}"
                             type="password"
                             name="password"
                             placeholder="Mật khẩu"
@@ -94,11 +115,14 @@
                             required>
                     <i class="fa-solid fa-eye toggle-password" toggle="#signup-password"></i>
                 </div>
+                <c:if test="${not empty passwordError}">
+                    <span class="field-error-text">${passwordError}</span>
+                </c:if>
 
                 <div class="form-row password-field">
                     <input
                             id="signup-confirmPassword"
-                            class="input-confirm"
+                            class="input-confirm ${not empty confirmPasswordError ? 'input-error-border' : ''}"
                             type="password"
                             name="confirmPassword"
                             placeholder="Xác nhận mật khẩu"
@@ -106,9 +130,15 @@
                             required>
                     <i class="fa-solid fa-eye toggle-password" toggle="#signup-confirmPassword"></i>
                 </div>
+                <c:if test="${not empty confirmPasswordError}">
+                    <span class="field-error-text">${confirmPasswordError}</span>
+                </c:if>
                 <div class="form-row" style="justify-content:center; margin-bottom: 15px;">
                     <div class="g-recaptcha" data-sitekey="${captchaSiteKey}"></div>
                 </div>
+                <c:if test="${not empty captchaError}">
+                    <span class="field-error-text" style="text-align: center; margin-bottom: 15px;">${captchaError}</span>
+                </c:if>
                 <div class="form-row">
                     <button type="submit" class="btn">Đăng ký</button>
                 </div>
@@ -134,17 +164,23 @@
     const avatarPreview = document.getElementById('signup-avatarPreview');
     const avatarBox = document.getElementById('signup-avatarBox');
 
-    avatarBox.addEventListener('click', () => avatarInput.click()); // mở hộp thoại chọn file
+    if (avatarBox && avatarInput) {
+        avatarBox.addEventListener('click', () => avatarInput.click()); // mở hộp thoại chọn file
+    }
 
     // cập nhật ảnh đại diện khi chọn file
     function handleAvatarChange(e){
         const file = e.target.files?.[0];
         if (!file) return;
         const reader = new FileReader();
-        reader.onload = (ev) => { avatarPreview.src = ev.target.result; };
+        reader.onload = (ev) => { 
+            if (avatarPreview) avatarPreview.src = ev.target.result; 
+        };
         reader.readAsDataURL(file);
     }
-    avatarInput.addEventListener('change', handleAvatarChange);
+    if (avatarInput) {
+        avatarInput.addEventListener('change', handleAvatarChange);
+    }
 </script>
 <script src="${pageContext.request.contextPath}/assets/js/main.js"></script>
 <script src="https://www.google.com/recaptcha/api.js" async defer></script>
