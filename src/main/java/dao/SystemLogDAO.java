@@ -21,9 +21,17 @@ public class SystemLogDAO {
         try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
-            ps.setInt(1, userID);
+            if (userID == null) {
+                ps.setNull(1, Types.INTEGER);
+            } else {
+                ps.setInt(1, userID);
+            }
             ps.setString(2, action);
-            ps.setString(3, entityType);
+            if (entityType == null) {
+                ps.setNull(3, Types.VARCHAR);
+            } else {
+                ps.setString(3, entityType);
+            }
             if (entityID == null) {
                 ps.setNull(4, Types.INTEGER);
             } else {
