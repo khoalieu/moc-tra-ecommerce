@@ -195,7 +195,10 @@
                     <input type="hidden" name="action" value="change_email">
 
                     <div class="input-group">
-                        <input type="email" id="newEmail" name="newEmail" placeholder=" " required style="width: 100%; box-sizing: border-box;">
+                        <input type="email" id="newEmail" name="newEmail" placeholder=" " 
+                               pattern="^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$"
+                               title="Vui lòng nhập email đúng định dạng (ví dụ: example@domain.com)"
+                               required style="width: 100%; box-sizing: border-box;">
                         <label for="newEmail">Nhập địa chỉ email mới</label>
                     </div>
 
