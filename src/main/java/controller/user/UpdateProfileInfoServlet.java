@@ -103,7 +103,6 @@ public class UpdateProfileInfoServlet extends HttpServlet {
         try {
             String genderForDb = (genderRaw != null) ? genderRaw.toLowerCase() : "other";
             if (dao.updateProfile(firstName, lastName, phone, dobStr, genderForDb, user.getId())) {
-                // Cập nhật lại object user trong session
                 user.setFirstName(firstName);
                 user.setLastName(lastName);
                 user.setPhone(phone);
@@ -145,43 +144,33 @@ public class UpdateProfileInfoServlet extends HttpServlet {
                 request.getRequestDispatcher(PROFILE_PAGE).forward(request, response);
                 return;
             }
-
-            // Validate file size (additional check)
             if (filePart.getSize() > 5 * 1024 * 1024) {
                 request.setAttribute("error", "File size must be less than 5MB.");
                 request.getRequestDispatcher(PROFILE_PAGE).forward(request, response);
                 return;
             }
 
-            // Create upload directory if it doesn't exist
             String uploadPath = UPLOAD_DIR;
             File uploadDir = new File(uploadPath);
             if (!uploadDir.exists()) {
                 uploadDir.mkdirs();
             }
 
-            // Xóa ảnh cũ (nếu có)
             if (currentUser.getAvatar() != null && !currentUser.getAvatar().isEmpty()) {
-                // Sửa lại cách lấy đường dẫn file cũ để xóa
                 File oldFile = new File(uploadPath + File.separator + currentUser.getAvatar());
                 if (oldFile.exists()) {
                     oldFile.delete();
                 }
             }
 
-            // 1. Tạo tên file đầy đủ có cả đuôi file
             String uniqueFileName = "avatar_" + currentUser.getId() + "_" + UUID.randomUUID().toString().substring(0, 8) + extension;
 
-            // 2. Lưu file vào ổ đĩa
             Path filePath = Paths.get(uploadPath, uniqueFileName);
             try (InputStream input = filePart.getInputStream()) {
                 Files.copy(input, filePath, StandardCopyOption.REPLACE_EXISTING);
             }
 
-            // Cập nhật Database với ĐẦY ĐỦ tên file (uniqueFileName)
-            // Hãy đảm bảo biến uniqueFileName truyền vào đây có đuôi .png/.jpg
             userDAO.updateAvatar(currentUser.getId(), uniqueFileName);
-            // Refresh user from database and update session
             User updatedUser = userDAO.getUserDetailById(currentUser.getId());
             session.setAttribute("user", updatedUser);
             new NotificationService().notifyProfileUpdated(currentUser.getId(),

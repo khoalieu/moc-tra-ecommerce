@@ -22,6 +22,37 @@ public class UserDAO {
     ResultSet rs = null;
     private final DataSource ds;
 
+    public static String PHONE_REGEX;
+    public static String[] VALID_PREFIXES;
+
+    static {
+        try (java.io.InputStream input = UserDAO.class.getClassLoader().getResourceAsStream("phone.properties")) {
+            Properties prop = new Properties();
+            if (input != null) {
+                prop.load(input);
+                PHONE_REGEX = prop.getProperty("phone.regex");
+                String prefixesStr = prop.getProperty("phone.prefixes");
+                if (prefixesStr != null) {
+                    VALID_PREFIXES = prefixesStr.split(",");
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        // Fallbacks
+        if (PHONE_REGEX == null) {
+            PHONE_REGEX = "^(03|05|07|08|09|01[2|6|8|9])\\d{8}$";
+        }
+        if (VALID_PREFIXES == null) {
+            VALID_PREFIXES = new String[]{
+                "032", "033", "034", "035", "036", "037", "038", "039",
+                "070", "079", "077", "076", "078", "089", "090", "093",
+                "081", "082", "083", "084", "085", "088", "091", "094",
+                "056", "058", "092", "059", "099"
+            };
+        }
+    }
+
     public UserDAO(DataSource ds) {
         this.ds = ds;
     }
@@ -919,14 +950,7 @@ public class UserDAO {
     public boolean isValidCarrier(String phone) {
         if (phone == null || phone.trim().length() != 10) return false;
         String prefix = phone.trim().substring(0, 3);
-        String[] validPrefixes = {
-                "032", "033", "034", "035", "036", "037", "038", "039", // Viettel
-                "070", "079", "077", "076", "078", "089", "090", "093", // Mobi
-                "081", "082", "083", "084", "085", "088", "091", "094", // Vina
-                "056", "058", "092", // Vietnamobile
-                "059", "099" // Gmobile
-        };
-        for (String p : validPrefixes) {
+        for (String p : VALID_PREFIXES) {
             if (prefix.equals(p)) return true;
         }
         return false;
