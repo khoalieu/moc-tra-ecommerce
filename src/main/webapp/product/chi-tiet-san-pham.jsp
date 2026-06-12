@@ -569,7 +569,103 @@
             });
         }
 
+        const reviewForm = document.querySelector('.review-form');
+        if (reviewForm) {
+            reviewForm.addEventListener('submit', function(e) {
+                e.preventDefault();
 
+                const submitBtn = reviewForm.querySelector('button[type="submit"]');
+                if (submitBtn) submitBtn.disabled = true;
+
+                const formData = new FormData(reviewForm);
+
+                fetch(reviewForm.action, {
+                    method: 'POST',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: new URLSearchParams(formData)
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (submitBtn) submitBtn.disabled = false;
+
+                    if (data.success) {
+                        // Update remaining reviews info
+                        const canReviewInfo = reviewForm.previousElementSibling;
+                        if (canReviewInfo && canReviewInfo.tagName === 'P') {
+                            if (data.remainingReviewCount > 0) {
+                                canReviewInfo.innerHTML = 'Bạn còn <b>' + data.remainingReviewCount + '</b> lượt đánh giá cho sản phẩm này.';
+                            } else {
+                                canReviewInfo.style.display = 'none';
+                            }
+                        }
+
+                        // Prepend new review
+                        const reviewList = document.querySelector('.review-list');
+                        if (reviewList) {
+                            const placeholder = document.getElementById('empty-reviews-placeholder');
+                            if (placeholder) {
+                                placeholder.remove();
+                            }
+
+                            // Generate star HTML
+                            let starsHtml = '';
+                            for (let i = 1; i <= data.rating; i++) {
+                                starsHtml += '<i class="fa-solid fa-star"></i>';
+                            }
+                            for (let i = 1; i <= 5 - data.rating; i++) {
+                                starsHtml += '<i class="fa-regular fa-star" style="color: #ddd;"></i>';
+                            }
+
+                            const reviewItem = document.createElement('div');
+                            reviewItem.className = 'review-item';
+                            reviewItem.innerHTML = `
+                                <div class="review-avatar">
+                                    <img src="${data.userAvatar}" alt="${data.userName}">
+                                </div>
+                                <div class="review-content">
+                                    <div class="review-author">${data.userName}</div>
+                                    <div class="review-meta">
+                                        <div class="star-rating-display">${starsHtml}</div>
+                                        <span class="review-date">${data.createdAt}</span>
+                                    </div>
+                                    <div class="review-body">${data.comment}</div>
+                                </div>
+                            `;
+
+                            reviewList.insertBefore(reviewItem, reviewList.firstChild);
+                        }
+
+                        // Increment reviews badge count
+                        const badge = document.getElementById('reviews-count-badge');
+                        if (badge) {
+                            badge.textContent = parseInt(badge.textContent) + 1;
+                        }
+
+                        // Reset form
+                        reviewForm.reset();
+
+                        // If no longer can review, hide form
+                        if (!data.canReview) {
+                            const container = reviewForm.closest('.review-form-container');
+                            if (container) {
+                                container.innerHTML = '<p style="color: #777;">Cảm ơn bạn đã đánh giá sản phẩm!</p>';
+                            }
+                        }
+
+                        showFavoriteToast(data.message, 'success');
+                    } else {
+                        showFavoriteToast(data.message, 'error');
+                    }
+                })
+                .catch(err => {
+                    if (submitBtn) submitBtn.disabled = false;
+                    console.error(err);
+                    showFavoriteToast('Gửi đánh giá thất bại. Vui lòng thử lại.', 'error');
+                });
+            });
+        }
 
         const defaultCheckedVariant = document.querySelector('input[name="variantId"]:checked');
         if (defaultCheckedVariant) {
