@@ -16,7 +16,7 @@ public class SystemLogDAO {
     }
 
     public void insertLog(Integer userID, String action, String entityType, Integer entityID) {
-        String sql = "INSERT INTO SystemLogs (UserID, Action, EntityType, EntityID) VALUES (?, ?, ?, ?)";
+        String sql = "INSERT INTO systemlogs (UserID, Action, EntityType, EntityID) VALUES (?, ?, ?, ?)";
 
         try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -48,7 +48,7 @@ public class SystemLogDAO {
         List<SystemLog> logs = new ArrayList<>();
 
         String sql = "SELECT LogID, UserID, Action, EntityType, EntityID, Timestamp " +
-                "FROM SystemLogs ORDER BY Timestamp DESC";
+                "FROM systemlogs ORDER BY Timestamp DESC";
 
         try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql);
