@@ -53,9 +53,11 @@ public class CartServlet extends HttpServlet {
         String productIdStr = request.getParameter("productId");
         String variantIdStr = request.getParameter("variantId");
 
+        int productId = 0;
+        int variantId = 0;
         try {
-            int productId = (productIdStr != null && !productIdStr.isEmpty()) ? Integer.parseInt(productIdStr) : 0;
-            int variantId = (variantIdStr != null && !variantIdStr.isEmpty()) ? Integer.parseInt(variantIdStr) : 0;
+            productId = (productIdStr != null && !productIdStr.isEmpty()) ? Integer.parseInt(productIdStr) : 0;
+            variantId = (variantIdStr != null && !variantIdStr.isEmpty()) ? Integer.parseInt(variantIdStr) : 0;
 
             if ("add".equals(action)) {
                 int quantity = 1;
@@ -66,8 +68,9 @@ public class CartServlet extends HttpServlet {
                 Product product = productDAO.getProductById(productId);
                 ProductVariant variant = variantDAO.getVariantById(variantId);
                 if (product != null && variant != null) {
+                    final int finalVariantId = variantId;
                     int currentInCart = (cart.getItems().stream()
-                            .filter(i -> i.getVariantId() == variantId)
+                            .filter(i -> i.getVariantId() == finalVariantId)
                             .findFirst().map(CartItem::getQuantity).orElse(0));
 
                     if (currentInCart + quantity > variant.getStockQuantity()) {
@@ -108,6 +111,39 @@ public class CartServlet extends HttpServlet {
             }
         } catch (NumberFormatException e) {
             e.printStackTrace();
+        }
+
+        boolean isAjax = "XMLHttpRequest".equals(request.getHeader("X-Requested-With"));
+        if (isAjax) {
+            response.setContentType("application/json;charset=UTF-8");
+            String errorMsg = (String) session.getAttribute("errorMsg");
+            String successMsg = (String) session.getAttribute("successMsg");
+            session.removeAttribute("errorMsg");
+            session.removeAttribute("successMsg");
+
+            java.util.Map<String, Object> jsonMap = new java.util.HashMap<>();
+            if (errorMsg != null) {
+                jsonMap.put("success", false);
+                jsonMap.put("message", errorMsg);
+            } else {
+                jsonMap.put("success", true);
+                jsonMap.put("message", successMsg != null ? successMsg : "Thành công!");
+                jsonMap.put("cartCount", cart.getTotalQuantity());
+                jsonMap.put("cartTotalMoney", cart.getTotalMoney());
+                
+                final int targetVariantId = variantId;
+                CartItem item = cart.getItems().stream()
+                        .filter(i -> i.getVariantId() == targetVariantId)
+                        .findFirst()
+                        .orElse(null);
+                if (item != null) {
+                    jsonMap.put("itemTotalPrice", item.getTotalPrice());
+                } else {
+                    jsonMap.put("itemTotalPrice", 0.0);
+                }
+            }
+            response.getWriter().write(new com.google.gson.Gson().toJson(jsonMap));
+            return;
         }
 
         String referer = request.getHeader("referer");
