@@ -23,6 +23,9 @@ public class LogoutServlet extends HttpServlet {
             log.log(user.getId(), "Đăng xuất", "Auth", null);
             session.invalidate();
         }
+        HttpSession newSession = request.getSession(true);
+        newSession.setAttribute("msg", "Bạn đã đăng xuất thành công!");
+        newSession.setAttribute("msgType", "success");
         response.sendRedirect(request.getContextPath()+"/login");
     }
 }

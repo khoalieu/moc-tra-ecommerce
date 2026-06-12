@@ -1159,4 +1159,142 @@ public class OrderDAO {
         }
     }
 
+    public Order getOrderByTrackingCode(String trackingCode) {
+        if (trackingCode == null || trackingCode.trim().isEmpty()) return null;
+        String sql = "SELECT o.*, a.full_name, a.phone_number, a.street_address, a.ward, a.province " +
+                "FROM orders o " +
+                "LEFT JOIN user_addresses a ON o.shipping_address_id = a.id " +
+                "WHERE o.tracking_code = ? LIMIT 1";
+        try (Connection conn = ds.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, trackingCode.trim());
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    Order o = new Order();
+                    o.setId(rs.getInt("id"));
+                    o.setUserId(rs.getInt("user_id"));
+                    o.setOrderNumber(rs.getString("order_number"));
+                    o.setTotalAmount(rs.getDouble("total_amount"));
+                    o.setShippingFee(rs.getDouble("shipping_fee"));
+                    o.setPaymentMethod(rs.getString("payment_method"));
+                    o.setShippingProvider(rs.getString("shipping_provider"));
+                    o.setTrackingCode(rs.getString("tracking_code"));
+                    try {
+                        o.setStatus(OrderStatus.valueOf(rs.getString("status").toUpperCase()));
+                    } catch (Exception e) {
+                        o.setStatus(OrderStatus.PENDING);
+                    }
+                    try {
+                        o.setPaymentStatus(PaymentStatus.valueOf(rs.getString("payment_status").toUpperCase()));
+                    } catch (Exception e) {
+                        o.setPaymentStatus(PaymentStatus.PENDING);
+                    }
+                    o.setItems(getOrderItems(o.getId()));
+                    return o;
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public boolean completeOrderByGHN(int orderId) {
+        String sql = "UPDATE orders SET " +
+                "status = 'completed', " +
+                "payment_status = CASE WHEN payment_method = 'cod' AND payment_status = 'pending' " +
+                "                      THEN 'paid' ELSE payment_status END " +
+                "WHERE id = ? AND status = 'shipping'";
+        try (Connection conn = ds.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, orderId);
+            boolean updated = ps.executeUpdate() > 0;
+            if (updated) {
+                Order order = getOrderById(orderId);
+                if (order != null) {
+                    new NotificationService().notifyOrderStatusChanged(order, OrderStatus.COMPLETED);
+                    sendOrderStatusEmail(order, OrderStatus.COMPLETED);
+                }
+            }
+            return updated;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    public boolean failOrderByGHN(int orderId, String reason) {
+        Connection conn = null;
+        try {
+            conn = ds.getConnection();
+            conn.setAutoCommit(false);
+
+            Order order = getOrderById(orderId);
+            if (order == null) {
+                conn.rollback();
+                return false;
+            }
+            if (order.getStatus() != OrderStatus.SHIPPING) {
+                conn.rollback();
+                return false;
+            }
+            String sqlUpdate = "UPDATE orders SET status = 'delivery_failed', cancel_reason = ? WHERE id = ?";
+            try (PreparedStatement ps = conn.prepareStatement(sqlUpdate)) {
+                ps.setString(1, reason != null ? reason : "GHN: Giao hàng thất bại");
+                ps.setInt(2, orderId);
+                if (ps.executeUpdate() == 0) {
+                    conn.rollback();
+                    return false;
+                }
+            }
+            if (order.getItems() != null) {
+                for (OrderItem item : order.getItems()) {
+                    Integer variantId = item.getVariantId();
+                    if (variantId != null && variantId > 0) {
+                        try (PreparedStatement psStock = conn.prepareStatement(
+                                "UPDATE product_variants SET stock_quantity = stock_quantity + ? WHERE id = ?")) {
+                            psStock.setInt(1, item.getQuantity());
+                            psStock.setInt(2, variantId);
+                            psStock.executeUpdate();
+                        }
+                    } else {
+                        try (PreparedStatement psStock = conn.prepareStatement(
+                                "UPDATE products SET stock_quantity = stock_quantity + ? WHERE id = ?")) {
+                            psStock.setInt(1, item.getQuantity());
+                            psStock.setInt(2, item.getProductId());
+                            psStock.executeUpdate();
+                        }
+                    }
+                }
+            }
+
+            conn.commit();
+
+            order.setStatus(OrderStatus.DELIVERY_FAILED);
+            NotificationService notificationService = new NotificationService();
+            notificationService.notifyOrderStatusChanged(order, OrderStatus.DELIVERY_FAILED);
+            notificationService.notifyAdminDeliveryFailed(order);
+            sendOrderStatusEmail(order, OrderStatus.DELIVERY_FAILED);
+
+            String refundReason = "GHN hoàn hàng: " + (reason != null ? reason : "Giao hàng thất bại");
+            boolean refundCreated = new RefundDAO(ds).createPendingInfoRefundForFailedDelivery(order, refundReason);
+            if (refundCreated) {
+                notificationService.notifyRefundPendingInfo(order);
+            }
+
+            return true;
+
+        } catch (SQLException e) {
+            if (conn != null) {
+                try { conn.rollback(); } catch (SQLException ex) { ex.printStackTrace(); }
+            }
+            e.printStackTrace();
+        } finally {
+            if (conn != null) {
+                try { conn.setAutoCommit(true); conn.close(); } catch (SQLException e) { e.printStackTrace(); }
+            }
+        }
+        return false;
+    }
+
 }

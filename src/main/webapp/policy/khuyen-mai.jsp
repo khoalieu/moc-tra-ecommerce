@@ -32,8 +32,19 @@
             <div class="slider-btn slider-next"><i class="fa-solid fa-chevron-right"></i></div>
 
             <c:forEach var="promo" items="${activePromotions}" varStatus="status">
+                <c:choose>
+                    <c:when test="${empty promo.imageUrl}">
+                        <c:set var="resolvedPromoImg" value="${pageContext.request.contextPath}/assets/images/no-image.jpg"/>
+                    </c:when>
+                    <c:when test="${promo.imageUrl.startsWith('http')}">
+                        <c:set var="resolvedPromoImg" value="${promo.imageUrl}"/>
+                    </c:when>
+                    <c:otherwise>
+                        <c:set var="resolvedPromoImg" value="${pageContext.request.contextPath}/${promo.imageUrl}"/>
+                    </c:otherwise>
+                </c:choose>
                 <div class="slide ${status.first ? 'active' : ''}"
-                     style="background-image: url('${pageContext.request.contextPath}/${promo.imageUrl}');">
+                     style="background-image: url('${resolvedPromoImg}');">
 
                     <div class="promo-hero__overlay">
                         <h1>${promo.name}</h1>
@@ -295,7 +306,18 @@
 
                             <div class="product-image">
                                 <a href="${pageContext.request.contextPath}/chi-tiet-san-pham?id=${p.id}">
-                                    <img src="${pageContext.request.contextPath}/${p.imageUrl}" alt="${p.name}" style="width: 100%; height: auto;">
+                                    <c:choose>
+                                        <c:when test="${empty p.imageUrl}">
+                                            <c:set var="resolvedPImg" value="${pageContext.request.contextPath}/assets/images/no-image.jpg"/>
+                                        </c:when>
+                                        <c:when test="${p.imageUrl.startsWith('http')}">
+                                            <c:set var="resolvedPImg" value="${p.imageUrl}"/>
+                                        </c:when>
+                                        <c:otherwise>
+                                            <c:set var="resolvedPImg" value="${pageContext.request.contextPath}/${p.imageUrl}"/>
+                                        </c:otherwise>
+                                    </c:choose>
+                                    <img src="${resolvedPImg}" alt="${p.name}" style="width: 100%; height: auto;">
                                 </a>
                             </div>
 
@@ -380,7 +402,18 @@
 
                                     <div class="product-image">
                                         <a href="${pageContext.request.contextPath}/chi-tiet-san-pham?id=${p.id}">
-                                            <img src="${pageContext.request.contextPath}/${p.imageUrl}" alt="${p.name}" style="width: 100%; height: auto;">
+                                            <c:choose>
+                                                <c:when test="${empty p.imageUrl}">
+                                                    <c:set var="resolvedPImg" value="${pageContext.request.contextPath}/assets/images/no-image.jpg"/>
+                                                </c:when>
+                                                <c:when test="${p.imageUrl.startsWith('http')}">
+                                                    <c:set var="resolvedPImg" value="${p.imageUrl}"/>
+                                                </c:when>
+                                                <c:otherwise>
+                                                    <c:set var="resolvedPImg" value="${pageContext.request.contextPath}/${p.imageUrl}"/>
+                                                </c:otherwise>
+                                            </c:choose>
+                                            <img src="${resolvedPImg}" alt="${p.name}" style="width: 100%; height: auto;">
                                         </a>
                                     </div>
 

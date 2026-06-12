@@ -154,7 +154,17 @@
                                 <c:forEach var="item" items="${orderItems}">
                                     <tr>
                                         <td class="text-left">
-                                            <img src="${pageContext.request.contextPath}${item.product.imageUrl}" width="50" class="img-rounded">
+                                            <c:choose>
+                                                <c:when test="${empty item.product.imageUrl}">
+                                                    <img src="${pageContext.request.contextPath}/assets/images/no-image.jpg" width="50" class="img-rounded">
+                                                </c:when>
+                                                <c:when test="${item.product.imageUrl.startsWith('http')}">
+                                                    <img src="${item.product.imageUrl}" width="50" class="img-rounded">
+                                                </c:when>
+                                                <c:otherwise>
+                                                    <img src="${pageContext.request.contextPath}/${item.product.imageUrl}" width="50" class="img-rounded">
+                                                </c:otherwise>
+                                            </c:choose>
                                         </td>
                                         <td class="text-left">
                                             <span class="font-medium">${item.product.name}</span>

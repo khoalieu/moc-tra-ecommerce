@@ -288,10 +288,26 @@
                                            onchange="updateBulkActions()">
                                 </td>
                                 <td>
-                                    <img src="${pageContext.request.contextPath}/${p.imageUrl}"
-                                         alt="${p.name}"
-                                         class="product-image-thumb"
-                                         style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px;">
+                                    <c:choose>
+                                        <c:when test="${empty p.imageUrl}">
+                                            <img src="${pageContext.request.contextPath}/assets/images/no-image.jpg"
+                                                 alt="${p.name}"
+                                                 class="product-image-thumb"
+                                                 style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px;">
+                                        </c:when>
+                                        <c:when test="${p.imageUrl.startsWith('http')}">
+                                            <img src="${p.imageUrl}"
+                                                 alt="${p.name}"
+                                                 class="product-image-thumb"
+                                                 style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px;">
+                                        </c:when>
+                                        <c:otherwise>
+                                            <img src="${pageContext.request.contextPath}/${p.imageUrl}"
+                                                 alt="${p.name}"
+                                                 class="product-image-thumb"
+                                                 style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px;">
+                                        </c:otherwise>
+                                    </c:choose>
                                 </td>
                                 <td>
                                     <div class="product-name-cell" style="font-weight: 500;">${p.name}</div>

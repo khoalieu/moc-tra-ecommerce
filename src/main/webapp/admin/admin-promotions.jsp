@@ -129,7 +129,14 @@
                                         <div class="promo-image-box">
                                             <c:choose>
                                                 <c:when test="${not empty promo.imageUrl}">
-                                                    <img src="${pageContext.request.contextPath}/${promo.imageUrl}" alt="${promo.name}" class="promo-list-image">
+                                                    <c:choose>
+                                                        <c:when test="${promo.imageUrl.startsWith('http')}">
+                                                            <img src="${promo.imageUrl}" alt="${promo.name}" class="promo-list-image">
+                                                        </c:when>
+                                                        <c:otherwise>
+                                                            <img src="${pageContext.request.contextPath}/${promo.imageUrl}" alt="${promo.name}" class="promo-list-image">
+                                                        </c:otherwise>
+                                                    </c:choose>
                                                 </c:when>
                                                 <c:otherwise>
                                                     <div class="promo-image-placeholder">
@@ -942,7 +949,11 @@
         const text = document.getElementById('promotionImageText');
 
         if (imageUrl) {
-            preview.src = '${pageContext.request.contextPath}/' + imageUrl;
+            if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+                preview.src = imageUrl;
+            } else {
+                preview.src = '${pageContext.request.contextPath}/' + imageUrl;
+            }
             preview.classList.remove('preview-hidden');
             icon.style.display = 'none';
             text.textContent = 'Nhấp để thay đổi hình ảnh';

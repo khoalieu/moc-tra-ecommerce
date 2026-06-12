@@ -7,11 +7,20 @@
             <div class="avatar-container" style="margin-bottom: 15px;">
                 <c:choose>
                     <c:when test="${not empty sessionScope.user.avatar}">
-                        <img id="sideAvatarPreview"
-                            <%-- THÊM CHỮ /image VÀO ĐÂY --%>
-                             src="${pageContext.request.contextPath}/image/${sessionScope.user.avatar}?t=<%=System.currentTimeMillis()%>"
-                             alt="Avatar"
-                             style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 2px solid #e67e22; display: block; margin: 0 auto;">
+                        <c:choose>
+                            <c:when test="${sessionScope.user.avatar.startsWith('http')}">
+                                <img id="sideAvatarPreview"
+                                     src="${sessionScope.user.avatar}"
+                                     alt="Avatar"
+                                     style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 2px solid #e67e22; display: block; margin: 0 auto;">
+                            </c:when>
+                            <c:otherwise>
+                                <img id="sideAvatarPreview"
+                                     src="${pageContext.request.contextPath}/image/${sessionScope.user.avatar}?t=<%=System.currentTimeMillis()%>"
+                                     alt="Avatar"
+                                     style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 2px solid #e67e22; display: block; margin: 0 auto;">
+                            </c:otherwise>
+                        </c:choose>
                     </c:when>
                     <c:otherwise>
                         <div class="avatar-circle" style="width: 80px; height: 80px; border-radius: 50%; background: #e67e22; color: white; display: flex; align-items: center; justify-content: center; font-size: 28px; font-weight: bold; margin: 0 auto; border: 2px solid #ddd;">

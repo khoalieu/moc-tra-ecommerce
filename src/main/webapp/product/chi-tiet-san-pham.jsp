@@ -39,13 +39,35 @@
 
         <section class="product-detail-layout">
             <div class="product-gallery">
+                <c:choose>
+                    <c:when test="${empty product.imageUrl}">
+                        <c:set var="resolvedProductImg" value="${pageContext.request.contextPath}/assets/images/no-image.jpg"/>
+                    </c:when>
+                    <c:when test="${product.imageUrl.startsWith('http')}">
+                        <c:set var="resolvedProductImg" value="${product.imageUrl}"/>
+                    </c:when>
+                    <c:otherwise>
+                        <c:set var="resolvedProductImg" value="${pageContext.request.contextPath}/${product.imageUrl}"/>
+                    </c:otherwise>
+                </c:choose>
                 <div class="main-image">
-                    <img id="mainImg" src="${pageContext.request.contextPath}/${product.imageUrl}" alt="${product.name}">
+                    <img id="mainImg" src="${resolvedProductImg}" alt="${product.name}">
                 </div>
                 <div class="thumbnail-images">
-                    <img src="${pageContext.request.contextPath}/${product.imageUrl}" alt="Main Thumbnail" class="active" onclick="changeImage(this)">
+                    <img src="${resolvedProductImg}" alt="Main Thumbnail" class="active" onclick="changeImage(this)">
                     <c:forEach var="img" items="${gallery}">
-                        <img src="${pageContext.request.contextPath}/${img.imageUrl}" alt="${img.altText}" onclick="changeImage(this)">
+                        <c:choose>
+                            <c:when test="${empty img.imageUrl}">
+                                <c:set var="resolvedGalleryImg" value="${pageContext.request.contextPath}/assets/images/no-image.jpg"/>
+                            </c:when>
+                            <c:when test="${img.imageUrl.startsWith('http')}">
+                                <c:set var="resolvedGalleryImg" value="${img.imageUrl}"/>
+                            </c:when>
+                            <c:otherwise>
+                                <c:set var="resolvedGalleryImg" value="${pageContext.request.contextPath}/${img.imageUrl}"/>
+                            </c:otherwise>
+                        </c:choose>
+                        <img src="${resolvedGalleryImg}" alt="${img.altText}" onclick="changeImage(this)">
                     </c:forEach>
                 </div>
             </div>
@@ -285,7 +307,18 @@
                         <c:forEach var="r" items="${reviews}">
                             <div class="review-item">
                                 <div class="review-avatar">
-                                    <img src="${pageContext.request.contextPath}/${r.userAvatar}" alt="${r.userName}">
+                                    <c:choose>
+                                        <c:when test="${empty r.userAvatar}">
+                                            <c:set var="resolvedAvatar" value="${pageContext.request.contextPath}/assets/images/useravata.png"/>
+                                        </c:when>
+                                        <c:when test="${r.userAvatar.startsWith('http')}">
+                                            <c:set var="resolvedAvatar" value="${r.userAvatar}"/>
+                                        </c:when>
+                                        <c:otherwise>
+                                            <c:set var="resolvedAvatar" value="${pageContext.request.contextPath}/${r.userAvatar}"/>
+                                        </c:otherwise>
+                                    </c:choose>
+                                    <img src="${resolvedAvatar}" alt="${r.userName}">
                                 </div>
                                 <div class="review-content">
                                     <div class="review-author">
@@ -331,7 +364,18 @@
                             </span>
                         </c:if>
 
-                        <img src="${pageContext.request.contextPath}/${rp.imageUrl}" alt="${rp.name}">
+                        <c:choose>
+                            <c:when test="${empty rp.imageUrl}">
+                                <c:set var="resolvedRpImg" value="${pageContext.request.contextPath}/assets/images/no-image.jpg"/>
+                            </c:when>
+                            <c:when test="${rp.imageUrl.startsWith('http')}">
+                                <c:set var="resolvedRpImg" value="${rp.imageUrl}"/>
+                            </c:when>
+                            <c:otherwise>
+                                <c:set var="resolvedRpImg" value="${pageContext.request.contextPath}/${rp.imageUrl}"/>
+                            </c:otherwise>
+                        </c:choose>
+                        <img src="${resolvedRpImg}" alt="${rp.name}">
                         <h3>${rp.name}</h3>
                         <p class="price">
                             <c:choose>

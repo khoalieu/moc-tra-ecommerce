@@ -24,8 +24,9 @@
             <%-- Kiểm tra nếu có banner từ Servlet --%>
             <c:when test="${not empty listBanners}">
                 <c:forEach var="b" items="${listBanners}" varStatus="st">
+                    <c:set var="resolvedBannerUrl" value="${(not empty b.imageUrl and b.imageUrl.startsWith('http')) ? b.imageUrl : pageContext.request.contextPath.concat('/').concat(not empty b.imageUrl ? b.imageUrl : 'assets/images/no-image.jpg')}"/>
                     <div class="hero-slide fade ${st.first ? 'active' : ''}"
-                         style="background-image: url('${pageContext.request.contextPath}/${b.imageUrl}');">
+                         style="background-image: url('${resolvedBannerUrl}');">
 
                         <div class="hero-content">
                             <c:if test="${not empty b.title}">
