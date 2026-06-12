@@ -36,7 +36,12 @@ public class UserNotificationServlet extends HttpServlet {
 
         if ("markAll".equals(action)) {
             notificationService.markAllAsReadForUser(user.getId());
-            response.sendRedirect(request.getContextPath() + "/thong-bao");
+            if ("XMLHttpRequest".equalsIgnoreCase(request.getHeader("X-Requested-With"))) {
+                response.setContentType("application/json;charset=UTF-8");
+                response.getWriter().write("{\"success\":true,\"unreadCount\":0}");
+            } else {
+                response.sendRedirect(request.getContextPath() + "/thong-bao");
+            }
             return;
         }
         if ("read".equals(action)) {

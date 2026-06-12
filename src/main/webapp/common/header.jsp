@@ -122,7 +122,7 @@
         <i class="fa-solid fa-cart-shopping"></i>
         <span>
             <a href="${pageContext.request.contextPath}/gio-hang" style="color: inherit; text-decoration: none;">
-                Giỏ Hàng (${sessionScope.cart != null ? sessionScope.cart.totalQuantity : 0})
+                Giỏ Hàng (<span class="header-cart-count">${sessionScope.cart != null ? sessionScope.cart.totalQuantity : 0}</span>)
             </a>
         </span>
     </span>

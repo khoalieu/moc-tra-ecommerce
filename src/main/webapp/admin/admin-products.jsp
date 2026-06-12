@@ -407,22 +407,11 @@
                                         <a href="admin/product/edit?id=${p.id}" class="btn-action" title="Chỉnh sửa">
                                             <i class="fas fa-edit"></i>
                                         </a>
-
-                                        <c:choose>
-                                            <c:when test="${p.status == 'ACTIVE'}">
-                                                <button class="btn-action danger" title="Ngừng bán"
-                                                        onclick="updateSingleStatus(${p.id}, 'INACTIVE')">
-                                                    <i class="fas fa-ban"></i>
-                                                </button>
-                                            </c:when>
-                                            <c:otherwise>
-                                                <button class="btn-action" style="color: green; border-color: green;"
-                                                        title="Kích hoạt lại"
-                                                        onclick="updateSingleStatus(${p.id}, 'ACTIVE')">
-                                                    <i class="fas fa-check"></i>
-                                                </button>
-                                            </c:otherwise>
-                                        </c:choose>
+                                        <label class="switch" title="${p.status == 'ACTIVE' ? 'Ngừng bán' : 'Kích hoạt lại'}">
+                                            <input type="checkbox" ${p.status == 'ACTIVE' ? 'checked' : ''} 
+                                                   onchange="toggleProductStatus(${p.id}, this)">
+                                            <span class="slider"></span>
+                                        </label>
                                     </div>
                                 </td>
                             </tr>
@@ -597,6 +586,45 @@
         const actionName = status === 'ACTIVE' ? 'Kích hoạt lại' : 'Ngừng bán';
         if (!confirm(`Bạn muốn ${actionName} sản phẩm này?`)) return;
         updateStatusAPI(id, status);
+    }
+
+    function toggleProductStatus(id, checkbox) {
+        const isChecked = checkbox.checked;
+        const newStatus = isChecked ? 'ACTIVE' : 'INACTIVE';
+        const actionName = isChecked ? 'Kích hoạt' : 'Ngừng bán';
+
+        checkbox.disabled = true;
+
+        const params = new URLSearchParams();
+        params.append('ids', id);
+        params.append('status', newStatus);
+
+        fetch('admin/product/status', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+            body: params
+        }).then(res => {
+            checkbox.disabled = false;
+            if (res.ok) {
+                const row = checkbox.closest('tr');
+                const badge = row.querySelector('.status-badge');
+                if (badge) {
+                    badge.className = 'status-badge ' + (isChecked ? 'status-confirmed' : 'status-cancelled');
+                    badge.style.background = isChecked ? '#d4edda' : '#f8d7da';
+                    badge.style.color = isChecked ? '#155724' : '#721c24';
+                    badge.textContent = isChecked ? 'Đang bán' : 'Ngừng bán';
+                }
+                checkbox.parentElement.title = isChecked ? 'Ngừng bán' : 'Kích hoạt lại';
+            } else {
+                alert("Lỗi máy chủ! Vui lòng thử lại.");
+                checkbox.checked = !isChecked;
+            }
+        }).catch(err => {
+            checkbox.disabled = false;
+            console.error(err);
+            alert("Lỗi kết nối!");
+            checkbox.checked = !isChecked;
+        });
     }
 
     // --- 4. CHECKBOX UTILS ---

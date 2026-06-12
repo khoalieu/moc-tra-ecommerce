@@ -211,14 +211,11 @@
                                             </form>
                                         </c:if>
 
-                                        <form action="${pageContext.request.contextPath}/admin/promotions" method="post" class="inline-form">
-                                            <input type="hidden" name="action" value="togglePromotion">
-                                            <input type="hidden" name="id" value="${promo.id}">
-                                            <input type="hidden" name="active" value="${!promo.active}">
-                                            <button type="submit" class="btn-action" title="${promo.active ? 'Tắt khuyến mãi' : 'Bật khuyến mãi'}">
-                                                <i class="fas ${promo.active ? 'fa-toggle-on' : 'fa-toggle-off'}"></i>
-                                            </button>
-                                        </form>
+                                        <label class="switch" title="${promo.active ? 'Tắt khuyến mãi' : 'Bật khuyến mãi'}">
+                                            <input type="checkbox" ${promo.active ? 'checked' : ''} 
+                                                   onchange="togglePromotionStatus(${promo.id}, this)">
+                                            <span class="slider"></span>
+                                        </label>
 
                                         <form action="${pageContext.request.contextPath}/admin/promotions" method="post"
                                               class="inline-form"
@@ -500,14 +497,11 @@
                                             </form>
                                         </c:if>
 
-                                        <form action="${pageContext.request.contextPath}/admin/promotions" method="post" class="inline-form">
-                                            <input type="hidden" name="action" value="toggleCoupon">
-                                            <input type="hidden" name="id" value="${coupon.id}">
-                                            <input type="hidden" name="active" value="${!coupon.active}">
-                                            <button type="submit" class="btn-action" title="${coupon.active ? 'Tắt mã' : 'Bật mã'}">
-                                                <i class="fas ${coupon.active ? 'fa-toggle-on' : 'fa-toggle-off'}"></i>
-                                            </button>
-                                        </form>
+                                        <label class="switch" title="${coupon.active ? 'Tắt mã' : 'Bật mã'}">
+                                            <input type="checkbox" ${coupon.active ? 'checked' : ''} 
+                                                   onchange="toggleCouponStatus(${coupon.id}, this)">
+                                            <span class="slider"></span>
+                                        </label>
 
                                         <form action="${pageContext.request.contextPath}/admin/promotions" method="post"
                                               class="inline-form"
@@ -992,6 +986,86 @@
             text.textContent = 'Đã chọn ảnh. Nhấp để đổi ảnh';
         });
     })();
+
+    function togglePromotionStatus(promoId, checkbox) {
+        const isChecked = checkbox.checked;
+        checkbox.disabled = true;
+
+        const params = new URLSearchParams();
+        params.append('action', 'togglePromotion');
+        params.append('id', promoId);
+        params.append('active', isChecked);
+
+        fetch('${pageContext.request.contextPath}/admin/promotions', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: params
+        })
+        .then(res => res.json())
+        .then(data => {
+            checkbox.disabled = false;
+            if (data.success) {
+                const row = checkbox.closest('tr');
+                const badge = row.querySelector('.status-badge');
+                if (badge) {
+                    badge.className = 'status-badge ' + (isChecked ? 'status-active' : 'status-inactive');
+                    badge.textContent = isChecked ? 'Hoạt động' : 'Tắt';
+                }
+            } else {
+                alert('Có lỗi xảy ra, vui lòng thử lại.');
+                checkbox.checked = !isChecked;
+            }
+        })
+        .catch(err => {
+            checkbox.disabled = false;
+            console.error(err);
+            alert('Lỗi kết nối.');
+            checkbox.checked = !isChecked;
+        });
+    }
+
+    function toggleCouponStatus(couponId, checkbox) {
+        const isChecked = checkbox.checked;
+        checkbox.disabled = true;
+
+        const params = new URLSearchParams();
+        params.append('action', 'toggleCoupon');
+        params.append('id', couponId);
+        params.append('active', isChecked);
+
+        fetch('${pageContext.request.contextPath}/admin/promotions', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: params
+        })
+        .then(res => res.json())
+        .then(data => {
+            checkbox.disabled = false;
+            if (data.success) {
+                const row = checkbox.closest('tr');
+                const badge = row.querySelector('.status-badge');
+                if (badge) {
+                    badge.className = 'status-badge ' + (isChecked ? 'status-active' : 'status-inactive');
+                    badge.textContent = isChecked ? 'Hoạt động' : 'Tắt';
+                }
+            } else {
+                alert('Có lỗi xảy ra, vui lòng thử lại.');
+                checkbox.checked = !isChecked;
+            }
+        })
+        .catch(err => {
+            checkbox.disabled = false;
+            console.error(err);
+            alert('Lỗi kết nối.');
+            checkbox.checked = !isChecked;
+        });
+    }
 </script>
 </body>
 </html>
