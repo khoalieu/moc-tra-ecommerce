@@ -110,5 +110,47 @@
 </div>
 
 <jsp:include page="/common/footer.jsp"/>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const markAllBtn = document.querySelector('.notification-mark-all-btn');
+    if (markAllBtn) {
+        markAllBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+
+            fetch(this.href, {
+                method: 'GET',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    // Remove unread styling from all articles
+                    document.querySelectorAll('.notification-item.unread').forEach(el => {
+                        el.classList.remove('unread');
+                    });
+
+                    // Hide the mark-all-as-read button
+                    markAllBtn.remove();
+
+                    // Update header notification badge if present
+                    const headerBadge = document.querySelector('.notification-badge');
+                    if (headerBadge) {
+                        headerBadge.textContent = '0';
+                        headerBadge.style.display = 'none';
+                    }
+                } else {
+                    alert('Có lỗi xảy ra, vui lòng thử lại.');
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                alert('Lỗi kết nối, vui lòng thử lại.');
+            });
+        });
+    }
+});
+</script>
 </body>
 </html>
