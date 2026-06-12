@@ -120,6 +120,36 @@ public class Product implements Serializable {
     public double getMaxVariantEffectivePrice() { return maxVariantEffectivePrice; }
     public void setMaxVariantEffectivePrice(double maxVariantEffectivePrice) { this.maxVariantEffectivePrice = maxVariantEffectivePrice; }
 
+    public double getDisplayMinPrice() {
+        if (minVariantEffectivePrice > 0) {
+            return minVariantEffectivePrice;
+        }
+        return salePrice > 0 && salePrice < price ? salePrice : price;
+    }
+
+    public double getDisplayMaxPrice() {
+        if (maxVariantEffectivePrice > 0) {
+            return maxVariantEffectivePrice;
+        }
+        return salePrice > 0 && salePrice < price ? salePrice : price;
+    }
+
+    public double getOriginalMinPrice() {
+        return minVariantPrice > 0 ? minVariantPrice : price;
+    }
+
+    public double getOriginalMaxPrice() {
+        return maxVariantPrice > 0 ? maxVariantPrice : price;
+    }
+
+    public boolean isDisplayPriceRange() {
+        return Math.abs(getDisplayMinPrice() - getDisplayMaxPrice()) > 0.001;
+    }
+
+    public boolean isDisplayOnSale() {
+        return getDisplayMinPrice() < getOriginalMinPrice() || getDisplayMaxPrice() < getOriginalMaxPrice();
+    }
+
     public List<ProductVariant> getVariants() {
         return variants;
     }

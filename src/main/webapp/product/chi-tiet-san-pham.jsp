@@ -51,7 +51,12 @@
             </div>
 
             <div class="product-info">
-                <c:if test="${product.salePrice > 0 && product.salePrice < product.price}">
+                <c:set var="initialVariant" value="${not empty variants ? variants[0] : null}" />
+                <c:set var="initialPrice" value="${not empty initialVariant ? initialVariant.price : product.originalMinPrice}" />
+                <c:set var="initialSalePrice" value="${not empty initialVariant ? initialVariant.salePrice : product.displayMinPrice}" />
+                <c:set var="initialOnSale" value="${initialSalePrice > 0 && initialSalePrice < initialPrice}" />
+
+                <c:if test="${product.displayOnSale}">
                     <span class="sale-tag">
                         <c:choose>
                             <c:when test="${product.currentPromotionType eq 'PERCENT'}">
@@ -70,12 +75,12 @@
                 <div class="price-block">
                     <span id="display-new-price" class="new-price">
                         <c:choose>
-                            <c:when test="${product.salePrice > 0}"><fmt:formatNumber value="${product.salePrice}" pattern="#,###"/>đ</c:when>
-                            <c:otherwise><fmt:formatNumber value="${product.price}" pattern="#,###"/>đ</c:otherwise>
+                            <c:when test="${initialOnSale}"><fmt:formatNumber value="${initialSalePrice}" pattern="#,###"/>đ</c:when>
+                            <c:otherwise><fmt:formatNumber value="${initialPrice}" pattern="#,###"/>đ</c:otherwise>
                         </c:choose>
                     </span>
-                        <span id="display-old-price" class="old-price" style="${product.salePrice > 0 ? '' : 'display:none;'}">
-                        <fmt:formatNumber value="${product.price}" pattern="#,###"/>đ
+                        <span id="display-old-price" class="old-price" style="${initialOnSale ? '' : 'display:none;'}">
+                        <fmt:formatNumber value="${initialPrice}" pattern="#,###"/>đ
                     </span>
                 </div>
 
@@ -122,13 +127,13 @@
                             <c:set var="initialStock" value="${variants[0].stockQuantity}" />
                         </c:when>
                         <c:otherwise>
-                            <c:set var="initialStock" value="${product.stockQuantity}" />
+                            <c:set var="initialStock" value="${product.totalStockQuantity}" />
                         </c:otherwise>
                     </c:choose>
 
                     <div class="quantity-selector product-qty-favorite-row">
                         <label for="quantity">Số lượng:</label>
-                        <input type="number" id="quantity" name="quantity" value="1" min="1" max="${initialStock}">
+                        <input type="number" id="quantity" name="quantity" value="${initialStock > 0 ? 1 : 0}" min="${initialStock > 0 ? 1 : 0}" max="${initialStock}">
 
                         <span id="variant-stock" data-default-stock="${initialStock}" style="font-size: 0.8rem; color: #888; margin-left: 10px;">(Còn ${initialStock} sản phẩm)</span>
 
@@ -143,7 +148,7 @@
                         </c:if>
                     </div>
 
-                    <button type="submit" class="cta-button add-to-cart-btn">
+                    <button type="submit" class="cta-button add-to-cart-btn" id="addToCartBtn" ${initialStock <= 0 ? 'disabled' : ''}>
                         <i class="fa-solid fa-cart-plus"></i> Thêm vào giỏ hàng
                     </button>
                 </form>
@@ -320,9 +325,9 @@
             <div class="product-grid">
                 <c:forEach var="rp" items="${relatedProducts}">
                     <div class="product-card">
-                        <c:if test="${rp.salePrice > 0 && rp.salePrice < rp.price}">
+                        <c:if test="${rp.displayOnSale}">
                             <span class="sale-tag">
-                                -<fmt:formatNumber value="${(rp.price - rp.salePrice) / rp.price * 100}" maxFractionDigits="0"/>%
+                                Giảm giá
                             </span>
                         </c:if>
 
@@ -330,12 +335,12 @@
                         <h3>${rp.name}</h3>
                         <p class="price">
                             <c:choose>
-                                <c:when test="${rp.salePrice > 0}">
-                                    <span class="new-price"><fmt:formatNumber value="${rp.salePrice}" pattern="#,###"/>đ</span>
-                                    <span class="old-price"><fmt:formatNumber value="${rp.price}" pattern="#,###"/>đ</span>
+                                <c:when test="${rp.displayOnSale}">
+                                    <span class="new-price"><fmt:formatNumber value="${rp.displayMinPrice}" pattern="#,###"/>đ<c:if test="${rp.displayPriceRange}"> - <fmt:formatNumber value="${rp.displayMaxPrice}" pattern="#,###"/>đ</c:if></span>
+                                    <span class="old-price"><fmt:formatNumber value="${rp.originalMinPrice}" pattern="#,###"/>đ<c:if test="${rp.originalMinPrice != rp.originalMaxPrice}"> - <fmt:formatNumber value="${rp.originalMaxPrice}" pattern="#,###"/>đ</c:if></span>
                                 </c:when>
                                 <c:otherwise>
-                                    <span class="new-price"><fmt:formatNumber value="${rp.price}" pattern="#,###"/>đ</span>
+                                    <span class="new-price"><fmt:formatNumber value="${rp.displayMinPrice}" pattern="#,###"/>đ<c:if test="${rp.displayPriceRange}"> - <fmt:formatNumber value="${rp.displayMaxPrice}" pattern="#,###"/>đ</c:if></span>
                                 </c:otherwise>
                             </c:choose>
                         </p>
@@ -418,6 +423,7 @@
         const oldPriceElem = document.getElementById('display-old-price');
         const stockElem = document.getElementById('variant-stock');
         const quantityInput = document.getElementById('quantity');
+        const addToCartBtn = document.getElementById('addToCartBtn');
 
         const formatCurrency = (amount) => new Intl.NumberFormat('vi-VN').format(amount) + "đ";
 
@@ -432,10 +438,20 @@
 
         const safeStock = Number.isFinite(stock) ? stock : 0;
         stockElem.innerText = "(Còn " + safeStock + " sản phẩm)";
+        quantityInput.min = safeStock > 0 ? 1 : 0;
         quantityInput.max = safeStock;
 
         if (parseInt(quantityInput.value) > safeStock && safeStock > 0) {
             quantityInput.value = safeStock;
+        }
+        if (safeStock <= 0) {
+            quantityInput.value = 0;
+            addToCartBtn.disabled = true;
+        } else {
+            if (parseInt(quantityInput.value) < 1) {
+                quantityInput.value = 1;
+            }
+            addToCartBtn.disabled = false;
         }
     }
 

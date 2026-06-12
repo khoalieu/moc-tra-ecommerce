@@ -24,6 +24,10 @@ public class ProductDAO {
                     "FROM product_variants v WHERE v.product_id = p.id AND v.is_active = 1) AS min_variant_effective_price " +
             ", (SELECT MAX(CASE WHEN v.sale_price > 0 AND v.sale_price < v.price THEN v.sale_price ELSE v.price END) " +
                     "FROM product_variants v WHERE v.product_id = p.id AND v.is_active = 1) AS max_variant_effective_price ";
+    private static final String VARIANT_EFFECTIVE_PRICE =
+            "(CASE WHEN v.sale_price > 0 AND v.sale_price < v.price THEN v.sale_price ELSE v.price END)";
+    private static final String MIN_VARIANT_EFFECTIVE_PRICE =
+            "(SELECT MIN(" + VARIANT_EFFECTIVE_PRICE + ") FROM product_variants v WHERE v.product_id = p.id AND v.is_active = 1)";
 
     public ProductDAO(DataSource ds) {
         this.ds = ds;
@@ -94,11 +98,13 @@ public class ProductDAO {
         }
 
         if (minPrice != null) {
-            sql.append(" AND (CASE WHEN p.sale_price > 0 THEN p.sale_price ELSE p.price END) >= ? ");
+            sql.append(" AND EXISTS (SELECT 1 FROM product_variants v WHERE v.product_id = p.id AND v.is_active = 1 ");
+            sql.append("AND ").append(VARIANT_EFFECTIVE_PRICE).append(" >= ?) ");
         }
 
         if (maxPrice != null) {
-            sql.append(" AND (CASE WHEN p.sale_price > 0 THEN p.sale_price ELSE p.price END) <= ? ");
+            sql.append(" AND EXISTS (SELECT 1 FROM product_variants v WHERE v.product_id = p.id AND v.is_active = 1 ");
+            sql.append("AND ").append(VARIANT_EFFECTIVE_PRICE).append(" <= ?) ");
         }
 
         if (promotionId != null) {
@@ -160,9 +166,9 @@ public class ProductDAO {
             sql.append("CHAR_LENGTH(p.name) ASC, ");
 
             if ("price-asc".equals(sort)) {
-                sql.append("(CASE WHEN p.sale_price > 0 THEN p.sale_price ELSE p.price END) ASC ");
+                sql.append(MIN_VARIANT_EFFECTIVE_PRICE).append(" ASC ");
             } else if ("price-desc".equals(sort)) {
-                sql.append("(CASE WHEN p.sale_price > 0 THEN p.sale_price ELSE p.price END) DESC ");
+                sql.append(MIN_VARIANT_EFFECTIVE_PRICE).append(" DESC ");
             } else if ("name-asc".equals(sort)) {
                 sql.append("p.name ASC ");
             } else {
@@ -172,10 +178,10 @@ public class ProductDAO {
             if (sort != null) {
                 switch (sort) {
                     case "price-asc":
-                        sql.append(" ORDER BY (CASE WHEN p.sale_price > 0 THEN p.sale_price ELSE p.price END) ASC ");
+                        sql.append(" ORDER BY ").append(MIN_VARIANT_EFFECTIVE_PRICE).append(" ASC ");
                         break;
                     case "price-desc":
-                        sql.append(" ORDER BY (CASE WHEN p.sale_price > 0 THEN p.sale_price ELSE p.price END) DESC ");
+                        sql.append(" ORDER BY ").append(MIN_VARIANT_EFFECTIVE_PRICE).append(" DESC ");
                         break;
                     case "name-asc":
                         sql.append(" ORDER BY p.name ASC ");
@@ -323,11 +329,13 @@ public class ProductDAO {
         }
 
         if (minPrice != null) {
-            sql.append(" AND (CASE WHEN p.sale_price > 0 THEN p.sale_price ELSE p.price END) >= ? ");
+            sql.append(" AND EXISTS (SELECT 1 FROM product_variants v WHERE v.product_id = p.id AND v.is_active = 1 ");
+            sql.append("AND ").append(VARIANT_EFFECTIVE_PRICE).append(" >= ?) ");
         }
 
         if (maxPrice != null) {
-            sql.append(" AND (CASE WHEN p.sale_price > 0 THEN p.sale_price ELSE p.price END) <= ? ");
+            sql.append(" AND EXISTS (SELECT 1 FROM product_variants v WHERE v.product_id = p.id AND v.is_active = 1 ");
+            sql.append("AND ").append(VARIANT_EFFECTIVE_PRICE).append(" <= ?) ");
         }
         if (promotionId != null) {
             sql.append(" AND pi.promotion_id = ? ");
@@ -533,10 +541,11 @@ public class ProductDAO {
 
         StringBuilder sql = new StringBuilder(
                 "SELECT " +
-                        "MIN(CASE WHEN p.sale_price > 0 THEN p.sale_price ELSE p.price END) AS min_price, " +
-                        "MAX(CASE WHEN p.sale_price > 0 THEN p.sale_price ELSE p.price END) AS max_price " +
+                        "MIN(CASE WHEN v.sale_price > 0 AND v.sale_price < v.price THEN v.sale_price ELSE v.price END) AS min_price, " +
+                        "MAX(CASE WHEN v.sale_price > 0 AND v.sale_price < v.price THEN v.sale_price ELSE v.price END) AS max_price " +
                         "FROM products p "
         );
+        sql.append(" JOIN product_variants v ON v.product_id = p.id AND v.is_active = 1 ");
 
         if (promotionId != null) {
             sql.append(" JOIN promotion_items pi ON p.id = pi.product_id ");
@@ -1064,7 +1073,8 @@ public class ProductDAO {
 
     public List<Product> getBestSellerProducts(int categoryId, int limit) {
         List<Product> list = new ArrayList<>();
-        String sql = "SELECT * FROM products WHERE category_id = ? AND is_bestseller = 1 AND status = 'ACTIVE' LIMIT ?";
+        String sql = "SELECT p.* " + VARIANT_SUMMARY_SELECT +
+                "FROM products p WHERE p.category_id = ? AND p.is_bestseller = 1 AND p.status = 'ACTIVE' LIMIT ?";
 
         try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -1267,6 +1277,7 @@ public class ProductDAO {
 
         StringBuilder sql = new StringBuilder(
                 "SELECT p.id, p.name, p.image_url, p.price, p.sale_price " +
+                        VARIANT_SUMMARY_SELECT +
                         "FROM products p " +
                         "WHERE p.status = 'active' "
         );
@@ -1344,6 +1355,7 @@ public class ProductDAO {
                 p.setImageUrl(rs.getString("image_url"));
                 p.setPrice(rs.getDouble("price"));
                 p.setSalePrice(rs.getDouble("sale_price"));
+                mapVariantSummary(p, rs);
 
                 list.add(p);
             }

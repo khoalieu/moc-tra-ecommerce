@@ -280,7 +280,7 @@
                 <div class="product-grid" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px;">
                     <c:forEach var="p" items="${productList}">
                         <div class="product-card">
-                            <c:if test="${p.salePrice > 0 && p.salePrice < p.price}">
+                            <c:if test="${p.displayOnSale}">
                                 <span class="sale-tag">
                                     <c:choose>
                                         <c:when test="${p.currentPromotionType == 'PERCENT'}">
@@ -308,17 +308,17 @@
 
                                 <div class="price-box">
                                     <c:choose>
-                                        <c:when test="${p.salePrice > 0 && p.salePrice < p.price}">
-                                            <span class="new-price" style="color: #d32f2f; font-weight: bold; font-size: 1.1rem; margin-right: 10px;">
-                                                <fmt:formatNumber value="${p.salePrice}" pattern="#,###"/>đ
+                                        <c:when test="${p.displayOnSale}">
+                                            <span class="new-price" style="display: block; color: #d32f2f; font-weight: bold; font-size: 1.1rem; margin-bottom: 4px;">
+                                                <fmt:formatNumber value="${p.displayMinPrice}" pattern="#,###"/>đ<c:if test="${p.displayPriceRange}"> - <fmt:formatNumber value="${p.displayMaxPrice}" pattern="#,###"/>đ</c:if>
                                             </span>
-                                            <span class="old-price" style="color: #999; text-decoration: line-through; font-size: 0.9rem;">
-                                                <fmt:formatNumber value="${p.price}" pattern="#,###"/>đ
+                                            <span class="old-price" style="display: block; color: #999; text-decoration: line-through; font-size: 0.9rem;">
+                                                <fmt:formatNumber value="${p.originalMinPrice}" pattern="#,###"/>đ<c:if test="${p.originalMinPrice != p.originalMaxPrice}"> - <fmt:formatNumber value="${p.originalMaxPrice}" pattern="#,###"/>đ</c:if>
                                             </span>
                                         </c:when>
                                         <c:otherwise>
                                             <span class="new-price" style="font-weight: bold; font-size: 1.1rem;">
-                                                <fmt:formatNumber value="${p.price}" pattern="#,###"/>đ
+                                                <fmt:formatNumber value="${p.displayMinPrice}" pattern="#,###"/>đ<c:if test="${p.displayPriceRange}"> - <fmt:formatNumber value="${p.displayMaxPrice}" pattern="#,###"/>đ</c:if>
                                             </span>
                                         </c:otherwise>
                                     </c:choose>
@@ -365,7 +365,7 @@
                                 <div class="product-card vip-product">
                                     <span class="vip-badge">VIP</span>
 
-                                    <c:if test="${p.salePrice > 0 && p.salePrice < p.price}">
+                                    <c:if test="${p.displayOnSale}">
                                         <span class="sale-tag vip-sale-tag">
                                             <c:choose>
                                                 <c:when test="${p.currentPromotionType == 'PERCENT'}">
@@ -393,17 +393,17 @@
                                         </h3>
 
                                         <div class="price-box">
-                                            <c:if test="${p.salePrice > 0 && p.salePrice < p.price}">
-                                                <span class="new-price" style="color: #d32f2f; font-weight: bold; font-size: 1.1rem; margin-right: 10px;">
-                                                    <fmt:formatNumber value="${p.salePrice}" pattern="#,###"/>đ
+                                            <c:if test="${p.displayOnSale}">
+                                                <span class="new-price" style="display: block; color: #d32f2f; font-weight: bold; font-size: 1.1rem; margin-bottom: 4px;">
+                                                    <fmt:formatNumber value="${p.displayMinPrice}" pattern="#,###"/>đ<c:if test="${p.displayPriceRange}"> - <fmt:formatNumber value="${p.displayMaxPrice}" pattern="#,###"/>đ</c:if>
                                                 </span>
-                                                <span class="old-price" style="color: #999; text-decoration: line-through; font-size: 0.9rem;">
-                                                    <fmt:formatNumber value="${p.price}" pattern="#,###"/>đ
+                                                <span class="old-price" style="display: block; color: #999; text-decoration: line-through; font-size: 0.9rem;">
+                                                    <fmt:formatNumber value="${p.originalMinPrice}" pattern="#,###"/>đ<c:if test="${p.originalMinPrice != p.originalMaxPrice}"> - <fmt:formatNumber value="${p.originalMaxPrice}" pattern="#,###"/>đ</c:if>
                                                 </span>
                                             </c:if>
-                                            <c:if test="${p.salePrice <= 0 || p.salePrice >= p.price}">
+                                            <c:if test="${not p.displayOnSale}">
                                                 <span class="new-price" style="font-weight: bold; font-size: 1.1rem;">
-                                                    <fmt:formatNumber value="${p.price}" pattern="#,###"/>đ
+                                                    <fmt:formatNumber value="${p.displayMinPrice}" pattern="#,###"/>đ<c:if test="${p.displayPriceRange}"> - <fmt:formatNumber value="${p.displayMaxPrice}" pattern="#,###"/>đ</c:if>
                                                 </span>
                                             </c:if>
                                         </div>

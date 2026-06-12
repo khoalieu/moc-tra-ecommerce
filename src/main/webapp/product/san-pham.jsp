@@ -352,7 +352,7 @@
                             <div class="product-card">
                                 <div class="product-image-wrapper">
                                     <img src="${p.imageUrl}" alt="${p.name}">
-                                    <c:if test="${p.salePrice > 0 && p.salePrice < p.price}">
+                                    <c:if test="${p.displayOnSale}">
                                         <span class="sale-tag">
                                             <c:choose>
                                                 <c:when test="${not empty p.currentPromotionType and p.currentPromotionType eq 'PERCENT'}">
@@ -373,19 +373,46 @@
 
                                     <c:choose>
                                         <%-- Case 1: Product is on sale --%>
-                                        <c:when test="${p.salePrice > 0 && p.salePrice < p.price}">
-                                            <span class="new-price">
-                                                <fmt:formatNumber value="${p.salePrice}" type="currency" currencySymbol=""/>đ
+                                        <c:when test="${p.displayOnSale}">
+                                            <span class="new-price" style="display: block; margin-bottom: 4px;">
+                                                <c:choose>
+                                                    <c:when test="${p.displayPriceRange}">
+                                                        <fmt:formatNumber value="${p.displayMinPrice}" type="currency" currencySymbol=""/>đ
+                                                        -
+                                                        <fmt:formatNumber value="${p.displayMaxPrice}" type="currency" currencySymbol=""/>đ
+                                                    </c:when>
+                                                    <c:otherwise>
+                                                        <fmt:formatNumber value="${p.displayMinPrice}" type="currency" currencySymbol=""/>đ
+                                                    </c:otherwise>
+                                                </c:choose>
                                             </span>
-                                            <span class="old-price">
-                                                <fmt:formatNumber value="${p.price}" type="currency" currencySymbol=""/>đ
+                                            <span class="old-price" style="display: block;">
+                                                <c:choose>
+                                                    <c:when test="${p.originalMinPrice != p.originalMaxPrice}">
+                                                        <fmt:formatNumber value="${p.originalMinPrice}" type="currency" currencySymbol=""/>đ
+                                                        -
+                                                        <fmt:formatNumber value="${p.originalMaxPrice}" type="currency" currencySymbol=""/>đ
+                                                    </c:when>
+                                                    <c:otherwise>
+                                                        <fmt:formatNumber value="${p.originalMinPrice}" type="currency" currencySymbol=""/>đ
+                                                    </c:otherwise>
+                                                </c:choose>
                                             </span>
                                         </c:when>
 
                                         <%-- Case 2: No sale, standard price --%>
                                         <c:otherwise>
                                             <span class="normal-price">
-                                                <fmt:formatNumber value="${p.price}" type="currency" currencySymbol=""/>đ
+                                                <c:choose>
+                                                    <c:when test="${p.displayPriceRange}">
+                                                        <fmt:formatNumber value="${p.displayMinPrice}" type="currency" currencySymbol=""/>đ
+                                                        -
+                                                        <fmt:formatNumber value="${p.displayMaxPrice}" type="currency" currencySymbol=""/>đ
+                                                    </c:when>
+                                                    <c:otherwise>
+                                                        <fmt:formatNumber value="${p.displayMinPrice}" type="currency" currencySymbol=""/>đ
+                                                    </c:otherwise>
+                                                </c:choose>
                                             </span>
                                         </c:otherwise>
                                     </c:choose>

@@ -93,7 +93,7 @@
                 <div class="product-card">
                     <div style="position: relative;">
                         <img src="${p.imageUrl}" alt="${p.name}">
-                        <c:if test="${p.salePrice > 0 && p.salePrice < p.price}">
+                        <c:if test="${p.displayOnSale}">
                             <span class="sale-tag">Giảm giá</span>
                         </c:if>
                     </div>
@@ -102,12 +102,16 @@
 
                     <p class="price">
                         <c:choose>
-                            <c:when test="${p.salePrice > 0 && p.salePrice < p.price}">
-                                <span class="new-price"><fmt:formatNumber value="${p.salePrice}" pattern="#,###"/>đ</span>
-                                <span class="old-price"><fmt:formatNumber value="${p.price}" pattern="#,###"/>đ</span>
+                            <c:when test="${p.displayOnSale}">
+                                <span class="new-price">
+                                    <fmt:formatNumber value="${p.displayMinPrice}" pattern="#,###"/>đ<c:if test="${p.displayPriceRange}"> - <fmt:formatNumber value="${p.displayMaxPrice}" pattern="#,###"/>đ</c:if>
+                                </span>
+                                <span class="old-price">
+                                    <fmt:formatNumber value="${p.originalMinPrice}" pattern="#,###"/>đ<c:if test="${p.originalMinPrice != p.originalMaxPrice}"> - <fmt:formatNumber value="${p.originalMaxPrice}" pattern="#,###"/>đ</c:if>
+                                </span>
                             </c:when>
                             <c:otherwise>
-                                <span class="new-price"><fmt:formatNumber value="${p.price}" pattern="#,###"/>đ</span>
+                                <span class="new-price"><fmt:formatNumber value="${p.displayMinPrice}" pattern="#,###"/>đ<c:if test="${p.displayPriceRange}"> - <fmt:formatNumber value="${p.displayMaxPrice}" pattern="#,###"/>đ</c:if></span>
                             </c:otherwise>
                         </c:choose>
                     </p>
@@ -132,7 +136,7 @@
                 <div class="product-card">
                     <div style="position: relative;">
                         <img src="${p.imageUrl}" alt="${p.name}">
-                        <c:if test="${p.salePrice > 0 && p.salePrice < p.price}">
+                        <c:if test="${p.displayOnSale}">
                             <span class="sale-tag">Sale</span>
                         </c:if>
                     </div>
@@ -141,12 +145,16 @@
 
                     <p class="price">
                         <c:choose>
-                            <c:when test="${p.salePrice > 0 && p.salePrice < p.price}">
-                                <span class="new-price"><fmt:formatNumber value="${p.salePrice}" pattern="#,###"/>đ</span>
-                                <span class="old-price"><fmt:formatNumber value="${p.price}" pattern="#,###"/>đ</span>
+                            <c:when test="${p.displayOnSale}">
+                                <span class="new-price">
+                                    <fmt:formatNumber value="${p.displayMinPrice}" pattern="#,###"/>đ<c:if test="${p.displayPriceRange}"> - <fmt:formatNumber value="${p.displayMaxPrice}" pattern="#,###"/>đ</c:if>
+                                </span>
+                                <span class="old-price">
+                                    <fmt:formatNumber value="${p.originalMinPrice}" pattern="#,###"/>đ<c:if test="${p.originalMinPrice != p.originalMaxPrice}"> - <fmt:formatNumber value="${p.originalMaxPrice}" pattern="#,###"/>đ</c:if>
+                                </span>
                             </c:when>
                             <c:otherwise>
-                                <span class="new-price"><fmt:formatNumber value="${p.price}" pattern="#,###"/>đ</span>
+                                <span class="new-price"><fmt:formatNumber value="${p.displayMinPrice}" pattern="#,###"/>đ<c:if test="${p.displayPriceRange}"> - <fmt:formatNumber value="${p.displayMaxPrice}" pattern="#,###"/>đ</c:if></span>
                             </c:otherwise>
                         </c:choose>
                     </p>

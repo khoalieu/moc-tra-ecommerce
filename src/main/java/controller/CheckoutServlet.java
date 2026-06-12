@@ -24,6 +24,7 @@ import controller.utils.RedirectUtils;
 import controller.utils.PaymentUtils;
 import controller.utils.PaymentResult;
 import model.promotion.Coupon;
+import model.product.ProductVariant;
 import service.EcommerceEmailService;
 import service.NotificationService;
 
@@ -62,10 +63,16 @@ public class CheckoutServlet extends HttpServlet {
 
         double subtotal = 0;
         List<CartItem> checkoutItems = new ArrayList<>();
+        ProductVariantDAO variantDAO = DAOFactory.getInstance().getProductVariantDAO();
         for (CartItem item : cart.getItems()) {
             for (String selectedId : selectedItems) {
                 try {
                     if (item.getVariantId() == Integer.parseInt(selectedId)) {
+                        ProductVariant freshVariant = variantDAO.getVariantById(item.getVariantId());
+                        if (!refreshCartItemVariant(session, item, freshVariant)) {
+                            response.sendRedirect(request.getContextPath() + "/gio-hang");
+                            return;
+                        }
                         checkoutItems.add(item);
                         subtotal += item.getTotalPrice();
                         break;
@@ -211,10 +218,16 @@ public class CheckoutServlet extends HttpServlet {
 
         List<CartItem> selectedCartItems = new ArrayList<>();
         double subtotal = 0;
+        ProductVariantDAO variantDAO = DAOFactory.getInstance().getProductVariantDAO();
         for (CartItem item : cart.getItems()) {
             for (String idStr : selectedItemIds) {
                 try {
                     if (item.getVariantId() == Integer.parseInt(idStr)) {
+                        ProductVariant freshVariant = variantDAO.getVariantById(item.getVariantId());
+                        if (!refreshCartItemVariant(session, item, freshVariant)) {
+                            response.sendRedirect(request.getContextPath() + "/gio-hang");
+                            return;
+                        }
                         selectedCartItems.add(item);
                         subtotal += item.getTotalPrice();
                         break;
@@ -442,6 +455,22 @@ public class CheckoutServlet extends HttpServlet {
         }
 
         return provinceFee + serviceFee;
+    }
+
+    private boolean refreshCartItemVariant(HttpSession session, CartItem item, ProductVariant freshVariant) {
+        if (freshVariant == null) {
+            session.setAttribute("errorMsg", "PhÃ¢n loáº¡i sáº£n pháº©m khÃ´ng cÃ²n tá»“n táº¡i.");
+            return false;
+        }
+
+        if (item.getQuantity() > freshVariant.getStockQuantity()) {
+            session.setAttribute("errorMsg", "PhÃ¢n loáº¡i " + freshVariant.getVariantName()
+                    + " chá»‰ cÃ²n " + freshVariant.getStockQuantity() + " sáº£n pháº©m.");
+            return false;
+        }
+
+        item.setVariant(freshVariant);
+        return true;
     }
 
     private String generateOrderNumber() {

@@ -55,7 +55,7 @@ public class SearchSuggestionServlet extends HttpServlet {
                 json.append(",");
             }
 
-            double displayPrice = p.getSalePrice() > 0 ? p.getSalePrice() : p.getPrice();
+            double displayPrice = p.getDisplayMinPrice();
 
             json.append("{");
             json.append("\"id\":").append(p.getId()).append(",");
