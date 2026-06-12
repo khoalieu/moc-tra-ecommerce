@@ -10,6 +10,7 @@ import model.enums.UserGender;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import service.NotificationService;
+import java.util.regex.Pattern;
 
 import java.io.File;
 import java.io.IOException;
@@ -81,6 +82,44 @@ public class UpdateProfileInfoServlet extends HttpServlet {
         String dobStr = request.getParameter("dob");
         String genderRaw = request.getParameter("gender");
 
+        if (firstName == null || firstName.trim().isEmpty() || firstName.trim().length() > 50) {
+            session.setAttribute("msg", "Tên không hợp lệ (không được để trống và không vượt quá 50 ký tự)!");
+            session.setAttribute("msgType", "danger");
+            response.sendRedirect(request.getContextPath() + "/tai-khoan-cua-toi");
+            return;
+        }
+        if (lastName == null || lastName.trim().isEmpty() || lastName.trim().length() > 50) {
+            session.setAttribute("msg", "Họ không hợp lệ (không được để trống và không vượt quá 50 ký tự)!");
+            session.setAttribute("msgType", "danger");
+            response.sendRedirect(request.getContextPath() + "/tai-khoan-cua-toi");
+            return;
+        }
+        firstName = firstName.trim();
+        lastName = lastName.trim();
+
+        UserDAO dao = DAOFactory.getInstance().getUserDAO();
+
+        if (phone != null && !phone.trim().isEmpty()) {
+            String cleanPhone = phone.trim();
+            if (!cleanPhone.matches("^[0-9]{10}$")) {
+                session.setAttribute("msg", "Số điện thoại không hợp lệ (phải gồm 10 chữ số)!");
+                session.setAttribute("msgType", "danger");
+                response.sendRedirect(request.getContextPath() + "/tai-khoan-cua-toi");
+                return;
+            } else if (!Pattern.matches(UserDAO.PHONE_REGEX, cleanPhone)) {
+                session.setAttribute("msg", "Số điện thoại không đúng định dạng nhà mạng Việt Nam!");
+                session.setAttribute("msgType", "danger");
+                response.sendRedirect(request.getContextPath() + "/tai-khoan-cua-toi");
+                return;
+            } else if (!dao.isValidCarrier(cleanPhone)) {
+                session.setAttribute("msg", "Đầu số nhà mạng không tồn tại!");
+                session.setAttribute("msgType", "danger");
+                response.sendRedirect(request.getContextPath() + "/tai-khoan-cua-toi");
+                return;
+            }
+            phone = cleanPhone;
+        }
+
         LocalDate validatedDob = null;
         if (dobStr != null && !dobStr.isEmpty()) {
             try {
@@ -98,8 +137,6 @@ public class UpdateProfileInfoServlet extends HttpServlet {
                 return;
             }
         }
-
-        UserDAO dao = DAOFactory.getInstance().getUserDAO();
         try {
             String genderForDb = (genderRaw != null) ? genderRaw.toLowerCase() : "other";
             if (dao.updateProfile(firstName, lastName, phone, dobStr, genderForDb, user.getId())) {
