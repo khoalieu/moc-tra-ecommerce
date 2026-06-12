@@ -37,60 +37,80 @@ public class RegisterServlet extends HttpServlet {
 
         String captchaResponse = request.getParameter("g-recaptcha-response");
 
-        if (userParam == null || userParam.trim().isEmpty() ||
-                phoneParam == null || phoneParam.trim().isEmpty() ||
-                passParam == null || passParam.isEmpty() ||
-                rePassParam == null || rePassParam.isEmpty()) {
+        boolean hasError = false;
 
+        if (userParam == null || userParam.trim().isEmpty()) {
+            request.setAttribute("usernameError", "Vui lòng nhập tên đăng nhập!");
+            hasError = true;
+        } else {
+            String userVal = userParam.trim();
+            if (userVal.contains(" ") || !Pattern.matches(USERNAME_REGEX, userVal)) {
+                request.setAttribute("usernameError", "Tên đăng nhập phải từ 6 ký tự trở lên, không chứa dấu cách hoặc ký tự đặc biệt!");
+                hasError = true;
+            }
+        }
+
+        if (phoneParam == null || phoneParam.trim().isEmpty()) {
+            request.setAttribute("phoneError", "Vui lòng nhập số điện thoại!");
+            hasError = true;
+        } else {
+            String phoneVal = phoneParam.trim();
+            if (!Pattern.matches("^[0-9]{10}$", phoneVal)) {
+                request.setAttribute("phoneError", "Số điện thoại không hợp lệ (phải gồm 10 chữ số)!");
+                hasError = true;
+            } else if (!Pattern.matches(UserDAO.PHONE_REGEX, phoneVal)) {
+                request.setAttribute("phoneError", "Số điện thoại không đúng định dạng nhà mạng Việt Nam!");
+                hasError = true;
+            } else if (!dao.isValidCarrier(phoneVal)) {
+                request.setAttribute("phoneError", "Đầu số nhà mạng không tồn tại!");
+                hasError = true;
+            }
+        }
+
+        if (passParam == null || passParam.isEmpty()) {
+            request.setAttribute("passwordError", "Vui lòng nhập mật khẩu!");
+            hasError = true;
+        } else if (!Pattern.matches(PASSWORD_REGEX, passParam)) {
+            request.setAttribute("passwordError", "Mật khẩu phải từ 8 ký tự trở lên, bao gồm cả chữ thường, chữ HOA và số!");
+            hasError = true;
+        }
+
+        if (rePassParam == null || rePassParam.isEmpty()) {
+            request.setAttribute("confirmPasswordError", "Vui lòng xác nhận mật khẩu!");
+            hasError = true;
+        } else if (passParam != null && !passParam.equals(rePassParam)) {
+            request.setAttribute("confirmPasswordError", "Mật khẩu xác nhận không khớp!");
+            hasError = true;
+        }
+
+        if (!CaptchaUtil.verify(captchaResponse)) {
+            request.setAttribute("captchaError", "Vui lòng xác minh CAPTCHA");
+            hasError = true;
+        }
+
+        if (hasError) {
             request.setAttribute("username", userParam != null ? userParam : "");
             request.setAttribute("phone", phoneParam != null ? phoneParam : "");
             request.setAttribute("captchaSiteKey", CaptchaUtil.getSiteKey());
-
-            request.setAttribute("errorMessage", "Vui lòng nhập đầy đủ tất cả thông tin!");
             request.getRequestDispatcher("/auth/signup.jsp").forward(request, response);
             return;
         }
 
-        String user = request.getParameter("username").trim();
-        String phone = request.getParameter("phone").trim();
-        String pass = request.getParameter("password");
-        String rePass = request.getParameter("confirmPassword");
+        String user = userParam.trim();
+        String phone = phoneParam.trim();
+        String pass = passParam;
 
-        String error = null;
-
-        if (user.contains(" ") || !Pattern.matches(USERNAME_REGEX, user)) {
-            error = "Tên đăng nhập phải từ 6 ký tự trở lên, không chứa dấu cách hoặc ký tự đặc biệt!";
-        }
-        else if (!Pattern.matches("^[0-9]{10}$", phone)) {
-            error = "Số điện thoại không hợp lệ (phải gồm 10 chữ số)!";
-        }else if (!Pattern.matches(UserDAO.PHONE_REGEX, phone)) {
-            error = "Số điện thoại không đúng định dạng nhà mạng VIỆT NAM!";
-        }else if (!dao.isValidCarrier(phone)){
-            error = "Đầu số nhà mạng không tồn tại!";
-        }else if (!Pattern.matches(PASSWORD_REGEX, pass)) {
-            error = "Mật khẩu phải từ 8 ký tự trở lên, bao gồm cả chữ thường, chữ HOA và số!";
-        }
-        else if (!pass.equals(rePass)) {
-            error = "Mật khẩu xác nhận không khớp!";
-        }
-        else if (!CaptchaUtil.verify(captchaResponse)) {
-            error = "Vui lòng xác minh CAPTCHA";
-        }
-        if (error != null) {
-            request.setAttribute("errorMessage", error);
-            request.setAttribute("username", user);
-            request.setAttribute("phone", phone);
-            request.setAttribute("captchaSiteKey", CaptchaUtil.getSiteKey());
-            request.getRequestDispatcher("/auth/signup.jsp").forward(request, response);
-            return;
-        }
         String validationError = dao.checkUserExistDetailed(user, phone);
         if (validationError != null) {
-            request.setAttribute("errorMessage", validationError);
+            if (validationError.contains("Tên đăng nhập")) {
+                request.setAttribute("usernameError", "Tên đăng nhập đã tồn tại trong hệ thống!");
+            }
+            if (validationError.contains("Số điện thoại")) {
+                request.setAttribute("phoneError", "Số điện thoại đã tồn tại trong hệ thống!");
+            }
             request.setAttribute("username", user);
             request.setAttribute("phone", phone);
             request.setAttribute("captchaSiteKey", CaptchaUtil.getSiteKey());
-
             request.getRequestDispatcher("/auth/signup.jsp").forward(request, response);
         } else {
             String otp = String.format("%06d", new java.util.Random().nextInt(999999));
