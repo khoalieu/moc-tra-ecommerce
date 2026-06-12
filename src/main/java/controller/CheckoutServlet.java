@@ -224,19 +224,31 @@ public class CheckoutServlet extends HttpServlet {
             }
         }
 
-        ShippingDAO shippingDAO = DAOFactory.getInstance().getShippingDAO();
         String province = null;
+        Integer ghnDistrictId = null;
+        String ghnWardCode = null;
+
         if ("new".equals(request.getParameter("selectedAddress"))) {
             province = request.getParameter("province");
+            String districtIdStr = request.getParameter("districtId");
+            String wardCode = request.getParameter("wardCode");
+            if (districtIdStr != null && !districtIdStr.isEmpty()) {
+                try { ghnDistrictId = Integer.parseInt(districtIdStr); } catch (NumberFormatException ignored) {}
+            }
+            if (wardCode != null && !wardCode.isEmpty()) {
+                ghnWardCode = wardCode;
+            }
         } else {
             UserAddress addr = addressDAO.getAddressById(shippingAddressId);
             if (addr != null) {
                 province = addr.getProvince();
+                ghnDistrictId = addr.getDistrictId();
+                ghnWardCode = addr.getWardCode();
             }
         }
 
         String shippingMethod = request.getParameter("shippingMethod");
-        double finalShippingFee = calculateFinalShippingFee(province, shippingMethod);
+        double finalShippingFee = calculateFinalShippingFee(province, shippingMethod, ghnDistrictId, ghnWardCode);
 
         double vipDiscount = 0;
         Integer appliedVoucherId = null;
@@ -427,21 +439,30 @@ public class CheckoutServlet extends HttpServlet {
         response.sendRedirect("hoa-don?id=" + orderId);
     }
 
-    private double calculateFinalShippingFee(String province, String shippingMethod) {
+    private double calculateFinalShippingFee(String province, String shippingMethod,
+                                              Integer districtId, String wardCode) {
         GHNShippingDAO ghnDAO = DAOFactory.getInstance().getGHNShippingDAO();
-        long provinceFee = 30000;
-        if (province != null && !province.isEmpty()) {
-            provinceFee = ghnDAO.calculateFeeByProvinceName(province);
-        }
-        double serviceFee = 0;
+        long baseFee;
 
+        if (districtId != null && districtId > 0 && wardCode != null && !wardCode.isEmpty()) {
+            long apiFee = ghnDAO.calculateShippingFee(districtId, wardCode, ghnDAO.getDefaultWeightGram());
+            if (apiFee >= 0) {
+                baseFee = apiFee;
+            } else {
+                baseFee = ghnDAO.calculateFeeByProvinceName(province);
+            }
+        } else {
+            baseFee = ghnDAO.calculateFeeByProvinceName(province);
+        }
+
+        double serviceFee = 0;
         if ("express".equals(shippingMethod)) {
             serviceFee = 15000;
         } else if ("instant".equals(shippingMethod)) {
             serviceFee = 30000;
         }
 
-        return provinceFee + serviceFee;
+        return baseFee + serviceFee;
     }
 
     private String generateOrderNumber() {

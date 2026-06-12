@@ -41,6 +41,10 @@ public class GHNShippingDAO {
         this.serviceTypeId     = parseInt(props.getProperty("ghn.service_type_id", "2"));
         this.defaultWeightGram = parseInt(props.getProperty("ghn.default_weight_gram", "500"));
     }
+    public int getDefaultWeightGram() {
+        return defaultWeightGram;
+    }
+
     public long calculateShippingFee(int toDistrictId, String toWardCode, int weightGram) {
         try {
             JsonObject body = new JsonObject();
