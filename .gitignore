@@ -28,13 +28,12 @@ desktop.ini
 email.properties.example
 email.properties
 config.properties
+phone.properties
 
 captcha.properties
 src/main/resources/captcha.properties
 src/main/resources/database.properties
-
 src/main/resources/payment.properties
-src/main/resources/database.properties
 
 Database/migrations/
 

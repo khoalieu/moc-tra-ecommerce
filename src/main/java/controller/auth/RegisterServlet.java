@@ -11,10 +11,10 @@ import controller.utils.CaptchaUtil;
 
 @WebServlet(name = "RegisterServlet", value = "/signup")
 public class RegisterServlet extends HttpServlet {
-    private static final String PHONE_REGEX = "^(03|05|07|08|09|01[2|6|8|9])\\d{8}$";
+    // PHONE_REGEX is loaded dynamically from UserDAO
     private static final String USERNAME_REGEX = "^[a-zA-Z0-9]{6,}$";
     private static final String EMAIL_REGEX = "^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$";
-    private static final String PASSWORD_REGEX = "^(?=.*[A-Za-z])(?=.*\\d)[A-Za-z\\d]{6,}$";
+    private static final String PASSWORD_REGEX = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)[A-Za-z\\d]{8,}$";
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
@@ -63,12 +63,12 @@ public class RegisterServlet extends HttpServlet {
         }
         else if (!Pattern.matches("^[0-9]{10}$", phone)) {
             error = "Số điện thoại không hợp lệ (phải gồm 10 chữ số)!";
-        }else if (!Pattern.matches(PHONE_REGEX, phone)) {
+        }else if (!Pattern.matches(UserDAO.PHONE_REGEX, phone)) {
             error = "Số điện thoại không đúng định dạng nhà mạng VIỆT NAM!";
         }else if (!dao.isValidCarrier(phone)){
             error = "Đầu số nhà mạng không tồn tại!";
         }else if (!Pattern.matches(PASSWORD_REGEX, pass)) {
-            error = "Mật khẩu phải từ 6 ký tự trở lên, bao gồm cả CHỮ và SỐ!";
+            error = "Mật khẩu phải từ 8 ký tự trở lên, bao gồm cả chữ thường, chữ HOA và số!";
         }
         else if (!pass.equals(rePass)) {
             error = "Mật khẩu xác nhận không khớp!";

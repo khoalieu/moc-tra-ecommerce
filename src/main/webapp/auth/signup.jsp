@@ -80,7 +80,7 @@
                             required>
                 </div>
 
-                <span class="input-guide"><i class="fa-solid fa-circle-info"></i> Mật khẩu: Ít nhất 8 ký tự, gồm cả chữ và số.</span>
+                <span class="input-guide"><i class="fa-solid fa-circle-info"></i> Mật khẩu: Ít nhất 8 ký tự, gồm cả chữ thường, chữ HOA và số.</span>
                 <div class="form-row password-field">
                     <input
                             id="signup-password"
@@ -89,6 +89,8 @@
                             name="password"
                             placeholder="Mật khẩu"
                             aria-label="Mật khẩu"
+                            pattern="^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d]{8,}$"
+                            title="Mật khẩu phải từ 8 ký tự trở lên, bao gồm cả chữ thường, chữ hoa và số."
                             required>
                     <i class="fa-solid fa-eye toggle-password" toggle="#signup-password"></i>
                 </div>
