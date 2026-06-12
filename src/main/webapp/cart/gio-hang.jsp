@@ -55,7 +55,7 @@
                                 </c:if>
 
                                 <c:forEach var="item" items="${sessionScope.cart.items}">
-                                    <tr>
+                                        <tr class="cart-row" data-id="${item.variantId}">
                                         <td style="text-align: center;">
                                             <input type="checkbox" class="item-checkbox" name="selectedItems"
                                                    value="${item.variantId}"
@@ -104,7 +104,7 @@
                                                    onchange="updateQuantity(this)" style="width: 60px; text-align: center;">
                                         </td>
 
-                                        <td style="color: #d9534f; font-weight: bold;">
+                                        <td class="item-total-price" data-id="${item.variantId}" style="color: #d9534f; font-weight: bold;">
                                             <fmt:formatNumber value="${item.totalPrice}" pattern="#,###"/>&nbsp;đ
                                         </td>
                                         <td>
@@ -156,19 +156,22 @@
     <i class="fa-solid fa-chevron-up"></i>
 </button>
 <script>
+    let calculateTotal = null;
+
     document.addEventListener('DOMContentLoaded', function() {
         const selectAllCb = document.getElementById('selectAll');
-        const itemCbs = document.querySelectorAll('.item-checkbox');
         const totalDisplay = document.getElementById('total-selected-price');
         const checkoutBtn = document.getElementById('btn-checkout');
         const formatCurrency = (amount) => {
             return new Intl.NumberFormat('vi-VN').format(amount) + '\u00A0đ';
         };
-        const calculateTotal = () => {
+        
+        calculateTotal = () => {
             let total = 0;
             let checkedCount = 0;
+            const currentItemCbs = document.querySelectorAll('.item-checkbox');
 
-            itemCbs.forEach(cb => {
+            currentItemCbs.forEach(cb => {
                 if (cb.checked) {
                     total += parseFloat(cb.getAttribute('data-price'));
                     checkedCount++;
@@ -186,51 +189,130 @@
                 checkoutBtn.innerText = 'Vui lòng chọn sản phẩm';
             }
         };
+
         if (selectAllCb) {
             selectAllCb.addEventListener('change', function() {
-                itemCbs.forEach(cb => cb.checked = this.checked);
+                const currentItemCbs = document.querySelectorAll('.item-checkbox');
+                currentItemCbs.forEach(cb => cb.checked = this.checked);
                 calculateTotal();
             });
         }
 
-        itemCbs.forEach(cb => {
-            cb.addEventListener('change', function() {
-                const allChecked = Array.from(itemCbs).every(i => i.checked);
+        document.addEventListener('change', function(e) {
+            if (e.target && e.target.classList.contains('item-checkbox')) {
+                const currentItemCbs = document.querySelectorAll('.item-checkbox');
+                const allChecked = Array.from(currentItemCbs).every(i => i.checked);
                 if (selectAllCb) selectAllCb.checked = allChecked;
                 calculateTotal();
-            });
+            }
+        });
+
+        document.querySelectorAll('.cart-item-quantity').forEach(input => {
+            input.setAttribute('data-prev-value', input.value);
         });
 
         calculateTotal();
     });
+
     function updateQuantity(input) {
         const variantId = input.getAttribute("data-id");
-        const quantity = input.value;
+        const quantity = parseInt(input.value);
 
-        const form = document.createElement('form');
-        form.method = 'POST';
-        form.action = '${pageContext.request.contextPath}/gio-hang';
+        if (isNaN(quantity) || quantity < 1) {
+            input.value = input.getAttribute('data-prev-value') || "1";
+            return;
+        }
 
-        form.innerHTML = `
-        <input type="hidden" name="action" value="update">
-        <input type="hidden" name="variantId" value="`+variantId+`">
-        <input type="hidden" name="quantity" value="`+quantity+`">
-        `;
-        document.body.appendChild(form);
-        form.submit();
+        const params = new URLSearchParams({
+            action: 'update',
+            variantId: variantId,
+            quantity: quantity
+        });
+
+        const prevValue = input.getAttribute('data-prev-value') || "1";
+
+        fetch('${pageContext.request.contextPath}/gio-hang', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: params
+        })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    input.setAttribute('data-prev-value', quantity);
+                    
+                    const cb = document.querySelector('.item-checkbox[value="' + variantId + '"]');
+                    if (cb) {
+                        cb.setAttribute('data-price', data.itemTotalPrice);
+                    }
+
+                    const totalCell = document.querySelector('.item-total-price[data-id="' + variantId + '"]');
+                    if (totalCell) {
+                        totalCell.innerHTML = new Intl.NumberFormat('vi-VN').format(data.itemTotalPrice) + '&nbsp;đ';
+                    }
+
+                    document.querySelectorAll('.header-cart-count').forEach(el => {
+                        el.textContent = data.cartCount;
+                    });
+
+                    if (calculateTotal) calculateTotal();
+                } else {
+                    alert(data.message || 'Cập nhật số lượng thất bại.');
+                    input.value = prevValue;
+                }
+            })
+            .catch(() => {
+                alert('Không thể kết nối đến máy chủ.');
+                input.value = prevValue;
+            });
     }
 
     function removeItem(variantId) {
-        if(confirm('Bạn có chắc chắn muốn xóa sản phẩm này khỏi giỏ hàng?')) {
-            const form = document.createElement('form');
-            form.method = 'POST';
-            form.action = '${pageContext.request.contextPath}/gio-hang';
-            form.innerHTML = `
-                <input type="hidden" name="action" value="remove">
-                <input type="hidden" name="variantId" value="` + variantId + `">
-            `;
-            document.body.appendChild(form);
-            form.submit();
+        if (confirm('Bạn có chắc chắn muốn xóa sản phẩm này khỏi giỏ hàng?')) {
+            const params = new URLSearchParams({
+                action: 'remove',
+                variantId: variantId
+            });
+
+            fetch('${pageContext.request.contextPath}/gio-hang', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: params
+            })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        const row = document.querySelector('.cart-row[data-id="' + variantId + '"]');
+                        if (row) {
+                            row.remove();
+                        }
+
+                        document.querySelectorAll('.header-cart-count').forEach(el => {
+                            el.textContent = data.cartCount;
+                        });
+
+                        if (calculateTotal) calculateTotal();
+
+                        const remainingRows = document.querySelectorAll('.cart-row');
+                        if (remainingRows.length === 0) {
+                            const tbody = document.querySelector('.cart-table tbody');
+                            if (tbody) {
+                                tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding: 20px;">Giỏ hàng trống!</td></tr>';
+                            }
+                        }
+                    } else {
+                        alert(data.message || 'Xóa sản phẩm thất bại.');
+                    }
+                })
+                .catch(() => {
+                    alert('Không thể kết nối đến máy chủ.');
+                });
         }
     }
 </script>

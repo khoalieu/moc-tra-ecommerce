@@ -181,6 +181,10 @@ public class ProductServlet extends HttpServlet {
 
         request.setAttribute("currentSearch", searchParam);
 
-        request.getRequestDispatcher("/product/san-pham.jsp").forward(request, response);
+        if ("XMLHttpRequest".equalsIgnoreCase(request.getHeader("X-Requested-With"))) {
+            request.getRequestDispatcher("/product/product-grid-partial.jsp").forward(request, response);
+        } else {
+            request.getRequestDispatcher("/product/san-pham.jsp").forward(request, response);
+        }
     }
 }
