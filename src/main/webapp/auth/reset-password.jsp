@@ -14,6 +14,21 @@
           href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css"
           integrity="sha512-2SwdPD6INVrV/lHTZbO2nodKhrnDdJK9/kg2XD1r9uGqPo1cUbujc+IYdlYdEErWNu69gVcYgdxlmVmzTWnetw=="
           crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <style>
+        .input-guide {
+            display: block;
+            font-size: 0.75rem;
+            color: #666;
+            margin-top: 10px;
+            margin-bottom: 4px;
+            font-style: italic;
+        }
+        .input-guide i {
+            margin-right: 4px;
+            font-size: 0.7rem;
+            color: #888;
+        }
+    </style>
 </head>
 
 <body>
@@ -34,6 +49,7 @@
 
             <div class="login-content">
                 <form id="resetForm" action="${pageContext.request.contextPath}/reset-password" method="post" autocomplete="off">
+                    <span class="input-guide"><i class="fa-solid fa-circle-info"></i> Mật khẩu: Ít nhất 8 ký tự, gồm cả chữ thường, chữ HOA và số.</span>
                     <div class="form-row">
                         <input
                                 id="new-password"
@@ -41,6 +57,8 @@
                                 type="password"
                                 name="newPassword"
                                 placeholder="Mật khẩu mới"
+                                pattern="^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d]{8,}$"
+                                title="Mật khẩu phải từ 8 ký tự trở lên, bao gồm cả chữ thường, chữ hoa và số."
                                 required>
                     </div>
 

@@ -3,6 +3,9 @@ package controller.auth;
 
 import dao.DAOFactory;
 import dao.UserDAO;
+import model.user.User;
+import service.EcommerceEmailService;
+import java.util.regex.Pattern;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.*;
@@ -19,6 +22,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 @WebServlet(urlPatterns = {"/forgot-password", "/verify-otp", "/reset-password"})
 public class ForgotPasswordServlet extends HttpServlet {
+    private static final String PASSWORD_REGEX = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)[A-Za-z\\d]{8,}$";
 
     private static final int DAILY_EMAIL_LIMIT = 5;
     private static final java.util.concurrent.ConcurrentHashMap<String, AtomicInteger> ipCounter = new java.util.concurrent.ConcurrentHashMap<>();
@@ -239,8 +243,8 @@ public class ForgotPasswordServlet extends HttpServlet {
             return;
         }
 
-        if (newPass.length() < 8) {
-            req.setAttribute("message", "Mật khẩu phải tối thiểu 8 ký tự.");
+        if (newPass == null || !Pattern.matches(PASSWORD_REGEX, newPass)) {
+            req.setAttribute("message", "Mật khẩu phải từ 8 ký tự trở lên, bao gồm cả chữ thường, chữ HOA và số!");
             req.getRequestDispatcher("/auth/reset-password.jsp").forward(req, resp);
             return;
         }
@@ -261,8 +265,13 @@ public class ForgotPasswordServlet extends HttpServlet {
             ss.removeAttribute("OTP_VERIFIED");
             ss.removeAttribute("OTP_LAST_SEND");
 
-            req.setAttribute("message", "Đặt lại mật khẩu thành công! Vui longf đăng nhập.");
-            req.getRequestDispatcher("/auth/login.jsp").forward(req, resp);
+            User user = dao.getUserDetailById(userId);
+            if (user != null) {
+                new EcommerceEmailService().sendPasswordChangedAlert(user);
+            }
+
+            ss.setAttribute("msg", "Đặt lại mật khẩu thành công! Vui lòng đăng nhập.");
+            resp.sendRedirect(req.getContextPath() + "/login");
         }else {
             req.setAttribute("message", "Lỗi hệ thống khi cập nhật mật khẩu.");
             req.getRequestDispatcher("/auth/reset-password.jsp").forward(req, resp);
