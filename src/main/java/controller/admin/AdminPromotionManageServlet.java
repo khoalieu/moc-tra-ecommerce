@@ -145,6 +145,11 @@ public class AdminPromotionManageServlet extends HttpServlet {
             e.printStackTrace();
         }
         promotionDAO.syncPromotionPrices();
+        if ("XMLHttpRequest".equalsIgnoreCase(request.getHeader("X-Requested-With"))) {
+            response.setContentType("application/json;charset=UTF-8");
+            response.getWriter().write("{\"success\":true}");
+            return;
+        }
         response.sendRedirect(redirectPath + "?tab=" + redirectTab);
     }
 
