@@ -108,7 +108,7 @@
 
                 <p class="short-description">${product.shortDescription}</p>
 
-                <form action="gio-hang" method="post" style="margin: 0; padding: 0;">
+                <form id="addToCartForm" action="gio-hang" method="post" style="margin: 0; padding: 0;">
                     <input type="hidden" name="action" value="add">
 
                     <input type="hidden" name="productId" value="${product.id}">
@@ -182,7 +182,7 @@
                 <button class="tab-link active" data-tab="tab-1">Mô Tả Chi Tiết</button>
                 <button class="tab-link" data-tab="tab-2">Thành Phần</button>
                 <button class="tab-link" data-tab="tab-3">Hướng Dẫn Sử Dụng</button>
-                <button class="tab-link" data-tab="tab-4">Đánh Giá (${reviews.size()})</button>
+                <button class="tab-link" data-tab="tab-4">Đánh Giá (<span id="reviews-count-badge">${reviews.size()}</span>)</button>
             </div>
 
             <div id="tab-1" class="tab-content active">
@@ -299,7 +299,7 @@
 
                     <div class="review-list">
                         <c:if test="${empty reviews}">
-                            <p style="font-style: italic; color: #777;">
+                            <p id="empty-reviews-placeholder" style="font-style: italic; color: #777;">
                                 (Chưa có đánh giá nào. Hãy là người đầu tiên!)
                             </p>
                         </c:if>
@@ -532,6 +532,44 @@
         }
 
         bindFavoriteButtons();
+
+        const addToCartForm = document.getElementById('addToCartForm');
+        if (addToCartForm) {
+            addToCartForm.addEventListener('submit', function (e) {
+                e.preventDefault();
+
+                const formData = new FormData(this);
+                const params = new URLSearchParams();
+                for (const pair of formData) {
+                    params.append(pair[0], pair[1]);
+                }
+
+                fetch('${pageContext.request.contextPath}/gio-hang', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: params
+                })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.success) {
+                            document.querySelectorAll('.header-cart-count').forEach(el => {
+                                el.textContent = data.cartCount;
+                            });
+                            showFavoriteToast(data.message, 'success');
+                        } else {
+                            showFavoriteToast(data.message, 'error');
+                        }
+                    })
+                    .catch(() => {
+                        showFavoriteToast('Không thể thêm sản phẩm vào giỏ hàng.', 'error');
+                    });
+            });
+        }
+
+
 
         const defaultCheckedVariant = document.querySelector('input[name="variantId"]:checked');
         if (defaultCheckedVariant) {
