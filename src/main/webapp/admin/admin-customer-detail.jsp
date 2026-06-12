@@ -51,7 +51,14 @@
                         <div class="customer-avatar-large">
                             <c:choose>
                                 <c:when test="${not empty customer.avatar}">
-                                    <img src="${pageContext.request.contextPath}/${customer.avatar}" alt="Avatar" class="customer-avatar-img">
+                                    <c:choose>
+                                        <c:when test="${customer.avatar.startsWith('http')}">
+                                            <img src="${customer.avatar}" alt="Avatar" class="customer-avatar-img">
+                                        </c:when>
+                                        <c:otherwise>
+                                            <img src="${pageContext.request.contextPath}/${customer.avatar}" alt="Avatar" class="customer-avatar-img">
+                                        </c:otherwise>
+                                    </c:choose>
                                 </c:when>
                                 <c:when test="${not empty customer.username and fn:length(customer.username) >= 2}">
                                     ${fn:toUpperCase(fn:substring(customer.username, 0, 2))}
