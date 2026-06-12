@@ -11,6 +11,19 @@ import java.util.List;
 
 public class ProductDAO {
     private final DataSource ds;
+    private static final String VARIANT_SUMMARY_SELECT =
+            ", (SELECT COALESCE(SUM(v.stock_quantity), 0) FROM product_variants v " +
+                    "WHERE v.product_id = p.id AND v.is_active = 1) AS variant_total_stock " +
+            ", (SELECT COUNT(*) FROM product_variants v " +
+                    "WHERE v.product_id = p.id AND v.is_active = 1) AS variant_count " +
+            ", (SELECT MIN(v.price) FROM product_variants v " +
+                    "WHERE v.product_id = p.id AND v.is_active = 1) AS min_variant_price " +
+            ", (SELECT MAX(v.price) FROM product_variants v " +
+                    "WHERE v.product_id = p.id AND v.is_active = 1) AS max_variant_price " +
+            ", (SELECT MIN(CASE WHEN v.sale_price > 0 AND v.sale_price < v.price THEN v.sale_price ELSE v.price END) " +
+                    "FROM product_variants v WHERE v.product_id = p.id AND v.is_active = 1) AS min_variant_effective_price " +
+            ", (SELECT MAX(CASE WHEN v.sale_price > 0 AND v.sale_price < v.price THEN v.sale_price ELSE v.price END) " +
+                    "FROM product_variants v WHERE v.product_id = p.id AND v.is_active = 1) AS max_variant_effective_price ";
 
     public ProductDAO(DataSource ds) {
         this.ds = ds;
@@ -69,6 +82,7 @@ public class ProductDAO {
                         "   FROM promotion_items pi " +
                         "   JOIN promotions pr ON pr.id = pi.promotion_id " +
                         "   WHERE pi.product_id = p.id LIMIT 1) AS current_promo_value " +
+                        VARIANT_SUMMARY_SELECT +
                         "FROM products p "
         );
         sql.append(" WHERE 1=1 ");
@@ -238,6 +252,7 @@ public class ProductDAO {
                 p.setSalePrice(rs.getDouble("sale_price"));
                 p.setSku(rs.getString("sku"));
                 p.setStockQuantity(rs.getInt("stock_quantity"));
+                mapVariantSummary(p, rs);
                 p.setCategoryId(rs.getInt("category_id"));
                 p.setImageUrl(rs.getString("image_url"));
                 p.setBestseller(rs.getBoolean("is_bestseller"));
@@ -404,6 +419,7 @@ public class ProductDAO {
                         "(SELECT GROUP_CONCAT(CONCAT(v.variant_name, ' còn ', v.stock_quantity) ORDER BY v.stock_quantity ASC SEPARATOR ', ') " +
                         "   FROM product_variants v WHERE v.product_id = p.id AND v.is_active = 1 " +
                         "   AND v.stock_quantity > 0 AND v.stock_quantity < ?) AS low_stock_variant_summary " +
+                        VARIANT_SUMMARY_SELECT +
                         "FROM products p " +
                         "LEFT JOIN categories c ON c.id = p.category_id " +
                         "WHERE 1=1 "
@@ -434,6 +450,7 @@ public class ProductDAO {
                 p.setSalePrice(rs.getDouble("sale_price"));
                 p.setSku(rs.getString("sku"));
                 p.setStockQuantity(rs.getInt("stock_quantity"));
+                mapVariantSummary(p, rs);
                 p.setCategoryId(rs.getInt("category_id"));
                 p.setImageUrl(rs.getString("image_url"));
                 p.setBestseller(rs.getBoolean("is_bestseller"));
@@ -781,6 +798,7 @@ public class ProductDAO {
                 "pi.promotion_id AS current_promo_id, " +
                 "pr.discount_type AS current_promo_type, " +
                 "pr.discount_value AS current_promo_value " +
+                VARIANT_SUMMARY_SELECT +
                 "FROM products p " +
                 "LEFT JOIN promotion_items pi ON p.id = pi.product_id " +
                 "LEFT JOIN promotions pr ON pr.id = pi.promotion_id " +
@@ -801,6 +819,7 @@ public class ProductDAO {
                 p.setSalePrice(rs.getDouble("sale_price"));
                 p.setSku(rs.getString("sku"));
                 p.setStockQuantity(rs.getInt("stock_quantity"));
+                mapVariantSummary(p, rs);
                 p.setCategoryId(rs.getInt("category_id"));
                 p.setImageUrl(rs.getString("image_url"));
                 p.setBestseller(rs.getBoolean("is_bestseller"));
@@ -840,7 +859,8 @@ public class ProductDAO {
 
     public List<Product> getRelatedProducts(int categoryId, int currentProductId) {
         List<Product> list = new ArrayList<>();
-        String sql = "SELECT * FROM products WHERE category_id = ? AND id != ? AND status = 'active' ORDER BY RAND() LIMIT 4";
+        String sql = "SELECT p.* " + VARIANT_SUMMARY_SELECT +
+                "FROM products p WHERE p.category_id = ? AND p.id != ? AND p.status = 'active' ORDER BY RAND() LIMIT 4";
         try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, categoryId);
@@ -852,6 +872,7 @@ public class ProductDAO {
                 p.setName(rs.getString("name"));
                 p.setPrice(rs.getDouble("price"));
                 p.setSalePrice(rs.getDouble("sale_price"));
+                mapVariantSummary(p, rs);
                 p.setImageUrl(rs.getString("image_url"));
                 p.setSlug(rs.getString("slug"));
                 list.add(p);
@@ -1007,6 +1028,7 @@ public class ProductDAO {
     public List<Product> getTopSellingByParentCategory(int parentId, int limit) {
         List<Product> list = new ArrayList<>();
         String sql = "SELECT p.*, IFNULL(SUM(IF(o.status = 'completed', oi.quantity, 0)), 0) AS sold_qty "
+                + VARIANT_SUMMARY_SELECT
                 + "FROM products p " + "JOIN categories c ON c.id = p.category_id "
                 + "LEFT JOIN order_items oi ON oi.product_id = p.id "
                 + "LEFT JOIN orders o ON o.id = oi.order_id "
@@ -1027,6 +1049,7 @@ public class ProductDAO {
                     p.setSalePrice(rs.getDouble("sale_price"));
                     p.setSku(rs.getString("sku"));
                     p.setStockQuantity(rs.getInt("stock_quantity"));
+                    mapVariantSummary(p, rs);
                     int catId = rs.getInt("category_id");
                     p.setCategoryId(rs.wasNull() ? null : catId);
                     p.setImageUrl(rs.getString("image_url"));
@@ -1070,6 +1093,7 @@ public class ProductDAO {
         p.setSalePrice(rs.getDouble("sale_price"));
         p.setSku(rs.getString("sku"));
         p.setStockQuantity(rs.getInt("stock_quantity"));
+        mapVariantSummary(p, rs);
         p.setCategoryId(rs.getInt("category_id"));
 
         String img = rs.getString("image_url");
@@ -1095,6 +1119,37 @@ public class ProductDAO {
             p.setCreatedAt(rs.getTimestamp("created_at").toLocalDateTime());
         }
         return p;
+    }
+
+    private void mapVariantSummary(Product p, ResultSet rs) throws SQLException {
+        if (!hasColumn(rs, "variant_total_stock")) {
+            return;
+        }
+
+        p.setTotalStockQuantity(rs.getInt("variant_total_stock"));
+        p.setVariantCount(rs.getInt("variant_count"));
+
+        double minVariantPrice = rs.getDouble("min_variant_price");
+        p.setMinVariantPrice(rs.wasNull() ? 0 : minVariantPrice);
+
+        double maxVariantPrice = rs.getDouble("max_variant_price");
+        p.setMaxVariantPrice(rs.wasNull() ? 0 : maxVariantPrice);
+
+        double minEffectivePrice = rs.getDouble("min_variant_effective_price");
+        p.setMinVariantEffectivePrice(rs.wasNull() ? 0 : minEffectivePrice);
+
+        double maxEffectivePrice = rs.getDouble("max_variant_effective_price");
+        p.setMaxVariantEffectivePrice(rs.wasNull() ? 0 : maxEffectivePrice);
+    }
+
+    private boolean hasColumn(ResultSet rs, String columnName) throws SQLException {
+        ResultSetMetaData metaData = rs.getMetaData();
+        for (int i = 1; i <= metaData.getColumnCount(); i++) {
+            if (columnName.equalsIgnoreCase(metaData.getColumnLabel(i))) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public void updateProductDiscounts(String type, double value, String[] ids) throws Exception {

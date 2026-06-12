@@ -32,6 +32,7 @@ public class ProductVariantDAO {
                     v.setId(rs.getInt("id"));
                     v.setProductId(rs.getInt("product_id"));
                     v.setVariantName(rs.getString("variant_name"));
+                    v.setSku(rs.getString("sku"));
                     v.setPrice(rs.getDouble("price"));
                     v.setSalePrice(rs.getDouble("sale_price"));
                     v.setStockQuantity(rs.getInt("stock_quantity"));
@@ -58,6 +59,7 @@ public class ProductVariantDAO {
                     v.setId(rs.getInt("id"));
                     v.setProductId(rs.getInt("product_id"));
                     v.setVariantName(rs.getString("variant_name"));
+                    v.setSku(rs.getString("sku"));
                     v.setPrice(rs.getDouble("price"));
                     v.setSalePrice(rs.getDouble("sale_price"));
                     v.setStockQuantity(rs.getInt("stock_quantity"));
@@ -111,14 +113,15 @@ public class ProductVariantDAO {
             variant.setSalePrice(variant.getPrice());
         }
 
-        String sql = "INSERT INTO product_variants (product_id, variant_name, price, sale_price, stock_quantity, is_active) VALUES (?, ?, ?, ?, ?, 1)";
+        String sql = "INSERT INTO product_variants (product_id, variant_name, sku, price, sale_price, stock_quantity, is_active) VALUES (?, ?, ?, ?, ?, ?, 1)";
         try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, variant.getProductId());
             ps.setString(2, variant.getVariantName());
-            ps.setDouble(3, variant.getPrice());
-            ps.setDouble(4, variant.getSalePrice());
-            ps.setInt(5, variant.getStockQuantity());
+            ps.setString(3, variant.getSku());
+            ps.setDouble(4, variant.getPrice());
+            ps.setDouble(5, variant.getSalePrice());
+            ps.setInt(6, variant.getStockQuantity());
             ps.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();
@@ -141,14 +144,15 @@ public class ProductVariantDAO {
             variant.setSalePrice(variant.getPrice());
         }
 
-        String sql = "UPDATE product_variants SET variant_name = ?, price = ?, sale_price = ?, stock_quantity = ? WHERE id = ?";
+        String sql = "UPDATE product_variants SET variant_name = ?, sku = ?, price = ?, sale_price = ?, stock_quantity = ? WHERE id = ?";
         try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, variant.getVariantName());
-            ps.setDouble(2, variant.getPrice());
-            ps.setDouble(3, variant.getSalePrice());
-            ps.setInt(4, variant.getStockQuantity());
-            ps.setInt(5, variant.getId());
+            ps.setString(2, variant.getSku());
+            ps.setDouble(3, variant.getPrice());
+            ps.setDouble(4, variant.getSalePrice());
+            ps.setInt(5, variant.getStockQuantity());
+            ps.setInt(6, variant.getId());
             ps.executeUpdate();
         } catch (SQLException e) {
             System.err.println("Lỗi updateVariant: " + e.getMessage());
