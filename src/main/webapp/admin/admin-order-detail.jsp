@@ -106,8 +106,9 @@
                                 <tr>
                                     <td>
                                         <div class="item-info-cell">
-                                            <img src="${item.product.imageUrl}" class="item-thumb" alt="${item.product.name}"
-                                                 onerror="this.onerror=null;this.src='assets/images/no-image.png';">
+                                            <c:set var="resolvedItemImg" value="${(not empty item.product.imageUrl and item.product.imageUrl.startsWith('http')) ? item.product.imageUrl : pageContext.request.contextPath.concat('/').concat(not empty item.product.imageUrl ? item.product.imageUrl : 'assets/images/no-image.jpg')}"/>
+                                            <img src="${resolvedItemImg}" class="item-thumb" alt="${item.product.name}"
+                                                 onerror="this.onerror=null;this.src='${pageContext.request.contextPath}/assets/images/no-image.jpg';">
                                             <div class="item-text">
                                                 <h4>${item.product.name}</h4>
                                                 <c:if test="${not empty item.variant}">
