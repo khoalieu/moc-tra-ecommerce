@@ -37,8 +37,16 @@
                     <div class="customer-avatar-large">
                         <c:choose>
                             <c:when test="${not empty customer.avatar}">
-                                <img src="${pageContext.request.contextPath}/${customer.avatar}" alt="Avatar"
-                                     style="width:100%; height:100%; border-radius:50%; object-fit:cover;">
+                                <c:choose>
+                                    <c:when test="${customer.avatar.startsWith('http')}">
+                                        <img src="${customer.avatar}" alt="Avatar"
+                                             style="width:100%; height:100%; border-radius:50%; object-fit:cover;">
+                                    </c:when>
+                                    <c:otherwise>
+                                        <img src="${pageContext.request.contextPath}/${customer.avatar}" alt="Avatar"
+                                             style="width:100%; height:100%; border-radius:50%; object-fit:cover;">
+                                    </c:otherwise>
+                                </c:choose>
                             </c:when>
                             <c:otherwise>
                                 ${customer.username.substring(0, 2).toUpperCase()}

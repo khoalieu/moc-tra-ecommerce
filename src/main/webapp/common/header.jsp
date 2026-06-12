@@ -217,9 +217,18 @@
                         <%-- Nếu có avatar: Ép kích thước TRỰC TIẾP --%>
                         <c:when test="${not empty sessionScope.user and not empty sessionScope.user.avatar}">
                             <div class="avatar-wrapper" style="width: 35px !important; height: 35px !important; border-radius: 50% !important; overflow: hidden !important; border: 2px solid #107e84; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                                <img src="${pageContext.request.contextPath}/image/${sessionScope.user.avatar}?t=<%=System.currentTimeMillis()%>"
-                                     alt="User Avatar"
-                                     style="width: 100% !important; height: 100% !important; object-fit: cover !important; display: block;">
+                                <c:choose>
+                                    <c:when test="${sessionScope.user.avatar.startsWith('http')}">
+                                        <img src="${sessionScope.user.avatar}"
+                                             alt="User Avatar"
+                                             style="width: 100% !important; height: 100% !important; object-fit: cover !important; display: block;">
+                                    </c:when>
+                                    <c:otherwise>
+                                        <img src="${pageContext.request.contextPath}/image/${sessionScope.user.avatar}?t=<%=System.currentTimeMillis()%>"
+                                             alt="User Avatar"
+                                             style="width: 100% !important; height: 100% !important; object-fit: cover !important; display: block;">
+                                    </c:otherwise>
+                                </c:choose>
                             </div>
                         </c:when>
 

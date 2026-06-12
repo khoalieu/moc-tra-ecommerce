@@ -3,6 +3,7 @@ package controller.user;
 import dao.DAOFactory;
 import dao.UserDAO;
 import controller.utils.RedirectUtils;
+import controller.utils.CloudinaryUtil;
 import jakarta.servlet.annotation.MultipartConfig;
 import jakarta.servlet.http.*;
 import model.user.User;
@@ -167,8 +168,9 @@ public class UpdateProfileInfoServlet extends HttpServlet {
             Part filePart = request.getPart("avatar");
             
             if (filePart == null || filePart.getSize() == 0) {
-                request.setAttribute("error", "Please select an image file to upload.");
-                request.getRequestDispatcher(PROFILE_PAGE).forward(request, response);
+                session.setAttribute("msg", "Vui lòng chọn một file ảnh để tải lên!");
+                session.setAttribute("msgType", "danger");
+                response.sendRedirect(request.getContextPath() + "/tai-khoan-cua-toi");
                 return;
             }
 
@@ -177,46 +179,66 @@ public class UpdateProfileInfoServlet extends HttpServlet {
 
             // Validate file extension
             if (!isAllowedExtension(extension)) {
-                request.setAttribute("error", "Invalid file type. Only JPG, PNG, GIF, and WebP are allowed.");
-                request.getRequestDispatcher(PROFILE_PAGE).forward(request, response);
+                session.setAttribute("msg", "Định dạng file không hợp lệ! Chỉ chấp nhận các định dạng JPG, PNG, GIF, và WebP.");
+                session.setAttribute("msgType", "danger");
+                response.sendRedirect(request.getContextPath() + "/tai-khoan-cua-toi");
                 return;
             }
-            if (filePart.getSize() > 5 * 1024 * 1024) {
-                request.setAttribute("error", "File size must be less than 5MB.");
-                request.getRequestDispatcher(PROFILE_PAGE).forward(request, response);
+            if (filePart.getSize() > 2 * 1024 * 1024) {
+                session.setAttribute("msg", "Kích thước ảnh đại diện tối đa là 2MB!");
+                session.setAttribute("msgType", "danger");
+                response.sendRedirect(request.getContextPath() + "/tai-khoan-cua-toi");
                 return;
             }
 
-            String uploadPath = UPLOAD_DIR;
-            File uploadDir = new File(uploadPath);
-            if (!uploadDir.exists()) {
-                uploadDir.mkdirs();
+            // Upload to Cloudinary using an InputStream
+            String secureUrl = null;
+            try (InputStream input = filePart.getInputStream()) {
+                String publicId = "avatar_" + currentUser.getId() + "_" + UUID.randomUUID().toString().substring(0, 8);
+                secureUrl = CloudinaryUtil.uploadFile(input, "avatars", publicId);
             }
 
-            if (currentUser.getAvatar() != null && !currentUser.getAvatar().isEmpty()) {
-                File oldFile = new File(uploadPath + File.separator + currentUser.getAvatar());
+            if (secureUrl == null || secureUrl.isEmpty()) {
+                throw new Exception("Cloudinary secure_url is empty");
+            }
+
+            // Delete old avatar from Cloudinary or Local
+            if (currentUser.getAvatar() != null && currentUser.getAvatar().startsWith("http")) {
+                try {
+                    String oldUrl = currentUser.getAvatar();
+                    int avatarsIndex = oldUrl.indexOf("avatars/");
+                    if (avatarsIndex != -1) {
+                        int dotIndex = oldUrl.lastIndexOf('.');
+                        if (dotIndex != -1 && dotIndex > avatarsIndex) {
+                            String oldPublicId = oldUrl.substring(avatarsIndex, dotIndex);
+                            CloudinaryUtil.deleteFile(oldPublicId);
+                        }
+                    }
+                } catch (Exception e) {
+                    System.err.println("Warning: failed to delete old avatar from Cloudinary: " + e.getMessage());
+                }
+            } else if (currentUser.getAvatar() != null && !currentUser.getAvatar().isEmpty()) {
+                File oldFile = new File(UPLOAD_DIR + File.separator + currentUser.getAvatar());
                 if (oldFile.exists()) {
                     oldFile.delete();
                 }
             }
 
-            String uniqueFileName = "avatar_" + currentUser.getId() + "_" + UUID.randomUUID().toString().substring(0, 8) + extension;
-
-            Path filePath = Paths.get(uploadPath, uniqueFileName);
-            try (InputStream input = filePart.getInputStream()) {
-                Files.copy(input, filePath, StandardCopyOption.REPLACE_EXISTING);
-            }
-
-            userDAO.updateAvatar(currentUser.getId(), uniqueFileName);
+            userDAO.updateAvatar(currentUser.getId(), secureUrl);
             User updatedUser = userDAO.getUserDetailById(currentUser.getId());
             session.setAttribute("user", updatedUser);
             new NotificationService().notifyProfileUpdated(currentUser.getId(),
                     "Ảnh đại diện của bạn vừa được cập nhật thành công.");
-            response.sendRedirect(request.getContextPath() + "/tai-khoan-cua-toi?success=avatar_updated");
+            
+            session.setAttribute("msg", "Cập nhật ảnh đại diện thành công!");
+            session.setAttribute("msgType", "success");
+            response.sendRedirect(request.getContextPath() + "/tai-khoan-cua-toi");
 
         } catch (Exception e) {
             e.printStackTrace();
-            response.sendRedirect(request.getContextPath() + "/tai-khoan-cua-toi?error=upload_failed");
+            session.setAttribute("msg", "Tải ảnh đại diện thất bại!");
+            session.setAttribute("msgType", "danger");
+            response.sendRedirect(request.getContextPath() + "/tai-khoan-cua-toi");
         }
     }
 
@@ -226,27 +248,43 @@ public class UpdateProfileInfoServlet extends HttpServlet {
     private void handleAvatarRemove(HttpServletRequest request, HttpServletResponse response, User currentUser, HttpSession session)
             throws ServletException, IOException {
         try {
-            // Delete file if exists
             if (currentUser.getAvatar() != null && !currentUser.getAvatar().isEmpty()) {
-                // Trỏ thẳng vào thư mục ngoài để xóa
-                File avatarFile = new File(UPLOAD_DIR + File.separator + currentUser.getAvatar());
-                if (avatarFile.exists()) {
-                    avatarFile.delete();
+                if (currentUser.getAvatar().startsWith("http")) {
+                    try {
+                        String oldUrl = currentUser.getAvatar();
+                        int avatarsIndex = oldUrl.indexOf("avatars/");
+                        if (avatarsIndex != -1) {
+                            int dotIndex = oldUrl.lastIndexOf('.');
+                            if (dotIndex != -1 && dotIndex > avatarsIndex) {
+                                String oldPublicId = oldUrl.substring(avatarsIndex, dotIndex);
+                                CloudinaryUtil.deleteFile(oldPublicId);
+                            }
+                        }
+                    } catch (Exception e) {
+                        System.err.println("Warning: failed to delete avatar from Cloudinary: " + e.getMessage());
+                    }
+                } else {
+                    File avatarFile = new File(UPLOAD_DIR + File.separator + currentUser.getAvatar());
+                    if (avatarFile.exists()) {
+                        avatarFile.delete();
+                    }
                 }
             }
-            // Update database
             userDAO.updateAvatar(currentUser.getId(), null);
 
-            // Refresh user from database and update session
             User updatedUser = userDAO.getUserDetailById(currentUser.getId());
             session.setAttribute("user", updatedUser);
             new NotificationService().notifyProfileUpdated(currentUser.getId(),
                     "Ảnh đại diện của bạn vừa được xóa.");
 
-            response.sendRedirect(request.getContextPath() + "/tai-khoan-cua-toi?success=avatar_removed");
+            session.setAttribute("msg", "Đã xóa ảnh đại diện!");
+            session.setAttribute("msgType", "success");
+            response.sendRedirect(request.getContextPath() + "/tai-khoan-cua-toi");
         } catch (Exception e) {
             e.printStackTrace();
-            response.sendRedirect(request.getContextPath() + "/tai-khoan-cua-toi?error=remove_failed");
+            session.setAttribute("msg", "Xóa ảnh đại diện thất bại!");
+            session.setAttribute("msgType", "danger");
+            response.sendRedirect(request.getContextPath() + "/tai-khoan-cua-toi");
         }
     }
 
