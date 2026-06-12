@@ -5,6 +5,7 @@ import dao.DAOFactory;
 import dao.UserDAO;
 import model.user.User;
 import service.NotificationService;
+import service.EcommerceEmailService;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -50,6 +51,7 @@ public class ChangePasswordServlet extends HttpServlet {
             boolean isPassUpdated = dao.changePassword(user.getId(), newPass);
             if (isPassUpdated){
                 new NotificationService().notifyPasswordChanged(user.getId());
+                new EcommerceEmailService().sendPasswordChangedAlert(user);
                 session.setAttribute("msg", "Đổi mật khẩu thành công!");
                 session.setAttribute("msgType", "success");
             }else {

@@ -123,6 +123,14 @@ public class EcommerceEmailService {
         return stock <= 0 || stock == 2 || stock == 10;
     }
 
+    public void sendPasswordChangedAlert(User user) {
+        if (user == null) {return;}
+        String body = "Xin chao " + displayCustomerName(user) + ",\n\n"
+                + "Mat khau tai khoan cua ban vua duoc thay doi thanh cong.\n"
+                + "Neu khong phai ban thuc hien hanh dong nay, vui long lien he voi Admin ngay lap tuc de bao ve tai khoan.";
+        sendToUser(user, "Canh bao bao mat: Mat khau cua ban da bi thay doi", body);
+    }
+
     private void sendToUser(User user, String subject, String body) {
         if (user == null) {return;}
         send(user.getEmail(), subject, body);
