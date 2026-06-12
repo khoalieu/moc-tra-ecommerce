@@ -13,9 +13,12 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
 import java.io.IOException;
+import java.util.regex.Pattern;
 
 @WebServlet(name = "ChangePasswordServlet", value = "/change-password")
 public class ChangePasswordServlet extends HttpServlet {
+    private static final String PASSWORD_REGEX = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)[A-Za-z\\d]{8,}$";
+
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         request.setCharacterEncoding("UTF-8");
@@ -40,8 +43,8 @@ public class ChangePasswordServlet extends HttpServlet {
         }else if (newPass == null || newPass.isEmpty() || !newPass.equals(confirmPass)){
             session.setAttribute("msg", "Mật khẩu mới không khớp hoặc trống!");
             session.setAttribute("msgType", "danger");
-        }else if (newPass.length() < 8){
-            session.setAttribute("msg", "Mật khẩu phải từ 8 ký tự trở lên!");
+        }else if (!Pattern.matches(PASSWORD_REGEX, newPass)){
+            session.setAttribute("msg", "Mật khẩu mới phải từ 8 ký tự trở lên, bao gồm cả chữ thường, chữ HOA và số!");
             session.setAttribute("msgType", "danger");
         }else {
             boolean isPassUpdated = dao.changePassword(user.getId(), newPass);

@@ -159,7 +159,7 @@
             <input type="hidden" name="action" value="change_password">
 
             <p style="font-size: 13px; color: #666; margin-bottom: 15px;">
-                *Vui lòng nhập mật khẩu cũ để xác thực thay đổi
+                *Vui lòng nhập mật khẩu cũ để xác thực thay đổi. Mật khẩu mới tối thiểu 8 ký tự, bao gồm cả chữ thường, chữ HOA và số.
             </p>
 
             <div class="form-row password-row">
@@ -169,7 +169,10 @@
                 </div>
 
                 <div class="input-group">
-                    <input type="password" id="newPassword" name="newPassword" placeholder=" " required>
+                    <input type="password" id="newPassword" name="newPassword" placeholder=" "
+                           pattern="^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d]{8,}$"
+                           title="Mật khẩu phải từ 8 ký tự trở lên, bao gồm cả chữ thường, chữ hoa và số."
+                           required>
                     <label for="newPassword">Mật khẩu mới</label>
                 </div>
 
