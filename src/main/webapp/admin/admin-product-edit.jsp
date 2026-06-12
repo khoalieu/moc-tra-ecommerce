@@ -272,9 +272,23 @@
                                 <div class="form-group">
                                     <label>Hình ảnh chính hiện tại</label>
                                     <div style="margin-bottom: 15px;">
-                                        <img src="${pageContext.request.contextPath}/${product.imageUrl}"
-                                             alt="${product.name}"
-                                             style="width: 100%; border-radius: 8px; border: 1px solid #ddd; object-fit: contain; height: 200px;">
+                                        <c:choose>
+                                            <c:when test="${empty product.imageUrl}">
+                                                <img src="${pageContext.request.contextPath}/assets/images/no-image.jpg"
+                                                     alt="${product.name}"
+                                                     style="width: 100%; border-radius: 8px; border: 1px solid #ddd; object-fit: contain; height: 200px;">
+                                            </c:when>
+                                            <c:when test="${product.imageUrl.startsWith('http')}">
+                                                <img src="${product.imageUrl}"
+                                                     alt="${product.name}"
+                                                     style="width: 100%; border-radius: 8px; border: 1px solid #ddd; object-fit: contain; height: 200px;">
+                                            </c:when>
+                                            <c:otherwise>
+                                                <img src="${pageContext.request.contextPath}/${product.imageUrl}"
+                                                     alt="${product.name}"
+                                                     style="width: 100%; border-radius: 8px; border: 1px solid #ddd; object-fit: contain; height: 200px;">
+                                            </c:otherwise>
+                                        </c:choose>
                                     </div>
 
                                     <label for="image_url">Thay đổi ảnh chính</label>

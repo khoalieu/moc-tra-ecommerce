@@ -244,7 +244,7 @@
                                         <c:choose>
                                             <c:when test="${not empty post.featuredImage}">
                                                 <img id="imagePreview"
-                                                     src="${ctx}/${post.featuredImage}"
+                                                     src="${post.featuredImage.startsWith('http') ? post.featuredImage : ctx.concat('/').concat(post.featuredImage)}"
                                                      alt="Preview"
                                                      style="max-width: 100%; border-radius: 10px; display:block; margin: 0 auto 10px;">
                                                 <p>Nhấp để đổi hình ảnh</p>

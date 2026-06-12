@@ -183,8 +183,23 @@
                                 <td><input type="checkbox" class="product-checkbox row-checkbox" value="${post.id}"
                                            onchange="updateBulkActions()"></td>
 
-                                <td><img src="${pageContext.request.contextPath}/${post.featuredImage}" alt="Blog image"
-                                         class="product-image-thumb"></td>
+                                <td>
+                                    <c:choose>
+                                         <c:when test="${not empty post.featuredImage}">
+                                             <c:choose>
+                                                 <c:when test="${post.featuredImage.startsWith('http')}">
+                                                     <img src="${post.featuredImage}" alt="Blog image" class="product-image-thumb">
+                                                 </c:when>
+                                                 <c:otherwise>
+                                                     <img src="${pageContext.request.contextPath}/${post.featuredImage}" alt="Blog image" class="product-image-thumb">
+                                                 </c:otherwise>
+                                             </c:choose>
+                                         </c:when>
+                                         <c:otherwise>
+                                             <img src="${pageContext.request.contextPath}/assets/images/no-image.jpg" alt="Blog image" class="product-image-thumb">
+                                         </c:otherwise>
+                                    </c:choose>
+                                </td>
 
                                 <td>
                                     <div class="product-name-cell">${post.title}</div>

@@ -145,9 +145,23 @@
                                 </td>
 
                                 <td>
-                                    <img src="${pageContext.request.contextPath}/${b.imageUrl}"
-                                         alt="Banner"
-                                         class="product-image-thumb"/>
+                                    <c:choose>
+                                        <c:when test="${empty b.imageUrl}">
+                                            <img src="${pageContext.request.contextPath}/assets/images/no-image.jpg"
+                                                 alt="Banner"
+                                                 class="product-image-thumb"/>
+                                        </c:when>
+                                        <c:when test="${b.imageUrl.startsWith('http')}">
+                                            <img src="${b.imageUrl}"
+                                                 alt="Banner"
+                                                 class="product-image-thumb"/>
+                                        </c:when>
+                                        <c:otherwise>
+                                            <img src="${pageContext.request.contextPath}/${b.imageUrl}"
+                                                 alt="Banner"
+                                                 class="product-image-thumb"/>
+                                        </c:otherwise>
+                                    </c:choose>
                                 </td>
 
                                 <td>

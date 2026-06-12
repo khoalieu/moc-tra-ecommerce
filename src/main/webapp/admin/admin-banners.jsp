@@ -159,8 +159,20 @@
                                         <div id="previewContainer">
                                             <c:choose>
                                                 <c:when test="${not empty banner.imageUrl}">
-                                                    <img src="${pageContext.request.contextPath}/${banner.imageUrl}"
-                                                         style="max-width: 100%; max-height: 200px; border-radius: 4px; object-fit: cover;">
+                                                    <c:choose>
+                                                        <c:when test="${empty banner.imageUrl}">
+                                                            <img src="${pageContext.request.contextPath}/assets/images/no-image.jpg"
+                                                                 style="max-width: 100%; max-height: 200px; border-radius: 4px; object-fit: cover;">
+                                                        </c:when>
+                                                        <c:when test="${banner.imageUrl.startsWith('http')}">
+                                                            <img src="${banner.imageUrl}"
+                                                                 style="max-width: 100%; max-height: 200px; border-radius: 4px; object-fit: cover;">
+                                                        </c:when>
+                                                        <c:otherwise>
+                                                            <img src="${pageContext.request.contextPath}/${banner.imageUrl}"
+                                                                 style="max-width: 100%; max-height: 200px; border-radius: 4px; object-fit: cover;">
+                                                        </c:otherwise>
+                                                    </c:choose>
                                                     <p style="margin-top: 10px; font-size: 12px; color: #107e84;">Nhấp
                                                         để đổi ảnh</p>
                                                 </c:when>
