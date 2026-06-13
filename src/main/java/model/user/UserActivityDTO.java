@@ -1,8 +1,11 @@
 package model.user;
 
+import java.io.Serializable;
 import java.time.LocalDateTime;
 
-public class UserActivityDTO implements Comparable<UserActivityDTO> {
+public class UserActivityDTO implements Serializable, Comparable<UserActivityDTO> {
+    private static final long serialVersionUID = 1L;
+
     private String icon;
     private String title;
     private String description;

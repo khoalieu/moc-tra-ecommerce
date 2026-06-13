@@ -1,8 +1,11 @@
 package model.notification;
 
+import java.io.Serializable;
 import java.sql.Timestamp;
 
-public class Notification {
+public class Notification implements Serializable {
+    private static final long serialVersionUID = 1L;
+
     private int id;
     private Integer userId;
     private String recipientRole;

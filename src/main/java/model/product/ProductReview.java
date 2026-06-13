@@ -1,8 +1,11 @@
 package model.product;
 
+import java.io.Serializable;
 import java.time.LocalDateTime;
 
-public class ProductReview {
+public class ProductReview implements Serializable {
+    private static final long serialVersionUID = 1L;
+
     private Integer id;
     private Integer productId;
     private Integer userId;

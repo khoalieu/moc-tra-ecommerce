@@ -2,9 +2,12 @@ package model.promotion;
 
 import model.enums.DiscountType;
 
+import java.io.Serializable;
 import java.time.LocalDateTime;
 
-public class Promotion {
+public class Promotion implements Serializable {
+    private static final long serialVersionUID = 1L;
+
     private int id;
     private String name;
     private String description;
