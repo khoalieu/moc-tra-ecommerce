@@ -13,4 +13,4 @@
 @import 'components.css';
 
 /* 5. Pages (Kiểu riêng cho từng trang: .hero-banner, .product-detail...) */
-@import 'pages.css';
+@import 'pages.css?v=4';

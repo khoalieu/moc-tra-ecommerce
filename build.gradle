@@ -56,6 +56,8 @@ dependencies {
 
     // Cloudinary SDK (Giúp đảm bảo tính năng upload ảnh hoạt động động)
     implementation 'com.cloudinary:cloudinary-http45:1.39.0'
+
+    implementation 'com.cloudinary:cloudinary-http44:1.39.0'
 }
 
 war {
