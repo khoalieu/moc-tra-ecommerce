@@ -401,18 +401,6 @@
                             <h2 class="checkout-card__title">Phương thức thanh toán</h2>
                             <div class="payment-methods">
                                 <label class="payment-option">
-                                    <input type="radio" name="paymentMethod" value="momo">
-                                    <div class="payment-option__content">
-                                        <span class="payment-option__name">
-                                            <i class="fa-solid fa-wallet"></i> Ví MoMo
-                                        </span>
-                                        <p class="payment-option__desc">
-                                            Thanh toán bằng ví MoMo. Hệ thống sẽ tạo mã QR hoặc link thanh toán.
-                                        </p>
-                                    </div>
-                                </label>
-
-                                <label class="payment-option">
                                     <input type="radio" name="paymentMethod" value="cod">
 
                                     <div class="payment-option__content">
@@ -790,8 +778,7 @@
                 }
 
                 let paymentText = "Thanh toán khi nhận hàng (COD)";
-                if (selectedPayment.value === "momo") paymentText = "Ví MoMo";
-                else if (selectedPayment.value === "bank") paymentText = "Chuyển khoản ngân hàng";
+                if (selectedPayment.value === "bank") paymentText = "Chuyển khoản ngân hàng";
 
                 const totalText = btnTotalDisplay.innerText.trim();
                 if (!confirm("Xác nhận thanh toán đơn hàng?\n\nSố tiền: " + totalText + "\nPhương thức: " + paymentText)) {

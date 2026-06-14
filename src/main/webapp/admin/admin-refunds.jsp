@@ -102,7 +102,7 @@
                                                 <div class="text-muted">Chưa có thông tin nhận tiền</div>
                                             </c:when>
                                             <c:otherwise>
-                                                <div><strong>${r.receiveMethod == 'momo' ? 'MoMo' : 'Ngân hàng'}</strong></div>
+                                                <div><strong>Ngân hàng</strong></div>
                                                 <div>Chủ TK: ${r.accountHolder}</div>
                                                 <c:if test="${not empty r.accountNumber}">
                                                     <div>STK/SĐT: ${r.accountNumber}</div>
@@ -230,3 +230,4 @@
 </script>
 </body>
 </html>
+

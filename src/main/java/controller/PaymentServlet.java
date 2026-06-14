@@ -19,6 +19,8 @@ import service.NotificationService;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
 import java.sql.Timestamp;
@@ -282,8 +284,7 @@ public class PaymentServlet extends HttpServlet {
                 return;
             }
 
-            orderDAO.updatePaymentStatus(order.getId(), PaymentStatus.PAID);
-            txDAO.markPaidByProviderOrderId(providerOrderId, rawBody);
+            markPayosPaymentPaid(orderDAO, txDAO, order.getId(), providerOrderId, rawBody);
             new NotificationService().notifyPaymentStatusChanged(order, PaymentStatus.PAID);
 
             System.out.println("Đã cập nhật PAID cho orderId = " + order.getId()
@@ -298,6 +299,35 @@ public class PaymentServlet extends HttpServlet {
             response.getWriter().write("Webhook error");
         }
     }
+
+    private void markPayosPaymentPaid(OrderDAO orderDAO, PaymentTransactionDAO txDAO,
+                                      int orderId, String providerOrderId, String rawBody) throws SQLException {
+        Connection conn = null;
+        try {
+            conn = DAOFactory.getDataSource().getConnection();
+            conn.setAutoCommit(false);
+
+            if (!orderDAO.updatePaymentStatus(conn, orderId, PaymentStatus.PAID)) {
+                throw new SQLException("Không thể cập nhật trạng thái thanh toán của đơn hàng.");
+            }
+
+            if (!txDAO.markPaidByProviderOrderId(conn, providerOrderId, rawBody)) {
+                throw new SQLException("Không thể cập nhật giao dịch thanh toán.");
+            }
+
+            conn.commit();
+        } catch (SQLException e) {
+            if (conn != null) {
+                try { conn.rollback(); } catch (SQLException rollbackError) { rollbackError.printStackTrace(); }
+            }
+            throw e;
+        } finally {
+            if (conn != null) {
+                try { conn.setAutoCommit(true); conn.close(); } catch (SQLException closeError) { closeError.printStackTrace(); }
+            }
+        }
+    }
+
     private void continuePayment(HttpServletRequest request, HttpServletResponse response)
             throws IOException {
         try {
@@ -353,9 +383,12 @@ public class PaymentServlet extends HttpServlet {
                 new NotificationService().notifyPaymentStatusChanged(order, PaymentStatus.EXPIRED);
             }
 
-            PaymentResult res = "bank".equalsIgnoreCase(order.getPaymentMethod())
-                    ? PaymentUtils.createPayosPayment(order)
-                    : PaymentUtils.createMomoPayment(order);
+            if (!"bank".equalsIgnoreCase(order.getPaymentMethod())) {
+                response.sendRedirect(request.getContextPath() + "/hoa-don?id=" + orderId);
+                return;
+            }
+
+            PaymentResult res = PaymentUtils.createPayosPayment(order);
 
             if (res == null) {
                 response.sendRedirect(request.getContextPath() + "/hoa-don?id=" + orderId);

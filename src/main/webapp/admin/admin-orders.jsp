@@ -121,7 +121,6 @@
                                 <option value="">Tất cả phương thức</option>
                                 <option value="cod" ${paymentMethod == 'cod' ? 'selected' : ''}>COD</option>
                                 <option value="bank" ${paymentMethod == 'bank' ? 'selected' : ''}>Ngân hàng</option>
-                                <option value="momo" ${paymentMethod == 'momo' ? 'selected' : ''}>MoMo</option>
                             </select>
                         </div>
 

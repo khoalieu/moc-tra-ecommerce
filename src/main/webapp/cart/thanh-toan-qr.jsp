@@ -147,11 +147,6 @@
             <div class="payment-qr-card">
 
                 <c:choose>
-                    <c:when test="${payment.provider == 'momo'}">
-                        <h1>Thanh toán MoMo</h1>
-                        <p class="note">Dùng ứng dụng MoMo để quét mã QR hoặc bấm nút mở trang thanh toán.</p>
-                    </c:when>
-
                     <c:when test="${payment.provider == 'payos'}">
                         <h1>Thanh toán ngân hàng</h1>
                         <p class="note">Quét mã QR bằng app ngân hàng hoặc bấm nút mở trang thanh toán.</p>
@@ -174,7 +169,6 @@
 
                     <p><strong>Phương thức:</strong>
                         <c:choose>
-                            <c:when test="${payment.provider == 'momo'}">Ví MoMo</c:when>
                             <c:when test="${payment.provider == 'payos'}">Chuyển khoản ngân hàng qua payOS</c:when>
                             <c:otherwise>${payment.paymentMethod}</c:otherwise>
                         </c:choose>

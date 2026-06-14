@@ -79,9 +79,6 @@
                                             <c:when test="${order.paymentMethod == 'bank'}">
                                                 Chuyển khoản ngân hàng
                                             </c:when>
-                                            <c:when test="${order.paymentMethod == 'momo'}">
-                                                Ví MoMo
-                                            </c:when>
                                             <c:otherwise>
                                                 ${order.paymentMethod}
                                             </c:otherwise>

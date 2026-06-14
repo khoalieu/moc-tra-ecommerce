@@ -53,7 +53,7 @@ public class UserRefundRequestServlet extends HttpServlet {
 
             if (reason == null || receiveMethod == null || accountHolder == null ||
                     (accountNumber == null && !hasQrImage) ||
-                    (!"bank".equals(receiveMethod) && !"momo".equals(receiveMethod))) {
+                    !"bank".equals(receiveMethod)) {
                 setMessage(session, "Vui lòng nhập đầy đủ thông tin hoàn tiền.", "danger");
                 response.sendRedirect(request.getContextPath() + "/don-hang");
                 return;
@@ -179,3 +179,4 @@ public class UserRefundRequestServlet extends HttpServlet {
         return relativeDir + "/" + fileName;
     }
 }
+

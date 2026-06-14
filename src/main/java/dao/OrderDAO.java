@@ -880,6 +880,16 @@ public class OrderDAO {
         return false;
     }
 
+    public boolean updatePaymentStatus(Connection conn, int orderId, PaymentStatus status) throws SQLException {
+        String sql = "UPDATE orders SET payment_status = ? WHERE id = ?";
+
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, status.name().toLowerCase());
+            ps.setInt(2, orderId);
+            return ps.executeUpdate() > 0;
+        }
+    }
+
     public Integer getOrderIdByOrderNumber(String orderNumber) {
         String sql = "SELECT id FROM orders WHERE order_number = ? LIMIT 1";
 

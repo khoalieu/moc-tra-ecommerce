@@ -159,7 +159,7 @@ public class AdminOrderServlet extends HttpServlet {
         if (paymentMethod == null || paymentMethod.isBlank()) {return null;}
 
         String normalized = paymentMethod.trim().toLowerCase();
-        return ("cod".equals(normalized) || "bank".equals(normalized) || "momo".equals(normalized))
+        return ("cod".equals(normalized) || "bank".equals(normalized))
                 ? normalized : null;
     }
 

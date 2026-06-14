@@ -338,7 +338,8 @@ public class CheckoutServlet extends HttpServlet {
         order.setCouponCode(appliedCouponCode);
         order.setCouponDiscountAmount(couponDiscount);
         order.setVipDiscountAmount(vipDiscount);
-        order.setPaymentMethod(request.getParameter("paymentMethod"));
+        String paymentMethod = normalizePaymentMethod(request.getParameter("paymentMethod"));
+        order.setPaymentMethod(paymentMethod);
         order.setNotes(request.getParameter("note"));
 
         OrderDAO orderDAO = DAOFactory.getInstance().getOrderDAO();
@@ -436,18 +437,11 @@ public class CheckoutServlet extends HttpServlet {
             session.removeAttribute("checkoutProcessing");
         }
 
-        String paymentMethod = request.getParameter("paymentMethod");
-        if (paymentMethod == null) {
-            paymentMethod = "cod";
-        }
-
-        if (!"cod".equals(paymentMethod)) {
+        if ("bank".equals(paymentMethod)) {
             try {
                 Order createdOrder = orderDAO.getOrderById(orderId);
 
-                PaymentResult res = "bank".equals(paymentMethod)
-                        ? PaymentUtils.createPayosPayment(createdOrder)
-                        : PaymentUtils.createMomoPayment(createdOrder);
+                PaymentResult res = PaymentUtils.createPayosPayment(createdOrder);
 
                 if (res != null) {
                     PaymentTransaction tx = new PaymentTransaction();
@@ -473,6 +467,13 @@ public class CheckoutServlet extends HttpServlet {
         }
 
         response.sendRedirect("hoa-don?id=" + orderId);
+    }
+
+    private String normalizePaymentMethod(String paymentMethod) {
+        if ("bank".equalsIgnoreCase(paymentMethod)) {
+            return "bank";
+        }
+        return "cod";
     }
 
     private double calculateFinalShippingFee(String province, String shippingMethod,
