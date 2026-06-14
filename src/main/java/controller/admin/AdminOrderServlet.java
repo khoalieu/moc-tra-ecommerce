@@ -142,8 +142,10 @@ public class AdminOrderServlet extends HttpServlet {
         if (status == null || status.isBlank()) {return null;}
 
         String normalized = status.trim().toUpperCase();
-        return ("PENDING".equals(normalized) || "SHIPPING".equals(normalized) || "COMPLETED".equals(normalized)
-                || "CANCELLED".equals(normalized) || "DELIVERY_FAILED".equals(normalized))
+        return ("PENDING".equals(normalized) || "PROCESSING".equals(normalized) || "SHIPPING".equals(normalized)
+                || "DELIVERY_ATTEMPT_FAILED".equals(normalized) || "RETURNING".equals(normalized)
+                || "COMPLETED".equals(normalized) || "CANCELLED".equals(normalized)
+                || "DELIVERY_FAILED".equals(normalized))
                 ? normalized : null;
     }
 
