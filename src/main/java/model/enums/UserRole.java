@@ -5,5 +5,7 @@ public enum UserRole {
     CUSTOMER,
     EDITOR,
     CSKH,
+    MARKETING,
+    MANAGEGER,
     SHIPPER
 }

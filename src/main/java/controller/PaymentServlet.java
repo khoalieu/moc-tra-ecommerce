@@ -152,6 +152,7 @@ public class PaymentServlet extends HttpServlet {
 
                 txDAO.markExpiredById(payment.getId());
                 orderDAO.updatePaymentStatus(orderId, PaymentStatus.EXPIRED);
+                orderDAO.cancelOrder(orderId, "Thanh toan qua han");
                 new NotificationService().notifyPaymentStatusChanged(order, PaymentStatus.EXPIRED);
 
                 data.put("paymentStatus", "EXPIRED");
@@ -199,6 +200,7 @@ public class PaymentServlet extends HttpServlet {
                 Order order = orderDAO.getOrderById(parsedOrderId);
                 if (order != null && order.getPaymentStatus() == PaymentStatus.PENDING) {
                     orderDAO.updatePaymentStatus(parsedOrderId, PaymentStatus.FAILED);
+                    orderDAO.cancelOrder(parsedOrderId, "Nguoi dung huy thanh toan");
                     new NotificationService().notifyPaymentStatusChanged(order, PaymentStatus.FAILED);
                 }
             } catch (Exception e) {

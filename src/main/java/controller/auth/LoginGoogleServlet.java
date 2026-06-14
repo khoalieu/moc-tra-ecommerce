@@ -102,8 +102,6 @@ public class LoginGoogleServlet extends HttpServlet {
                         response.sendRedirect(request.getContextPath() + "/admin/dashboard");
                     } else if (user.hasPermission("blog.create")) {
                         response.sendRedirect(request.getContextPath() + "/editor/dashboard");
-                    } else if (user.hasPermission("shipper.view")) {
-                        response.sendRedirect(request.getContextPath() + "/shipper/dashboard");
                     } else {
                         response.sendRedirect(request.getContextPath() + "/admin/dashboard");
                     }
