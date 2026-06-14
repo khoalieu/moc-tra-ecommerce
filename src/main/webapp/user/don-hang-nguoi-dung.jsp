@@ -57,9 +57,21 @@
                             <c:set var="statusClass" value="status-cancelled" />
                             <c:set var="statusText" value="Đã hủy" />
                         </c:when>
+                        <c:when test="${statusStr == 'PROCESSING'}">
+                            <c:set var="statusClass" value="status-processing" />
+                            <c:set var="statusText" value="Chờ GHN lấy hàng" />
+                        </c:when>
                         <c:when test="${statusStr == 'SHIPPING'}">
                             <c:set var="statusClass" value="status-shipping" />
                             <c:set var="statusText" value="Đang giao hàng" />
+                        </c:when>
+                        <c:when test="${statusStr == 'DELIVERY_ATTEMPT_FAILED'}">
+                            <c:set var="statusClass" value="status-delivery-attempt-failed" />
+                            <c:set var="statusText" value="Giao hụt, chờ giao lại" />
+                        </c:when>
+                        <c:when test="${statusStr == 'RETURNING'}">
+                            <c:set var="statusClass" value="status-returning" />
+                            <c:set var="statusText" value="Đang hoàn hàng" />
                         </c:when>
                         <c:when test="${statusStr == 'DELIVERY_FAILED'}">
                             <c:set var="statusClass" value="status-delivery-failed" />
@@ -74,11 +86,29 @@
                             <c:set var="tl3" value="" />
                             <c:set var="tl4" value="" />
                         </c:when>
+                        <c:when test="${statusStr == 'PROCESSING'}">
+                            <c:set var="tl1" value="done" />
+                            <c:set var="tl2" value="active" />
+                            <c:set var="tl3" value="" />
+                            <c:set var="tl4" value="" />
+                        </c:when>
                         <c:when test="${statusStr == 'SHIPPING'}">
                             <c:set var="tl1" value="done" />
                             <c:set var="tl2" value="done" />
                             <c:set var="tl3" value="active" />
                             <c:set var="tl4" value="" />
+                        </c:when>
+                        <c:when test="${statusStr == 'DELIVERY_ATTEMPT_FAILED'}">
+                            <c:set var="tl1" value="done" />
+                            <c:set var="tl2" value="done" />
+                            <c:set var="tl3" value="failed" />
+                            <c:set var="tl4" value="" />
+                        </c:when>
+                        <c:when test="${statusStr == 'RETURNING'}">
+                            <c:set var="tl1" value="done" />
+                            <c:set var="tl2" value="done" />
+                            <c:set var="tl3" value="done" />
+                            <c:set var="tl4" value="returning" />
                         </c:when>
                         <c:when test="${statusStr == 'COMPLETED'}">
                             <c:set var="tl1" value="done" />
@@ -106,7 +136,12 @@
                         </c:otherwise>
                     </c:choose>
 
-                    <div class="order-card" data-status="${fn:toLowerCase(statusStr)}">
+                    <c:set var="filterStatus" value="${fn:toLowerCase(statusStr)}" />
+                    <c:if test="${statusStr == 'PROCESSING' || statusStr == 'DELIVERY_ATTEMPT_FAILED' || statusStr == 'RETURNING'}">
+                        <c:set var="filterStatus" value="shipping" />
+                    </c:if>
+
+                    <div class="order-card" data-status="${filterStatus}">
                         <div class="order-card-header">
                             <div class="order-card-meta">
                                 <div class="order-number">
@@ -174,6 +209,18 @@
                                         <div class="timeline-label">Giao thất bại</div>
                                     </div>
                                 </c:when>
+                                <c:when test="${statusStr == 'DELIVERY_ATTEMPT_FAILED'}">
+                                    <div class="timeline-step active">
+                                        <div class="timeline-icon"><i class="fa-solid fa-phone-volume"></i></div>
+                                        <div class="timeline-label">Chờ giao lại</div>
+                                    </div>
+                                </c:when>
+                                <c:when test="${statusStr == 'RETURNING'}">
+                                    <div class="timeline-step returning">
+                                        <div class="timeline-icon"><i class="fa-solid fa-rotate-left"></i></div>
+                                        <div class="timeline-label">Đang hoàn</div>
+                                    </div>
+                                </c:when>
                                 <c:otherwise>
                                     <div class="timeline-step ${tl4}">
                                         <div class="timeline-icon"><i class="fa-solid fa-circle-check"></i></div>
@@ -182,6 +229,16 @@
                                 </c:otherwise>
                             </c:choose>
                         </div>
+
+                        <c:if test="${(statusStr == 'PROCESSING' || statusStr == 'SHIPPING' || statusStr == 'DELIVERY_ATTEMPT_FAILED' || statusStr == 'RETURNING') && not empty o.cancelReason}">
+                            <div class="shipping-status-banner">
+                                <i class="fa-solid fa-truck-fast"></i>
+                                <div>
+                                    <span class="cancel-reason-title">Cập nhật vận chuyển</span>
+                                    <span class="cancel-reason-text">${o.cancelReason}</span>
+                                </div>
+                            </div>
+                        </c:if>
 
                         <c:if test="${(statusStr == 'CANCELLED' || statusStr == 'DELIVERY_FAILED') && not empty o.cancelReason}">
                             <div class="cancel-reason-banner">
@@ -282,6 +339,17 @@
                                 <span><strong>Địa chỉ giao hàng:</strong> ${o.notes}</span>
                             </div>
                         </div>
+
+                            <c:if test="${not empty o.trackingCode}">
+                                <div class="shipping-addr-inline">
+                                    <i class="fa-solid fa-barcode"></i>
+                                    <span>
+                                        <strong>Mã vận đơn ${empty o.shippingProvider ? 'GHN' : o.shippingProvider}:</strong>
+                                        ${o.trackingCode}
+                                        <a href="https://donhang.ghn.vn/?order_code=${o.trackingCode}" target="_blank" rel="noopener">Tra cứu</a>
+                                    </span>
+                                </div>
+                            </c:if>
 
                         <div class="order-summary-compact">
                             <div class="summary-amount-row">
