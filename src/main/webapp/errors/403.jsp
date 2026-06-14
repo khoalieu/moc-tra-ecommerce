@@ -1,4 +1,5 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -61,9 +62,25 @@
     Xin lỗi, tài khoản của bạn không có quyền quản trị viên để truy cập trang này.
     Vui lòng quay lại trang chủ.
   </p>
-  <a href="${pageContext.request.contextPath}/index" class="btn-home">
-    <i class="fa-solid fa-house"></i> Quay về Trang chủ
-  </a>
+  <div class="actions" style="display: flex; gap: 15px; justify-content: center;">
+    <a href="${pageContext.request.contextPath}/index" class="btn-home" style="background-color: #6c757d;">
+      <i class="fa-solid fa-house"></i> Quay về Trang chủ
+    </a>
+    <c:if test="${not empty sessionScope.user and sessionScope.user.hasPermission('dashboard.view')}">
+      <c:choose>
+        <c:when test="${sessionScope.user.hasPermission('blog.create')}">
+          <a href="${pageContext.request.contextPath}/editor/dashboard" class="btn-home">
+            <i class="fa-solid fa-gauge"></i> Quay về Trang quản trị
+          </a>
+        </c:when>
+        <c:otherwise>
+          <a href="${pageContext.request.contextPath}/admin/dashboard" class="btn-home">
+            <i class="fa-solid fa-gauge"></i> Quay về Trang quản trị
+          </a>
+        </c:otherwise>
+      </c:choose>
+    </c:if>
+  </div>
 </div>
 </body>
 </html>
