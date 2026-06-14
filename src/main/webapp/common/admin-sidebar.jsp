@@ -20,47 +20,57 @@
                 </a>
             </li>
 
-            <li class="nav-item ${param.activePage == 'products' ? 'active' : ''}">
-                <a href="${ctx}/admin/products">
-                    <i class="fas fa-box"></i>
-                    <span>Tất cả Sản phẩm</span>
-                </a>
-            </li>
+            <c:if test="${sessionScope.user.hasPermission('product.view')}">
+                <li class="nav-item ${param.activePage == 'products' ? 'active' : ''}">
+                    <a href="${ctx}/admin/products">
+                        <i class="fas fa-box"></i>
+                        <span>Tất cả Sản phẩm</span>
+                    </a>
+                </li>
 
-            <li class="nav-item ${param.activePage == 'inventory' ? 'active' : ''}">
-                <a href="${ctx}/admin/inventory">
-                    <i class="fas fa-boxes-stacked"></i>
-                    <span>Quản lý tồn kho</span>
-                </a>
-            </li>
+                <li class="nav-item ${param.activePage == 'inventory' ? 'active' : ''}">
+                    <a href="${ctx}/admin/inventory">
+                        <i class="fas fa-boxes-stacked"></i>
+                        <span>Quản lý tồn kho</span>
+                    </a>
+                </li>
+            </c:if>
 
-            <li class="nav-item ${param.activePage == 'banners' ? 'active' : ''}">
-                <a href="${ctx}/admin/banner">
-                    <i class="fas fa-images"></i>
-                    <span>Quản lý Banner</span>
-                </a>
-            </li>
+            <c:if test="${sessionScope.user.hasPermission('banner.manage')}">
+                <li class="nav-item ${param.activePage == 'banners' ? 'active' : ''}">
+                    <a href="${ctx}/admin/banner">
+                        <i class="fas fa-images"></i>
+                        <span>Quản lý Banner</span>
+                    </a>
+                </li>
+            </c:if>
 
-            <li class="nav-item ${param.activePage == 'categories' ? 'active' : ''}">
-                <a href="${ctx}/admin/categories">
-                    <i class="fas fa-sitemap"></i>
-                    <span>Danh mục Sản phẩm</span>
-                </a>
-            </li>
+            <c:if test="${sessionScope.user.hasPermission('category.manage')}">
+                <li class="nav-item ${param.activePage == 'categories' ? 'active' : ''}">
+                    <a href="${ctx}/admin/categories">
+                        <i class="fas fa-sitemap"></i>
+                        <span>Danh mục Sản phẩm</span>
+                    </a>
+                </li>
+            </c:if>
 
-            <li class="nav-item ${param.activePage == 'orders' ? 'active' : ''}">
-                <a href="${ctx}/admin/orders">
-                    <i class="fas fa-shopping-cart"></i>
-                    <span>Đơn hàng</span>
-                </a>
-            </li>
+            <c:if test="${sessionScope.user.hasPermission('order.view')}">
+                <li class="nav-item ${param.activePage == 'orders' ? 'active' : ''}">
+                    <a href="${ctx}/admin/orders">
+                        <i class="fas fa-shopping-cart"></i>
+                        <span>Đơn hàng</span>
+                    </a>
+                </li>
+            </c:if>
 
-            <li class="nav-item ${param.activePage == 'refunds' ? 'active' : ''}">
-                <a href="${ctx}/admin/refunds">
-                    <i class="fas fa-money-bill-transfer"></i>
-                    <span>Hoàn tiền</span>
-                </a>
-            </li>
+            <c:if test="${sessionScope.user.hasPermission('order.refund')}">
+                <li class="nav-item ${param.activePage == 'refunds' ? 'active' : ''}">
+                    <a href="${ctx}/admin/refunds">
+                        <i class="fas fa-money-bill-transfer"></i>
+                        <span>Hoàn tiền</span>
+                    </a>
+                </li>
+            </c:if>
 
             <li class="nav-item ${param.activePage == 'notifications' ? 'active' : ''}">
                 <a href="${ctx}/admin/notifications" class="admin-notification-nav"
@@ -71,21 +81,25 @@
                 </a>
             </li>
 
-            <li class="nav-item ${param.activePage == 'customers' ? 'active' : ''}">
-                <a href="${ctx}/admin/customers">
-                    <i class="fas fa-users"></i>
-                    <span>Khách hàng</span>
-                </a>
-            </li>
+            <c:if test="${sessionScope.user.hasPermission('customer.view')}">
+                <li class="nav-item ${param.activePage == 'customers' ? 'active' : ''}">
+                    <a href="${ctx}/admin/customers">
+                        <i class="fas fa-users"></i>
+                        <span>Khách hàng</span>
+                    </a>
+                </li>
+            </c:if>
 
-            <li class="nav-item ${param.activePage == 'contacts' ? 'active' : ''}">
-                <a href="${ctx}/admin/contacts" class="admin-contact-nav"
-                   data-summary-url="${ctx}/admin/contacts?action=summary">
-                    <i class="fas fa-envelope-open-text"></i>
-                    <span>Quản lý Liên hệ</span>
-                    <span class="badge admin-contact-badge" style="display:none;"></span>
-                </a>
-            </li>
+            <c:if test="${sessionScope.user.hasPermission('contact.manage')}">
+                <li class="nav-item ${param.activePage == 'contacts' ? 'active' : ''}">
+                    <a href="${ctx}/admin/contacts" class="admin-contact-nav"
+                       data-summary-url="${ctx}/admin/contacts?action=summary">
+                        <i class="fas fa-envelope-open-text"></i>
+                        <span>Quản lý Liên hệ</span>
+                        <span class="badge admin-contact-badge" style="display:none;"></span>
+                    </a>
+                </li>
+            </c:if>
 
             <c:if test="${sessionScope.user.hasPermission('blog.view')}">
                 <li class="nav-item ${param.activePage == 'blog' ? 'active' : ''}">
@@ -104,18 +118,25 @@
                     </a>
                 </li>
             </c:if>
-            <li class="nav-item ${param.activePage == 'promotions' ? 'active' : ''}">
-                <a href="${ctx}/admin/promotions">
-                    <i class="fa-solid fa-percent"></i>
-                    <span>Quản lý khuyến mãi</span>
-                </a>
-            </li>
-            <li class="nav-item ${param.activePage == 'system-logs' ? 'active' : ''}">
-                <a href="${ctx}/admin/system-logs">
-                    <i class="fas fa-history"></i>
-                    <span>Nhật ký hệ thống</span>
-                </a>
-            </li>
+
+            <c:if test="${sessionScope.user.hasPermission('promotion.manage')}">
+                <li class="nav-item ${param.activePage == 'promotions' ? 'active' : ''}">
+                    <a href="${ctx}/admin/promotions">
+                        <i class="fa-solid fa-percent"></i>
+                        <span>Quản lý khuyến mãi</span>
+                    </a>
+                </li>
+            </c:if>
+
+            <c:if test="${sessionScope.user.hasPermission('system.logs')}">
+                <li class="nav-item ${param.activePage == 'system-logs' ? 'active' : ''}">
+                    <a href="${ctx}/admin/system-logs">
+                        <i class="fas fa-history"></i>
+                        <span>Nhật ký hệ thống</span>
+                    </a>
+                </li>
+            </c:if>
+
             <c:if test="${sessionScope.user.hasPermission('role.manage')}">
                 <li class="nav-item ${param.activePage == 'roles' ? 'active' : ''}">
                     <a href="${ctx}/admin/roles">
