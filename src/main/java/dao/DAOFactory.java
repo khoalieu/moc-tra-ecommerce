@@ -24,7 +24,16 @@ public class DAOFactory {
             // Configure HikariCP Connection Pool
             HikariConfig config = new HikariConfig();
             config.setDriverClassName("com.mysql.cj.jdbc.Driver"); // Explicitly set MySQL driver
-            config.setJdbcUrl(props.getProperty("db.url"));
+            String url = props.getProperty("db.url");
+            if (url != null && url.contains("//mysql:3306/")) {
+                try {
+                    java.net.InetAddress.getByName("mysql");
+                } catch (java.net.UnknownHostException e) {
+                    System.out.println("⚠️ Host 'mysql' is not resolvable. Falling back to '127.0.0.1:3307' for local development.");
+                    url = url.replace("//mysql:3306/", "//127.0.0.1:3307/");
+                }
+            }
+            config.setJdbcUrl(url);
             config.setUsername(props.getProperty("db.user"));
             config.setPassword(props.getProperty("db.password"));
 
