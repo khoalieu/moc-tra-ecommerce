@@ -144,6 +144,7 @@ public class MomoServlet extends HttpServlet {
             } else {
                 txDAO.updateStatusByProviderOrderId(orderNumber, "failed", rawBody);
                 orderDAO.updatePaymentStatus(tx.getOrderId(), PaymentStatus.FAILED);
+                orderDAO.cancelOrder(tx.getOrderId(), "Thanh toan MoMo that bai");
                 new NotificationService().notifyPaymentStatusChanged(order, PaymentStatus.FAILED);
                 System.out.println("MoMo thanh toán thất bại cho orderId = " + tx.getOrderId());
             }

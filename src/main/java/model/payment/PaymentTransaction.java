@@ -1,11 +1,11 @@
 package model.payment;
 
-import java.io.Serializable;
 import java.sql.Timestamp;
+
+import java.io.Serializable;
 
 public class PaymentTransaction implements Serializable {
     private static final long serialVersionUID = 1L;
-
     private int id;
     private int orderId;
     private String paymentMethod;

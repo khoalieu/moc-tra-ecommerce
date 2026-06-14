@@ -5,9 +5,9 @@ import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.Date;
 
+
 public class BlogComment implements Serializable {
     private static final long serialVersionUID = 1L;
-
     private Integer id;
     private Integer postId;
     private Integer userId;

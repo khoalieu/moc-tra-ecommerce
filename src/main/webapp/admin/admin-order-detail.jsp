@@ -89,7 +89,7 @@
                 <div class="left-column">
                     <div class="detail-card">
                         <h3 class="card-title">Sản phẩm đã đặt</h3>
-                        <form action="admin-edit-order" method="post" id="adminUpdateQtyForm">
+                        <form action="admin/order-edit-invoice" method="post" id="adminUpdateQtyForm">
                             <input type="hidden" name="action" value="update-all-quantities">
                             <input type="hidden" name="orderId" value="${order.id}">
                         <table class="order-items-table">
