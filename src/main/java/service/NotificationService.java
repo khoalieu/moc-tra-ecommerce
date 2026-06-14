@@ -177,6 +177,20 @@ public class NotificationService {
                 "don-hang", "order", order.getId());
     }
 
+    public int notifyOrderAutoCancelledUnpaid(Order order) {
+        if (order == null) {
+            return 0;
+        }
+        String code = displayOrderNumber(order.getOrderNumber(), order.getId());
+        return notifyUser(order.getUserId(),
+                "order_auto_cancelled_unpaid",
+                "Đơn hàng đã tự hủy",
+                "Đơn hàng " + code + " đã bị hủy do quá thời gian thanh toán 24 giờ.",
+                "don-hang",
+                "order",
+                order.getId());
+    }
+
     public int notifyRefundRequested(Order order, boolean completedPendingInfo) {
         if (order == null) {return 0;}
 

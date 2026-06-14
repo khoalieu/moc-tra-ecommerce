@@ -187,6 +187,9 @@
                             <span id="countdownText">Đang tính...</span>
                         </div>
                     </c:if>
+                    <p class="note" style="margin-top:12px;">
+                        Mã QR có hiệu lực 15 phút. Đơn hàng online chưa thanh toán sẽ tự hủy sau 24 giờ.
+                    </p>
                 </div>
 
                 <div class="qr-box" id="qrBox">

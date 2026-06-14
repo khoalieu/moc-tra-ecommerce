@@ -9,6 +9,7 @@ import dao.PaymentTransactionDAO;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.*;
+import model.enums.OrderStatus;
 import model.enums.PaymentStatus;
 import model.order.Order;
 import model.payment.PaymentTransaction;
@@ -94,6 +95,10 @@ public class PaymentServlet extends HttpServlet {
                 return;
             }
             if (order.getPaymentStatus() == PaymentStatus.PAID) {
+                response.sendRedirect(request.getContextPath() + "/hoa-don?id=" + orderId);
+                return;
+            }
+            if (order.getStatus() != OrderStatus.PENDING) {
                 response.sendRedirect(request.getContextPath() + "/hoa-don?id=" + orderId);
                 return;
             }
@@ -193,18 +198,7 @@ public class PaymentServlet extends HttpServlet {
         String orderId = request.getParameter("orderId");
 
         if (orderId != null && !orderId.isEmpty()) {
-            try {
-                int parsedOrderId = Integer.parseInt(orderId);
-                OrderDAO orderDAO = DAOFactory.getInstance().getOrderDAO();
-                Order order = orderDAO.getOrderById(parsedOrderId);
-                if (order != null && order.getPaymentStatus() == PaymentStatus.PENDING) {
-                    orderDAO.updatePaymentStatus(parsedOrderId, PaymentStatus.FAILED);
-                    new NotificationService().notifyPaymentStatusChanged(order, PaymentStatus.FAILED);
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-            response.sendRedirect(request.getContextPath() + "/hoa-don?id=" + orderId);
+            response.sendRedirect(request.getContextPath() + "/thanh-toan-qr?orderId=" + orderId);
         } else {
             response.sendRedirect(request.getContextPath() + "/don-hang");
         }
@@ -379,7 +373,7 @@ public class PaymentServlet extends HttpServlet {
             tx.setPayUrl(res.getPayUrl());
             tx.setDeeplink(res.getDeeplink());
             tx.setTransactionStatus("pending");
-            tx.setExpiredAt(Timestamp.valueOf(LocalDateTime.now().plusMinutes(2)));
+            tx.setExpiredAt(Timestamp.valueOf(LocalDateTime.now().plusMinutes(15)));
 
             txDAO.create(tx);
             orderDAO.updatePaymentStatus(orderId, PaymentStatus.PENDING);
