@@ -93,6 +93,25 @@
                         data-filter-value="out-of-stock">
                     <i class="fas fa-triangle-exclamation"></i> Hết hàng
                 </button>
+                <div class="admin-product-quick-btn admin-product-unsold-btn ${currentStockFilter == 'unsold' ? 'active' : ''}"
+                     data-filter-field="stockFilter"
+                     data-filter-value="unsold">
+                    <span class="admin-product-unsold-label">
+                        <i class="fas fa-chart-line"></i> Không bán được
+                    </span>
+                    <select name="unsoldPeriod"
+                            form="productFilterForm"
+                            class="admin-product-unsold-select"
+                            onclick="event.stopPropagation();"
+                            onchange="document.getElementById('stock-filter').value='unsold'; this.form.submit();">
+                        <option value="all" ${currentUnsoldPeriod == 'all' ? 'selected' : ''}>Tất cả</option>
+                        <option value="day" ${currentUnsoldPeriod == 'day' ? 'selected' : ''}>Hôm nay</option>
+                        <option value="week" ${currentUnsoldPeriod == 'week' ? 'selected' : ''}>7 ngày</option>
+                        <option value="month" ${currentUnsoldPeriod == 'month' ? 'selected' : ''}>1 tháng</option>
+                        <option value="six-months" ${currentUnsoldPeriod == 'six-months' ? 'selected' : ''}>6 tháng</option>
+                        <option value="year" ${currentUnsoldPeriod == 'year' ? 'selected' : ''}>1 năm</option>
+                    </select>
+                </div>
             </div>
 
             <form id="productFilterForm" action="admin/products" method="get" class="filters-section">
@@ -132,6 +151,7 @@
                             <option value="need-reorder" ${currentStockFilter == 'need-reorder' ? 'selected' : ''}>Cần nhập hàng</option>
                             <option value="low-stock" ${currentStockFilter == 'low-stock' ? 'selected' : ''}>Sắp hết hàng</option>
                             <option value="out-of-stock" ${currentStockFilter == 'out-of-stock' ? 'selected' : ''}>Hết hàng</option>
+                            <option value="unsold" ${currentStockFilter == 'unsold' ? 'selected' : ''}>Không bán được</option>
                         </select>
                     </div>
 

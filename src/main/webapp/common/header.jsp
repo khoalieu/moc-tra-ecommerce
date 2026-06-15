@@ -134,7 +134,7 @@
                             <h3>Giỏ hàng của bạn</h3>
                         </div>
 
-                        <div class="cart-items" style="max-height: 300px; overflow-y: auto;">
+                        <div class="cart-items header-cart-items" style="max-height: 300px; overflow-y: auto;">
                             <%-- Kiểm tra giỏ hàng trống --%>
                             <c:if test="${sessionScope.cart == null || sessionScope.cart.items.size() == 0}">
                                 <p style="padding: 20px; text-align: center; color: #666;">
@@ -177,7 +177,7 @@
                             <c:if test="${sessionScope.cart != null && sessionScope.cart.items.size() > 0}">
                                 <div class="cart-total">
                                     <span>Tổng tiền:</span>
-                                    <span class="total-price">
+                                    <span class="total-price header-cart-total">
                         <fmt:formatNumber value="${sessionScope.cart.totalMoney}" pattern="#,###"/>đ
                     </span>
                                 </div>
@@ -322,6 +322,85 @@
     </div>
 </header>
 <script>
+    window.updateHeaderCartDropdown = function (data) {
+        if (!data) {
+            return;
+        }
+
+        document.querySelectorAll(".header-cart-count").forEach(function (el) {
+            el.textContent = data.cartCount || 0;
+        });
+
+        ensureHeaderCartTotal(data.cartTotalMoney || 0, data.cartCount || 0);
+
+        const cartItemsWrap = document.querySelector(".header-cart-items");
+        if (!cartItemsWrap || !Array.isArray(data.cartItems)) {
+            return;
+        }
+
+        if (data.cartItems.length === 0) {
+            cartItemsWrap.innerHTML = '<p style="padding: 20px; text-align: center; color: #666;">Giỏ hàng đang trống</p>';
+            return;
+        }
+
+        const contextPath = "${pageContext.request.contextPath}";
+        let html = "";
+        data.cartItems.forEach(function (item) {
+            const imageUrl = item.imageUrl && String(item.imageUrl).trim() !== ""
+                ? item.imageUrl
+                : contextPath + "/assets/images/no-image.png";
+
+            html += '<div class="cart-item">';
+            html += '<img src="' + headerCartEscapeHtml(imageUrl) + '" alt="' + headerCartEscapeHtml(item.productName || "") + '" onerror="this.src=\'' + contextPath + '/assets/images/no-image.png\'">';
+            html += '<div class="cart-item-info">';
+            html += '<h4><a href="' + contextPath + '/chi-tiet-san-pham?id=' + encodeURIComponent(item.productId || 0) + '" style="color: inherit; text-decoration: none;">' + headerCartEscapeHtml(item.productName || "") + '</a></h4>';
+            if (item.variantName) {
+                html += '<p style="font-size: 0.8rem; color: #888; margin: 2px 0 5px 0;">Phân loại: ' + headerCartEscapeHtml(item.variantName) + '</p>';
+            }
+            html += '<p class="cart-item-quantity">' + (item.quantity || 0) + ' x <span class="cart-item-price">' + headerCartFormatCurrency(item.unitPrice || 0) + '</span></p>';
+            html += '</div>';
+            html += '</div>';
+        });
+        cartItemsWrap.innerHTML = html;
+    };
+
+    function headerCartFormatCurrency(value) {
+        return Number(value || 0).toLocaleString("vi-VN") + "đ";
+    }
+
+    function ensureHeaderCartTotal(totalMoney, cartCount) {
+        const footer = document.querySelector(".cart-dropdown-footer");
+        if (!footer) {
+            return;
+        }
+
+        let totalRow = footer.querySelector(".cart-total");
+        if (cartCount > 0 && !totalRow) {
+            const actions = footer.querySelector(".cart-actions");
+            totalRow = document.createElement("div");
+            totalRow.className = "cart-total";
+            totalRow.innerHTML = '<span>Tổng tiền:</span><span class="total-price header-cart-total"></span>';
+            footer.insertBefore(totalRow, actions || null);
+        }
+
+        if (totalRow) {
+            totalRow.style.display = cartCount > 0 ? "" : "none";
+            const totalEl = totalRow.querySelector(".header-cart-total");
+            if (totalEl) {
+                totalEl.textContent = headerCartFormatCurrency(totalMoney);
+            }
+        }
+    }
+
+    function headerCartEscapeHtml(value) {
+        return String(value === null || value === undefined ? "" : value)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
     document.addEventListener("DOMContentLoaded", function () {
         const searchInput = document.getElementById("headerSearchInput");
         const suggestionBox = document.getElementById("searchSuggestionBox");

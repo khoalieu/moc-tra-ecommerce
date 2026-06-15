@@ -254,9 +254,9 @@
                         totalCell.innerHTML = new Intl.NumberFormat('vi-VN').format(data.itemTotalPrice) + '&nbsp;đ';
                     }
 
-                    document.querySelectorAll('.header-cart-count').forEach(el => {
-                        el.textContent = data.cartCount;
-                    });
+                    if (window.updateHeaderCartDropdown) {
+                        window.updateHeaderCartDropdown(data);
+                    }
 
                     if (calculateTotal) calculateTotal();
                 } else {
@@ -293,9 +293,9 @@
                             row.remove();
                         }
 
-                        document.querySelectorAll('.header-cart-count').forEach(el => {
-                            el.textContent = data.cartCount;
-                        });
+                        if (window.updateHeaderCartDropdown) {
+                            window.updateHeaderCartDropdown(data);
+                        }
 
                         if (calculateTotal) calculateTotal();
 

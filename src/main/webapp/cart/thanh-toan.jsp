@@ -467,6 +467,7 @@
         const addressRadios    = document.querySelectorAll('input[name="selectedAddress"]');
         const manualAddressForm = document.querySelector(".manual-address");
         const manualInputs     = manualAddressForm ? manualAddressForm.querySelectorAll("input:not([type=hidden]), textarea, select") : [];
+        const manualRequiredFields = manualAddressForm ? manualAddressForm.querySelectorAll("[required]") : [];
         const provinceSelect   = document.getElementById("province");
         const districtSelect   = document.getElementById("district");
         const wardSelect       = document.getElementById("ward");
@@ -496,8 +497,10 @@
         const couponCard           = document.querySelector('.coupon-checkout-card');
         const vipCard              = document.querySelector('.vip-voucher-card');
         const SHIPPING_API_URL     = "${pageContext.request.contextPath}/api/get-shipping-fee";
+        const submitOrderBtn       = document.getElementById("btnSubmitOrder");
 
         let provinceFee = 0, serviceFee = 0;
+        let isSubmittingOrder = false;
 
         if (checkoutRight && orderCard) {
             if (vipCard) {
@@ -683,6 +686,9 @@
                         input.disabled = false;
                     }
                 });
+                manualRequiredFields.forEach(input => {
+                    input.required = true;
+                });
 
                 if (provinceSelect.value !== "") {
                     wardSelect.disabled = false;
@@ -691,6 +697,9 @@
                 fetchProvinceFee(provinceSelect.value);
             } else {
                 manualAddressForm.classList.add("disabled");
+                manualRequiredFields.forEach(input => {
+                    input.required = false;
+                });
                 manualInputs.forEach(input => { input.disabled = true; });
                 const province = selected.getAttribute('data-province');
                 fetchProvinceFee(province);
@@ -787,8 +796,31 @@
                 const totalText = btnTotalDisplay.innerText.trim();
                 if (!confirm("Xác nhận thanh toán đơn hàng?\n\nSố tiền: " + totalText + "\nPhương thức: " + paymentText)) {
                     e.preventDefault();
+                    return;
+                }
+
+                if (isSubmittingOrder) {
+                    e.preventDefault();
+                    return;
+                }
+
+                isSubmittingOrder = true;
+                if (submitOrderBtn) {
+                    submitOrderBtn.disabled = true;
+                    submitOrderBtn.classList.add("is-loading");
+                    submitOrderBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang tạo đơn...';
                 }
             });
+        }
+
+        if (!document.querySelector('input[name="selectedAddress"]:checked')) {
+            const firstSavedAddress = document.querySelector('input[name="selectedAddress"]:not([value="new"])');
+            const newAddressOption = document.querySelector('input[name="selectedAddress"][value="new"]');
+            if (firstSavedAddress) {
+                firstSavedAddress.checked = true;
+            } else if (newAddressOption) {
+                newAddressOption.checked = true;
+            }
         }
 
         updateServiceFee();

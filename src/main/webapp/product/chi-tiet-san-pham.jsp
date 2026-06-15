@@ -555,9 +555,9 @@
                     .then(res => res.json())
                     .then(data => {
                         if (data.success) {
-                            document.querySelectorAll('.header-cart-count').forEach(el => {
-                                el.textContent = data.cartCount;
-                            });
+                            if (window.updateHeaderCartDropdown) {
+                                window.updateHeaderCartDropdown(data);
+                            }
                             showFavoriteToast(data.message, 'success');
                         } else {
                             showFavoriteToast(data.message, 'error');

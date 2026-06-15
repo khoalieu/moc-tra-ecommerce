@@ -1,8 +1,17 @@
 package model.product;
 
 public class TopProductDTO {
+    private int productId;
     private String productName;
     private int totalSold;
+
+    public int getProductId() {
+        return productId;
+    }
+
+    public void setProductId(int productId) {
+        this.productId = productId;
+    }
 
     public String getProductName() {
         return productName;
