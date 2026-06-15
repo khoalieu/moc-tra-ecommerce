@@ -1,5 +1,5 @@
 .contact-section {
-    padding: 60px 0;
+    padding: 44px 0 70px;
     background-color: #f9f9f9;
 }
 
@@ -23,9 +23,9 @@
 }
 
 .contact-content {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 40px;
+    display: grid;
+    grid-template-columns: minmax(280px, 0.85fr) minmax(360px, 1.15fr);
+    gap: 0;
     background: #fff;
     border-radius: 12px;
     overflow: hidden;
@@ -33,42 +33,51 @@
 }
 
 .contact-info {
-    flex: 1;
-    min-width: 300px;
-    background-color: #00796b;
-    color: #fff;
+    min-width: 0;
+    background: linear-gradient(180deg, #0b8a78 0%, #087565 100%);
     padding: 40px;
 }
 
 .info-item {
     display: flex;
-    margin-bottom: 30px;
+    align-items: flex-start;
+    gap: 16px;
+    margin-bottom: 18px;
+    padding: 18px;
+    border-radius: 10px;
+    background: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
 }
 
 .info-item .icon {
     font-size: 24px;
-    margin-right: 20px;
-    color: #a8d59d;
+    margin-right: 0;
+    color: #107e84;
+    width: 34px;
+    text-align: center;
+    flex: 0 0 34px;
 }
 
 .info-item .details h3 {
     font-size: 18px;
     margin-bottom: 5px;
     font-weight: 600;
+    color: #202b33;
 }
 
 .info-item .details p {
-    color: #e0f0dc;
+    color: #4f5f67;
     line-height: 1.5;
+    margin: 0;
 }
 
 .map-container {
-    margin-top: 40px;
+    margin-top: 24px;
 }
 
 .contact-form-wrapper {
-    flex: 1.5;
-    min-width: 350px;
+    min-width: 0;
     padding: 40px;
 }
 
@@ -112,7 +121,7 @@
 }
 
 .btn-submit {
-    background-color: #4a6741;
+    background-color: #107e84;
     color: #fff;
     border: none;
     padding: 14px 30px;
@@ -127,9 +136,15 @@
 }
 
 .btn-submit:hover {
-    background-color: #385230;
+    background-color: #0b6f74;
     transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(74, 103, 65, 0.2);
+    box-shadow: 0 5px 15px rgba(16, 126, 132, 0.22);
+}
+
+.btn-submit:disabled {
+    opacity: 0.75;
+    cursor: not-allowed;
+    transform: none;
 }
 
 .alert {
@@ -155,7 +170,7 @@
 
 @media (max-width: 768px) {
     .contact-content {
-        flex-direction: column;
+        grid-template-columns: 1fr;
     }
     
     .contact-info,

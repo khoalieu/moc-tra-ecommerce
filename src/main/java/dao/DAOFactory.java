@@ -122,6 +122,10 @@ public class DAOFactory {
         return new CouponDAO(dataSource);
     }
 
+    public ContactDAO getContactDAO() {
+        return new ContactDAO(dataSource);
+    }
+
     public ReviewDAO getReviewDAO() {
         return new ReviewDAO(dataSource);
     }

@@ -35,6 +35,10 @@
             background-color: #e4fce4;
             color: #5cb85c;
         }
+        .status-replied {
+            background-color: #f0e8ff;
+            color: #6f42c1;
+        }
         .table-actions .btn-icon {
             background: none;
             border: none;
@@ -50,12 +54,164 @@
         .table-actions .btn-delete:hover {
             color: #d9534f;
         }
+        .admin-contacts-page .content-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+        .admin-contacts-page .filter-group,
+        .admin-contacts-page .filter-form {
+            width: 100%;
+        }
+        .admin-contacts-page .filter-form {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .admin-contacts-page .form-control {
+            height: 42px;
+            border: 1px solid #d7ded9;
+            border-radius: 8px;
+            padding: 0 12px;
+            font: inherit;
+            background: #fff;
+            color: #263238;
+        }
+        .admin-contacts-page select.form-control {
+            min-width: 190px;
+        }
+        .admin-contacts-page .search-box {
+            display: flex;
+            align-items: center;
+            min-width: 320px;
+            flex: 1;
+            max-width: 520px;
+        }
+        .admin-contacts-page .search-box .form-control {
+            width: 100%;
+            border-radius: 8px 0 0 8px;
+        }
+        .admin-contacts-page .btn-search {
+            height: 42px;
+            width: 46px;
+            border: 1px solid #107e84;
+            border-left: 0;
+            border-radius: 0 8px 8px 0;
+            background: #107e84;
+            color: #fff;
+            cursor: pointer;
+        }
+        .admin-contacts-page .card {
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
+            overflow: hidden;
+        }
+        .admin-contacts-page .card-body {
+            padding: 0;
+        }
+        .admin-contacts-page .table-responsive {
+            width: 100%;
+            overflow-x: auto;
+        }
+        .admin-contacts-page .admin-table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 860px;
+        }
+        .admin-contacts-page .admin-table th {
+            padding: 15px 16px;
+            background: #f4f8f7;
+            color: #374151;
+            text-align: left;
+            font-weight: 700;
+            border-bottom: 1px solid #e5ece8;
+            white-space: nowrap;
+        }
+        .admin-contacts-page .admin-table td {
+            padding: 15px 16px;
+            border-bottom: 1px solid #edf1ee;
+            color: #344054;
+            vertical-align: middle;
+        }
+        .admin-contacts-page .admin-table tbody tr:hover {
+            background: #f8fbfa;
+        }
+        .admin-contacts-page .admin-table .unread-row {
+            background: #fffaf0;
+        }
+        .admin-contacts-page .table-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            white-space: nowrap;
+        }
+        .admin-contacts-page .table-actions form {
+            display: inline-flex;
+            margin: 0;
+        }
+        .admin-contacts-page .table-actions .btn-icon {
+            width: 34px;
+            height: 34px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            background: #eef7f7;
+            color: #107e84;
+            margin-right: 0;
+        }
+        .admin-contacts-page .table-actions .btn-icon:hover {
+            background: #107e84;
+            color: #fff;
+        }
+        .admin-contacts-page .table-actions .btn-delete {
+            background: #fff1f0;
+            color: #dc3545;
+        }
+        .admin-contacts-page .table-actions .btn-delete:hover {
+            background: #dc3545;
+            color: #fff;
+        }
+        .admin-contacts-page .pagination {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            justify-content: flex-end;
+            padding: 16px;
+        }
+        .admin-contacts-page .page-item {
+            min-width: 36px;
+            height: 36px;
+            padding: 0 10px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            border: 1px solid #d7ded9;
+            color: #107e84;
+            text-decoration: none;
+            font-weight: 600;
+        }
+        .admin-contacts-page .page-item.active {
+            background: #107e84;
+            border-color: #107e84;
+            color: #fff;
+        }
+        @media (max-width: 768px) {
+            .admin-contacts-page .search-box {
+                min-width: 100%;
+            }
+        }
     </style>
 </head>
 
 <body>
 
-<div class="admin-container">
+<div class="admin-container admin-contacts-page">
     <jsp:include page="/common/admin-sidebar.jsp">
         <jsp:param name="activePage" value="contacts"/>
     </jsp:include>
@@ -82,6 +238,7 @@
                             <option value="">Tất cả trạng thái</option>
                             <option value="UNREAD" ${param.status == 'UNREAD' ? 'selected' : ''}>Chưa đọc</option>
                             <option value="READ" ${param.status == 'READ' ? 'selected' : ''}>Đã đọc</option>
+                            <option value="REPLIED" ${param.status == 'REPLIED' ? 'selected' : ''}>Đã trả lời</option>
                             <option value="RESOLVED" ${param.status == 'RESOLVED' ? 'selected' : ''}>Đã xử lý</option>
                         </select>
                         <div class="search-box">
@@ -93,10 +250,11 @@
             </div>
 
             <c:if test="${not empty sessionScope.flashMsg}">
-                <div class="alert alert-success" style="margin-bottom: 20px; padding: 15px; background: #d4edda; color: #155724; border-radius: 4px;">
+                <div class="alert alert-${empty sessionScope.flashType ? 'success' : sessionScope.flashType}" style="margin-bottom: 20px; padding: 15px; background: #d4edda; color: #155724; border-radius: 4px;">
                     <i class="fas fa-check-circle"></i> ${sessionScope.flashMsg}
                 </div>
                 <c:remove var="flashMsg" scope="session"/>
+                <c:remove var="flashType" scope="session"/>
             </c:if>
 
             <div class="card">
@@ -115,51 +273,15 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <!-- Dữ liệu mẫu (Mock Data) vì chưa có BE -->
                                 <c:choose>
                                     <c:when test="${empty contactsList}">
-                                        <!-- Hiển thị dữ liệu mẫu để Admin xem UI -->
-                                        <tr class="unread-row" style="font-weight: 600;">
-                                            <td>#1001</td>
-                                            <td>Nguyễn Văn A</td>
-                                            <td>nguyenvana@gmail.com</td>
-                                            <td>Sản phẩm bị lỗi đóng gói</td>
-                                            <td><span class="status-badge status-unread">Chưa đọc</span></td>
-                                            <td>14/06/2026 10:30</td>
-                                            <td class="table-actions">
-                                                <button class="btn-icon" title="Xem chi tiết"><i class="fas fa-eye"></i></button>
-                                                <button class="btn-icon" title="Đánh dấu đã xử lý"><i class="fas fa-check-circle"></i></button>
-                                                <button class="btn-icon btn-delete" title="Xóa"><i class="fas fa-trash"></i></button>
-                                            </td>
-                                        </tr>
                                         <tr>
-                                            <td>#1002</td>
-                                            <td>Trần Thị B</td>
-                                            <td>tranthib@gmail.com</td>
-                                            <td>Hỏi về chính sách sỉ trà thảo mộc</td>
-                                            <td><span class="status-badge status-resolved">Đã xử lý</span></td>
-                                            <td>12/06/2026 15:45</td>
-                                            <td class="table-actions">
-                                                <button class="btn-icon" title="Xem chi tiết"><i class="fas fa-eye"></i></button>
-                                                <button class="btn-icon btn-delete" title="Xóa"><i class="fas fa-trash"></i></button>
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td>#1003</td>
-                                            <td>Lê Hoàng C</td>
-                                            <td>lehoangc@gmail.com</td>
-                                            <td>Cửa hàng ở Quận 7 còn mở không?</td>
-                                            <td><span class="status-badge status-read">Đã đọc</span></td>
-                                            <td>10/06/2026 09:15</td>
-                                            <td class="table-actions">
-                                                <button class="btn-icon" title="Xem chi tiết"><i class="fas fa-eye"></i></button>
-                                                <button class="btn-icon" title="Đánh dấu đã xử lý"><i class="fas fa-check-circle"></i></button>
-                                                <button class="btn-icon btn-delete" title="Xóa"><i class="fas fa-trash"></i></button>
+                                            <td colspan="7" style="text-align:center; padding: 30px; color: #777;">
+                                                Chưa có liên hệ nào phù hợp với bộ lọc hiện tại.
                                             </td>
                                         </tr>
                                     </c:when>
                                     <c:otherwise>
-                                        <!-- Dữ liệu thực tế từ Backend (Sẽ hoạt động khi làm xong BE) -->
                                         <c:forEach var="contact" items="${contactsList}">
                                             <tr class="${contact.status == 'UNREAD' ? 'unread-row' : ''}" style="${contact.status == 'UNREAD' ? 'font-weight: 600;' : ''}">
                                                 <td>#${contact.id}</td>
@@ -173,6 +295,9 @@
                                                         </c:when>
                                                         <c:when test="${contact.status == 'READ'}">
                                                             <span class="status-badge status-read">Đã đọc</span>
+                                                        </c:when>
+                                                        <c:when test="${contact.status == 'REPLIED'}">
+                                                            <span class="status-badge status-replied">Đã trả lời</span>
                                                         </c:when>
                                                         <c:when test="${contact.status == 'RESOLVED'}">
                                                             <span class="status-badge status-resolved">Đã xử lý</span>
@@ -203,13 +328,21 @@
                         </table>
                     </div>
                     
-                    <!-- Pagination (Mock) -->
-                    <div class="pagination">
-                        <span class="page-item active">1</span>
-                        <a href="#" class="page-item">2</a>
-                        <a href="#" class="page-item">3</a>
-                        <a href="#" class="page-item"><i class="fas fa-chevron-right"></i></a>
-                    </div>
+                    <c:if test="${totalPages > 1}">
+                        <div class="pagination">
+                            <c:forEach begin="1" end="${totalPages}" var="p">
+                                <c:choose>
+                                    <c:when test="${p == currentPage}">
+                                        <span class="page-item active">${p}</span>
+                                    </c:when>
+                                    <c:otherwise>
+                                        <a class="page-item"
+                                           href="${pageContext.request.contextPath}/admin/contacts?page=${p}&status=${status}&search=${search}">${p}</a>
+                                    </c:otherwise>
+                                </c:choose>
+                            </c:forEach>
+                        </div>
+                    </c:if>
                 </div>
             </div>
 

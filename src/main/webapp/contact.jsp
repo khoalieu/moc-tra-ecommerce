@@ -17,16 +17,6 @@
 
 <jsp:include page="/common/header.jsp"></jsp:include>
 
-<div class="breadcrumb-area">
-    <div class="container">
-        <ul class="breadcrumb">
-            <li><a href="${pageContext.request.contextPath}/">Trang chủ</a></li>
-            <li>/</li>
-            <li class="active">Liên hệ</li>
-        </ul>
-    </div>
-</div>
-
 <section class="contact-section">
     <div class="container">
         <div class="contact-header">
@@ -89,12 +79,17 @@
                 <form action="${pageContext.request.contextPath}/lien-he" method="POST" class="contact-form">
                     <div class="form-group">
                         <label for="name">Họ và tên <span class="required">*</span></label>
-                        <input type="text" id="name" name="name" required placeholder="Nhập họ tên của bạn">
+                        <input type="text" id="name" name="name" required placeholder="Nhập họ tên của bạn" value="${sessionScope.user.displayName}">
                     </div>
                     
                     <div class="form-group">
                         <label for="email">Email <span class="required">*</span></label>
-                        <input type="email" id="email" name="email" required pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$" title="Vui lòng nhập định dạng email hợp lệ" placeholder="Nhập địa chỉ email của bạn">
+                        <input type="email" id="email" name="email" required pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$" title="Vui lòng nhập định dạng email hợp lệ" placeholder="Nhập địa chỉ email của bạn" value="${sessionScope.user.email}">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="phone">Số điện thoại</label>
+                        <input type="tel" id="phone" name="phone" placeholder="Số điện thoại để shop liên hệ nếu cần" value="${sessionScope.user.phone}">
                     </div>
 
                     <div class="form-group">
@@ -118,5 +113,21 @@
 
 <jsp:include page="/common/footer.jsp"></jsp:include>
 
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const form = document.querySelector(".contact-form");
+        if (!form) {
+            return;
+        }
+
+        form.addEventListener("submit", function () {
+            const btn = form.querySelector(".btn-submit");
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang gửi...';
+            }
+        });
+    });
+</script>
 </body>
 </html>

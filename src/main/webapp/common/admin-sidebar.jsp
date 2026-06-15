@@ -79,9 +79,11 @@
             </li>
 
             <li class="nav-item ${param.activePage == 'contacts' ? 'active' : ''}">
-                <a href="${ctx}/admin/contacts">
+                <a href="${ctx}/admin/contacts" class="admin-contact-nav"
+                   data-summary-url="${ctx}/admin/contacts?action=summary">
                     <i class="fas fa-envelope-open-text"></i>
                     <span>Quản lý Liên hệ</span>
+                    <span class="badge admin-contact-badge" style="display:none;"></span>
                 </a>
             </li>
 
@@ -128,32 +130,37 @@
 
 <script>
     document.addEventListener("DOMContentLoaded", function () {
-        const nav = document.querySelector(".admin-notification-nav");
-        if (!nav) {
-            return;
-        }
+        loadAdminSidebarBadge(".admin-notification-nav", ".admin-notification-badge");
+        loadAdminSidebarBadge(".admin-contact-nav", ".admin-contact-badge");
 
-        const badge = nav.querySelector(".admin-notification-badge");
-        const summaryUrl = nav.getAttribute("data-summary-url");
-        if (!badge || !summaryUrl) {
-            return;
-        }
+        function loadAdminSidebarBadge(navSelector, badgeSelector) {
+            const nav = document.querySelector(navSelector);
+            if (!nav) {
+                return;
+            }
 
-        fetch(summaryUrl)
-            .then(function (response) {
-                return response.json();
-            })
-            .then(function (data) {
-                const unreadCount = data && data.unreadCount ? data.unreadCount : 0;
-                if (unreadCount > 0) {
-                    badge.innerText = unreadCount;
-                    badge.style.display = "inline-block";
-                } else {
+            const badge = nav.querySelector(badgeSelector);
+            const summaryUrl = nav.getAttribute("data-summary-url");
+            if (!badge || !summaryUrl) {
+                return;
+            }
+
+            fetch(summaryUrl)
+                .then(function (response) {
+                    return response.json();
+                })
+                .then(function (data) {
+                    const unreadCount = data && data.unreadCount ? data.unreadCount : 0;
+                    if (unreadCount > 0) {
+                        badge.innerText = unreadCount;
+                        badge.style.display = "inline-block";
+                    } else {
+                        badge.style.display = "none";
+                    }
+                })
+                .catch(function () {
                     badge.style.display = "none";
-                }
-            })
-            .catch(function () {
-                badge.style.display = "none";
-            });
+                });
+        }
     });
 </script>
