@@ -46,6 +46,7 @@ public class AdminProductListServlet extends HttpServlet {
         String status = request.getParameter("status");
         String stockFilter = request.getParameter("stockFilter");
         String promotionFilter = request.getParameter("promotionFilter");
+        String unsoldPeriod = normalizeUnsoldPeriod(request.getParameter("unsoldPeriod"));
         String reorderThresholdStr = request.getParameter("reorderThreshold");
         String lowStockThresholdStr = request.getParameter("lowStockThreshold");
         promotionDAO.syncPromotionPrices();
@@ -107,12 +108,12 @@ public class AdminProductListServlet extends HttpServlet {
         List<Integer> selectedCategoryIds = resolveSelectedCategoryIds(categoryId, categoryList);
 
         List<Product> productList = productDAO.getAdminProducts(selectedCategoryIds, promotionId, promotionStatus, stockFilter,
-                sort, minPrice, maxPrice, keyword, page, pageSize, status, reorderThreshold, lowStockThreshold);
+                sort, minPrice, maxPrice, keyword, page, pageSize, status, reorderThreshold, lowStockThreshold, unsoldPeriod);
 
         int totalProducts = 0;
         try {
             totalProducts = productDAO.countAdminProducts(selectedCategoryIds, promotionId, promotionStatus, stockFilter,
-                    minPrice, maxPrice, keyword, status, reorderThreshold, lowStockThreshold);
+                    minPrice, maxPrice, keyword, status, reorderThreshold, lowStockThreshold, unsoldPeriod);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -120,7 +121,7 @@ public class AdminProductListServlet extends HttpServlet {
         int totalPages = (int) Math.ceil((double) totalProducts / pageSize);
         List<Promotion> activePromos = promotionDAO.getAvailablePromotionsForAdmin();
         String filterQuery = buildFilterQuery(categoryId, status, stockFilter, minPriceStr, maxPriceStr, sort, keyword,
-                promotionFilter, reorderThreshold, lowStockThreshold);
+                promotionFilter, reorderThreshold, lowStockThreshold, unsoldPeriod);
         request.setAttribute("productList", productList);
         request.setAttribute("categoryList", categoryList);
         request.setAttribute("activePromos", activePromos);
@@ -137,6 +138,7 @@ public class AdminProductListServlet extends HttpServlet {
         request.setAttribute("currentStatus", status);
         request.setAttribute("currentStockFilter", stockFilter);
         request.setAttribute("currentPromotionFilter", promotionFilter);
+        request.setAttribute("currentUnsoldPeriod", unsoldPeriod);
         request.setAttribute("currentReorderThreshold", reorderThreshold);
         request.setAttribute("currentLowStockThreshold", lowStockThreshold);
         request.setAttribute("filterQuery", filterQuery);
@@ -185,10 +187,19 @@ public class AdminProductListServlet extends HttpServlet {
 
     private String normalizeStockFilter(String stockFilter) {
         if ("in-stock".equals(stockFilter) || "need-reorder".equals(stockFilter)
-                || "low-stock".equals(stockFilter) || "out-of-stock".equals(stockFilter)) {
+                || "low-stock".equals(stockFilter) || "out-of-stock".equals(stockFilter)
+                || "unsold".equals(stockFilter)) {
             return stockFilter;
         }
         return null;
+    }
+
+    private String normalizeUnsoldPeriod(String period) {
+        if ("day".equals(period) || "week".equals(period) || "month".equals(period)
+                || "six-months".equals(period) || "year".equals(period)) {
+            return period;
+        }
+        return "all";
     }
 
     private List<Integer> resolveSelectedCategoryIds(Integer categoryId, List<Category> categoryList) {
@@ -208,7 +219,7 @@ public class AdminProductListServlet extends HttpServlet {
 
     private String buildFilterQuery(Integer categoryId, String status, String stockFilter, String minPrice, String maxPrice,
                                     String sort, String keyword, String promotionFilter,
-                                    int reorderThreshold, int lowStockThreshold) {
+                                    int reorderThreshold, int lowStockThreshold, String unsoldPeriod) {
         StringBuilder query = new StringBuilder();
         appendQueryParam(query, "categoryId", categoryId);
         appendQueryParam(query, "status", status);
@@ -218,6 +229,7 @@ public class AdminProductListServlet extends HttpServlet {
         appendQueryParam(query, "sort", sort);
         appendQueryParam(query, "keyword", keyword);
         appendQueryParam(query, "promotionFilter", promotionFilter);
+        appendQueryParam(query, "unsoldPeriod", unsoldPeriod);
         appendQueryParam(query, "reorderThreshold", reorderThreshold);
         appendQueryParam(query, "lowStockThreshold", lowStockThreshold);
         return query.toString();
