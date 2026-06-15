@@ -10,7 +10,7 @@
     <title>Trà Thảo Mộc & Trà Sữa DIY</title>
     <base href="${pageContext.request.contextPath}/">
 
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/main.css">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/main.css?v=4">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
@@ -29,14 +29,6 @@
                          style="background-image: url('${resolvedBannerUrl}');">
 
                         <div class="hero-content">
-                            <c:if test="${not empty b.title}">
-                                <h1>${b.title}</h1>
-                            </c:if>
-
-                            <c:if test="${not empty b.subtitle}">
-                                <p>${b.subtitle}</p>
-                            </c:if>
-
                             <c:if test="${not empty b.buttonLink}">
                                 <a href="${pageContext.request.contextPath}/${b.buttonLink}" class="hero-btn">
                                     <c:out value="${b.buttonText}" default="Xem Ngay"/>
