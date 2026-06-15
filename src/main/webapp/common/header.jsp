@@ -92,6 +92,7 @@
                     </li>
 
                     <li><a href="${pageContext.request.contextPath}/khuyen-mai">KHUYẾN MÃI</a></li>
+                    <li><a href="${pageContext.request.contextPath}/lien-he">LIÊN HỆ</a></li>
                 </ul>
             </div>
         </nav>

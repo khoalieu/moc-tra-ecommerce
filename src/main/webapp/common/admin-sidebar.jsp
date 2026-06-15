@@ -78,6 +78,13 @@
                 </a>
             </li>
 
+            <li class="nav-item ${param.activePage == 'contacts' ? 'active' : ''}">
+                <a href="${ctx}/admin/contacts">
+                    <i class="fas fa-envelope-open-text"></i>
+                    <span>Quản lý Liên hệ</span>
+                </a>
+            </li>
+
             <c:if test="${sessionScope.user.hasPermission('blog.view')}">
                 <li class="nav-item ${param.activePage == 'blog' ? 'active' : ''}">
                     <a href="${ctx}/admin/blog">
