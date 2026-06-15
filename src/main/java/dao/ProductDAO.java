@@ -412,6 +412,14 @@ public class ProductDAO {
                                           String stockFilter, String sort, Double minPrice, Double maxPrice,
                                           String search, int index, int size, String status,
                                           int reorderThreshold, int lowStockThreshold) {
+        return getAdminProducts(categoryIds, promotionId, promotionStatus, stockFilter, sort, minPrice, maxPrice,
+                search, index, size, status, reorderThreshold, lowStockThreshold, "all");
+    }
+
+    public List<Product> getAdminProducts(List<Integer> categoryIds, Integer promotionId, String promotionStatus,
+                                          String stockFilter, String sort, Double minPrice, Double maxPrice,
+                                          String search, int index, int size, String status,
+                                          int reorderThreshold, int lowStockThreshold, String unsoldPeriod) {
         List<Product> list = new ArrayList<>();
         List<Object> params = new ArrayList<>();
         List<String> keywords = splitSearchKeywords(search);
@@ -441,7 +449,7 @@ public class ProductDAO {
         params.add(reorderThreshold);
 
         appendAdminProductFilters(sql, params, categoryIds, promotionId, promotionStatus, stockFilter,
-                minPrice, maxPrice, search, keywords, status, reorderThreshold, lowStockThreshold);
+                minPrice, maxPrice, search, keywords, status, reorderThreshold, lowStockThreshold, unsoldPeriod);
         appendAdminProductSort(sql, params, sort, search, keywords);
         sql.append(" LIMIT ? OFFSET ?");
         params.add(size);
@@ -502,6 +510,13 @@ public class ProductDAO {
     public int countAdminProducts(List<Integer> categoryIds, Integer promotionId, String promotionStatus,
                                   String stockFilter, Double minPrice, Double maxPrice, String search,
                                   String status, int reorderThreshold, int lowStockThreshold) {
+        return countAdminProducts(categoryIds, promotionId, promotionStatus, stockFilter, minPrice, maxPrice, search,
+                status, reorderThreshold, lowStockThreshold, "all");
+    }
+
+    public int countAdminProducts(List<Integer> categoryIds, Integer promotionId, String promotionStatus,
+                                  String stockFilter, Double minPrice, Double maxPrice, String search,
+                                  String status, int reorderThreshold, int lowStockThreshold, String unsoldPeriod) {
         List<Object> params = new ArrayList<>();
         List<String> keywords = splitSearchKeywords(search);
         StringBuilder sql = new StringBuilder(
@@ -511,7 +526,7 @@ public class ProductDAO {
         );
 
         appendAdminProductFilters(sql, params, categoryIds, promotionId, promotionStatus, stockFilter,
-                minPrice, maxPrice, search, keywords, status, reorderThreshold, lowStockThreshold);
+                minPrice, maxPrice, search, keywords, status, reorderThreshold, lowStockThreshold, unsoldPeriod);
 
         try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql.toString())) {
@@ -653,6 +668,14 @@ public class ProductDAO {
                                            Integer promotionId, String promotionStatus, String stockFilter,
                                            Double minPrice, Double maxPrice, String search, List<String> keywords, String status,
                                            int reorderThreshold, int lowStockThreshold) {
+        appendAdminProductFilters(sql, params, categoryIds, promotionId, promotionStatus, stockFilter,
+                minPrice, maxPrice, search, keywords, status, reorderThreshold, lowStockThreshold, "all");
+    }
+
+    private void appendAdminProductFilters(StringBuilder sql, List<Object> params, List<Integer> categoryIds,
+                                           Integer promotionId, String promotionStatus, String stockFilter,
+                                           Double minPrice, Double maxPrice, String search, List<String> keywords, String status,
+                                           int reorderThreshold, int lowStockThreshold, String unsoldPeriod) {
         if (categoryIds != null && !categoryIds.isEmpty()) {
             sql.append(" AND p.category_id IN (");
             appendPlaceholders(sql, categoryIds.size());
@@ -730,6 +753,26 @@ public class ProductDAO {
             params.add(lowStockThreshold);
         } else if ("out-of-stock".equals(stockFilter)) {
             sql.append(" AND ").append(TOTAL_VARIANT_STOCK).append(" = 0 ");
+        } else if ("unsold".equals(stockFilter)) {
+            sql.append(" AND NOT EXISTS (");
+            sql.append("SELECT 1 FROM order_items oi JOIN orders o ON o.id = oi.order_id ");
+            sql.append("WHERE oi.product_id = p.id AND o.status = 'COMPLETED'");
+            appendUnsoldPeriodCondition(sql, unsoldPeriod);
+            sql.append(") ");
+        }
+    }
+
+    private void appendUnsoldPeriodCondition(StringBuilder sql, String period) {
+        if ("day".equals(period)) {
+            sql.append(" AND o.created_at >= CURDATE()");
+        } else if ("week".equals(period)) {
+            sql.append(" AND o.created_at >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)");
+        } else if ("month".equals(period)) {
+            sql.append(" AND o.created_at >= DATE_SUB(CURDATE(), INTERVAL 1 MONTH)");
+        } else if ("six-months".equals(period)) {
+            sql.append(" AND o.created_at >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH)");
+        } else if ("year".equals(period)) {
+            sql.append(" AND o.created_at >= DATE_SUB(CURDATE(), INTERVAL 1 YEAR)");
         }
     }
 

@@ -130,6 +130,7 @@ public class CartServlet extends HttpServlet {
                 jsonMap.put("message", successMsg != null ? successMsg : "Thành công!");
                 jsonMap.put("cartCount", cart.getTotalQuantity());
                 jsonMap.put("cartTotalMoney", cart.getTotalMoney());
+                jsonMap.put("cartItems", buildCartItemsPayload(cart));
                 
                 final int targetVariantId = variantId;
                 CartItem item = cart.getItems().stream()
@@ -152,5 +153,27 @@ public class CartServlet extends HttpServlet {
         } else {
             response.sendRedirect(request.getContextPath() + "/gio-hang");
         }
+    }
+
+    private java.util.List<java.util.Map<String, Object>> buildCartItemsPayload(Cart cart) {
+        java.util.List<java.util.Map<String, Object>> payload = new java.util.ArrayList<>();
+        if (cart == null || cart.getItems() == null) {
+            return payload;
+        }
+
+        for (CartItem item : cart.getItems()) {
+            java.util.Map<String, Object> row = new java.util.HashMap<>();
+            Product product = item.getProduct();
+            ProductVariant variant = item.getVariant();
+
+            row.put("productId", product != null ? product.getId() : 0);
+            row.put("productName", product != null ? product.getName() : "");
+            row.put("imageUrl", product != null ? product.getImageUrl() : "");
+            row.put("variantName", variant != null ? variant.getVariantName() : "");
+            row.put("quantity", item.getQuantity());
+            row.put("unitPrice", item.getUnitPrice());
+            payload.add(row);
+        }
+        return payload;
     }
 }

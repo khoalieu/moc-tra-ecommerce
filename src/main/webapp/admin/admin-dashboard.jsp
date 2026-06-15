@@ -17,6 +17,18 @@
     <link rel="stylesheet" href="${pageContext.request.contextPath}/admin/assets/css/admin.css">
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .dashboard-control-form { display: flex; flex-wrap: wrap; gap: 10px; align-items: end; margin-bottom: 14px; }
+        .dashboard-control-form label { display: block; margin-bottom: 4px; color: #666; font-size: 12px; font-weight: 600; }
+        .dashboard-control-form select,
+        .dashboard-control-form input { min-height: 36px; border: 1px solid #ddd; border-radius: 6px; padding: 0 10px; background: #fff; }
+        .dashboard-control-form input { width: 84px; }
+        .dashboard-control-form button { display: none; }
+        .dashboard-scroll-list { max-height: 360px; overflow-y: auto; padding-right: 4px; }
+        .dashboard-scroll-list.compact { max-height: 300px; }
+        .stat-title-link { color: inherit; text-decoration: none; }
+        .stat-title-link:hover { color: #107e84; }
+    </style>
 </head>
 
 <body>
@@ -50,17 +62,53 @@
             <div class="dashboard-grid">
 
                 <div class="dashboard-card">
-                    <h3><i class="fas fa-fire"></i> Top 5 sản phẩm bán chạy</h3>
+                    <h3>
+                        <i class="fas fa-fire"></i>
+                        ${currentTopMode == 'least' ? 'Sản phẩm bán ít nhất' : 'Sản phẩm bán chạy'}
+                    </h3>
 
-                    <div class="stat-list">
+                    <form id="topProductsForm" action="${pageContext.request.contextPath}/admin/dashboard" method="get" class="dashboard-control-form">
+                        <div>
+                            <label for="topLimit">Top N</label>
+                            <input type="number" id="topLimit" name="topLimit" min="1" max="50" value="${currentTopLimit}">
+                        </div>
+                        <div>
+                            <label for="topMode">Loại</label>
+                            <select id="topMode" name="topMode">
+                                <option value="best" ${currentTopMode == 'best' ? 'selected' : ''}>Bán chạy nhất</option>
+                                <option value="least" ${currentTopMode == 'least' ? 'selected' : ''}>Bán ít nhất</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="topPeriod">Thời gian</label>
+                            <select id="topPeriod" name="topPeriod">
+                                <option value="" ${currentTopPeriod == 'all' ? 'selected' : ''}>Tất cả thời gian</option>
+                                <option value="day" ${currentTopPeriod == 'day' ? 'selected' : ''}>Hôm nay</option>
+                                <option value="week" ${currentTopPeriod == 'week' ? 'selected' : ''}>7 ngày</option>
+                                <option value="month" ${currentTopPeriod == 'month' ? 'selected' : ''}>1 tháng</option>
+                                <option value="six-months" ${currentTopPeriod == 'six-months' ? 'selected' : ''}>6 tháng</option>
+                                <option value="year" ${currentTopPeriod == 'year' ? 'selected' : ''}>1 năm</option>
+                            </select>
+                        </div>
+                        <input type="hidden" name="revenuePeriod" value="${currentRevenuePeriod}">
+                        <button type="submit">Lọc</button>
+                    </form>
+
+                    <div id="topProductsList" class="stat-list dashboard-scroll-list">
                         <c:forEach var="p" items="${topProducts}" varStatus="loop">
                             <div class="stat-row">
                                 <div class="stat-left">
                                     <span class="rank-badge">${loop.index + 1}</span>
 
                                     <div>
-                                        <div class="stat-title">${p.productName}</div>
-                                        <div class="stat-sub">Sản phẩm bán chạy</div>
+                                        <div class="stat-title">
+                                            <a class="stat-title-link" href="${pageContext.request.contextPath}/admin/product/edit?id=${p.productId}">
+                                                ${p.productName}
+                                            </a>
+                                        </div>
+                                        <div class="stat-sub">
+                                            ${currentTopMode == 'least' ? 'Sản phẩm bán ít' : 'Sản phẩm bán chạy'}
+                                        </div>
                                     </div>
                                 </div>
 
@@ -81,7 +129,7 @@
                 <div class="dashboard-card">
                     <h3><i class="fas fa-user-plus"></i> Người dùng mới theo tháng</h3>
 
-                    <div class="stat-list">
+                    <div class="stat-list dashboard-scroll-list compact">
                         <c:forEach var="u" items="${newUsersByMonth}">
                             <div class="stat-row">
                                 <div class="stat-left">
@@ -180,6 +228,24 @@
                             Doanh thu theo tháng
                         </h3>
 
+
+                        <form id="revenueFilterForm" action="${pageContext.request.contextPath}/admin/dashboard" method="get" class="dashboard-control-form">
+                            <input type="hidden" name="topLimit" value="${currentTopLimit}">
+                            <input type="hidden" name="topMode" value="${currentTopMode}">
+                            <input type="hidden" name="topPeriod" value="${currentTopPeriod}">
+                            <div>
+                                <label for="revenuePeriod">Thống kê</label>
+                                <select id="revenuePeriod" name="revenuePeriod">
+                                    <option value="day" ${currentRevenuePeriod == 'day' ? 'selected' : ''}>4 ngày gần nhất</option>
+                                    <option value="week" ${currentRevenuePeriod == 'week' ? 'selected' : ''}>Theo tuần</option>
+                                    <option value="month" ${currentRevenuePeriod == 'month' ? 'selected' : ''}>Theo tháng</option>
+                                    <option value="six-months" ${currentRevenuePeriod == 'six-months' ? 'selected' : ''}>6 tháng</option>
+                                    <option value="year" ${currentRevenuePeriod == 'year' ? 'selected' : ''}>1 năm</option>
+                                </select>
+                            </div>
+                            <button type="submit">Cập nhật</button>
+                        </form>
+
                         <div class="chart-wrap">
                             <canvas id="revenueChart"></canvas>
                         </div>
@@ -231,7 +297,7 @@
         </c:forEach>
     ];
 
-    new Chart(document.getElementById("revenueChart"), {
+    const revenueChart = new Chart(document.getElementById("revenueChart"), {
         type: "bar",
         data: {
             labels: revenueLabels,
@@ -261,6 +327,102 @@
             }
         }
     });
+
+    const ctx = "${pageContext.request.contextPath}";
+    const topProductsForm = document.getElementById("topProductsForm");
+    const revenueFilterForm = document.getElementById("revenueFilterForm");
+    const topProductsList = document.getElementById("topProductsList");
+
+    function debounce(fn, delay) {
+        let timer;
+        return function () {
+            clearTimeout(timer);
+            timer = setTimeout(fn, delay);
+        };
+    }
+
+    function escapeHtml(value) {
+        return String(value || "")
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#39;");
+    }
+
+    function currentTopModeLabel(shortLabel) {
+        const mode = document.getElementById("topMode").value;
+        if (mode === "least") {
+            return shortLabel ? "Sản phẩm bán ít" : "Sản phẩm bán ít nhất";
+        }
+        return shortLabel ? "Sản phẩm bán chạy" : "Sản phẩm bán chạy";
+    }
+
+    function loadTopProducts() {
+        const params = new URLSearchParams(new FormData(topProductsForm));
+        params.set("ajax", "topProducts");
+
+        fetch(ctx + "/admin/dashboard?" + params.toString(), {
+            headers: {"Accept": "application/json"}
+        })
+            .then(response => response.json())
+            .then(products => {
+                topProductsList.innerHTML = "";
+                if (!products || products.length === 0) {
+                    topProductsList.innerHTML = '<div class="stat-row"><div class="stat-title">Chưa có dữ liệu.</div></div>';
+                    return;
+                }
+
+                products.forEach((product, index) => {
+                    const row = document.createElement("div");
+                    row.className = "stat-row";
+                    row.innerHTML =
+                        '<div class="stat-left">' +
+                        '<span class="rank-badge">' + (index + 1) + '</span>' +
+                        '<div>' +
+                        '<div class="stat-title">' +
+                        '<a class="stat-title-link" href="' + ctx + '/admin/product/edit?id=' + product.productId + '">' +
+                        escapeHtml(product.productName) +
+                        '</a>' +
+                        '</div>' +
+                        '<div class="stat-sub">' + currentTopModeLabel(true) + '</div>' +
+                        '</div>' +
+                        '</div>' +
+                        '<div class="stat-value">' + product.totalSold + '</div>';
+                    topProductsList.appendChild(row);
+                });
+            });
+    }
+
+    function loadRevenue() {
+        const params = new URLSearchParams(new FormData(revenueFilterForm));
+        params.set("ajax", "revenue");
+
+        fetch(ctx + "/admin/dashboard?" + params.toString(), {
+            headers: {"Accept": "application/json"}
+        })
+            .then(response => response.json())
+            .then(rows => {
+                revenueChart.data.labels = rows.map(row => row.label);
+                revenueChart.data.datasets[0].data = rows.map(row => row.revenue);
+                revenueChart.update();
+            });
+    }
+
+    topProductsForm.addEventListener("submit", function (event) {
+        event.preventDefault();
+        loadTopProducts();
+    });
+
+    revenueFilterForm.addEventListener("submit", function (event) {
+        event.preventDefault();
+        loadRevenue();
+    });
+
+    document.getElementById("topLimit").addEventListener("input", debounce(loadTopProducts, 350));
+    document.getElementById("topMode").addEventListener("change", loadTopProducts);
+    document.getElementById("topPeriod").addEventListener("change", loadTopProducts);
+    document.getElementById("revenuePeriod").addEventListener("change", loadRevenue);
 </script>
 
 </body>
