@@ -182,6 +182,12 @@ public class CheckoutServlet extends HttpServlet {
 
         String selectedAddressVal = request.getParameter("selectedAddress");
         UserAddressDAO addressDAO = DAOFactory.getInstance().getUserAddressDAO();
+        if (selectedAddressVal == null || selectedAddressVal.isBlank()) {
+            List<UserAddress> addresses = addressDAO.getListAddress(user.getId());
+            if (addresses != null && !addresses.isEmpty()) {
+                selectedAddressVal = String.valueOf(addresses.get(0).getId());
+            }
+        }
         int shippingAddressId = 0;
 
         if ("new".equals(selectedAddressVal)) {
@@ -343,8 +349,19 @@ public class CheckoutServlet extends HttpServlet {
 
         Connection txConn = null;
         int orderId = 0;
+        boolean checkoutLockAcquired = false;
 
         try {
+            synchronized (session) {
+                Boolean processing = (Boolean) session.getAttribute("checkoutProcessing");
+                if (Boolean.TRUE.equals(processing)) {
+                    response.sendRedirect(request.getContextPath() + "/thanh-toan");
+                    return;
+                }
+                session.setAttribute("checkoutProcessing", Boolean.TRUE);
+                checkoutLockAcquired = true;
+            }
+
             txConn = DAOFactory.getDataSource().getConnection();
             txConn.setAutoCommit(false);
 
@@ -396,6 +413,9 @@ public class CheckoutServlet extends HttpServlet {
             }
 
         } catch (Exception e) {
+            if (checkoutLockAcquired) {
+                session.removeAttribute("checkoutProcessing");
+            }
             if (txConn != null) {
                 try { txConn.rollback(); } catch (SQLException ex) { ex.printStackTrace(); }
             }
@@ -412,6 +432,9 @@ public class CheckoutServlet extends HttpServlet {
         cart.removeItems(selectedItemIds);
         session.setAttribute("cart", cart);
         session.removeAttribute("selectedItemIds");
+        if (checkoutLockAcquired) {
+            session.removeAttribute("checkoutProcessing");
+        }
 
         String paymentMethod = request.getParameter("paymentMethod");
         if (paymentMethod == null) {

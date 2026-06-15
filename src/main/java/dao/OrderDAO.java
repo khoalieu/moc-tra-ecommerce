@@ -481,7 +481,10 @@ public class OrderDAO {
 
     public boolean updateOrderStatus(int orderId, OrderStatus status) {
         Order oldOrder = getOrderById(orderId);
-        String sql = "UPDATE orders SET status = ? WHERE id = ?";
+        String sql = "UPDATE orders SET status = ?, " +
+                "payment_status = CASE WHEN ? = 'completed' AND payment_method = 'cod' AND payment_status = 'pending' " +
+                "                      THEN 'paid' ELSE payment_status END " +
+                "WHERE id = ?";
         boolean updated = false;
         boolean deliveryFailedFromShipping = oldOrder != null
                 && oldOrder.getStatus() == OrderStatus.SHIPPING
@@ -492,7 +495,8 @@ public class OrderDAO {
             try {
                 try (PreparedStatement ps = conn.prepareStatement(sql)) {
                     ps.setString(1, status.name().toLowerCase());
-                    ps.setInt(2, orderId);
+                    ps.setString(2, status.name().toLowerCase());
+                    ps.setInt(3, orderId);
                     updated = ps.executeUpdate() > 0;
                 }
                 if (updated && shouldRestoreStockOnStatusChange(oldOrder, status)) {
