@@ -21,15 +21,14 @@ public class DAOFactory {
 
             props.load(input);
 
-            // Configure HikariCP Connection Pool
             HikariConfig config = new HikariConfig();
-            config.setDriverClassName("com.mysql.cj.jdbc.Driver"); // Explicitly set MySQL driver
+            config.setDriverClassName("com.mysql.cj.jdbc.Driver");
             String url = props.getProperty("db.url");
             if (url != null && url.contains("//mysql:3306/")) {
                 try {
                     java.net.InetAddress.getByName("mysql");
                 } catch (java.net.UnknownHostException e) {
-                    System.out.println("⚠️ Host 'mysql' is not resolvable. Falling back to '127.0.0.1:3307' for local development.");
+                    System.out.println(" Host 'mysql' is not resolvable. Falling back to '127.0.0.1:3307' for local development.");
                     url = url.replace("//mysql:3306/", "//127.0.0.1:3307/");
                 }
             }
@@ -52,7 +51,7 @@ public class DAOFactory {
 
             this.dataSource = new HikariDataSource(config);
 
-            System.out.println("✅ HikariCP Connection Pool initialized successfully");
+            System.out.println("HikariCP Connection Pool initialized successfully");
 
         } catch (Exception e) {
             throw new RuntimeException("Failed to load DB configuration", e);
@@ -186,7 +185,7 @@ public class DAOFactory {
     public void shutdown() {
         if (dataSource instanceof HikariDataSource) {
             ((HikariDataSource) dataSource).close();
-            System.out.println("✅ HikariCP Connection Pool closed");
+            System.out.println("HikariCP Connection Pool closed");
         }
     }
 }
