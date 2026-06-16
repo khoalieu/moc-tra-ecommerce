@@ -113,10 +113,25 @@ public class NotificationService {
         String message;
 
         switch (newStatus) {
+            case PROCESSING:
+                type = "order_processing";
+                title = "Đơn hàng đang được chuẩn bị";
+                message = "Đơn hàng " + code + " đang được shop/GHN chuẩn bị lấy hàng.";
+                break;
             case SHIPPING:
                 type = "order_shipping";
                 title = "Đơn hàng đang được giao";
                 message = "Đơn hàng " + code + " đang trên đường giao đến bạn.";
+                break;
+            case DELIVERY_ATTEMPT_FAILED:
+                type = "order_delivery_attempt_failed";
+                title = "Giao hàng chưa thành công";
+                message = "Đơn hàng " + code + " giao chưa thành công trong lần này. Đơn vị vận chuyển có thể tiếp tục giao lại.";
+                break;
+            case RETURNING:
+                type = "order_returning";
+                title = "Đơn hàng đang hoàn về shop";
+                message = "Đơn hàng " + code + " đang trong quá trình hoàn về shop.";
                 break;
             case COMPLETED:
                 type = "order_completed";
