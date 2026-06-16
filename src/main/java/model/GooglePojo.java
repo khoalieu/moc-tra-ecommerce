@@ -1,6 +1,10 @@
 package model;
 
-public class GooglePojo {
+import java.io.Serializable;
+
+public class GooglePojo implements Serializable {
+    private static final long serialVersionUID = 1L;
+
     private String id;
     private String email;
     private boolean verified_email;

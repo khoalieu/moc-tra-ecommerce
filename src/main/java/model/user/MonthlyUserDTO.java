@@ -1,6 +1,10 @@
 package model.user;
 
-public class MonthlyUserDTO {
+import java.io.Serializable;
+
+public class MonthlyUserDTO implements Serializable {
+    private static final long serialVersionUID = 1L;
+
     private String month;
     private int totalUsers;
 

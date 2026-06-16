@@ -4,11 +4,14 @@ package model.blog;
 import model.user.User;
 import model.enums.BlogStatus;
 
+import java.io.Serializable;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.Date;
 
-public class BlogPost {
+public class BlogPost implements Serializable {
+    private static final long serialVersionUID = 1L;
+
     private Integer id;
     private String title;
     private String slug;

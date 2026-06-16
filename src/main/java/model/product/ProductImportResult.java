@@ -1,9 +1,12 @@
 package model.product;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ProductImportResult {
+public class ProductImportResult implements Serializable {
+    private static final long serialVersionUID = 1L;
+
     private int addedCount;
     private int updatedCount;
     private int errorCount;

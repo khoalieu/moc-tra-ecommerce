@@ -1,8 +1,11 @@
 package model.contact;
 
+import java.io.Serializable;
 import java.sql.Timestamp;
 
-public class Contact {
+public class Contact implements Serializable {
+    private static final long serialVersionUID = 1L;
+
     private int id;
     private String name;
     private String email;

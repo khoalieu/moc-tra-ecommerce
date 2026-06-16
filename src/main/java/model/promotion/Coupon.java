@@ -1,8 +1,11 @@
 package model.promotion;
 
+import java.io.Serializable;
 import java.time.LocalDateTime;
 
-public class Coupon {
+public class Coupon implements Serializable {
+    private static final long serialVersionUID = 1L;
+
     private int id;
     private String code;
     private String title;

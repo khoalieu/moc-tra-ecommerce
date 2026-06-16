@@ -1,6 +1,10 @@
 package model.product;
 
-public class TopProductDTO {
+import java.io.Serializable;
+
+public class TopProductDTO implements Serializable {
+    private static final long serialVersionUID = 1L;
+
     private int productId;
     private String productName;
     private int totalSold;

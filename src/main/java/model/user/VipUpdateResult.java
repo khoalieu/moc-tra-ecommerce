@@ -1,6 +1,10 @@
 package model.user;
 
-public class VipUpdateResult {
+import java.io.Serializable;
+
+public class VipUpdateResult implements Serializable {
+    private static final long serialVersionUID = 1L;
+
     private int upgradedCount;
     private int downgradedCount;
 
