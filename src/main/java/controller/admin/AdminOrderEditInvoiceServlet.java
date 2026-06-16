@@ -15,7 +15,7 @@ import service.SystemLogService;
 import java.io.IOException;
 import java.util.List;
 
-@WebServlet(name = "AdminOrderEditInvoiceServlet", value = "/admin-edit-order")
+@WebServlet(name = "AdminOrderEditInvoiceServlet", value = "/admin/order-edit-invoice")
 public class AdminOrderEditInvoiceServlet extends HttpServlet {
 
     private OrderDAO orderDAO;
