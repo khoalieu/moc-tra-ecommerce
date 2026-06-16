@@ -757,6 +757,13 @@
     box-shadow: 0 0 0 4px rgba(245, 124, 0, 0.12);
 }
 
+.user-dashboard-page .timeline-step.returning .timeline-icon {
+    background: #fef3c7;
+    color: #92400e;
+    border-color: #d97706;
+    box-shadow: 0 0 0 4px rgba(217, 119, 6, 0.12);
+}
+
 @keyframes pulse-icon {
     0%, 100% { box-shadow: 0 0 0 4px rgba(16, 126, 132, 0.2); }
     50% { box-shadow: 0 0 0 7px rgba(16, 126, 132, 0.08); }
@@ -777,6 +784,7 @@
 .user-dashboard-page .timeline-step.active .timeline-label { color: #0a5c60; font-weight: 700; }
 .user-dashboard-page .timeline-step.cancelled .timeline-label { color: #dc2626; font-weight: 600; }
 .user-dashboard-page .timeline-step.failed .timeline-label { color: #f57c00; font-weight: 600; }
+.user-dashboard-page .timeline-step.returning .timeline-label { color: #92400e; font-weight: 600; }
 
 .user-dashboard-page .cancel-reason-banner {
     display: flex;
@@ -1074,6 +1082,43 @@
 .user-dashboard-page .status-shipping {
     background: #e0f2fe;
     color: #0369a1;
+}
+
+.user-dashboard-page .shipping-status-banner {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    border-left: 4px solid #2563eb;
+    border-radius: 8px;
+    padding: 14px 18px;
+    margin: 12px 20px 0;
+    font-size: 13.5px;
+    color: #1e3a8a;
+    animation: fadeInDown 0.4s ease;
+}
+
+.user-dashboard-page .shipping-status-banner i {
+    color: #2563eb;
+    font-size: 16px;
+    margin-top: 1px;
+    flex-shrink: 0;
+}
+
+.user-dashboard-page .status-processing {
+    background: #eef2ff;
+    color: #4338ca;
+}
+
+.user-dashboard-page .status-delivery-attempt-failed {
+    background: #fff7ed;
+    color: #c2410c;
+}
+
+.user-dashboard-page .status-returning {
+    background: #fef3c7;
+    color: #92400e;
 }
 
 .user-dashboard-page .status-delivery-failed {

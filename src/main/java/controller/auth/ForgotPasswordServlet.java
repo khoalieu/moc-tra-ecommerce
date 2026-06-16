@@ -32,25 +32,6 @@ public class ForgotPasswordServlet extends HttpServlet {
     private static final long RESEND_COOLDOWN = 2 * 60_000L;
     private static final SecureRandom RNG = new SecureRandom();
 
-    private static final String SMTP_HOST = "smtp.gmail.com";
-    private static final int SMTP_PORT = 587;
-    private static String SMTP_USER;
-    private static String SMTP_PASS;
-
-    static {
-        try (InputStream input = ForgotPasswordServlet.class.getClassLoader().getResourceAsStream("config.properties")) {
-            Properties prop = new Properties();
-            if (input != null) {
-                prop.load(input);
-                SMTP_USER = prop.getProperty("smtp.user");
-                SMTP_PASS = prop.getProperty("smtp.pass");
-            } else {
-                System.err.println("[Error] Không tìm thấy file config.properties!");
-            }
-        } catch (IOException ex) {
-            ex.printStackTrace();
-        }
-    }
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
@@ -280,24 +261,7 @@ public class ForgotPasswordServlet extends HttpServlet {
 
     private boolean sendOtpMail(String toEmail, String otp) {
         try {
-            Properties props = new Properties();
-            props.put("mail.smtp.auth", "true");
-            props.put("mail.smtp.starttls.enable", "true");
-            props.put("mail.smtp.host", SMTP_HOST);
-            props.put("mail.smtp.port", String.valueOf(SMTP_PORT));
-
-            Session mailSession = Session.getInstance(props, new Authenticator() {
-                @Override
-                protected PasswordAuthentication getPasswordAuthentication() {
-                    return new PasswordAuthentication(SMTP_USER, SMTP_PASS);
-                }
-            });
-            Message msg = new MimeMessage(mailSession);
-            msg.setFrom(new InternetAddress(SMTP_USER));
-            msg.setRecipients(Message.RecipientType.TO, InternetAddress.parse(toEmail));
-            msg.setSubject("Ma OTP khoi phuc mat khau");
-            msg.setText("Ma OTP cua ban la: " + otp + "\nHieu luc 5 phut.");
-            Transport.send(msg);
+            controller.utils.EmailService.sendEmail(toEmail, "Ma OTP khoi phuc mat khau", "Ma OTP cua ban la: " + otp + "\nHieu luc 5 phut.");
             return true;
         } catch (Exception e) {
             e.printStackTrace();

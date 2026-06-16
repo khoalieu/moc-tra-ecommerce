@@ -1,6 +1,7 @@
 plugins {
     id 'java'
     id 'war'
+    id 'org.gretty' version '4.1.1'
 }
 
 group = 'vn.edu.hcmuaf'
@@ -69,4 +70,17 @@ war {
 compileJava {
     options.encoding = 'UTF-8'
     options.compilerArgs << '-parameters'
+}
+
+task runInit(type: JavaExec) {
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'DatabaseInitializer'
+}
+
+// Cấu hình Gretty Tomcat 10 nhúng
+gretty {
+    servletContainer = 'tomcat10'
+    httpPort = 8080
+    contextPath = '/'
+    managedClassReload = false
 }

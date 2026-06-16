@@ -21,46 +21,9 @@
 </head>
 <body>
 <div class="admin-container">
-    <aside class="admin-sidebar">
-        <div class="sidebar-header">
-            <div class="admin-logo">
-                <img src="${pageContext.request.contextPath}/assets/images/logoweb.png" alt="Mộc Trà">
-                <h2>Mộc Trà Admin</h2>
-            </div>
-        </div>
-
-        <nav class="admin-nav">
-            <ul>
-                <li class="nav-item">
-                    <a href="${pageContext.request.contextPath}/admin/dashboard.jsp"><i
-                            class="fas fa-tachometer-alt"></i><span>Dashboard</span></a>
-                </li>
-                <li class="nav-item active">
-                    <a href="${pageContext.request.contextPath}/admin/products"><i class="fas fa-box"></i><span>Tất cả Sản phẩm</span></a>
-                </li>
-                <li class="nav-item">
-                    <a href="${pageContext.request.contextPath}/admin/banners.jsp"><i class="fas fa-images"></i><span>Quản lý Banner</span></a>
-                </li>
-                <li class="nav-item">
-                    <a href="${pageContext.request.contextPath}/admin/categories.jsp"><i
-                            class="fas fa-sitemap"></i><span>Danh mục Sản phẩm</span></a>
-                </li>
-                <li class="nav-item">
-                    <a href="${pageContext.request.contextPath}/admin/orders.jsp"><i
-                            class="fas fa-shopping-cart"></i><span>Đơn hàng</span></a>
-                </li>
-                <li class="nav-item">
-                    <a href="${pageContext.request.contextPath}/admin/customers.jsp"><i class="fas fa-users"></i><span>Khách hàng</span></a>
-                </li>
-                <li class="nav-item">
-                    <a href="${pageContext.request.contextPath}/admin/blog.jsp"><i class="fas fa-newspaper"></i><span>Tất cả Bài viết</span></a>
-                </li>
-                <li class="nav-item">
-                    <a href="${pageContext.request.contextPath}/admin/blog-categories.jsp"><i class="fas fa-folder"></i><span>Danh mục Blog</span></a>
-                </li>
-            </ul>
-        </nav>
-    </aside>
+    <jsp:include page="/common/admin-sidebar.jsp">
+        <jsp:param name="activePage" value="products"/>
+    </jsp:include>
 
     <main class="admin-main">
         <header class="admin-header">

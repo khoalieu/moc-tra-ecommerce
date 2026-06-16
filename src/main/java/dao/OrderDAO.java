@@ -100,6 +100,8 @@ public class OrderDAO {
 
                 o.setItems(getOrderItems(o.getId()));
                 o.setCancelReason(rs.getString("cancel_reason"));
+                o.setShippingProvider(rs.getString("shipping_provider"));
+                o.setTrackingCode(rs.getString("tracking_code"));
 
                 list.add(o);
 
@@ -699,7 +701,7 @@ public class OrderDAO {
             sql.append("WHERE rr.order_id = o.id AND rr.status IN ('refunded', 'rejected')");
             sql.append(") ");
         } else if ("shipping".equals(quickFilter)) {
-            sql.append(" AND o.status = 'shipping' ");
+            sql.append(" AND o.status IN ('processing','shipping','delivery_attempt_failed','returning') ");
         } else if ("delivery_failed".equals(quickFilter)) {
             sql.append(" AND o.status = 'delivery_failed' ");
         }
@@ -1304,12 +1306,54 @@ public class OrderDAO {
         return null;
     }
 
+    public void saveShipmentEvent(int orderId, String trackingCode, String ghnStatus,
+                                  String reason, String rawPayload) {
+        String sql = "INSERT INTO shipment_events " +
+                "(order_id, tracking_code, ghn_status, reason, raw_payload, created_at) " +
+                "VALUES (?, ?, ?, ?, ?, NOW())";
+        try (Connection conn = ds.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, orderId);
+            ps.setString(2, trackingCode);
+            ps.setString(3, ghnStatus);
+            ps.setString(4, reason);
+            ps.setString(5, rawPayload);
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            System.err.println("[GHN Webhook] Cannot save shipment event. Did you run migration 005? " + e.getMessage());
+        }
+    }
+
+    public boolean updateGHNOrderStatus(int orderId, OrderStatus status, String reason) {
+        if (status == null || status == OrderStatus.COMPLETED || status == OrderStatus.DELIVERY_FAILED) {
+            return false;
+        }
+
+        String sql = "UPDATE orders SET status = ?, cancel_reason = ? " +
+                "WHERE id = ? AND status IN ('pending','processing','shipping','delivery_attempt_failed','returning')";
+        try (Connection conn = ds.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, status.name().toLowerCase());
+            ps.setString(2, reason);
+            ps.setInt(3, orderId);
+            boolean updated = ps.executeUpdate() > 0;
+            if (updated) {
+                Order order = getOrderById(orderId);
+                new NotificationService().notifyOrderStatusChanged(order, status);
+            }
+            return updated;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
     public boolean completeOrderByGHN(int orderId) {
         String sql = "UPDATE orders SET " +
                 "status = 'completed', " +
                 "payment_status = CASE WHEN payment_method = 'cod' AND payment_status = 'pending' " +
                 "                      THEN 'paid' ELSE payment_status END " +
-                "WHERE id = ? AND status = 'shipping'";
+                "WHERE id = ? AND status IN ('pending','processing','shipping','delivery_attempt_failed','returning')";
         try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, orderId);
@@ -1339,7 +1383,11 @@ public class OrderDAO {
                 conn.rollback();
                 return false;
             }
-            if (order.getStatus() != OrderStatus.SHIPPING) {
+            if (order.getStatus() != OrderStatus.PENDING
+                    && order.getStatus() != OrderStatus.PROCESSING
+                    && order.getStatus() != OrderStatus.SHIPPING
+                    && order.getStatus() != OrderStatus.DELIVERY_ATTEMPT_FAILED
+                    && order.getStatus() != OrderStatus.RETURNING) {
                 conn.rollback();
                 return false;
             }

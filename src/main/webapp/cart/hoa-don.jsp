@@ -246,6 +246,15 @@
                                 </span>
                             </div>
                         </div>
+
+                        <div class="invoice-actions" style="margin-top: 30px; display: flex; gap: 15px; justify-content: flex-end; flex-wrap: wrap;">
+                            <a href="${pageContext.request.contextPath}/don-hang" class="btn btn-primary" style="padding: 10px 20px; border-radius: 8px; text-decoration: none; font-weight: 600; display: inline-flex; align-items: center; gap: 8px;">
+                                <i class="fa-solid fa-list-check"></i> Theo dõi đơn hàng này
+                            </a>
+                            <a href="${pageContext.request.contextPath}/san-pham" class="btn" style="padding: 10px 20px; border: 1px solid #ccc; border-radius: 8px; text-decoration: none; font-weight: 600; color: #555; display: inline-flex; align-items: center; gap: 8px; background: #fff;">
+                                <i class="fa-solid fa-arrow-left"></i> Tiếp tục mua sắm
+                            </a>
+                        </div>
                     </div>
                 </div> </c:if>
         </div>
