@@ -1099,11 +1099,18 @@ public class OrderDAO {
     }
 
     public boolean updateOrderTotal(int orderId) {
-        String sql = "UPDATE orders " + "SET total_amount = (SELECT COALESCE(SUM(quantity * price),0) FROM order_items  WHERE order_id = ?) + shipping_fee WHERE id = ?";
+        String sql = "UPDATE orders " +
+                "SET subtotal_amount = (SELECT COALESCE(SUM(quantity * price), 0) FROM order_items WHERE order_id = ?), " +
+                "total_amount = GREATEST(0, " +
+                "    (SELECT COALESCE(SUM(quantity * price), 0) FROM order_items WHERE order_id = ?) " +
+                "    + shipping_fee - COALESCE(coupon_discount_amount, 0) - COALESCE(vip_discount_amount, 0)" +
+                ") " +
+                "WHERE id = ?";
         try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, orderId);
             ps.setInt(2, orderId);
+            ps.setInt(3, orderId);
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {
             e.printStackTrace();

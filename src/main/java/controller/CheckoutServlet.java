@@ -267,7 +267,7 @@ public class CheckoutServlet extends HttpServlet {
         }
 
         String shippingMethod = request.getParameter("shippingMethod");
-        double finalShippingFee = calculateFinalShippingFee(province, shippingMethod, ghnDistrictId, ghnWardCode);
+        double finalShippingFee = calculateFinalShippingFee(province, shippingMethod);
 
         double vipDiscount = 0;
         Integer appliedVoucherId = null;
@@ -476,21 +476,9 @@ public class CheckoutServlet extends HttpServlet {
         return "cod";
     }
 
-    private double calculateFinalShippingFee(String province, String shippingMethod,
-                                              Integer districtId, String wardCode) {
+    private double calculateFinalShippingFee(String province, String shippingMethod) {
         GHNShippingDAO ghnDAO = DAOFactory.getInstance().getGHNShippingDAO();
-        long baseFee;
-
-        if (districtId != null && districtId > 0 && wardCode != null && !wardCode.isEmpty()) {
-            long apiFee = ghnDAO.calculateShippingFee(districtId, wardCode, ghnDAO.getDefaultWeightGram());
-            if (apiFee >= 0) {
-                baseFee = apiFee;
-            } else {
-                baseFee = ghnDAO.calculateFeeByProvinceName(province);
-            }
-        } else {
-            baseFee = ghnDAO.calculateFeeByProvinceName(province);
-        }
+        long baseFee = ghnDAO.calculateFeeByProvinceName(province);
 
         double serviceFee = 0;
         if ("express".equals(shippingMethod)) {
