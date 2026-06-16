@@ -267,7 +267,7 @@ public class CheckoutServlet extends HttpServlet {
         }
 
         String shippingMethod = request.getParameter("shippingMethod");
-        double finalShippingFee = calculateFinalShippingFee(province, shippingMethod, ghnDistrictId, ghnWardCode);
+        double finalShippingFee = calculateFinalShippingFee(province, shippingMethod);
 
         double vipDiscount = 0;
         Integer appliedVoucherId = null;
@@ -338,7 +338,8 @@ public class CheckoutServlet extends HttpServlet {
         order.setCouponCode(appliedCouponCode);
         order.setCouponDiscountAmount(couponDiscount);
         order.setVipDiscountAmount(vipDiscount);
-        order.setPaymentMethod(request.getParameter("paymentMethod"));
+        String paymentMethod = normalizePaymentMethod(request.getParameter("paymentMethod"));
+        order.setPaymentMethod(paymentMethod);
         order.setNotes(request.getParameter("note"));
 
         OrderDAO orderDAO = DAOFactory.getInstance().getOrderDAO();
@@ -436,18 +437,11 @@ public class CheckoutServlet extends HttpServlet {
             session.removeAttribute("checkoutProcessing");
         }
 
-        String paymentMethod = request.getParameter("paymentMethod");
-        if (paymentMethod == null) {
-            paymentMethod = "cod";
-        }
-
-        if (!"cod".equals(paymentMethod)) {
+        if ("bank".equals(paymentMethod)) {
             try {
                 Order createdOrder = orderDAO.getOrderById(orderId);
 
-                PaymentResult res = "bank".equals(paymentMethod)
-                        ? PaymentUtils.createPayosPayment(createdOrder)
-                        : PaymentUtils.createMomoPayment(createdOrder);
+                PaymentResult res = PaymentUtils.createPayosPayment(createdOrder);
 
                 if (res != null) {
                     PaymentTransaction tx = new PaymentTransaction();
@@ -461,7 +455,7 @@ public class CheckoutServlet extends HttpServlet {
                     tx.setPayUrl(res.getPayUrl());
                     tx.setDeeplink(res.getDeeplink());
                     tx.setTransactionStatus("pending");
-                    tx.setExpiredAt(Timestamp.valueOf(LocalDateTime.now().plusMinutes(2)));
+                    tx.setExpiredAt(Timestamp.valueOf(LocalDateTime.now().plusMinutes(15)));
 
                     DAOFactory.getInstance().getPaymentTransactionDAO().create(tx);
                     response.sendRedirect("thanh-toan-qr?orderId=" + orderId);
@@ -475,21 +469,16 @@ public class CheckoutServlet extends HttpServlet {
         response.sendRedirect("hoa-don?id=" + orderId);
     }
 
-    private double calculateFinalShippingFee(String province, String shippingMethod,
-                                              Integer districtId, String wardCode) {
-        GHNShippingDAO ghnDAO = DAOFactory.getInstance().getGHNShippingDAO();
-        long baseFee;
-
-        if (districtId != null && districtId > 0 && wardCode != null && !wardCode.isEmpty()) {
-            long apiFee = ghnDAO.calculateShippingFee(districtId, wardCode, ghnDAO.getDefaultWeightGram());
-            if (apiFee >= 0) {
-                baseFee = apiFee;
-            } else {
-                baseFee = ghnDAO.calculateFeeByProvinceName(province);
-            }
-        } else {
-            baseFee = ghnDAO.calculateFeeByProvinceName(province);
+    private String normalizePaymentMethod(String paymentMethod) {
+        if ("bank".equalsIgnoreCase(paymentMethod)) {
+            return "bank";
         }
+        return "cod";
+    }
+
+    private double calculateFinalShippingFee(String province, String shippingMethod) {
+        GHNShippingDAO ghnDAO = DAOFactory.getInstance().getGHNShippingDAO();
+        long baseFee = ghnDAO.calculateFeeByProvinceName(province);
 
         double serviceFee = 0;
         if ("express".equals(shippingMethod)) {

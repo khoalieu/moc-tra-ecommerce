@@ -9,6 +9,7 @@ import dao.PaymentTransactionDAO;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.*;
+import model.enums.OrderStatus;
 import model.enums.PaymentStatus;
 import model.order.Order;
 import model.payment.PaymentTransaction;
@@ -18,6 +19,8 @@ import service.NotificationService;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
 import java.sql.Timestamp;
@@ -97,6 +100,10 @@ public class PaymentServlet extends HttpServlet {
                 response.sendRedirect(request.getContextPath() + "/hoa-don?id=" + orderId);
                 return;
             }
+            if (order.getStatus() != OrderStatus.PENDING) {
+                response.sendRedirect(request.getContextPath() + "/hoa-don?id=" + orderId);
+                return;
+            }
 
             PaymentTransaction payment = txDAO.getByOrderId(orderId);
             if (payment == null) {
@@ -152,7 +159,6 @@ public class PaymentServlet extends HttpServlet {
 
                 txDAO.markExpiredById(payment.getId());
                 orderDAO.updatePaymentStatus(orderId, PaymentStatus.EXPIRED);
-                orderDAO.cancelOrder(orderId, "Thanh toan qua han");
                 new NotificationService().notifyPaymentStatusChanged(order, PaymentStatus.EXPIRED);
 
                 data.put("paymentStatus", "EXPIRED");
@@ -194,19 +200,7 @@ public class PaymentServlet extends HttpServlet {
         String orderId = request.getParameter("orderId");
 
         if (orderId != null && !orderId.isEmpty()) {
-            try {
-                int parsedOrderId = Integer.parseInt(orderId);
-                OrderDAO orderDAO = DAOFactory.getInstance().getOrderDAO();
-                Order order = orderDAO.getOrderById(parsedOrderId);
-                if (order != null && order.getPaymentStatus() == PaymentStatus.PENDING) {
-                    orderDAO.updatePaymentStatus(parsedOrderId, PaymentStatus.FAILED);
-                    orderDAO.cancelOrder(parsedOrderId, "Nguoi dung huy thanh toan");
-                    new NotificationService().notifyPaymentStatusChanged(order, PaymentStatus.FAILED);
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-            response.sendRedirect(request.getContextPath() + "/hoa-don?id=" + orderId);
+            response.sendRedirect(request.getContextPath() + "/thanh-toan-qr?orderId=" + orderId);
         } else {
             response.sendRedirect(request.getContextPath() + "/don-hang");
         }
@@ -290,8 +284,7 @@ public class PaymentServlet extends HttpServlet {
                 return;
             }
 
-            orderDAO.updatePaymentStatus(order.getId(), PaymentStatus.PAID);
-            txDAO.markPaidByProviderOrderId(providerOrderId, rawBody);
+            markPayosPaymentPaid(orderDAO, txDAO, order.getId(), providerOrderId, rawBody);
             new NotificationService().notifyPaymentStatusChanged(order, PaymentStatus.PAID);
 
             System.out.println("Đã cập nhật PAID cho orderId = " + order.getId()
@@ -306,6 +299,35 @@ public class PaymentServlet extends HttpServlet {
             response.getWriter().write("Webhook error");
         }
     }
+
+    private void markPayosPaymentPaid(OrderDAO orderDAO, PaymentTransactionDAO txDAO,
+                                      int orderId, String providerOrderId, String rawBody) throws SQLException {
+        Connection conn = null;
+        try {
+            conn = DAOFactory.getDataSource().getConnection();
+            conn.setAutoCommit(false);
+
+            if (!orderDAO.updatePaymentStatus(conn, orderId, PaymentStatus.PAID)) {
+                throw new SQLException("Không thể cập nhật trạng thái thanh toán của đơn hàng.");
+            }
+
+            if (!txDAO.markPaidByProviderOrderId(conn, providerOrderId, rawBody)) {
+                throw new SQLException("Không thể cập nhật giao dịch thanh toán.");
+            }
+
+            conn.commit();
+        } catch (SQLException e) {
+            if (conn != null) {
+                try { conn.rollback(); } catch (SQLException rollbackError) { rollbackError.printStackTrace(); }
+            }
+            throw e;
+        } finally {
+            if (conn != null) {
+                try { conn.setAutoCommit(true); conn.close(); } catch (SQLException closeError) { closeError.printStackTrace(); }
+            }
+        }
+    }
+
     private void continuePayment(HttpServletRequest request, HttpServletResponse response)
             throws IOException {
         try {
@@ -361,9 +383,12 @@ public class PaymentServlet extends HttpServlet {
                 new NotificationService().notifyPaymentStatusChanged(order, PaymentStatus.EXPIRED);
             }
 
-            PaymentResult res = "bank".equalsIgnoreCase(order.getPaymentMethod())
-                    ? PaymentUtils.createPayosPayment(order)
-                    : PaymentUtils.createMomoPayment(order);
+            if (!"bank".equalsIgnoreCase(order.getPaymentMethod())) {
+                response.sendRedirect(request.getContextPath() + "/hoa-don?id=" + orderId);
+                return;
+            }
+
+            PaymentResult res = PaymentUtils.createPayosPayment(order);
 
             if (res == null) {
                 response.sendRedirect(request.getContextPath() + "/hoa-don?id=" + orderId);
@@ -381,7 +406,7 @@ public class PaymentServlet extends HttpServlet {
             tx.setPayUrl(res.getPayUrl());
             tx.setDeeplink(res.getDeeplink());
             tx.setTransactionStatus("pending");
-            tx.setExpiredAt(Timestamp.valueOf(LocalDateTime.now().plusMinutes(2)));
+            tx.setExpiredAt(Timestamp.valueOf(LocalDateTime.now().plusMinutes(15)));
 
             txDAO.create(tx);
             orderDAO.updatePaymentStatus(orderId, PaymentStatus.PENDING);

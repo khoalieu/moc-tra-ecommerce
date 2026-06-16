@@ -291,7 +291,7 @@
                                             <span class="text-muted">Chưa có thông tin nhận tiền</span>
                                         </c:when>
                                         <c:otherwise>
-                                            <strong>${refund.receiveMethod == 'momo' ? 'MoMo' : 'Ngân hàng'}</strong><br>
+                                            <strong>Ngân hàng</strong><br>
                                             Chủ TK: ${refund.accountHolder}<br>
                                             <c:if test="${not empty refund.accountNumber}">
                                                 STK/SĐT: ${refund.accountNumber}
@@ -706,3 +706,4 @@
 
 </body>
 </html>
+

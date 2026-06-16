@@ -502,14 +502,13 @@
                         <label class="refund-field-label" for="receiveMethod">Phương thức nhận tiền</label>
                         <select name="receiveMethod" id="receiveMethod" class="refund-input" required>
                             <option value="bank">Ngân hàng</option>
-                            <option value="momo">MoMo</option>
                         </select>
 
                         <label class="refund-field-label" for="accountHolder">Tên chủ tài khoản</label>
                         <input type="text" name="accountHolder" id="accountHolder" class="refund-input"
                                placeholder="Ví dụ: Nguyễn Văn A" required>
 
-                        <label class="refund-field-label" for="accountNumber">Số tài khoản / Số điện thoại ví</label>
+                        <label class="refund-field-label" for="accountNumber">Số tài khoản</label>
                         <input type="text" name="accountNumber" id="accountNumber" class="refund-input"
                                placeholder="Có thể bỏ trống nếu đã tải ảnh QR">
 
@@ -692,3 +691,4 @@
 </script>
 </body>
 </html>
+

@@ -28,7 +28,7 @@ git<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding=
                     <ul>
                         <li>Thanh toán khi nhận hàng (COD)</li>
                         <li>Chuyển khoản ngân hàng</li>
-                        <li>Thanh toán qua ví điện tử (MoMo, ZaloPay, ShopeePay)</li>
+                        <li>Thanh toán qua mã QR ngân hàng</li>
                         <li>Thanh toán bằng thẻ tín dụng/ghi nợ</li>
                     </ul>
                 </div>

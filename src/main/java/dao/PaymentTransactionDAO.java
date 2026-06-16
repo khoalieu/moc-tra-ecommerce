@@ -126,6 +126,19 @@ public class PaymentTransactionDAO {
 
         return false;
     }
+
+    public boolean markPaidByProviderOrderId(Connection conn, String providerOrderId, String rawResponse) throws SQLException {
+        String sql = "UPDATE payment_transactions " +
+                "SET transaction_status = 'paid', raw_response = ?, paid_at = NOW() " +
+                "WHERE provider_order_id = ?";
+
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, rawResponse);
+            ps.setString(2, providerOrderId);
+            return ps.executeUpdate() > 0;
+        }
+    }
+
     public boolean markExpiredById(int id) {
         String sql = "UPDATE payment_transactions " +
                 "SET transaction_status = 'expired' " +

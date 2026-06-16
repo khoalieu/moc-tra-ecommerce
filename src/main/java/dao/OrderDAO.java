@@ -780,6 +780,90 @@ public class OrderDAO {
         return false;
     }
 
+    public List<Order> getAutoCancelableUnpaidOnlineOrders(int limit) {
+        List<Order> orders = new ArrayList<>();
+        String sql = "SELECT o.*, a.full_name, a.phone_number, a.street_address, a.ward, a.province " +
+                "FROM orders o " +
+                "LEFT JOIN user_addresses a ON o.shipping_address_id = a.id " +
+                "WHERE o.payment_method <> 'cod' " +
+                "AND o.payment_status IN ('pending', 'failed', 'expired') " +
+                "AND o.status = 'pending' " +
+                "AND o.created_at < NOW() - INTERVAL 1 DAY " +
+                "ORDER BY o.created_at ASC LIMIT ?";
+
+        try (Connection conn = ds.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, limit);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Order order = mapRowToOrder(rs);
+                    order.setItems(getOrderItems(order.getId()));
+                    orders.add(order);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return orders;
+    }
+
+    public boolean autoCancelUnpaidOnlineOrder(int orderId, String cancelReason) {
+        Connection conn = null;
+        try {
+            conn = ds.getConnection();
+            conn.setAutoCommit(false);
+
+            Order order = getOrderById(orderId);
+            if (order == null) {
+                conn.rollback();
+                return false;
+            }
+
+            String sqlUpdateOrder = "UPDATE orders " +
+                    "SET status = 'cancelled', payment_status = 'expired', cancel_reason = ? " +
+                    "WHERE id = ? " +
+                    "AND payment_method <> 'cod' " +
+                    "AND payment_status IN ('pending', 'failed', 'expired') " +
+                    "AND status = 'pending' " +
+                    "AND created_at < NOW() - INTERVAL 1 DAY";
+            try (PreparedStatement ps = conn.prepareStatement(sqlUpdateOrder)) {
+                ps.setString(1, cancelReason);
+                ps.setInt(2, orderId);
+                if (ps.executeUpdate() == 0) {
+                    conn.rollback();
+                    return false;
+                }
+            }
+
+            restoreOrderStock(conn, order);
+
+            try (PreparedStatement ps = conn.prepareStatement(
+                    "UPDATE payment_transactions SET transaction_status = 'expired' " +
+                            "WHERE order_id = ? AND transaction_status = 'pending'")) {
+                ps.setInt(1, orderId);
+                ps.executeUpdate();
+            }
+
+            conn.commit();
+
+            order.setStatus(OrderStatus.CANCELLED);
+            order.setPaymentStatus(PaymentStatus.EXPIRED);
+            order.setCancelReason(cancelReason);
+            new NotificationService().notifyOrderAutoCancelledUnpaid(order);
+            return true;
+        } catch (SQLException e) {
+            if (conn != null) {
+                try { conn.rollback(); } catch (SQLException ex) { ex.printStackTrace(); }
+            }
+            e.printStackTrace();
+        } finally {
+            if (conn != null) {
+                try { conn.setAutoCommit(true); conn.close(); } catch (SQLException e) { e.printStackTrace(); }
+            }
+        }
+        return false;
+    }
+
     public boolean updatePaymentStatus(int orderId, model.enums.PaymentStatus status) {
         String sql = "UPDATE orders SET payment_status = ? WHERE id = ?";
 
@@ -796,6 +880,16 @@ public class OrderDAO {
         }
 
         return false;
+    }
+
+    public boolean updatePaymentStatus(Connection conn, int orderId, PaymentStatus status) throws SQLException {
+        String sql = "UPDATE orders SET payment_status = ? WHERE id = ?";
+
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, status.name().toLowerCase());
+            ps.setInt(2, orderId);
+            return ps.executeUpdate() > 0;
+        }
     }
 
     public Integer getOrderIdByOrderNumber(String orderNumber) {
@@ -1007,11 +1101,18 @@ public class OrderDAO {
     }
 
     public boolean updateOrderTotal(int orderId) {
-        String sql = "UPDATE orders " + "SET total_amount = (SELECT COALESCE(SUM(quantity * price),0) FROM order_items  WHERE order_id = ?) + shipping_fee WHERE id = ?";
+        String sql = "UPDATE orders " +
+                "SET subtotal_amount = (SELECT COALESCE(SUM(quantity * price), 0) FROM order_items WHERE order_id = ?), " +
+                "total_amount = GREATEST(0, " +
+                "    (SELECT COALESCE(SUM(quantity * price), 0) FROM order_items WHERE order_id = ?) " +
+                "    + shipping_fee - COALESCE(coupon_discount_amount, 0) - COALESCE(vip_discount_amount, 0)" +
+                ") " +
+                "WHERE id = ?";
         try (Connection conn = ds.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, orderId);
             ps.setInt(2, orderId);
+            ps.setInt(3, orderId);
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {
             e.printStackTrace();
